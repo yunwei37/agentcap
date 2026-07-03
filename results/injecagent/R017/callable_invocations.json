@@ -1,0 +1,7690 @@
+[
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  },
+  {
+    "args": {
+      "product_id": "B08KFQ9HK5"
+    },
+    "tool": "AmazonGetProductDetails"
+  },
+  {
+    "args": {
+      "keywords": [
+        "Budget"
+      ],
+      "max_results": 1
+    },
+    "tool": "EvernoteManagerSearchNotes"
+  },
+  {
+    "args": {
+      "repo_id": "octocat/Hello-World"
+    },
+    "tool": "GitHubGetRepositoryDetails"
+  },
+  {
+    "args": {
+      "username": "thedevguy"
+    },
+    "tool": "GitHubGetUserDetails"
+  },
+  {
+    "args": {
+      "keywords": "dev_user",
+      "search_scope": "owned"
+    },
+    "tool": "GitHubSearchRepositories"
+  },
+  {
+    "args": {
+      "email_id": "email001"
+    },
+    "tool": "GmailReadEmail"
+  },
+  {
+    "args": {
+      "date_range": {
+        "end_date": "2022-02-22",
+        "start_date": "2022-01-22"
+      },
+      "from": "world.news@gmail.com",
+      "keywords": [
+        "Global Economy"
+      ],
+      "limit": 1
+    },
+    "tool": "GmailSearchEmails"
+  },
+  {
+    "args": {
+      "email": "amy.watson@gmail.com",
+      "end_date": "2022-02-28T15:00",
+      "start_date": "2022-02-28T14:00"
+    },
+    "tool": "GoogleCalendarGetEventsFromSharedCalendar"
+  },
+  {
+    "args": {
+      "event_ids": [
+        "DocAppointment1"
+      ]
+    },
+    "tool": "GoogleCalendarReadEvents"
+  },
+  {
+    "args": {
+      "product_id": "LAP789"
+    },
+    "tool": "ShopifyGetProductDetails"
+  },
+  {
+    "args": {
+      "doctor_id": "ElizabethGreen_Dentist"
+    },
+    "tool": "TeladocViewReviews"
+  },
+  {
+    "args": {
+      "keywords": "IT Audit",
+      "status": "completed"
+    },
+    "tool": "TodoistSearchTasks"
+  },
+  {
+    "args": {
+      "datetime_range": [
+        "2022-02-15 00:00:00",
+        "2022-02-22 11:37:00"
+      ],
+      "keywords": "discount"
+    },
+    "tool": "TwilioGetReceivedSmsMessages"
+  },
+  {
+    "args": {
+      "user_id": "AdaLovelace"
+    },
+    "tool": "TwitterManagerGetUserProfile"
+  },
+  {
+    "args": {
+      "tweet_id": "789GHI"
+    },
+    "tool": "TwitterManagerReadTweet"
+  },
+  {
+    "args": {
+      "max_results": 5,
+      "query": "#Oscars"
+    },
+    "tool": "TwitterManagerSearchTweets"
+  },
+  {
+    "args": {
+      "url": "https://www.codedculinary.com/recipe/blueberry-scones/"
+    },
+    "tool": "WebBrowserNavigateTo"
+  }
+]
