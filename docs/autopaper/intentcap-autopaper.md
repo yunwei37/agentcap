@@ -11,7 +11,7 @@ LLM agent 正在从固定工具调用器变成可扩展的执行环境。一个 
 
 IntentCap 的核心观点是把用户意图作为权限根，把 context influence 当成最小权限 capability。系统首先生成结构化 intent certificate，记录当前目标、用户选择的对象、授权的 sink、约束、approval 和过期条件。每个 context cell 都带有 provenance label 和允许的 influence modes。一个 capability lease 只有在操作可由 intent certificate 推导，并且该操作的 control provenance 被允许影响对应 decision class 时才有效。LLM 可以辅助提出 plan、effect graph 和 candidate leases，但 deterministic checker 才能接受或拒绝 lease 与事件；checker 验证 provenance、flow、temporal order、budget 和 delegation 约束，并把允许的 lease 下发到 context constructor、tool gateway、MCP broker、本地执行 sandbox 和 delegation monitor。
 
-本文的目标不是宣称“解决 prompt injection”，而是给出一个更精确的系统安全性质：在已建模的 decision classes 和已接入的 enforcement boundaries 内，accepted high-impact events 不能被未授权 context 作为 control dependency 影响。当前原型已经把这个思想落到多个 benchmark 的 replay 与本地执行路径上：AgentDojo、InjecAgent 和 MCPTox 用于 context-to-decision 攻击，tau2/tau3 用于 policy-following utility 与 authority minimization。下一步需要把 reference replay 推进到 fresh model/user-simulator 运行，并补 expert-oracle lease scoring。
+本文的目标不是宣称“解决 prompt injection”，而是给出一个更精确的系统安全性质：在已建模的 decision classes 和已接入的 enforcement boundaries 内，accepted high-impact events 不能被未授权 context 作为 control dependency 影响。当前原型已经把这个思想落到多个 benchmark 的 replay 与本地执行路径上：AgentDojo、InjecAgent 和 MCPTox 用于 context-to-decision 攻击，tau2/tau3 用于 policy-following utility 与 authority minimization。后续数据集选择先做网络检索和官方 metadata 审核，不自动同步新测试集；下一步需要把 reference replay 推进到 fresh model/user-simulator 运行，并补 expert-oracle lease scoring。
 
 ## 论文主线
 1. Agent 安全的对象不是只有工具操作，还有“谁能影响未来决策”。
@@ -38,19 +38,23 @@ IntentCap 的核心观点是把用户意图作为权限根，把 context influen
 - tau2/tau3 minimization：R022 覆盖全部 3,813 个 assistant reference actions。Exact event leases 用 3,813 个 event slots；domain regular assistant ACL 暴露 34,209 个 tool slots，global all-tool ACL 暴露 388,512 个 tool slots。
 - tau2/tau3 live toolkit execution：R023 把 3,813 个 assistant reference actions 接到真实 tau2 domain toolkit callables；3,813 个事件全部 checker-approved 并调用注册 callable，3,795 个成功，18 个 direct-replay `ValueError`，0 个 checker block，0 个 unsupported tools。
 - tau2/tau3 evaluator-backed replay：R024 构造 tau2 message trajectories，assistant actions 通过 exact IntentCap event leases 和 `LiveToolGateway`，user reference actions 作为 simulator-side actions 不计入 assistant authority，并把 per-task leases/provenance labels 写入 `intentcap_traces.json`。R024 使用官方 `ACTION`、`DB`、`ENV_ASSERTION` evaluator classes，结果为 2,554/2,556 tool-oracle pass tasks、43/43 action-basis pass tasks、2,545/2,547 env-oracle pass tasks，0 checker blocks，0 unsupported tasks。两个失败是 `mock` 环境断言 mismatch，不是 checker deny。168 个带 `COMMUNICATE` 或 `NL_ASSERTION` basis 的任务仍未评估，因为没有运行 fresh model/user-simulator 对话。`banking_knowledge` 因本地缺少 retrieval 依赖使用 no-retrieval fallback environment，所以 R024 不能被写成该 domain 的完整 official environment-constructor run。
+- Checker ablation：R025 把 local wrong-sink、AgentDojo R011、MCPTox R007、InjecAgent R010 和 tau2 R024 合成一个 saved-trace checker-ablation corpus。8,680 个 events 中，deterministic checker 允许 4,869 个、拒绝 3,811 个。Object-only policy 会 false-accept 全部 3,811 个被 checker 拒绝的事件；saved-lease-constraints/no-provenance policy 会 false-accept 3,810 个；full-event-args/no-provenance policy 也会 false-accept 全部 3,811 个。这说明即使 candidate lease 覆盖了 event 可见的 operation/object/arguments，只要绕过 provenance label 和 influence-mode checking，攻击事件仍会被当作有效授权接受。该结果支持 C3 的一个子结论，但还不是 real LLM-proposed lease corpus。
 
 ## 当前可支持的说法
 - IntentCap 可以在 toy trace、AgentDojo、MCPTox、InjecAgent 和 tau2/tau3 reference replay 中表达并执行 context-provenance-aware allow/deny。
 - 对 MCPTox，context authority 不是“更小 tool set”的同义词：exact-tool ACL 与 IntentCap 暴露同样的 tool count，但缺少 provenance check 时会放行 poisoned-description-controlled calls。
 - 对 tau2/tau3，exact event leases 比 domain/global static ACL 显著缩小 authority surface，并且可以下发到真实 toolkit callable 和官方 action/env evaluator reference replay。
+- 对 checker/LLM split，R025 支持一个更窄但关键的说法：deterministic provenance checking 能拒绝 object-only、saved-lease-constraints/no-provenance 或 full-event-args/no-provenance policy 会错误接受的候选授权，同时保留 tau2 reference-action 等有效事件。
 
 ## 还不能支持的说法
 - 不能说 IntentCap 已经完成 fresh online model benchmark。
 - 不能说 IntentCap 已经测量了 denial recovery 或 model 看到拒绝后的重规划能力。
 - 不能说 R024 是完整 tau2/tau3 simulator utility，因为 `COMMUNICATE` 和 `NL_ASSERTION` 没有评估。
 - 不能说 R024 对 `banking_knowledge` 使用了完整 official retrieval environment constructor；当前是 no-retrieval fallback。
+- 不能说 R025 已经评估真实 LLM lease compiler；它只是 saved traces 上的 object-only / no-provenance ablation。
 - 不能说 lease 是全局最小；当前是相对于 reference effects 或保存 traces 的 exact/event-scoped lease。
 - 不能说 OS enforcement 不需要；IntentCap 决定 policy provenance，sandbox/OS monitor 仍是可选或必要后端。
+- 不能在没有确认前自动同步新的 eval dataset；后续应先从官方网页、论文、data card、repo metadata 做候选筛选，再明确下载边界。
 
 ## 评估计划
 - E1：AgentDojo influence-denial。比较 vanilla、static tool filter、Task Shield/CaMeL 可复现实验和 IntentCap，指标包括 attack success、wrong-sink rate、utility、false denial。
@@ -58,7 +62,7 @@ IntentCap 的核心观点是把用户意图作为权限根，把 context influen
 - E3：MCPTox MCP poisoning。重点比较 exact-tool ACL、server allowlist 和 IntentCap provenance lease，证明 tool description 不能作为 authorize/tool-select/sink-select 的 control source。
 - E4：tau2/tau3 utility。把 R024 reference replay 推进到小规模 fresh model/user-simulator run，测量 task success、denial recovery、approval burden 和 latency。
 - E5：expert-oracle lease scoring。为 10-30 个跨 benchmark tasks 手写 expert leases，对比 IntentCap exact/task/domain/global policies 的 risk-weighted distance。
-- E6：compiler/checker ablation。构造 LLM-proposed candidate leases，比较 LLM-only acceptance 与 deterministic checker rejection。
+- E6：compiler/checker ablation。R025 已完成 saved-trace object-only/no-provenance ablation；下一步需要构造 real LLM-proposed candidate leases，比较 LLM-only acceptance 与 deterministic checker rejection。
 
 ## 下一步门槛
-下一步最有价值的是三选一：第一，接一个 fresh online model/API benchmark subset，让 `LiveToolGateway` 真正在模型循环中阻断并观察恢复；第二，把 R024 改造成 tau2/tau3 fresh user-simulator utility run；第三，为 R019/R020/R022/R024 加 expert-oracle lease scoring。没有其中至少一个结果前，中文论文不应把当前证据写成 end-to-end online benchmark。
+下一步最有价值的是四选一：第一，接一个 fresh online model/API benchmark subset，让 `LiveToolGateway` 真正在模型循环中阻断并观察恢复；第二，把 R024 改造成 tau2/tau3 fresh user-simulator utility run；第三，为 R019/R020/R022/R024 加 expert-oracle lease scoring；第四，把 R025 从 synthetic ablation 推进到 real LLM-proposed lease corpus。选择新 workload 时先使用网络检索到的候选集（AgentHarm、ToolSandbox、MCP-Bench、WebArena/WorkArena、OSWorld、GAIA、BrowseComp、SWE-bench 等）做 metadata 评估，不默认 clone/sync。没有其中至少一个结果前，中文论文不应把当前证据写成 end-to-end online benchmark 或完整 compiler evaluation。

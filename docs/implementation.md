@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-03
 Stage at update: stage 4 implementation probes
-Source/command: local checker, gateway replay, live tool gateway smoke, AgentDojo/MCPTox/InjecAgent export adapters, R010 mixed replay, R011 AgentDojo goal inference, R012 InjecAgent enhanced replay, R013 live smoke, R014 AgentDojo inferred-event audit, R015 MCPTox reconciliation audit, R016 benchmark-derived live trace execution, R017 official cached prompted-output gateway replay, R018 cached-output aggregate, R019 InjecAgent authority-minimization analysis, R020 MCPTox authority-minimization analysis, R021 tau2/tau3 artifact probe, R022 tau2/tau3 reference-action authority minimization, R023 tau2/tau3 reference-action live gateway execution, and R024 tau2/tau3 evaluator-backed reference-action replay
+Source/command: local checker, gateway replay, live tool gateway smoke, AgentDojo/MCPTox/InjecAgent export adapters, R010 mixed replay, R011 AgentDojo goal inference, R012 InjecAgent enhanced replay, R013 live smoke, R014 AgentDojo inferred-event audit, R015 MCPTox reconciliation audit, R016 benchmark-derived live trace execution, R017 official cached prompted-output gateway replay, R018 cached-output aggregate, R019 InjecAgent authority-minimization analysis, R020 MCPTox authority-minimization analysis, R021 tau2/tau3 artifact probe, R022 tau2/tau3 reference-action authority minimization, R023 tau2/tau3 reference-action live gateway execution, R024 tau2/tau3 evaluator-backed reference-action replay, R025 checker-ablation analysis, and web-only eval-dataset survey without new dataset sync
 Completeness: partial
 
 ## Repository Layout Relevant To The Project
@@ -32,12 +32,13 @@ Completeness: partial
 | `scripts/aggregate_injecagent_cached_outputs_gateway.py` | aggregates cached-output live gateway results across released InjecAgent result directories | created |
 | `scripts/analyze_injecagent_authority_minimization.py` | compares IntentCap one-shot leases against static object-scope policies over a mixed InjecAgent trace | created |
 | `scripts/analyze_mcptox_authority_minimization.py` | compares IntentCap provenance leases against exact-tool and MCP server/global object-scope policies over MCPTox | created |
+| `scripts/analyze_checker_ablation.py` | compares the deterministic checker against object-only, saved-lease-constraints/no-provenance, and full-event-args/no-provenance acceptance over saved traces | created |
 | `scripts/probe_tau2_bench.py` | probes tau2/tau3 task, policy, tool, document, and reference-action artifacts without model/API execution | created |
 | `scripts/analyze_tau2_authority_minimization.py` | compares tau2/tau3 exact reference-action leases against task/domain/global static tool scopes | created |
 | `scripts/run_tau2_reference_actions_live_gateway.py` | executes tau2/tau3 assistant reference actions through `LiveToolGateway` and real tau2 domain toolkit callables | created |
 | `scripts/run_tau2_evaluator_backed_replay.py` | replays tau2/tau3 reference trajectories through exact IntentCap event leases and official tau2 action/env evaluators | created |
 | `benchmarks/` | ignored external benchmark clone workspace | created; AgentDojo cloned locally |
-| `results/` | raw result outputs and run logs | created; R001-R024 recorded |
+| `results/` | raw result outputs and run logs | created; R001-R025 recorded |
 
 ## Implementation Milestones
 | Milestone | Deliverable | Exit condition | Status |
@@ -84,14 +85,16 @@ Completeness: partial
 - R022 analyzes tau2/tau3 assistant reference-action authority. It covers all 3,813 assistant-side reference actions with exact event leases, while static domain regular assistant ACLs expose 34,209 tool slots and global all-tool ACLs expose 388,512 slots. The analyzer also records 11,029 user-side simulator reference actions separately.
 - R023 executes tau2/tau3 assistant reference actions through `LiveToolGateway` and real tau2 domain toolkit callables. It covers all 3,813 assistant reference actions across `mock`, `airline`, `retail`, `telecom`, and `banking_knowledge`; 3,813 pass exact lease checks and invoke registered toolkit methods, 3,795 complete without tool exception, 18 raise direct-replay `ValueError`s, and 0 are checker-blocked or unsupported. The runner uses local import shims for missing optional tau2 dependencies instead of mutating the system Python environment.
 - R024 wraps tau2/tau3 reference trajectories in official tau2 `ActionEvaluator` and `EnvironmentEvaluator` calls. It covers all 2,556 tasks and 14,842 reference actions across the same five domains; 3,813 assistant actions pass exact event-lease checks, 0 are checker-blocked, 0 tasks are unsupported, 2,554/2,556 tool-oracle tasks pass, 43/43 action-basis tasks pass, and 2,545/2,547 environment-oracle tasks pass. The runner intentionally leaves `COMMUNICATE` and `NL_ASSERTION` reward basis unevaluated because no model/user-simulator dialogue is run. It also writes `intentcap_traces.json` so the exact per-task leases and provenance labels can be audited. `banking_knowledge` uses a local no-retrieval environment fallback because the official retrieval dependency is unavailable locally.
-- The next benchmark step is to build an online model/API wrapper, a tau2/tau3 simulator-backed utility subset, or expert-oracle lease scoring.
+- R025 adds a checker-ablation analyzer over saved traces. It loads the local wrong-sink example, AgentDojo R011, MCPTox R007, InjecAgent R010, and tau2 R024, then compares the full deterministic checker against object-only, saved-lease-constraints/no-provenance, and full-event-args/no-provenance acceptance. Across 8,680 events, the checker allows 4,869 and denies 3,811; object-only and full-event-args/no-provenance would each false-accept 3,811 denied events, while saved-lease-constraints/no-provenance would false-accept 3,810. The analyzer records input trace SHA-256 digests in `results/checker/R025/input_trace_digests.csv`. This is first C3 evidence for the checker/LLM split, but not yet a real LLM-proposed lease corpus.
+- New eval datasets should be selected through web metadata first and not cloned, synced, or bulk-downloaded without explicit approval. Existing local benchmark artifacts remain usable for the already recorded R001-R025 evidence chain.
+- The next benchmark step is to build an online model/API wrapper, a tau2/tau3 simulator-backed utility subset, expert-oracle lease scoring, or a real LLM-proposed candidate lease corpus.
 
 ## Build/Run Commands
 | Purpose | Command | Status |
 |---|---|---|
 | Build current workshop PDF | `make` | works as of commit `4ce9892`; root paper should remain frozen |
 | Verify workshop PDF page count | `pdfinfo main.pdf | rg '^Pages'` | works; expected `Pages: 2` |
-| Unit tests | `PYTHONPATH=src python -m pytest -q` | works: 27 tests passed; `pytest.ini` restricts discovery to this repo's `tests/` |
+| Unit tests | `PYTHONPATH=src python -m pytest -q` | works: 31 tests passed; `pytest.ini` restricts discovery to this repo's `tests/` |
 | Local checker sanity | `PYTHONPATH=src python -m intentcap.checker examples/local_pdf_wrong_sink.json` | works; see `results/local/R001/verdicts.json` |
 | AgentDojo suite count probe | `. .venv/bin/activate && python scripts/probe_agentdojo.py --benchmark-version v1.2.2 --suite workspace` | works; see `results/agentdojo/R002/` |
 | AgentDojo workspace ground-truth check | `. .venv/bin/activate && python scripts/probe_agentdojo.py --benchmark-version v1.2.2 --suite workspace --check` | warning; see `results/agentdojo/R003/` |
@@ -114,6 +117,7 @@ Completeness: partial
 | InjecAgent cached-output aggregate | `PYTHONPATH=src python scripts/aggregate_injecagent_cached_outputs_gateway.py --results-zip benchmarks/injecagent/results.zip --setting all --include-counterfactual-stage2 --output-dir results/injecagent/R018` | works; R018 processes 122 result sets, executes 128,044 setup calls, and blocks 37,991 cached attacker decisions |
 | InjecAgent authority minimization | `PYTHONPATH=src python scripts/analyze_injecagent_authority_minimization.py --trace results/online/R010/export/intentcap_trace.json --tool-catalog benchmarks/injecagent/data/tools.json --output-dir results/injecagent/R019` | works; R019 compares one-shot, task-tool, toolkit, benchmark-user-tool, observed-trace, and catalog-all object scopes |
 | MCPTox authority minimization | `PYTHONPATH=src python scripts/analyze_mcptox_authority_minimization.py --trace results/mcptox/R007/intentcap_trace.json --response-all benchmarks/mcptox/response_all.json --output-dir results/mcptox/R020` | works; R020 compares provenance-checked exact MCP leases with exact-tool, server-level, and global object-only policies |
+| Checker ablation | `PYTHONPATH=src python scripts/analyze_checker_ablation.py --output-dir results/checker/R025` | works; R025 analyzes 8,680 saved-trace events and finds 3,811 object-only false accepts, 3,810 saved-lease-constraints/no-provenance false accepts, and 3,811 full-event-args/no-provenance false accepts rejected by the checker |
 | tau2/tau3 artifact probe | `PYTHONPATH=src python scripts/probe_tau2_bench.py --benchmark-dir benchmarks/tau2-bench --output-dir results/tau2/R021` | works; R021 records task, tool, policy, document, initialization, and reference-action artifacts without model/API execution |
 | tau2/tau3 authority minimization | `PYTHONPATH=src python scripts/analyze_tau2_authority_minimization.py --benchmark-dir benchmarks/tau2-bench --output-dir results/tau2/R022` | works; R022 compares exact assistant reference-action leases with task-reference, domain, and global static tool scopes |
 | tau2/tau3 reference-action live gateway | `PYTHONPATH=src python scripts/run_tau2_reference_actions_live_gateway.py --benchmark-dir benchmarks/tau2-bench --domains mock airline retail telecom banking_knowledge --output-dir results/tau2/R023` | works; R023 executes 3,813 checker-approved assistant reference actions against real tau2 toolkit callables, with 3,795 successful tool executions and 18 direct-replay `ValueError`s |
@@ -125,6 +129,7 @@ Completeness: partial
 - Record every nontrivial experiment command, commit, machine, seed/repetition policy, and result path in `docs/evaluation.md`.
 - Avoid requiring model API keys for smoke tests. Use local/static traces first where possible.
 - Treat benchmark setup failures as useful evidence and record them.
+- Do not clone, sync, or bulk-download new eval datasets by default. Use web search and official metadata first, then ask before bringing a new dataset into `benchmarks/` or `results/`.
 
 ## Known Technical Debt And Open Engineering Tasks
 - Need formalize the trace JSON schema currently implied by `src/intentcap/checker.py` and `scripts/export_agentdojo_intentcap.py`.
@@ -140,6 +145,7 @@ Completeness: partial
 - R022 is tau2/tau3 reference-action authority analysis only. It uses benchmark labels as a utility-side proxy and does not run the simulator or measure task completion.
 - R023 executes real tau2 toolkit methods but still uses benchmark reference labels as the event stream. It does not run an LLM agent, user simulator, reward calculation, or denial-recovery loop; direct tool exceptions should be reported as replay limitations, not checker denials.
 - R024 applies official tau2 action/env evaluator classes to reference replay, but it still does not run a model, generate fresh actions, conduct interactive user simulation, evaluate natural-language communication, or test denial recovery. The `banking_knowledge` path uses a local no-retrieval fallback instead of the full official retrieval environment constructor. The two mock environment-assertion failures and 18 retail direct-replay tool errors should be reported as reference-replay/evaluator limitations, not checker failures.
+- R025 is a saved-trace ablation, not an LLM compiler benchmark. It proves object-only and no-provenance acceptance are insufficient on current traces, but it does not yet measure candidate lease synthesis precision/recall, proof completeness, or false rejection on independently hand-labeled valid candidates.
 - Need reconcile InjecAgent README count of 62 attacker tools with the local base-case count of 63 unique attacker-tool names, where `GmailSendEmail` is the repeated exfiltration sink.
 - Need implement an online model/API benchmark wrapper so deterministic trace-level denials, local live execution, and cached model-output replay can be paired with fresh model/tool utility and attack-success metrics.
 - Need convert tau2/tau3 reference-action lease scopes into a small simulator-backed utility run.
@@ -147,4 +153,4 @@ Completeness: partial
 - Need decide whether to keep external benchmark clones only as ignored local state or convert selected ones into submodules later.
 
 ## Next Engineering Action
-Build the next evidence step: connect the live gateway to an online model/API benchmark subset, turn R024 into a tau2/tau3 fresh model/user-simulator utility run, or add expert-oracle lease scoring for R019/R020/R022-style minimization.
+Build the next evidence step: connect the live gateway to an online model/API benchmark subset, turn R024 into a tau2/tau3 fresh model/user-simulator utility run, add expert-oracle lease scoring for R019/R020/R022-style minimization, or generate a real LLM-proposed lease corpus for C3.

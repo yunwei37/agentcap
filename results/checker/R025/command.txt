@@ -1,0 +1,1 @@
+PYTHONPATH=src /usr/bin/python scripts/analyze_checker_ablation.py --output-dir results/checker/R025

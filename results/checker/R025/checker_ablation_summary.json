@@ -1,0 +1,81 @@
+{
+  "analyzer_sha256": "0bbecd0e460d812e3734402edcb42e1e96eb98cdab9135a29a4b3e1b6d7aeae2",
+  "benchmark": "IntentCap checker ablation corpus",
+  "checker_allowed": 4869,
+  "checker_denied": 3811,
+  "checker_denied_by_mode": {
+    "authorize": 2270,
+    "sink_select": 1320,
+    "tool_select": 221
+  },
+  "events": 8680,
+  "full_event_args_no_provenance_accept": 8680,
+  "full_event_args_no_provenance_false_accept": 3811,
+  "full_event_args_no_provenance_false_accept_by_mode": {
+    "authorize": 2270,
+    "sink_select": 1320,
+    "tool_select": 221
+  },
+  "input_trace_digests": [
+    {
+      "bytes": 2269,
+      "path": "examples/local_pdf_wrong_sink.json",
+      "sha256": "ee91f809ad3dfb2286da4dd72bf44b23ce0b197d70d79b9ef53829c0d3f4c37a"
+    },
+    {
+      "bytes": 114666,
+      "path": "results/agentdojo/R011/intentcap_trace.json",
+      "sha256": "24df558c3043da8c59ece179c074a981f75a41b021db2d6cbf27328352ad7df6"
+    },
+    {
+      "bytes": 5730270,
+      "path": "results/mcptox/R007/intentcap_trace.json",
+      "sha256": "8c173778d1478b5be77bbdf9247181432035481ddeb12fafc1e825aa52f823fe"
+    },
+    {
+      "bytes": 6199530,
+      "path": "results/online/R010/export/intentcap_trace.json",
+      "sha256": "66d039767cc5e62fa7baba62cb1d3d6500d77debcece1cdb8f9243a4878483ad"
+    },
+    {
+      "bytes": 10603355,
+      "path": "results/tau2/R024/intentcap_traces.json",
+      "sha256": "7a86bd4fa158befc02d592f0e8759cd84e208b27276aa813c2e0385b5230f323"
+    }
+  ],
+  "invalid_full_event_arg_proposals_rejected": 3811,
+  "invalid_lease_constraint_proposals_rejected": 3810,
+  "invalid_object_only_proposals_rejected": 3811,
+  "lease_constraints_no_provenance_accept": 8679,
+  "lease_constraints_no_provenance_false_accept": 3810,
+  "lease_constraints_no_provenance_false_accept_by_mode": {
+    "authorize": 2270,
+    "sink_select": 1319,
+    "tool_select": 221
+  },
+  "mode_counts": {
+    "authorize": 2270,
+    "parameterize": 1,
+    "sink_select": 1321,
+    "tool_select": 5088
+  },
+  "notes": [
+    "The checker column is the current IntentCap deterministic checker over saved traces.",
+    "Object-only accept ignores argument constraints and provenance labels.",
+    "Lease-constraints/no-provenance accept uses saved lease op/object/argument constraints but ignores context labels and control/data provenance.",
+    "Full-event-args/no-provenance accept synthesizes a candidate lease from each event's visible op/object/args and ignores context labels and control/data provenance.",
+    "False accepts are events accepted by an ablated policy and denied by the checker.",
+    "tau2 R024 traces contribute valid reference-action acceptance, not adversarial denials."
+  ],
+  "object_only_accept": 8680,
+  "object_only_false_accept": 3811,
+  "sources": 2560,
+  "trace_paths": [
+    "examples/local_pdf_wrong_sink.json",
+    "results/agentdojo/R011/intentcap_trace.json",
+    "results/mcptox/R007/intentcap_trace.json",
+    "results/online/R010/export/intentcap_trace.json",
+    "results/tau2/R024/intentcap_traces.json"
+  ],
+  "valid_events_preserved_by_checker": 4869
+}
