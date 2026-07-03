@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-03
 Stage at update: stage 3 adapter-informed design
-Source/command: AgentDojo, MCPTox, InjecAgent export/checker probes plus gateway replay, R014 AgentDojo inferred-event audit, R015 MCPTox reconciliation audit, R016 benchmark-derived live gateway execution, R017 official cached prompted-output gateway replay, R018 cached-output aggregate, and R019 authority-minimization analysis
+Source/command: AgentDojo, MCPTox, InjecAgent export/checker probes plus gateway replay, R014 AgentDojo inferred-event audit, R015 MCPTox reconciliation audit, R016 benchmark-derived live gateway execution, R017 official cached prompted-output gateway replay, R018 cached-output aggregate, R019 InjecAgent authority-minimization analysis, and R020 MCPTox authority-minimization analysis
 Completeness: partial
 
 ## System-Under-Test Model
@@ -95,6 +95,7 @@ The offline checker is the cheapest path to validate the core idea against exist
 - R017 connects `LiveToolGateway` to InjecAgent's released GPT-4 ReAct base outputs. The runtime executes trusted benchmark setup calls, then blocks all benchmark-labeled model-produced attacker decisions from those cached outputs. This is the first model-output-aware live gateway run, but it remains cached-output replay rather than fresh online inference. Its stage-2 data-stealing events are counterfactual because an actual IntentCap run would stop after the stage-1 denial.
 - R018 aggregates that cached-output path across the released InjecAgent output archive. This validates that the live gateway decision shape is stable across many model/prompt/settings outputs, but it also exposes an artifact-integrity boundary: one released result row has incomplete case coverage. The design implication is that aggregate scripts must report coverage anomalies as first-class output, not silently fold them into totals.
 - R019 adds an authority-minimization view over the R010 mixed trace. The key design implication is that object-scope policies are not enough even when they appear narrow: a per-task single-tool allowlist has the same tool count as IntentCap but still admits one injected same-tool event because it lacks provenance constraints. Toolkit/server-level static authorization is much wider, exposing 9.59 tools per case on average and admitting 77 injected attacker events. This supports keeping influence/provenance checks as first-class lease predicates, not only as a tool-exposure minimizer.
+- R020 repeats the minimization question in MCPTox and makes the provenance point sharper. An exact-tool MCP ACL exposes the same 1.0 object per event as IntentCap but admits all 2,148 poisoned-description-controlled calls because it ignores control provenance. Authentic server-level MCP authorization exposes 9.76 tools per event and admits 2,058. The design implication is that IntentCap leases need both narrow object predicates and influence/provenance predicates; reducing visible tool count alone does not enforce context authority.
 - Benchmark adapters should preserve raw benchmark identifiers in each event so denial explanations can be traced back to a task, server, tool, attack template, or risk category.
 
 ## Next Design Action
