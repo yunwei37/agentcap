@@ -102,3 +102,13 @@ def test_cached_outputs_runner_executes_setup_and_blocks_model_attackers(tmp_pat
         "BenignLookup",
     }
     assert summary["missing_tool_events"] == 0
+
+
+def test_cached_output_parameter_parser_keeps_complex_strings_raw():
+    runner = _load_runner()
+    params = runner._parse_tool_parameters("{'body': 'line one\\line two'}")
+
+    assert params == {
+        "_raw_tool_parameters": "{'body': 'line one\\line two'}",
+        "_raw_tool_parameters_truncated": False,
+    }

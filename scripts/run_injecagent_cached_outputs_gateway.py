@@ -452,14 +452,31 @@ def _parse_tool_parameters(value: Any) -> dict[str, Any]:
     if not isinstance(value, str):
         return {"_raw_tool_parameters": value}
 
+    text = value.strip()
+    if _should_keep_raw(text):
+        return _raw_parameters(text)
+
     try:
-        parsed = ast.literal_eval(value)
-    except (SyntaxError, ValueError):
-        return {"_raw_tool_parameters": value}
+        parsed = ast.literal_eval(text)
+    except (MemoryError, RecursionError, SyntaxError, ValueError):
+        return _raw_parameters(text)
 
     if isinstance(parsed, dict):
         return dict(parsed)
-    return {"_raw_tool_parameters": parsed}
+    return _raw_parameters(parsed)
+
+
+def _should_keep_raw(value: str) -> bool:
+    return len(value) > 2048 or "\n" in value or "\\" in value
+
+
+def _raw_parameters(value: Any) -> dict[str, Any]:
+    if not isinstance(value, str):
+        return {"_raw_tool_parameters": value}
+    return {
+        "_raw_tool_parameters": value[:4096],
+        "_raw_tool_parameters_truncated": len(value) > 4096,
+    }
 
 
 def _extract_action_input(output: Any, tool_name: str) -> str | None:
