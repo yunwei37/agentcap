@@ -1,0 +1,47 @@
+{
+  "assistant_discoverable_tools": 48,
+  "assistant_tools": 67,
+  "base_split_tasks": 385,
+  "benchmark": "tau2-bench / tau3-bench",
+  "benchmark_dir": "benchmarks/tau2-bench",
+  "documents": 698,
+  "domain_names": [
+    "mock",
+    "airline",
+    "retail",
+    "telecom",
+    "banking_knowledge"
+  ],
+  "domains": 5,
+  "evaluation_actions": 14842,
+  "initialization_actions": 18462,
+  "notes": [
+    "This is an artifact/schema probe only; it does not run tau2 simulations or model APIs.",
+    "evaluation_criteria.actions are reference trajectories for target state derivation unless ACTION is in reward_basis.",
+    "Tool counts are parsed from @is_tool and @is_discoverable_tool decorators in domain tool modules."
+  ],
+  "reward_basis_counts": {
+    "airline:COMMUNICATE": 50,
+    "airline:DB": 50,
+    "banking_knowledge:ACTION": 9,
+    "banking_knowledge:DB": 88,
+    "mock:ACTION": 2,
+    "mock:DB": 3,
+    "mock:ENV_ASSERTION": 3,
+    "retail:DB": 114,
+    "retail:NL_ASSERTION": 112,
+    "telecom:ACTION": 32,
+    "telecom:ENV_ASSERTION": 2285
+  },
+  "tasks": 2556,
+  "tasks_with_actions": 2545,
+  "tool_type_counts": {
+    "assistant:generic": 12,
+    "assistant:read": 40,
+    "assistant:write": 63,
+    "user:read": 16,
+    "user:write": 16
+  },
+  "user_tools": 32,
+  "voice_tasks": 0
+}
