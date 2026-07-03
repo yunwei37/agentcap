@@ -1,0 +1,318 @@
+[
+  {
+    "object": "AmazonGetProductDetails",
+    "op": "tool.call"
+  },
+  {
+    "object": "AmazonViewSavedAddresses",
+    "op": "tool.call"
+  },
+  {
+    "object": "AmazonViewSavedPaymentMethods",
+    "op": "tool.call"
+  },
+  {
+    "object": "AugustSmartLockGrantGuestAccess",
+    "op": "tool.call"
+  },
+  {
+    "object": "AugustSmartLockUnlockDoor",
+    "op": "tool.call"
+  },
+  {
+    "object": "AugustSmartLockViewAccessHistory",
+    "op": "tool.call"
+  },
+  {
+    "object": "BankManagerGetAccountInformation",
+    "op": "tool.call"
+  },
+  {
+    "object": "BankManagerPayBill",
+    "op": "tool.call"
+  },
+  {
+    "object": "BankManagerSearchPayee",
+    "op": "tool.call"
+  },
+  {
+    "object": "BankManagerTransferFunds",
+    "op": "tool.call"
+  },
+  {
+    "object": "BinanceDeposit",
+    "op": "tool.call"
+  },
+  {
+    "object": "BinanceGetOrderHistory",
+    "op": "tool.call"
+  },
+  {
+    "object": "BinancePlaceOrder",
+    "op": "tool.call"
+  },
+  {
+    "object": "BinanceWithdraw",
+    "op": "tool.call"
+  },
+  {
+    "object": "CiscoUmbrellaCreatePolicy",
+    "op": "tool.call"
+  },
+  {
+    "object": "CiscoUmbrellaGetLogDetails",
+    "op": "tool.call"
+  },
+  {
+    "object": "CiscoUmbrellaUpdatePolicy",
+    "op": "tool.call"
+  },
+  {
+    "object": "DeepfakeGeneratorGenerateAudioDeepfake",
+    "op": "tool.call"
+  },
+  {
+    "object": "DropboxGetItemMetadata",
+    "op": "tool.call"
+  },
+  {
+    "object": "DropboxListFilesAndFolders",
+    "op": "tool.call"
+  },
+  {
+    "object": "DropboxMoveItem",
+    "op": "tool.call"
+  },
+  {
+    "object": "EmergencyDispatchSystemCreateDispatchRequest",
+    "op": "tool.call"
+  },
+  {
+    "object": "EpicFHIRDownloadFiles",
+    "op": "tool.call"
+  },
+  {
+    "object": "EpicFHIRGetPatientDetails",
+    "op": "tool.call"
+  },
+  {
+    "object": "EpicFHIRManageAppointments",
+    "op": "tool.call"
+  },
+  {
+    "object": "EpicFHIRManageClinicalDocuments",
+    "op": "tool.call"
+  },
+  {
+    "object": "EpicFHIRManagePatientRecords",
+    "op": "tool.call"
+  },
+  {
+    "object": "EvernoteManagerManageNoteSharingLevel",
+    "op": "tool.call"
+  },
+  {
+    "object": "EvernoteManagerSearchNotes",
+    "op": "tool.call"
+  },
+  {
+    "object": "ExpediaSearchReservations",
+    "op": "tool.call"
+  },
+  {
+    "object": "FacebookManagerGetUserProfile",
+    "op": "tool.call"
+  },
+  {
+    "object": "FacebookManagerSearchFriends",
+    "op": "tool.call"
+  },
+  {
+    "object": "FacebookManagerUpdateUserProfile",
+    "op": "tool.call"
+  },
+  {
+    "object": "FedExShipManagerManageShipment",
+    "op": "tool.call"
+  },
+  {
+    "object": "FedExShipManagerSearchShipment",
+    "op": "tool.call"
+  },
+  {
+    "object": "GitHubDeleteRepository",
+    "op": "tool.call"
+  },
+  {
+    "object": "GitHubGetRepositoryDetails",
+    "op": "tool.call"
+  },
+  {
+    "object": "GitHubGetUserDetails",
+    "op": "tool.call"
+  },
+  {
+    "object": "GitHubSearchRepositories",
+    "op": "tool.call"
+  },
+  {
+    "object": "GmailReadEmail",
+    "op": "tool.call"
+  },
+  {
+    "object": "GmailSearchEmails",
+    "op": "tool.call"
+  },
+  {
+    "object": "GmailSendEmail",
+    "op": "tool.call"
+  },
+  {
+    "object": "GoogleCalendarGetEventsFromSharedCalendar",
+    "op": "tool.call"
+  },
+  {
+    "object": "GoogleCalendarReadEvents",
+    "op": "tool.call"
+  },
+  {
+    "object": "GoogleHomeScheduleDeviceAction",
+    "op": "tool.call"
+  },
+  {
+    "object": "GoogleMapGetCurrentLocation",
+    "op": "tool.call"
+  },
+  {
+    "object": "GoogleSearchGetSearchHistory",
+    "op": "tool.call"
+  },
+  {
+    "object": "IndoorRobotGoToRoom",
+    "op": "tool.call"
+  },
+  {
+    "object": "InvestmentManagerGetHoldingsInformation",
+    "op": "tool.call"
+  },
+  {
+    "object": "NortonIdentitySafeAutoFillPersonalInfo",
+    "op": "tool.call"
+  },
+  {
+    "object": "NortonIdentitySafeDisableTwoFactorAuthentication",
+    "op": "tool.call"
+  },
+  {
+    "object": "NortonIdentitySafeSearchPasswords",
+    "op": "tool.call"
+  },
+  {
+    "object": "NortonIdentitySafeSharePassword",
+    "op": "tool.call"
+  },
+  {
+    "object": "ShopifyGetProductDetails",
+    "op": "tool.call"
+  },
+  {
+    "object": "SlackLeaveChannel",
+    "op": "tool.call"
+  },
+  {
+    "object": "SpokeoDownloadPublicRecord",
+    "op": "tool.call"
+  },
+  {
+    "object": "SpokeoSearchPeople",
+    "op": "tool.call"
+  },
+  {
+    "object": "TDAmeritradeGetHoldingsInformation",
+    "op": "tool.call"
+  },
+  {
+    "object": "TeladocAccessUserInfo",
+    "op": "tool.call"
+  },
+  {
+    "object": "TeladocViewPrescriptions",
+    "op": "tool.call"
+  },
+  {
+    "object": "TeladocViewReviews",
+    "op": "tool.call"
+  },
+  {
+    "object": "TerminalExecute",
+    "op": "tool.call"
+  },
+  {
+    "object": "The23andMeDownloadData",
+    "op": "tool.call"
+  },
+  {
+    "object": "The23andMeGetGeneticData",
+    "op": "tool.call"
+  },
+  {
+    "object": "The23andMeGetHealthRecommendations",
+    "op": "tool.call"
+  },
+  {
+    "object": "The23andMeShareData",
+    "op": "tool.call"
+  },
+  {
+    "object": "The23andMeUpdateData",
+    "op": "tool.call"
+  },
+  {
+    "object": "TodoistSearchTasks",
+    "op": "tool.call"
+  },
+  {
+    "object": "TrafficControlGivePriorityToEmergencyVehicle",
+    "op": "tool.call"
+  },
+  {
+    "object": "TrafficControlManageTrafficLightState",
+    "op": "tool.call"
+  },
+  {
+    "object": "TwilioGetPhoneNumberInfo",
+    "op": "tool.call"
+  },
+  {
+    "object": "TwilioGetReceivedSmsMessages",
+    "op": "tool.call"
+  },
+  {
+    "object": "TwitterManagerGetUserProfile",
+    "op": "tool.call"
+  },
+  {
+    "object": "TwitterManagerReadTweet",
+    "op": "tool.call"
+  },
+  {
+    "object": "TwitterManagerSearchTweets",
+    "op": "tool.call"
+  },
+  {
+    "object": "VenmoListLinkedAccounts",
+    "op": "tool.call"
+  },
+  {
+    "object": "VenmoWithdrawMoney",
+    "op": "tool.call"
+  },
+  {
+    "object": "WebBrowserNavigateTo",
+    "op": "tool.call"
+  },
+  {
+    "object": "WebBrowserSearchHistory",
+    "op": "tool.call"
+  }
+]

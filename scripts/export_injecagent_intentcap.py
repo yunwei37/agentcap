@@ -9,6 +9,7 @@ provenance is the untrusted user-tool response containing attacker content.
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 from collections import Counter
 from pathlib import Path
@@ -53,13 +54,22 @@ def main() -> int:
     parser.add_argument("--setting", choices=["base", "enhanced", "all"], default="base")
     parser.add_argument("--attack-family", choices=["direct_harm", "data_stealing", "all"], default="all")
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument(
+        "--include-user-tool-events",
+        action="store_true",
+        help="Emit the benchmark's benign user-tool call before injected attacker-tool calls.",
+    )
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     cases = _load_cases(args.benchmark_dir / "data", args.setting, args.attack_family)
-    catalog = _catalog(args.benchmark_dir / "data", cases)
-    trace = _trace_from_cases(cases)
+    catalog = _catalog(
+        args.benchmark_dir / "data",
+        cases,
+        include_user_tool_events=args.include_user_tool_events,
+    )
+    trace = _trace_from_cases(cases, include_user_tool_events=args.include_user_tool_events)
 
     (args.output_dir / "catalog.json").write_text(json.dumps(catalog, indent=2, sort_keys=True))
     (args.output_dir / "intentcap_trace.json").write_text(json.dumps(trace, indent=2, sort_keys=True))
@@ -68,6 +78,7 @@ def main() -> int:
     summary["benchmark_dir"] = str(args.benchmark_dir)
     summary["setting"] = args.setting
     summary["attack_family"] = args.attack_family
+    summary["include_user_tool_events"] = args.include_user_tool_events
 
     if args.check:
         verdicts = check_trace(trace)
@@ -99,7 +110,11 @@ def _load_cases(data_dir: Path, setting: str, attack_family: str) -> list[dict[s
     return cases
 
 
-def _catalog(data_dir: Path, cases: list[dict[str, Any]]) -> dict[str, Any]:
+def _catalog(
+    data_dir: Path,
+    cases: list[dict[str, Any]],
+    include_user_tool_events: bool = False,
+) -> dict[str, Any]:
     tools = json.loads((data_dir / "tools.json").read_text())
     user_cases = _load_jsonl(data_dir / "user_cases.jsonl")
     attacker_dh = _load_jsonl(data_dir / "attacker_cases_dh.jsonl")
@@ -123,6 +138,8 @@ def _catalog(data_dir: Path, cases: list[dict[str, Any]]) -> dict[str, Any]:
         "attacker_direct_harm_case_count": len(attacker_dh),
         "attacker_data_stealing_case_count": len(attacker_ds),
         "selected_case_count": len(cases),
+        "selected_user_tool_candidates": len(cases),
+        "selected_user_tool_events": len(cases) if include_user_tool_events else 0,
         "selected_attacker_tool_events": sum(len(case.get("Attacker Tools", [])) for case in cases),
         "selected_attack_families": dict(Counter(case["_intentcap_attack_family"] for case in cases)),
         "selected_settings": dict(Counter(case["_intentcap_setting"] for case in cases)),
@@ -136,13 +153,76 @@ def _load_jsonl(path: Path) -> list[dict[str, Any]]:
     return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
 
 
-def _trace_from_cases(cases: list[dict[str, Any]]) -> dict[str, Any]:
+def _trace_from_cases(
+    cases: list[dict[str, Any]],
+    include_user_tool_events: bool = False,
+) -> dict[str, Any]:
     labels: dict[str, Any] = {}
     leases: list[dict[str, Any]] = []
     events: list[dict[str, Any]] = []
 
     for case in cases:
         case_id = _case_id(case)
+        if include_user_tool_events:
+            trusted_source = f"injecagent_user_intent:{case_id}"
+            user_tool = str(case.get("User Tool", "<unknown>"))
+            user_decision = f"{user_tool}.tool_choice"
+            user_args_decision = f"{user_tool}.arguments"
+            labels[trusted_source] = {
+                "origin": "trusted_user_instruction",
+                "integrity": "trusted_user_intent",
+                "allowed": {
+                    "tool_select": [user_decision],
+                    "parameterize": [user_args_decision],
+                },
+                "injecagent": {
+                    "setting": case["_intentcap_setting"],
+                    "attack_family": case["_intentcap_attack_family"],
+                    "attack_type": case.get("Attack Type"),
+                    "user_tool": case.get("User Tool"),
+                },
+            }
+
+            user_event_id = f"{case_id}:user:{user_tool}"
+            user_event_args = _parse_tool_parameters(case.get("Tool Parameters"))
+            user_event_args["_intentcap_event_id"] = user_event_id
+            events.append(
+                {
+                    "id": user_event_id,
+                    "op": "tool.call",
+                    "object": user_tool,
+                    "args": user_event_args,
+                    "decision": user_decision,
+                    "mode": "tool_select",
+                    "control_provenance": [trusted_source],
+                    "data_provenance": [trusted_source],
+                    "intentcap_event_type": "benign_user_tool",
+                    "injecagent": {
+                        "setting": case["_intentcap_setting"],
+                        "attack_family": case["_intentcap_attack_family"],
+                        "case_index": case["_intentcap_case_index"],
+                        "attack_type": case.get("Attack Type"),
+                        "user_tool": case.get("User Tool"),
+                        "user_instruction": case.get("User Instruction"),
+                        "tool_parameters": case.get("Tool Parameters"),
+                    },
+                }
+            )
+            leases.append(
+                {
+                    "id": f"intent:{user_event_id}",
+                    "op": "tool.call",
+                    "object": user_tool,
+                    "args": {
+                        "_intentcap_event_id": {
+                            "equals": user_event_id,
+                        },
+                    },
+                    "control_may_depend_on": [trusted_source],
+                    "data_may_depend_on": [trusted_source],
+                }
+            )
+
         source = f"injecagent_tool_response:{case_id}"
         labels[source] = {
             "origin": "user_tool_response_with_injected_attacker_instruction",
@@ -181,6 +261,7 @@ def _trace_from_cases(cases: list[dict[str, Any]]) -> dict[str, Any]:
                     "mode": mode,
                     "control_provenance": [source],
                     "data_provenance": [source],
+                    "intentcap_event_type": "injected_attacker_tool",
                     "injecagent": {
                         "setting": case["_intentcap_setting"],
                         "attack_family": case["_intentcap_attack_family"],
@@ -238,17 +319,37 @@ def _classify_attacker_tool(tool_name: str, attack_type: str, attack_family: str
     return f"{tool_name}.authority", "authorize"
 
 
+def _parse_tool_parameters(value: Any) -> dict[str, Any]:
+    if isinstance(value, dict):
+        return dict(value)
+    if not isinstance(value, str):
+        return {"_raw_tool_parameters": value}
+
+    try:
+        parsed = ast.literal_eval(value)
+    except (SyntaxError, ValueError):
+        return {"_raw_tool_parameters": value}
+
+    if isinstance(parsed, dict):
+        return dict(parsed)
+    return {"_raw_tool_parameters": parsed}
+
+
 def _summary(cases: list[dict[str, Any]], trace: dict[str, Any]) -> dict[str, Any]:
     mode_counts = Counter(event.get("mode", "") for event in trace["events"])
+    event_type_counts = Counter(event.get("intentcap_event_type", "unknown") for event in trace["events"])
     family_counts = Counter(case["_intentcap_attack_family"] for case in cases)
     setting_counts = Counter(case["_intentcap_setting"] for case in cases)
     attack_type_counts = Counter(case.get("Attack Type", "") for case in cases)
     return {
         "selected_cases": len(cases),
         "trace_events": len(trace["events"]),
+        "benign_user_tool_events": event_type_counts.get("benign_user_tool", 0),
+        "injected_attacker_tool_events": event_type_counts.get("injected_attacker_tool", 0),
         "labels": len(trace["labels"]),
         "leases": len(trace["leases"]),
         "mode_counts": dict(sorted(mode_counts.items())),
+        "event_type_counts": dict(sorted(event_type_counts.items())),
         "attack_family_counts": dict(sorted(family_counts.items())),
         "setting_counts": dict(sorted(setting_counts.items())),
         "attack_type_counts": dict(sorted(attack_type_counts.items())),

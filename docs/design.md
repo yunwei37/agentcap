@@ -84,10 +84,11 @@ The offline checker is the cheapest path to validate the core idea against exist
 - InjecAgent exercises a different path from MCPTox. The untrusted source is not a poisoned MCP tool description; it is a benign user-tool response whose content contains an attacker instruction. The exported protected events are attacker-tool calls expected by the benchmark's synthesized cases. This gives a second tool-response/context-influence workload beyond AgentDojo's smaller ground-truth subset.
 - InjecAgent base-setting export currently treats every attacker tool as a protected decision controlled by the injected tool response. Direct-harm tools are labeled `authorize`; exfiltration sinks such as `GmailSendEmail` are labeled `sink_select`; data-reading attacker tools in data-stealing chains are labeled `authorize`.
 - The first runtime-facing layer is `TraceGateway`, a gateway replay adapter over the checker. It exposes leased operation/object pairs, authorizes each attempted event independently, and records whether the action would execute or be blocked. R009 validates the same gateway path over AgentDojo, MCPTox, and InjecAgent traces.
+- R010 adds a mixed InjecAgent replay path: the benchmark's original user-tool call is labeled as trusted user-intent control and allowed as `tool_select`, while attacker-tool calls from the injected tool response remain denied as `authorize` or `sink_select`. This is the first adapter result that exercises allowed benign control and denied injected control in the same trace, though it is still deterministic replay rather than live model execution.
 - Benchmark adapters should preserve raw benchmark identifiers in each event so denial explanations can be traced back to a task, server, tool, attack template, or risk category.
 
 ## Next Design Action
-Implement the next benchmark adapter that can classify a small set of actions as:
+Implement the next benchmark adapter or live wrapper that can classify a small set of actions as:
 
 - allowed data use,
 - denied wrong-sink influence,

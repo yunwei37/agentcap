@@ -70,7 +70,7 @@ Completeness: partial
 | AgentDojo | Formal utility/security check functions over environment state | avoids LLM-as-judge for security metrics | implement IntentCap as agent wrapper or offline trajectory checker | adapter work |
 | CaMeL | Query-derived control/data-flow extraction | stronger theorem and clearer TCB | compare IntentCap control provenance to CaMeL flows | same-claim risk |
 | Task Shield | Objective-serving action check | better intent derivation rule | action must both serve intent and have provenance-authorized control | may blur novelty |
-| MCPTox | Poisoned tool descriptions where poisoned tool is not executed | shows description/context influence can be dangerous without direct action | label MCP descriptions as forbidden for authorize/sink/tool-select decisions | artifact available; adapter has full `Success`-label coverage; count/oracle reconciliation and online wrapper pending |
+| MCPTox | Poisoned tool descriptions where poisoned tool is not executed | shows description/context influence can be dangerous without direct action | label MCP descriptions as forbidden for authorize/sink/tool-select decisions | artifact available; adapter has full `Success`-label coverage; count/oracle reconciliation and live wrapper pending |
 | tau3 | Domain policies and user simulation | tests utility under realistic policies, not only attacks | add policy-as-intent certificates for airline/retail/banking tasks | setup complexity |
 | MCP-Bench/LiveMCPBench | large MCP toolset retrieval and selection | tool-exposure minimization at scale | measure exposed tool count and wrong-tool selection under lease scoping | LLM-as-judge may be noisy |
 
@@ -107,4 +107,4 @@ Completeness: partial
 - Larger claim opportunities: portable intent-provenance-aware policy compiler for agent extension ecosystems; offline trace checker first, runtime enforcer second.
 - Absorbable ideas to import: AgentDojo oracles, CaMeL flow split, Task Shield goal alignment, MCPTox poisoned-tool-description cases, tau domain policies.
 - Mandatory baselines: vanilla, static allowlist/tool filter, Task Shield, CaMeL, Progent-style policy, Skill manifest/SkillGuard-style policy, OS enforcement only.
-- Next action: harden benchmark evidence, with priority on AgentDojo natural-language attack-goal extraction, InjecAgent enhanced-setting export, MCPTox oracle/count reconciliation, or a small online wrapper baseline.
+- Next action: harden benchmark evidence, with priority on AgentDojo natural-language attack-goal extraction, InjecAgent enhanced-setting export, MCPTox oracle/count reconciliation, or a small live wrapper baseline. R010 already adds deterministic mixed benign/attack replay for InjecAgent, but not live model/tool execution.

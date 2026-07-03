@@ -80,7 +80,10 @@ class TraceGateway:
         )
 
     def replay(self) -> list[dict[str, Any]]:
-        return [self.authorize(event).to_dict() for event in self.events]
+        decisions: list[dict[str, Any]] = []
+        for event in self.events:
+            decisions.append(self.authorize(event).to_dict())
+        return decisions
 
     def summary(self, decisions: list[dict[str, Any]] | None = None) -> dict[str, Any]:
         if decisions is None:
