@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-03
 Stage at update: stage 1 novelty scan plus artifact probes
-Source/command: web search over primary benchmark, paper, and artifact pages; local MCPTox clone/schema/export/parser probes
+Source/command: web search over primary benchmark, paper, and artifact pages; local MCPTox and InjecAgent clone/schema/export probes
 Completeness: partial
 
 ## Search Log
@@ -15,6 +15,7 @@ Completeness: partial
 | 2026-07-02 | `tool poisoning attacks MCP benchmark paper dataset GitHub` | Find MCP-specific security benchmark | MCPTox reports 45 real-world MCP servers, 353 tools, and 1,312 malicious cases: https://arxiv.org/html/2508.14925v1 |
 | 2026-07-02 | `Task Shield CaMeL Progent prompt injection defense LLM agents` | Find defense baselines | Task Shield evaluates on AgentDojo; CaMeL provides control/data-flow design and code; Progent provides privilege-control DSL baseline: https://aclanthology.org/2025.acl-long.1435/, https://arxiv.org/abs/2503.18813, https://arxiv.org/html/2504.11703v2 |
 | 2026-07-03 | `MCPTox MCP tool poisoning benchmark GitHub` plus local clone/export | Verify MCP security benchmark artifact availability and adapter viability | Official MCPTox repository exists at https://github.com/zhiqiangwang4/MCPTox-Benchmark. Local R005 clone at `f85189f` contains 45 server groups, 485 tool entries/files, 11 attack scopes, and 1,348 cases. R007 exports 2,148 protected events from all 1,834 benchmark responses labeled `Success`, including 115 bounded fallback parses. An Inspect AI reimplementation also exists at https://github.com/stefanoamorelli/inspect-evals-mcptox. |
+| 2026-07-03 | local InjecAgent clone/export | Verify broad IPI benchmark artifact and adapter viability | Local R008 clone at `f19c9f2` contains 1,054 base-setting synthesized cases across 17 user tools, matching the benchmark headline count. The base cases expose 63 unique attacker-tool names in the artifact and export 1,598 protected attacker-tool events. |
 
 ## PDF Corpus
 | Work | Local PDF path | Verification status | Why kept |
@@ -32,7 +33,7 @@ Completeness: partial
 | Work | Claim | Method/artifact | Evaluation | Same problem/mechanism/metric/setting? | Gap relative to this project |
 |---|---|---|---|---|---|
 | AgentDojo | Dynamic environment to evaluate prompt injection attacks and defenses for LLM agents. | Python benchmark with stateful environments, tools, user tasks, injection tasks, and formal checks. | 97 realistic tasks, 629 security test cases, 70 tools, four suites: Workspace, Slack, Travel, Banking. | Same problem and benchmark setting; not the same mechanism. | Use as primary security benchmark; IntentCap should add decision-class/influence checks. |
-| InjecAgent | Benchmark vulnerability of tool-integrated agents to indirect prompt injection. | Test cases spanning user and attacker tools. | 1,054 cases, 17 user tools, 62 attacker tools. | Same problem; simpler/simulated setting than AgentDojo. | Useful breadth benchmark for influence-violation taxonomy. |
+| InjecAgent | Benchmark vulnerability of tool-integrated agents to indirect prompt injection. | Test cases spanning user and attacker tools; local artifact now cloned and base setting exported. | README reports 1,054 cases, 17 user tools, 62 attacker tools; local base cases expose 1,054 cases, 17 user tools, 63 unique attacker-tool names, and 1,598 attacker-tool events. | Same problem; simpler/simulated setting than AgentDojo. | Useful breadth benchmark for influence-violation taxonomy; next step is enhanced setting or online prompted-agent baseline. |
 | CaMeL | Defeat prompt injection by extracting control/data flows from trusted query and enforcing capabilities. | Protective system layer around LLM; released code. | Reports 77% AgentDojo tasks with provable security vs 84% undefended utility. | Same high-level security family and close mechanism. | IntentCap must distinguish itself via user intent certificates, influence modes, decision classes, and cross-extension lease synthesis. |
 | Task Shield | Enforce task alignment: every instruction/tool call should serve user objective. | Test-time verifier. | AgentDojo; reports 2.07% attack success and 69.79% utility on GPT-4o. | Same defense setting; different policy basis. | Strong mandatory baseline for goal-derived action filtering. |
 | Progent | Fine-grained programmable privilege control for LLM agents. | DSL for deterministic tool-call policies and fallbacks. | Tool-level policy enforcement across agent scenarios. | Same least-privilege problem; mostly tool-call/action level. | IntentCap must show context provenance and decision influence authority beyond operation predicates. |
@@ -94,7 +95,7 @@ Completeness: partial
 | P0 | CaMeL paper/artifact | closest same-mechanism risk |
 | P0 | Task Shield | strong AgentDojo baseline and goal-alignment comparison |
 | P0 | MCPTox | MCP-specific tool poisoning and decision-influence benchmark |
-| P1 | InjecAgent | broad IPI taxonomy and test cases |
+| P1 | InjecAgent | broad IPI taxonomy and test cases; local base-setting adapter now exists |
 | P1 | Progent | least-privilege/tool-policy baseline |
 | P1 | tau2/tau3-bench | realistic policy/tool/user utility benchmark |
 | P1 | MCP-Bench/LiveMCPBench | MCP-scale benign utility and tool exposure |
@@ -106,4 +107,4 @@ Completeness: partial
 - Larger claim opportunities: portable intent-provenance-aware policy compiler for agent extension ecosystems; offline trace checker first, runtime enforcer second.
 - Absorbable ideas to import: AgentDojo oracles, CaMeL flow split, Task Shield goal alignment, MCPTox poisoned-tool-description cases, tau domain policies.
 - Mandatory baselines: vanilla, static allowlist/tool filter, Task Shield, CaMeL, Progent-style policy, Skill manifest/SkillGuard-style policy, OS enforcement only.
-- Next action: harden benchmark evidence, with priority on MCPTox oracle/count reconciliation, AgentDojo natural-language attack-goal extraction, InjecAgent setup, or a small online wrapper baseline.
+- Next action: harden benchmark evidence, with priority on AgentDojo natural-language attack-goal extraction, InjecAgent enhanced-setting export, MCPTox oracle/count reconciliation, or a small online wrapper baseline.

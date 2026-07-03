@@ -2,13 +2,13 @@
 
 Last updated: 2026-07-03
 Stage at update: stage 3/5 trace-level benchmark probes
-Source/command: AgentDojo export/checker probe and MCPTox artifact/response/parser export probes
+Source/command: AgentDojo, MCPTox, and InjecAgent export/checker probes
 Completeness: partial
 
 ## Current State
 - Stage: Stage 3 design/prototype and Stage 5 evaluation probes are active. Stage 0 framing is good enough to seed claims, and the first benchmark artifacts are now locally probed.
-- Blocking gate: no online IntentCap-wrapper benchmark utility/security run yet; current evidence is trace-level replay, parser coverage, and artifact/schema probing.
-- Next action: implement the next evidence step, either AgentDojo natural-language injection-goal classification, MCPTox oracle reconciliation, a small online wrapper baseline, or an InjecAgent setup/adaptation probe.
+- Blocking gate: no online IntentCap-wrapper benchmark utility/security run yet; current evidence is trace-level replay across AgentDojo, MCPTox, and InjecAgent plus artifact/schema probing.
+- Next action: implement the next evidence step, either AgentDojo natural-language injection-goal classification, InjecAgent enhanced-setting export, MCPTox oracle reconciliation, or a small online wrapper baseline.
 - Paper boundary: the existing two-page English workshop paper is frozen under `docs/paper-workshop/`; auto-research drafts go under `docs/autopaper/`.
 
 ## Downstream Document Index
@@ -113,7 +113,7 @@ Completeness: partial.
 ### Claim Ledger
 | ID | Claim | Scope | Metric/evidence needed | Status |
 |---|---|---|---|---|
-| C1 | IntentCap blocks unauthorized context-to-decision influence while allowing authorized data use. | AgentDojo/InjecAgent/MCPTox-style adversarial workflows with protected decisions. | Attack success rate, influence-violation denial counts, benign utility, false denial recovery. | partial: local trace, AgentDojo ground-truth replay, and MCPTox successful-response replay with full parser coverage; no online utility run yet |
+| C1 | IntentCap blocks unauthorized context-to-decision influence while allowing authorized data use. | AgentDojo/InjecAgent/MCPTox-style adversarial workflows with protected decisions. | Attack success rate, influence-violation denial counts, benign utility, false denial recovery. | partial: local trace plus AgentDojo, MCPTox, and InjecAgent offline replay; no online utility run yet |
 | C2 | Intent-carrying leases reduce over-privilege relative to static tool/server/Skill policies. | Skills, MCP tools, local scripts, and subagent delegation in mixed workflows. | Risk-weighted authority score vs static allowlist, Skill manifest, human approval, and expert oracle. | proposed |
 | C3 | The compiler/checker split keeps LLM policy synthesis outside the trusted computing base. | Candidate lease generation from plans and extension metadata. | Invalid proposals rejected, valid proposals accepted, proof completeness, checker coverage. | proposed |
 
@@ -135,7 +135,7 @@ Completeness: partial.
 ### Expansion Agenda
 | Expansion axis | Bigger experiment | Claim upside | Cost/risk | Probe |
 |---|---|---|---|---|
-| Benchmark breadth | AgentDojo + InjecAgent + MCPTox + tau/MCP utility tasks | cross-ecosystem claim | medium setup cost | dry-run each benchmark and inspect task schemas |
+| Benchmark breadth | AgentDojo + InjecAgent + MCPTox + tau/MCP utility tasks | cross-ecosystem claim | medium setup cost | three security benchmark adapters exist; utility benchmark still pending |
 | Enforcement backend | tool gateway + MCP broker + sandbox lowering | backend-independent authorization claim | implementation cost | offline checker first, runtime enforcement second |
 | Authority minimization | compare generated leases to expert oracle | least-privilege claim | requires manual oracle design | start with 10 tasks |
 | Refinement | denied action -> narrower lease -> continue | utility preservation claim | requires agent loop integration | simulate with recorded traces |
