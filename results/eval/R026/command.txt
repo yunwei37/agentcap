@@ -1,0 +1,1 @@
+PYTHONPATH=src /usr/bin/python scripts/rank_eval_dataset_candidates.py --output-dir results/eval/R026

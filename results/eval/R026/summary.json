@@ -1,0 +1,50 @@
+{
+  "analyzer_sha256": "478cc9924d61ccf52b4fae6cabe1e2bf732d72d4883145b834ca3571ddc03468",
+  "benchmark": "web-only eval dataset candidate ranking",
+  "candidate_count": 28,
+  "git_status": "## main...origin/main\n M docs/autopaper/intentcap-autopaper.md\n M docs/background-related-work.md\n M docs/design.md\n M docs/evaluation.md\n M docs/idea-story.md\n M docs/implementation.md\n?? results/eval/\n?? scripts/rank_eval_dataset_candidates.py\n?? tests/test_rank_eval_dataset_candidates.py",
+  "local_candidate_count": 4,
+  "machine": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "no_sync_policy": "R026 uses official web metadata only; it does not clone, sync, download, or execute any new dataset.",
+  "notes": [
+    "Scores are for selecting the next IntentCap evidence step, not benchmark results.",
+    "A high web-only rank means read/source approval priority, not permission to download.",
+    "Safety-protocol candidates include harmful or misuse tasks and need separate handling."
+  ],
+  "project_head": "3959f8d62494c589a54b3a577659948c018b59d5",
+  "run_id": "R026",
+  "safety_protocol_required": [
+    "HarmfulSkillBench",
+    "HarmActionsEval",
+    "AgentHarm",
+    "Agent-SafetyBench"
+  ],
+  "scoring_formula": "3*context_influence + 3*authority_decision + 2*oracle_strength + 2*runtime_feasibility + 2*skills_mcp_relevance + 2*utility_relevance + local_bonus - 2*safety_protocol_cost - sync_risk",
+  "top_existing_local": [
+    "AgentDojo",
+    "MCPTox",
+    "tau2/tau3-bench",
+    "InjecAgent"
+  ],
+  "top_explicit_approval_candidates": [
+    "Skill-Inject",
+    "MCPSecBench",
+    "MCP-Bench",
+    "ToolSandbox",
+    "WorkBench",
+    "SWE-bench",
+    "OASB Skills Security Benchmark",
+    "Agent Security Bench"
+  ],
+  "top_web_only": [
+    "Skill-Inject",
+    "MCPSecBench",
+    "MCP-Bench",
+    "ToolSandbox",
+    "HarmfulSkillBench",
+    "WorkBench",
+    "TheAgentCompany",
+    "SWE-bench"
+  ],
+  "web_only_candidate_count": 24
+}
