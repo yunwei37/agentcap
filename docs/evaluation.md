@@ -1,8 +1,8 @@
 # Evaluation
 
-Last updated: 2026-07-02 America/Vancouver
-Stage at update: stage 5 evaluation design started
-Source/command: research-experiment-design startup skeleton plus related-work benchmark search
+Last updated: 2026-07-03
+Stage at update: stage 5 evaluation probes started
+Source/command: AgentDojo trace export/checker probe and MCPTox artifact probe
 Completeness: partial
 
 ## Claim-To-Experiment Map
@@ -75,22 +75,26 @@ Completeness: partial
 | R001 | C1 | local wrong-sink trace sanity | `PYTHONPATH=src python -m intentcap.checker examples/local_pdf_wrong_sink.json > results/local/R001/verdicts.json` | `4ce9892` plus uncommitted prototype files recorded in `results/local/R001/git-status.txt` | Linux `lab` 6.15.11 x86_64 | deterministic | `results/local/R001/` | done |
 | R002 | C1 | AgentDojo install/import and suite-count probe | `uv venv .venv && uv pip install -e benchmarks/agentdojo`; `. .venv/bin/activate && python scripts/probe_agentdojo.py --benchmark-version v1.2.2 --suite <suite>` | AgentDojo `089ed468`; project pre-commit dirty status in `results/agentdojo/R002/git-status.txt` | Linux `lab` 6.15.11 x86_64 | deterministic metadata probe | `results/agentdojo/R002/` | done |
 | R003 | C1 | AgentDojo workspace ground-truth suite check without model API | `. .venv/bin/activate && python scripts/probe_agentdojo.py --benchmark-version v1.2.2 --suite workspace --check` | AgentDojo `089ed468`; project pre-commit dirty status in `results/agentdojo/R003/git-status.txt` | Linux `lab` 6.15.11 x86_64 | deterministic ground-truth check | `results/agentdojo/R003/` | warn: user tasks pass; 8/14 injection checks fail |
-| R004 | C1 | InjecAgent setup probe | pending | pending | pending | N/A | `results/injecagent/R004/` | todo |
-| R005 | C1 | MCPTox artifact availability/setup probe | pending | pending | pending | N/A | `results/mcptox/R005/` | todo |
+| R004 | C1 | AgentDojo workspace injection ground-truth export into IntentCap trace format | `. .venv/bin/activate && PYTHONPATH=src python scripts/export_agentdojo_intentcap.py --benchmark-version v1.2.2 --suite workspace --output-dir results/agentdojo/R004 --check` | AgentDojo `089ed468`; project pre-commit dirty status in `results/agentdojo/R004/git-status.txt` | Linux `lab` 6.15.11 x86_64 | deterministic metadata/ground-truth replay | `results/agentdojo/R004/` | done |
+| R005 | C1 | MCPTox official artifact availability and schema probe | `git clone --depth 1 https://github.com/zhiqiangwang4/MCPTox-Benchmark benchmarks/mcptox`; local JSON schema/count probe in `results/mcptox/R005/schema_probe.txt` | MCPTox `f85189f`; project pre-commit dirty status in `results/mcptox/R005/git-status.txt` | Linux `lab` 6.15.11 x86_64 | deterministic artifact probe | `results/mcptox/R005/` | done |
+| R006 | C1 | InjecAgent setup probe | pending | pending | pending | N/A | `results/injecagent/R006/` | todo |
 
 ## Result Summary And Anomalies
 - R001 local sanity passed: `pdf_to_xlsx_cells` and `user_selected_repo_issue` are allowed; `pdf_injected_repo_issue` is denied with `no matching lease`.
 - R002 AgentDojo setup succeeded: editable install works, and v1.2.2 suite counts are Workspace 40/14/24, Slack 21/5/11, Travel 20/7/28, Banking 16/9/11 for user tasks / injection tasks / tools.
 - R003 AgentDojo workspace ground-truth check is a warning: all 40 user tasks pass, but 8 of 14 injection tasks fail (`injection_task_6` through `injection_task_13`) under `suite.check(check_injectable=False)`. Treat this as a benchmark-oracle/setup anomaly to investigate, not an IntentCap result.
+- R004 AgentDojo export succeeded: workspace v1.2.2 has 40 user tasks, 14 injection tasks, and 24 tools; only 6 injection tasks provide non-empty ground-truth tool-call traces, yielding 10 exported protected-decision events. The prototype checker denied all 10 because the control source was `agentdojo_injection_goal:*`, whose label allows `parameterize`/`summarize` but not `sink_select`/`authorize`.
+- R004 limitation: `injection_task_6` through `injection_task_13` remain natural-language-only attack goals with no ground-truth tool-call trace. They need a separate goal-to-event adapter or online run, not simple replay.
+- R005 MCPTox artifact probe succeeded: the official public repository cloned at `f85189f` and contains `pure_tool.json`, `response_all.json`, 45 server groups, 485 pure-tool entries / `def_tool` Python files, 11 attack scopes, and 1,348 cases in `response_all.json`.
 - No model-based external benchmark experiment has run yet.
-- The next useful result can be a benchmark setup failure if it records exact command, environment, and blocker.
+- The next useful result is either an AgentDojo natural-language attack-goal adapter or a first MCPTox JSON-to-IntentCap adapter over poisoned tool metadata.
 
 ## Claim Verdict Table
 | Claim | Verdict | Evidence | Current supported wording | Maximal plausible wording | Expansion experiments |
 |---|---|---|---|---|---|
-| C1 | partial | R001 proves only the local motivating wrong-sink trace, not a benchmark claim | IntentCap's minimal checker can distinguish allowed PDF data use from denied PDF-controlled wrong-sink action in a toy trace. | IntentCap blocks unauthorized context-to-decision influence across multiple agent security benchmarks | E1-E3 |
+| C1 | partial | R001 proves the local motivating wrong-sink trace; R004 proves AgentDojo injection ground-truth calls can be replayed as denied protected-decision events, but not yet with model utility/security outcomes | IntentCap's minimal checker can distinguish allowed data use from denied untrusted-context control over protected decisions in toy traces and exported AgentDojo injection traces. | IntentCap blocks unauthorized context-to-decision influence across multiple agent security benchmarks | E1-E3 |
 | C2 | unsupported | no oracle leases yet | none | IntentCap produces run-time leases closer to expert oracle than static policies while preserving utility | E4-E5 |
-| C3 | unsupported | no checker implementation yet | none | Deterministic checking keeps LLM-generated policy outside the TCB across extension types | E6 |
+| C3 | unsupported | checker exists, but no LLM-proposed lease corpus or compiler/checker ablation has run | none | Deterministic checking keeps LLM-generated policy outside the TCB across extension types | E6 |
 
 ## Claim Expansion Agenda
 - If AgentDojo results hold, expand from document/tool-output IPI to MCP tool-description poisoning.
@@ -104,21 +108,24 @@ Completeness: partial
 | P0 | AgentDojo setup and one dry-run | primary benchmark gate |
 | P1 | hand-label 10 AgentDojo tasks for protected decision classes | creates oracle for C1/C2 |
 | P1 | MCPTox availability probe | determines MCP security scope |
+| P1 | MCPTox poisoned-tool adapter | tests whether tool metadata is treated as context without authority |
 | P2 | tau3 benign utility probe | tests policy-following utility beyond attacks |
 
 ## Integrity Audit Notes
 - No benchmark-scale numeric paper claim is currently supported.
 - R001 is a local sanity check only; it must not be reported as benchmark evidence.
+- R004 is trace-level benchmark evidence only; it is not a model-based attack-success result.
+- R005 is artifact/setup evidence only; it is not yet a security result.
 - All benchmark claims in docs are sourced from primary pages or papers but not yet reproduced locally.
 - Documentation compliance gate is not passed because independent subagent review has not been run.
 
 ## Reproducibility Checklist
 | Item | Status | Notes |
 |---|---|---|
-| Exact commands recorded | partial | recorded for R001-R003 |
-| Commit recorded per run | partial | local/project dirty status and AgentDojo commit recorded for R001-R003 |
-| Machine recorded per run | partial | R001-R003 record Linux host class in tracker |
-| Seeds/repetitions recorded | partial | R001-R003 deterministic; no model benchmark seeds yet |
-| Raw result paths exist | partial | `results/local/R001/`, `results/agentdojo/R002/`, `results/agentdojo/R003/` exist |
-| Scripts checked in | partial | minimal checker and AgentDojo probe exist; benchmark adapters pending |
-| External benchmark versions pinned | partial | AgentDojo shallow clone at `089ed468`; other benchmarks pending |
+| Exact commands recorded | partial | recorded for R001-R005 |
+| Commit recorded per run | partial | local/project dirty status and external benchmark commits recorded for R001-R005 |
+| Machine recorded per run | partial | R001-R005 record Linux host class where applicable |
+| Seeds/repetitions recorded | partial | R001-R005 deterministic probes; no model benchmark seeds yet |
+| Raw result paths exist | partial | `results/local/R001/`, `results/agentdojo/R002/`, `results/agentdojo/R003/`, `results/agentdojo/R004/`, `results/mcptox/R005/` exist |
+| Scripts checked in | partial | minimal checker, AgentDojo suite probe, and AgentDojo IntentCap export adapter exist; MCPTox adapter pending |
+| External benchmark versions pinned | partial | AgentDojo shallow clone at `089ed468`; MCPTox shallow clone at `f85189f`; other benchmarks pending |

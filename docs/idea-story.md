@@ -1,23 +1,23 @@
 # Idea Story
 
-Last updated: 2026-07-02 America/Vancouver
-Stage at update: stage 1 novelty scan with stage 3 scaffold started
-Source/command: auto-research-orchestrator persistent goal for IntentCap
+Last updated: 2026-07-03
+Stage at update: stage 3/5 trace-level benchmark probes
+Source/command: AgentDojo export/checker probe and MCPTox artifact probe
 Completeness: partial
 
 ## Current State
-- Stage: Stage 1 novelty scan is active. Stage 0 framing is good enough to seed claims, but closest-work and benchmark gates are not yet cleared.
-- Blocking gate: no reproduced benchmark result yet; related-work map is initial and still needs source-level reproduction checks.
-- Next action: clone or install the highest-priority benchmark harnesses, starting with AgentDojo and InjecAgent, then record a minimal dry-run or setup failure in `docs/evaluation.md`.
+- Stage: Stage 3 design/prototype and Stage 5 evaluation probes are active. Stage 0 framing is good enough to seed claims, and the first benchmark artifacts are now locally probed.
+- Blocking gate: no model-based benchmark utility/security run yet; current evidence is trace-level replay and artifact/schema probing.
+- Next action: implement the next benchmark adapter, either AgentDojo natural-language injection-goal classification or MCPTox poisoned-tool-description replay.
 - Paper boundary: the existing two-page English workshop paper is frozen under `docs/paper-workshop/`; auto-research drafts go under `docs/autopaper/`.
 
 ## Downstream Document Index
 | Doc | Role | Current status | Next required update |
 |---|---|---|---|
-| `docs/background-related-work.md` | novelty, closest work, benchmarks, baselines | partial | verify benchmark install paths and artifact availability |
-| `docs/design.md` | mechanism and artifact boundary | partial | refine checker semantics after first benchmark adapter |
-| `docs/implementation.md` | prototype milestones and runnable commands | partial | create initial package and command skeleton |
-| `docs/evaluation.md` | experiment plan, run tracker, results, claim verdict | partial | add first benchmark setup/dry-run rows |
+| `docs/background-related-work.md` | novelty, closest work, benchmarks, baselines | partial | reconcile MCPTox paper/artifact counts and add adapter notes |
+| `docs/design.md` | mechanism and artifact boundary | partial | refine checker semantics after MCPTox or natural-language-goal adapter |
+| `docs/implementation.md` | prototype milestones and runnable commands | partial | formalize trace schema and add next adapter |
+| `docs/evaluation.md` | experiment plan, run tracker, results, claim verdict | partial | add end-to-end adapter table with oracle/limitation column |
 
 ## Intro P1: Problem And Stakes
 Purpose: Establish why agent extension security is not just tool ACL security.
@@ -113,7 +113,7 @@ Completeness: partial.
 ### Claim Ledger
 | ID | Claim | Scope | Metric/evidence needed | Status |
 |---|---|---|---|---|
-| C1 | IntentCap blocks unauthorized context-to-decision influence while allowing authorized data use. | AgentDojo/InjecAgent/MCPTox-style adversarial workflows with protected decisions. | Attack success rate, influence-violation denial counts, benign utility, false denial recovery. | proposed |
+| C1 | IntentCap blocks unauthorized context-to-decision influence while allowing authorized data use. | AgentDojo/InjecAgent/MCPTox-style adversarial workflows with protected decisions. | Attack success rate, influence-violation denial counts, benign utility, false denial recovery. | partial: local trace plus AgentDojo ground-truth replay, no model utility run yet |
 | C2 | Intent-carrying leases reduce over-privilege relative to static tool/server/Skill policies. | Skills, MCP tools, local scripts, and subagent delegation in mixed workflows. | Risk-weighted authority score vs static allowlist, Skill manifest, human approval, and expert oracle. | proposed |
 | C3 | The compiler/checker split keeps LLM policy synthesis outside the trusted computing base. | Candidate lease generation from plans and extension metadata. | Invalid proposals rejected, valid proposals accepted, proof completeness, checker coverage. | proposed |
 
@@ -130,7 +130,7 @@ Completeness: partial.
 | Task Shield | user-objective alignment checks | useful baseline for "does this action serve the user goal?" | may look similar unless IntentCap emphasizes proof-carrying leases |
 | Progent | deterministic privilege DSL | baseline for tool-level policies | may overlap with runtime policy enforcement |
 | AgentDojo | utility/security benchmark oracles | primary reproducible security testbed | adapters may need effort |
-| MCPTox | MCP tool poisoning cases | expands from document/tool output injection to tool-description poisoning | availability/reproducibility must be verified |
+| MCPTox | MCP tool poisoning cases | expands from document/tool output injection to tool-description poisoning | artifact is available; adapter/count reconciliation still pending |
 
 ### Expansion Agenda
 | Expansion axis | Bigger experiment | Claim upside | Cost/risk | Probe |
@@ -151,4 +151,4 @@ Completeness: partial.
 - How much control-provenance tracking can be extracted from existing agent harnesses without modifying model internals?
 - Should the first prototype be online enforcement or offline trace checking?
 - Which benchmark exposes the cleanest wrong-sink and approval-scope tests?
-- Is MCPTox artifact/code available enough to reproduce, or should it be treated as a paper-only benchmark initially?
+- How should MCPTox artifact counts be reconciled with paper/search-summary counts before reporting any numeric benchmark claim?

@@ -1,6 +1,6 @@
 # IntentCap AutoPaper Draft
 
-Last updated: 2026-07-02 America/Vancouver
+Last updated: 2026-07-03
 Status: early research draft; not the frozen two-page workshop abstract
 
 ## Working Title
@@ -29,5 +29,11 @@ The research plan is to validate IntentCap first as an offline trace checker and
 - Do not frame the work as EIM for agents or ActPlane policy synthesis.
 - Do claim context influence as least-privilege authority, with user intent as the root of run-time authority.
 
+## Current Evidence Snapshot
+- Local motivating trace: the checker allows user-selected PDF-to-spreadsheet and user-selected-repository issue actions while denying a PDF-controlled wrong-repository issue action.
+- AgentDojo workspace probe: task/tool metadata loads from the local v1.2.2 install. Six of 14 workspace injection tasks expose non-empty ground-truth tool-call traces; these produce 10 IntentCap protected-decision events. Under the current labels, all 10 are denied because untrusted injection goals are not authorized to control `sink_select` or `authorize` decisions.
+- AgentDojo limitation: eight workspace injection tasks are natural-language-only attack goals under the ground-truth replay path, so the next adapter must classify the attacker goal text or run an online agent to produce trajectories.
+- MCPTox probe: the official public artifact is available and locally cloned. Its JSON files expose 45 server groups, 485 tool entries/files, 11 attack scopes, and 1,348 cases, making it a plausible next adapter for MCP tool-description poisoning.
+
 ## Next Drafting Gate
-No more paper prose should be polished until at least one benchmark setup/dry-run and the local checker sanity test are recorded in `docs/evaluation.md`.
+No more polished claims should be added until one benchmark adapter produces an end-to-end table with task IDs, protected decision classes, checker verdicts, and an oracle/limitation column. The immediate candidates are AgentDojo natural-language attack goals and MCPTox poisoned MCP tool descriptions.

@@ -1,0 +1,11 @@
+{
+  "benchmark_version": "v1.2.2",
+  "checker_allowed": 0,
+  "checker_denied": 10,
+  "injection_tasks": 14,
+  "injection_tasks_with_ground_truth": 6,
+  "suite": "workspace",
+  "tools": 24,
+  "trace_events": 10,
+  "user_tasks": 40
+}
