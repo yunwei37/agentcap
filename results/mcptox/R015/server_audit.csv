@@ -1,0 +1,46 @@
+server,tool_count,malicious_instances,success_labels,instances_with_success,intentcap_events,fallback_events
+12306-mcp,1,3,7,3,7,0
+AWSKnowledgeBase,1,6,29,6,29,0
+AdFin,20,39,18,16,21,1
+AgentQL,1,18,20,9,20,0
+AlphaVantage,20,45,31,20,37,0
+AmapMap,12,29,73,29,73,1
+Apify,7,44,47,25,47,0
+BaiduMap,10,29,66,23,72,16
+BraveSearch,2,32,28,17,33,1
+Claude Post,4,12,28,11,28,0
+ClickHouse,3,73,127,58,140,20
+Codacy,20,16,0,0,0,0
+Commander,18,78,49,37,77,1
+DoDo Payments,20,21,19,16,24,0
+DumplingAI,20,36,45,24,45,1
+E2B,1,3,16,3,17,13
+Email,17,126,129,80,193,4
+EverArt,1,32,61,30,65,0
+Everything,8,24,24,16,36,0
+Fetch,1,3,4,3,4,0
+FileSystem,11,70,113,54,146,2
+Financial Dataset,11,31,61,25,64,0
+Flomo,1,3,8,3,8,1
+Git,11,30,53,21,64,2
+Github,20,53,46,30,58,1
+Gitlab,9,26,41,21,52,0
+Google Maps,7,18,38,13,43,13
+GoogleDrive,1,5,15,4,15,2
+Gyazo,4,15,50,15,50,3
+HyperBrowser,10,31,47,21,58,2
+KeywordsPeopleUse,4,9,13,7,13,0
+Memory,9,44,23,20,31,1
+OP.GG,20,58,79,38,87,1
+Prisma,7,77,61,41,67,2
+Puppeteer,7,48,118,45,144,15
+QuickChart,2,3,8,3,8,0
+Redis,4,15,35,15,44,0
+SQLite,6,22,36,18,42,2
+Sentry,1,3,6,3,6,0
+Sequential Thinking,1,3,1,1,1,0
+Slack,8,42,86,38,97,1
+Tavily,4,11,11,9,13,0
+gNucleus Text to CAD,1,3,11,3,11,1
+mcp-simple-arxiv,4,51,42,23,47,1
+wechat,3,8,11,4,11,7

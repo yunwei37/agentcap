@@ -1,0 +1,49 @@
+{
+  "checks": [
+    {
+      "count": 45,
+      "item": "benchmark_servers",
+      "recommended_reporting_unit": "MCP servers in response_all.json",
+      "status": "paper_ready"
+    },
+    {
+      "count": 353,
+      "item": "authentic_tools",
+      "recommended_reporting_unit": "server tool-name references in response_all.json",
+      "status": "paper_ready"
+    },
+    {
+      "count": 1348,
+      "item": "malicious_test_cases",
+      "recommended_reporting_unit": "response_all.data_length / malicious_instance records",
+      "status": "paper_ready"
+    },
+    {
+      "count": 485,
+      "item": "poisoned_tool_records",
+      "recommended_reporting_unit": "pure_tool.json generated poisoned-tool records",
+      "status": "artifact_only_not_authentic_tool_count"
+    },
+    {
+      "count": 1834,
+      "item": "model_success_labels",
+      "recommended_reporting_unit": "model responses labeled Success",
+      "status": "benchmark_label_count_not_case_count"
+    },
+    {
+      "count": 2148,
+      "item": "intentcap_protected_events",
+      "recommended_reporting_unit": "exported protected-decision events from Success responses",
+      "status": "intentcap_replay_event_count_not_case_count"
+    }
+  ],
+  "reporting_guidance": {
+    "do_not_report_pure_tool_entries_as_authentic_tools": 485,
+    "fallback_events_require_separate_reporting": 115,
+    "intentcap_events_are_replay_events": 2148,
+    "paper_benchmark_authentic_tool_count": 353,
+    "paper_benchmark_case_count": 1348,
+    "paper_benchmark_server_count": 45,
+    "success_labels_are_model_response_outcomes": 1834
+  }
+}

@@ -1,0 +1,79 @@
+[
+  {
+    "fallback_events": 18,
+    "intentcap_events": 147,
+    "malicious_instances": 63,
+    "security_risk": "Code Injection",
+    "success_labels": 118
+  },
+  {
+    "fallback_events": 2,
+    "intentcap_events": 199,
+    "malicious_instances": 115,
+    "security_risk": "Credential Leakage",
+    "success_labels": 149
+  },
+  {
+    "fallback_events": 5,
+    "intentcap_events": 214,
+    "malicious_instances": 120,
+    "security_risk": "Data Tampering",
+    "success_labels": 183
+  },
+  {
+    "fallback_events": 1,
+    "intentcap_events": 41,
+    "malicious_instances": 55,
+    "security_risk": "Financial Loss",
+    "success_labels": 38
+  },
+  {
+    "fallback_events": 52,
+    "intentcap_events": 502,
+    "malicious_instances": 281,
+    "security_risk": "Information Manipulation",
+    "success_labels": 471
+  },
+  {
+    "fallback_events": 4,
+    "intentcap_events": 162,
+    "malicious_instances": 124,
+    "security_risk": "Infrastructure Damage",
+    "success_labels": 123
+  },
+  {
+    "fallback_events": 14,
+    "intentcap_events": 108,
+    "malicious_instances": 57,
+    "security_risk": "Instruction Tampering",
+    "success_labels": 98
+  },
+  {
+    "fallback_events": 8,
+    "intentcap_events": 79,
+    "malicious_instances": 44,
+    "security_risk": "Message Hijacking",
+    "success_labels": 66
+  },
+  {
+    "fallback_events": 0,
+    "intentcap_events": 4,
+    "malicious_instances": 4,
+    "security_risk": "Other",
+    "success_labels": 3
+  },
+  {
+    "fallback_events": 9,
+    "intentcap_events": 349,
+    "malicious_instances": 276,
+    "security_risk": "Privacy Leakage",
+    "success_labels": 271
+  },
+  {
+    "fallback_events": 2,
+    "intentcap_events": 343,
+    "malicious_instances": 209,
+    "security_risk": "Service Disruption",
+    "success_labels": 314
+  }
+]
