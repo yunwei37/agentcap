@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-03
 Stage at update: stage 3 adapter-informed design
-Source/command: AgentDojo, MCPTox, InjecAgent export/checker probes plus gateway replay, R014 AgentDojo inferred-event audit, and R015 MCPTox reconciliation audit
+Source/command: AgentDojo, MCPTox, InjecAgent export/checker probes plus gateway replay, R014 AgentDojo inferred-event audit, R015 MCPTox reconciliation audit, and R016 benchmark-derived live gateway execution
 Completeness: partial
 
 ## System-Under-Test Model
@@ -91,10 +91,11 @@ The offline checker is the cheapest path to validate the core idea against exist
 - R010 adds a mixed InjecAgent replay path: the benchmark's original user-tool call is labeled as trusted user-intent control and allowed as `tool_select`, while attacker-tool calls from the injected tool response remain denied as `authorize` or `sink_select`. This is the first adapter result that exercises allowed benign control and denied injected control in the same trace, though it is still deterministic replay rather than live model execution.
 - R012 repeats the mixed InjecAgent replay on the enhanced setting. Under the current event extractor, enhanced and base settings produce identical event/verdict counts, so enhanced does not currently exercise a different IntentCap mechanism; it is a consistency check for the adapter.
 - R013 adds a local `LiveToolGateway` smoke test. A trusted `product.lookup` callable executes and returns data, while a registered `email.send` callable controlled by untrusted product-review text is blocked before side effects occur. This validates the runtime boundary shape, but not model-driven benchmark utility.
+- R016 extends the `LiveToolGateway` path to the full saved R010 mixed InjecAgent trace. The runner registers local no-op callables for all 79 tool objects in the trace, executes all 1,054 trusted user-tool events, and blocks all 1,598 registered attacker-tool events before their callables run. This validates live callable suppression over a benchmark-derived trace, but it is still not a prompted-model or external-tool benchmark execution.
 - Benchmark adapters should preserve raw benchmark identifiers in each event so denial explanations can be traced back to a task, server, tool, attack template, or risk category.
 
 ## Next Design Action
-Implement the next model/tool live wrapper that can classify a small set of actions as:
+Implement the next prompted-model or benchmark-harness live wrapper that can classify a small set of actions as:
 
 - allowed data use,
 - denied wrong-sink influence,

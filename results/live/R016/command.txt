@@ -1,0 +1,1 @@
+PYTHONPATH=src /usr/bin/python scripts/run_live_trace_gateway.py --trace results/online/R010/export/intentcap_trace.json --output-dir results/live/R016

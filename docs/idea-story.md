@@ -2,13 +2,13 @@
 
 Last updated: 2026-07-03
 Stage at update: stage 3/5 trace-level benchmark probes
-Source/command: AgentDojo, MCPTox, InjecAgent export/checker probes plus gateway replay, including R010 mixed replay, R011 AgentDojo goal inference, R012 InjecAgent enhanced replay, R013 local live smoke, R014 AgentDojo inferred-event audit, and R015 MCPTox reconciliation audit
+Source/command: AgentDojo, MCPTox, InjecAgent export/checker probes plus gateway replay, including R010 mixed replay, R011 AgentDojo goal inference, R012 InjecAgent enhanced replay, R013 local live smoke, R014 AgentDojo inferred-event audit, R015 MCPTox reconciliation audit, and R016 benchmark-derived live gateway execution
 Completeness: partial
 
 ## Current State
 - Stage: Stage 3 design/prototype and Stage 5 evaluation probes are active. Stage 0 framing is good enough to seed claims, and the first benchmark artifacts are now locally probed.
-- Blocking gate: no benchmark/model live IntentCap-wrapper utility/security run yet; current evidence is trace-level gateway replay across AgentDojo, MCPTox, and InjecAgent, a mixed InjecAgent replay where trusted user-tool choices execute and injected attacker-tool choices are blocked, an audited AgentDojo goal-inferred replay for natural-language-only injection tasks, reconciled MCPTox count/oracle units, an InjecAgent enhanced-setting consistency replay, and a local live tool gateway smoke.
-- Next action: implement the next evidence step by connecting `LiveToolGateway` to a benchmark/model subset.
+- Blocking gate: no prompted-model or benchmark-harness live IntentCap-wrapper utility/security run yet; current evidence is trace-level gateway replay across AgentDojo, MCPTox, and InjecAgent, a mixed InjecAgent replay where trusted user-tool choices execute and injected attacker-tool choices are blocked, an audited AgentDojo goal-inferred replay for natural-language-only injection tasks, reconciled MCPTox count/oracle units, an InjecAgent enhanced-setting consistency replay, a local live tool gateway smoke, and a benchmark-derived local live gateway run over saved InjecAgent trace events.
+- Next action: implement the next evidence step by connecting `LiveToolGateway` to a prompted model or benchmark harness subset.
 - Paper boundary: the existing two-page English workshop paper is frozen under `docs/paper-workshop/`; auto-research drafts go under `docs/autopaper/`.
 
 ## Downstream Document Index
@@ -17,7 +17,7 @@ Completeness: partial
 | `docs/background-related-work.md` | novelty, closest work, benchmarks, baselines | partial | add online-baseline notes after first benchmark live-wrapper run |
 | `docs/design.md` | mechanism and artifact boundary | partial | refine checker semantics after parser/oracle and online-wrapper results |
 | `docs/implementation.md` | prototype milestones and runnable commands | partial | formalize trace schema and improve adapter coverage |
-| `docs/evaluation.md` | experiment plan, run tracker, results, claim verdict | partial | add benchmark/model live utility/attack run |
+| `docs/evaluation.md` | experiment plan, run tracker, results, claim verdict | partial | add prompted-model or benchmark-harness live utility/attack run |
 
 ## Intro P1: Problem And Stakes
 Purpose: Establish why agent extension security is not just tool ACL security.
@@ -113,7 +113,7 @@ Completeness: partial.
 ### Claim Ledger
 | ID | Claim | Scope | Metric/evidence needed | Status |
 |---|---|---|---|---|
-| C1 | IntentCap blocks unauthorized context-to-decision influence while allowing authorized data use. | AgentDojo/InjecAgent/MCPTox-style adversarial workflows with protected decisions. | Attack success rate, influence-violation denial counts, benign utility, false denial recovery. | partial: local trace plus AgentDojo, reconciled MCPTox, InjecAgent, mixed InjecAgent, audited AgentDojo goal-inferred, InjecAgent enhanced consistency replay, and local live gateway smoke; no benchmark/model live utility run yet |
+| C1 | IntentCap blocks unauthorized context-to-decision influence while allowing authorized data use. | AgentDojo/InjecAgent/MCPTox-style adversarial workflows with protected decisions. | Attack success rate, influence-violation denial counts, benign utility, false denial recovery. | partial: local trace plus AgentDojo, reconciled MCPTox, InjecAgent, mixed InjecAgent, audited AgentDojo goal-inferred, InjecAgent enhanced consistency replay, local live gateway smoke, and benchmark-derived local live InjecAgent execution; no prompted-model benchmark live utility run yet |
 | C2 | Intent-carrying leases reduce over-privilege relative to static tool/server/Skill policies. | Skills, MCP tools, local scripts, and subagent delegation in mixed workflows. | Risk-weighted authority score vs static allowlist, Skill manifest, human approval, and expert oracle. | proposed |
 | C3 | The compiler/checker split keeps LLM policy synthesis outside the trusted computing base. | Candidate lease generation from plans and extension metadata. | Invalid proposals rejected, valid proposals accepted, proof completeness, checker coverage. | proposed |
 
@@ -135,7 +135,7 @@ Completeness: partial.
 ### Expansion Agenda
 | Expansion axis | Bigger experiment | Claim upside | Cost/risk | Probe |
 |---|---|---|---|---|
-| Benchmark breadth | AgentDojo + InjecAgent + MCPTox + tau/MCP utility tasks | cross-ecosystem claim | medium setup cost | three security benchmark adapters and a gateway replay path exist; R010 adds mixed benign/attack replay; R011 adds AgentDojo goal-inferred coverage; R012 checks InjecAgent enhanced consistency; R013 adds local live wrapper mechanics; R014 audits AgentDojo paper-ready versus adapter-only events; R015 reconciles MCPTox count units; benchmark/model live utility still pending |
+| Benchmark breadth | AgentDojo + InjecAgent + MCPTox + tau/MCP utility tasks | cross-ecosystem claim | medium setup cost | three security benchmark adapters and a gateway replay path exist; R010 adds mixed benign/attack replay; R011 adds AgentDojo goal-inferred coverage; R012 checks InjecAgent enhanced consistency; R013 adds local live wrapper mechanics; R014 audits AgentDojo paper-ready versus adapter-only events; R015 reconciles MCPTox count units; R016 adds benchmark-derived local live execution; prompted-model benchmark live utility still pending |
 | Enforcement backend | tool gateway + MCP broker + sandbox lowering | backend-independent authorization claim | implementation cost | offline checker first, runtime enforcement second |
 | Authority minimization | compare generated leases to expert oracle | least-privilege claim | requires manual oracle design | start with 10 tasks |
 | Refinement | denied action -> narrower lease -> continue | utility preservation claim | requires agent loop integration | simulate with recorded traces |
@@ -151,4 +151,4 @@ Completeness: partial.
 - How much control-provenance tracking can be extracted from existing agent harnesses without modifying model internals?
 - Should the first prototype be online enforcement or offline trace checking?
 - Which benchmark exposes the cleanest wrong-sink and approval-scope tests beyond the current audited AgentDojo goal-inferred replay?
-- Which benchmark subset is small enough for the first live wrapper run but still exercises both benign utility and injected protected-decision blocking?
+- Which prompted benchmark subset is small enough for the first model-driven live wrapper run but still exercises both benign utility and injected protected-decision blocking?

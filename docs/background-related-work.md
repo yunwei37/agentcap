@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-03
 Stage at update: stage 1 novelty scan plus artifact probes
-Source/command: web search over primary benchmark, paper, and artifact pages; local MCPTox and InjecAgent clone/schema/export probes plus R014 AgentDojo inferred-event audit and R015 MCPTox reconciliation audit
+Source/command: web search over primary benchmark, paper, and artifact pages; local MCPTox and InjecAgent clone/schema/export probes plus R014 AgentDojo inferred-event audit, R015 MCPTox reconciliation audit, and R016 benchmark-derived live gateway execution
 Completeness: partial
 
 ## Search Log
@@ -72,7 +72,7 @@ Completeness: partial
 | AgentDojo | Formal utility/security check functions over environment state | avoids LLM-as-judge for security metrics | implement IntentCap as agent wrapper or offline trajectory checker; R014 audits R011 and separates 10 official ground-truth events from 54 adapter-only inferred events | still needs online model trajectories and utility/security checks |
 | CaMeL | Query-derived control/data-flow extraction | stronger theorem and clearer TCB | compare IntentCap control provenance to CaMeL flows | same-claim risk |
 | Task Shield | Objective-serving action check | better intent derivation rule | action must both serve intent and have provenance-authorized control | may blur novelty |
-| MCPTox | Poisoned tool descriptions where poisoned tool is not executed | shows description/context influence can be dangerous without direct action | label MCP descriptions as forbidden for authorize/sink/tool-select decisions | artifact available; adapter has full `Success`-label coverage; R015 reconciles count units; benchmark/model live wrapper pending |
+| MCPTox | Poisoned tool descriptions where poisoned tool is not executed | shows description/context influence can be dangerous without direct action | label MCP descriptions as forbidden for authorize/sink/tool-select decisions | artifact available; adapter has full `Success`-label coverage; R015 reconciles count units; prompted-model benchmark live wrapper pending |
 | tau3 | Domain policies and user simulation | tests utility under realistic policies, not only attacks | add policy-as-intent certificates for airline/retail/banking tasks | setup complexity |
 | MCP-Bench/LiveMCPBench | large MCP toolset retrieval and selection | tool-exposure minimization at scale | measure exposed tool count and wrong-tool selection under lease scoping | LLM-as-judge may be noisy |
 
@@ -109,4 +109,4 @@ Completeness: partial
 - Larger claim opportunities: portable intent-provenance-aware policy compiler for agent extension ecosystems; offline trace checker first, runtime enforcer second.
 - Absorbable ideas to import: AgentDojo oracles, CaMeL flow split, Task Shield goal alignment, MCPTox poisoned-tool-description cases, tau domain policies.
 - Mandatory baselines: vanilla, static allowlist/tool filter, Task Shield, CaMeL, Progent-style policy, Skill manifest/SkillGuard-style policy, OS enforcement only.
-- Next action: harden benchmark evidence with a small benchmark/model live wrapper baseline. R010 adds deterministic mixed benign/attack replay for InjecAgent, R011 adds AgentDojo natural-language goal replay, R012 confirms InjecAgent enhanced-setting consistency, R013 adds a local live gateway smoke, R014 audits the AgentDojo ground-truth/inferred split, and R015 reconciles MCPTox count units, but none is a live model/benchmark execution.
+- Next action: harden benchmark evidence with a small prompted-model or benchmark-harness live wrapper baseline. R010 adds deterministic mixed benign/attack replay for InjecAgent, R011 adds AgentDojo natural-language goal replay, R012 confirms InjecAgent enhanced-setting consistency, R013 adds a local live gateway smoke, R014 audits the AgentDojo ground-truth/inferred split, R015 reconciles MCPTox count units, and R016 adds benchmark-derived local live callable execution, but none is a live model/benchmark execution.

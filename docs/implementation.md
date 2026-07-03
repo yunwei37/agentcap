@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-03
 Stage at update: stage 4 implementation probes
-Source/command: local checker, gateway replay, live tool gateway smoke, AgentDojo/MCPTox/InjecAgent export adapters, R010 mixed replay, R011 AgentDojo goal inference, R012 InjecAgent enhanced replay, R013 live smoke, R014 AgentDojo inferred-event audit, and R015 MCPTox reconciliation audit
+Source/command: local checker, gateway replay, live tool gateway smoke, AgentDojo/MCPTox/InjecAgent export adapters, R010 mixed replay, R011 AgentDojo goal inference, R012 InjecAgent enhanced replay, R013 live smoke, R014 AgentDojo inferred-event audit, R015 MCPTox reconciliation audit, and R016 benchmark-derived live trace execution
 Completeness: partial
 
 ## Repository Layout Relevant To The Project
@@ -27,8 +27,9 @@ Completeness: partial
 | `scripts/export_injecagent_intentcap.py` | exports InjecAgent synthesized attacker-tool cases into IntentCap JSON traces | created |
 | `scripts/replay_intentcap_gateway.py` | replays exported traces through the IntentCap gateway abstraction | created |
 | `scripts/run_live_gateway_smoke.py` | executes a local live gateway smoke test with one allowed tool and one blocked sink | created |
+| `scripts/run_live_trace_gateway.py` | executes saved benchmark-derived traces through the live gateway with registered local callables | created |
 | `benchmarks/` | ignored external benchmark clone workspace | created; AgentDojo cloned locally |
-| `results/` | raw result outputs and run logs | created; R001-R015 recorded |
+| `results/` | raw result outputs and run logs | created; R001-R016 recorded |
 
 ## Implementation Milestones
 | Milestone | Deliverable | Exit condition | Status |
@@ -39,7 +40,7 @@ Completeness: partial
 | M3: AgentDojo adapter | load AgentDojo task metadata/traces or wrap benchmark agent calls | one benign and one adversarial task dry-run logged | partial: metadata, injection ground-truth export, and goal-inferred natural-language replay work; online agent trajectories still pending |
 | M4: InjecAgent/MCPTox adapters | parse cases into protected decision events | at least one setup/dry-run or documented blocker per benchmark | partial: MCPTox and InjecAgent trace exporters work; InjecAgent now supports mixed benign/attack traces; online wrappers pending |
 | M5: Lease compiler prototype | heuristic compiler from task intent and effect list to candidate leases | compares LLM-only/wide leases vs minimized leases | todo |
-| M6: Online enforcement harness | tool gateway/MCP broker/context constructor wrappers | blocks wrong sink in a live toy workflow | partial: local live tool gateway smoke passes; benchmark/model wrapper pending |
+| M6: Online enforcement harness | tool gateway/MCP broker/context constructor wrappers | blocks wrong sink in a live toy workflow | partial: local live tool gateway smoke and benchmark-derived live trace execution pass; prompted-model wrapper pending |
 | M7: Evaluation scripts | aggregate utility, attack success, over-privilege, false denial, recovery | generates tables for `docs/autopaper` | todo |
 
 ## Current Implementation Status
@@ -64,14 +65,15 @@ Completeness: partial
 - R009 replays AgentDojo R004, MCPTox R007, and InjecAgent R008 through the gateway. The gateway blocks 3,756 of 3,756 attempted protected events.
 - R010 replays mixed InjecAgent base-setting traces through the checker and gateway. The checker allows 1,054 trusted user-tool events and denies 1,598 injected attacker-tool events; the gateway executes the same 1,054 events and blocks the same 1,598 events.
 - R013 runs a local live wrapper smoke test. It executes one trusted `product.lookup` callable, blocks one registered `email.send` callable controlled by untrusted tool-result text, and records zero sent-email side effects.
-- The next benchmark step is to build a benchmark/model live wrapper baseline with utility measurement.
+- R016 runs the full R010 mixed InjecAgent base trace through `LiveToolGateway` with local no-op callables registered for all 79 tool objects. It executes 1,054 trusted user-tool callables, blocks 1,598 registered attacker-tool callables before invocation, and records 0 missing tools and 0 tool errors.
+- The next benchmark step is to build a prompted-model or benchmark-harness live wrapper baseline with utility measurement.
 
 ## Build/Run Commands
 | Purpose | Command | Status |
 |---|---|---|
 | Build current workshop PDF | `make` | works as of commit `4ce9892`; root paper should remain frozen |
 | Verify workshop PDF page count | `pdfinfo main.pdf | rg '^Pages'` | works; expected `Pages: 2` |
-| Unit tests | `PYTHONPATH=src python -m pytest -q` | works: 15 tests passed; `pytest.ini` restricts discovery to this repo's `tests/` |
+| Unit tests | `PYTHONPATH=src python -m pytest -q` | works: 16 tests passed; `pytest.ini` restricts discovery to this repo's `tests/` |
 | Local checker sanity | `PYTHONPATH=src python -m intentcap.checker examples/local_pdf_wrong_sink.json` | works; see `results/local/R001/verdicts.json` |
 | AgentDojo suite count probe | `. .venv/bin/activate && python scripts/probe_agentdojo.py --benchmark-version v1.2.2 --suite workspace` | works; see `results/agentdojo/R002/` |
 | AgentDojo workspace ground-truth check | `. .venv/bin/activate && python scripts/probe_agentdojo.py --benchmark-version v1.2.2 --suite workspace --check` | warning; see `results/agentdojo/R003/` |
@@ -89,6 +91,7 @@ Completeness: partial
 | Enhanced InjecAgent gateway replay | `PYTHONPATH=src python scripts/replay_intentcap_gateway.py results/injecagent/R012/export/intentcap_trace.json --output-dir results/injecagent/R012/gateway` | works; R012 executes 1,054 trusted events and blocks 1,598 injected events |
 | AgentDojo goal-inferred gateway replay | `PYTHONPATH=src python scripts/replay_intentcap_gateway.py results/agentdojo/R011/intentcap_trace.json --output-dir results/agentdojo/R011/gateway` | works; R011 blocks all 64 events |
 | Live gateway smoke | `PYTHONPATH=src python scripts/run_live_gateway_smoke.py --output-dir results/live/R013` | works; R013 executes 1 trusted callable, blocks 1 injected sink callable, and records 0 sent emails |
+| Benchmark-derived live trace gateway | `PYTHONPATH=src python scripts/run_live_trace_gateway.py --trace results/online/R010/export/intentcap_trace.json --output-dir results/live/R016` | works; R016 registers 79 tool callables, executes 1,054 benign calls, blocks 1,598 attacker calls, and records 0 missing tools/errors |
 
 ## Integration Constraints
 - Do not mutate the frozen workshop paper unless explicitly requested.
@@ -102,10 +105,11 @@ Completeness: partial
 - Need improve checker denial selection once there are multiple plausible leases for the same operation; R004 uses a synthetic `_intentcap_event_id` field for deterministic event-scoped replay.
 - R014 separates current AgentDojo goal-inferred event templates from official ground-truth events; future AgentDojo paper counts should use the 10 official events unless an online trajectory run provides new benchmark evidence.
 - R015 reconciles MCPTox count surfaces; future MCPTox paper counts should use 1,348 cases and 353 authentic tools, while keeping 1,834 Success labels, 2,148 replay events, and 115 fallback events as distinct units.
+- R016 is benchmark-derived local live execution over saved trace events. It proves registered Python callables are invoked only on allowed events and suppressed on blocked events, but it is not a prompted-model, external-tool, or benchmark-harness utility/security run.
 - Need reconcile InjecAgent README count of 62 attacker tools with the local base-case count of 63 unique attacker-tool names, where `GmailSendEmail` is the repeated exfiltration sink.
-- Need implement a benchmark/model live wrapper baseline so deterministic trace-level denials and local live smoke can be paired with model/tool utility and attack-success metrics.
+- Need implement a prompted-model or benchmark-harness live wrapper baseline so deterministic trace-level denials and local live execution can be paired with model/tool utility and attack-success metrics.
 - Need extend live gateway from local Python callables to MCP/tool mediation with denial recovery.
 - Need decide whether to keep external benchmark clones only as ignored local state or convert selected ones into submodules later.
 
 ## Next Engineering Action
-Build the next evidence step: connect the live gateway to a benchmark/tool subset to measure model utility and attack blocking under actual tool exposure.
+Build the next evidence step: connect the live gateway to a prompted model or benchmark harness subset to measure model utility and attack blocking under actual tool exposure.
