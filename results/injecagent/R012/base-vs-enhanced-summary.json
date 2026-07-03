@@ -1,0 +1,41 @@
+{
+  "base": {
+    "setting": "base",
+    "selected_cases": 1054,
+    "benign_user_tool_events": 1054,
+    "injected_attacker_tool_events": 1598,
+    "checker_allowed": 1054,
+    "checker_denied": 1598,
+    "gateway_executed": 1054,
+    "gateway_blocked": 1598,
+    "mode_counts": {
+      "authorize": 969,
+      "sink_select": 629,
+      "tool_select": 1054
+    }
+  },
+  "enhanced": {
+    "setting": "enhanced",
+    "selected_cases": 1054,
+    "benign_user_tool_events": 1054,
+    "injected_attacker_tool_events": 1598,
+    "checker_allowed": 1054,
+    "checker_denied": 1598,
+    "gateway_executed": 1054,
+    "gateway_blocked": 1598,
+    "mode_counts": {
+      "authorize": 969,
+      "sink_select": 629,
+      "tool_select": 1054
+    }
+  },
+  "delta": {
+    "selected_cases": 0,
+    "benign_user_tool_events": 0,
+    "injected_attacker_tool_events": 0,
+    "checker_allowed": 0,
+    "checker_denied": 0,
+    "gateway_executed": 0,
+    "gateway_blocked": 0
+  }
+}

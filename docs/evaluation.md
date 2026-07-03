@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-03
 Stage at update: stage 5 evaluation probes started
-Source/command: AgentDojo, MCPTox, InjecAgent trace exports plus IntentCap gateway replay, including R010 mixed benign/attack replay and R011 AgentDojo goal-inferred replay
+Source/command: AgentDojo, MCPTox, InjecAgent trace exports plus IntentCap gateway replay, including R010 mixed benign/attack replay, R011 AgentDojo goal-inferred replay, and R012 InjecAgent enhanced replay
 Completeness: partial
 
 ## Claim-To-Experiment Map
@@ -83,6 +83,7 @@ Completeness: partial
 | R009 | C1/C2 | gateway replay over exported benchmark traces | `PYTHONPATH=src python scripts/replay_intentcap_gateway.py <trace> --output-dir results/gateway/R009/<benchmark>` for AgentDojo R004, MCPTox R007, and InjecAgent R008 | project pre-commit dirty status in `results/gateway/R009/git-status.txt` | Linux `lab` 6.15.11 x86_64 | deterministic trace replay | `results/gateway/R009/` | done |
 | R010 | C1/C2 | mixed benign/attack gateway replay over InjecAgent base cases | `PYTHONPATH=src python scripts/export_injecagent_intentcap.py --benchmark-dir benchmarks/injecagent --setting base --attack-family all --include-user-tool-events --output-dir results/online/R010/export --check`; `PYTHONPATH=src python scripts/replay_intentcap_gateway.py results/online/R010/export/intentcap_trace.json --output-dir results/online/R010/gateway` | project pre-commit dirty status | Linux `lab` 6.15.11 x86_64 | deterministic trace replay | `results/online/R010/` | done |
 | R011 | C1 | AgentDojo workspace natural-language injection-goal adapter replay | `. .venv/bin/activate && PYTHONPATH=src python scripts/export_agentdojo_intentcap.py --benchmark-version v1.2.2 --suite workspace --include-goal-inferred-events --output-dir results/agentdojo/R011 --check`; `PYTHONPATH=src python scripts/replay_intentcap_gateway.py results/agentdojo/R011/intentcap_trace.json --output-dir results/agentdojo/R011/gateway` | AgentDojo `089ed468`; project pre-commit dirty status in `results/agentdojo/R011/git-status.txt` | Linux `lab` 6.15.11 x86_64 | deterministic trace replay with heuristic goal-inferred events | `results/agentdojo/R011/` | done |
+| R012 | C1/C2 | InjecAgent enhanced-setting mixed replay and base/enhanced comparison | `PYTHONPATH=src python scripts/export_injecagent_intentcap.py --benchmark-dir benchmarks/injecagent --setting enhanced --attack-family all --include-user-tool-events --output-dir results/injecagent/R012/export --check`; `PYTHONPATH=src python scripts/replay_intentcap_gateway.py results/injecagent/R012/export/intentcap_trace.json --output-dir results/injecagent/R012/gateway` | InjecAgent `f19c9f2`; project pre-commit dirty status in `results/injecagent/R012/git-status.txt` | Linux `lab` 6.15.11 x86_64 | deterministic trace replay | `results/injecagent/R012/` | done |
 
 ## Result Summary And Anomalies
 - R001 local sanity passed: `pdf_to_xlsx_cells` and `user_selected_repo_issue` are allowed; `pdf_injected_repo_issue` is denied with `no matching lease`.
@@ -104,13 +105,15 @@ Completeness: partial
 - R010 decision-class breakdown: 1,054 `tool_select` events executed, while 969 `authorize` and 629 `sink_select` events were blocked. This is the first deterministic mixed utility/security replay, but it is still not a live LLM/model/tool execution experiment.
 - R011 AgentDojo goal-inferred replay succeeded: the exporter now emits conservative abstract protected events for the eight workspace injection tasks whose `ground_truth()` returns no calls. R011 contains 10 official ground-truth events plus 54 goal-inferred events across all 14 workspace injection tasks; the checker denied all 64 and the gateway blocked all 64.
 - R011 decision-class breakdown: 41 `authorize` and 23 `sink_select` events were blocked. Goal-inferred events are explicitly marked with `official_ground_truth: false`; they are adapter/oracle evidence, not benchmark-provided trajectories.
+- R012 InjecAgent enhanced-setting mixed replay succeeded: enhanced setting has the same selected-case and event counts as the base mixed replay under the current adapter: 1,054 trusted user-tool events and 1,598 injected attacker-tool events. The checker allowed the trusted 1,054 and denied the injected 1,598; the gateway executed 1,054 and blocked 1,598.
+- R012 base-vs-enhanced comparison shows zero delta for selected cases, benign user-tool events, injected attacker-tool events, checker allowed/denied counts, and gateway executed/blocked counts. Treat R012 as a robustness/consistency check, not new attack-class evidence.
 - No live IntentCap-wrapper external benchmark experiment has run yet.
-- The next useful result is either an enhanced-setting InjecAgent export, MCPTox oracle reconciliation, or a true live wrapper baseline with benign utility measurement.
+- The next useful result is either MCPTox oracle reconciliation, R011 label audit, or a true live wrapper baseline with benign utility measurement.
 
 ## Claim Verdict Table
 | Claim | Verdict | Evidence | Current supported wording | Maximal plausible wording | Expansion experiments |
 |---|---|---|---|---|---|
-| C1 | partial | R001 proves the local motivating wrong-sink trace; R004 proves AgentDojo injection ground-truth calls can be replayed as denied protected-decision events; R007 proves all MCPTox `Success`-labeled tool-poisoning responses can be replayed as denied metadata-to-decision influence events; R008 adds InjecAgent base-setting attacker-tool replay; R009 shows the same traces replay through a gateway-style block/execute interface; R010 adds a mixed trace where trusted user-tool choices execute and injected attacker-tool choices are blocked; R011 extends AgentDojo workspace coverage with explicitly marked goal-inferred protected events. None yet measure model utility under a live online wrapper. | IntentCap's checker and gateway can distinguish trusted user-intent control from denied untrusted-context control over protected decisions in toy traces and three exported benchmark families: AgentDojo, MCPTox, and InjecAgent. | IntentCap blocks unauthorized context-to-decision influence across multiple agent security benchmarks while preserving utility through an online wrapper | E1-E3 plus live utility runs |
+| C1 | partial | R001 proves the local motivating wrong-sink trace; R004 proves AgentDojo injection ground-truth calls can be replayed as denied protected-decision events; R007 proves all MCPTox `Success`-labeled tool-poisoning responses can be replayed as denied metadata-to-decision influence events; R008 adds InjecAgent base-setting attacker-tool replay; R009 shows the same traces replay through a gateway-style block/execute interface; R010 adds a mixed trace where trusted user-tool choices execute and injected attacker-tool choices are blocked; R011 extends AgentDojo workspace coverage with explicitly marked goal-inferred protected events; R012 shows InjecAgent enhanced setting does not change current adapter-level event/verdict coverage. None yet measure model utility under a live online wrapper. | IntentCap's checker and gateway can distinguish trusted user-intent control from denied untrusted-context control over protected decisions in toy traces and three exported benchmark families: AgentDojo, MCPTox, and InjecAgent. | IntentCap blocks unauthorized context-to-decision influence across multiple agent security benchmarks while preserving utility through an online wrapper | E1-E3 plus live utility runs |
 | C2 | unsupported | no oracle leases yet | none | IntentCap produces run-time leases closer to expert oracle than static policies while preserving utility | E4-E5 |
 | C3 | unsupported | checker exists, but no LLM-proposed lease corpus or compiler/checker ablation has run | none | Deterministic checking keeps LLM-generated policy outside the TCB across extension types | E6 |
 
@@ -128,7 +131,7 @@ Completeness: partial
 | P1 | MCPTox availability probe | determines MCP security scope |
 | P1 | MCPTox poisoned-tool adapter | tests whether tool metadata is treated as context without authority |
 | P1 | MCPTox parser/oracle refinement | closed the R006 97 unparsed-success gap in R007; next refinement is reconciling fallback events with benchmark oracle semantics |
-| P1 | InjecAgent enhanced-setting export | checks whether the added hacking prompt changes coverage or only duplicates base semantics |
+| P1 | InjecAgent all-setting aggregate export | checks whether base+enhanced aggregation only duplicates R010/R012 or reveals adapter drift |
 | P1 | Live online wrapper subset | converts deterministic gateway replay denials into model/tool utility and attack-blocking evidence |
 | P2 | tau3 benign utility probe | tests policy-following utility beyond attacks |
 
@@ -143,16 +146,17 @@ Completeness: partial
 - R009 uses the gateway abstraction but still replays recorded traces; it is not a live model or live tool-execution run.
 - R010 adds benign allowed events to the replay path, but remains deterministic trace/gateway replay rather than live model or live external-tool execution.
 - R011 improves AgentDojo workspace coverage but uses adapter-inferred events for eight tasks; those 54 events must not be reported as benchmark-provided ground-truth trajectories.
+- R012 is a neutral robustness check: enhanced-setting InjecAgent replay matches base replay under current event extraction, so it should not be framed as a stronger security result.
 - Model-based benchmark claims are not yet reproduced locally; current benchmark evidence is setup/schema plus offline trace replay.
 - Documentation compliance gate is not passed because independent subagent review has not been run.
 
 ## Reproducibility Checklist
 | Item | Status | Notes |
 |---|---|---|
-| Exact commands recorded | partial | recorded for R001-R011 |
-| Commit recorded per run | partial | local/project dirty status and external benchmark commits recorded for R001-R011 |
-| Machine recorded per run | partial | R001-R011 record Linux host class where applicable |
-| Seeds/repetitions recorded | partial | R001-R011 deterministic probes; no model benchmark seeds yet |
-| Raw result paths exist | partial | `results/local/R001/`, `results/agentdojo/R002/`, `results/agentdojo/R003/`, `results/agentdojo/R004/`, `results/agentdojo/R011/`, `results/mcptox/R005/`, `results/mcptox/R006/`, `results/mcptox/R007/`, `results/injecagent/R008/`, `results/gateway/R009/`, and `results/online/R010/` exist |
+| Exact commands recorded | partial | recorded for R001-R012 |
+| Commit recorded per run | partial | local/project dirty status and external benchmark commits recorded for R001-R012 |
+| Machine recorded per run | partial | R001-R012 record Linux host class where applicable |
+| Seeds/repetitions recorded | partial | R001-R012 deterministic probes; no model benchmark seeds yet |
+| Raw result paths exist | partial | `results/local/R001/`, `results/agentdojo/R002/`, `results/agentdojo/R003/`, `results/agentdojo/R004/`, `results/agentdojo/R011/`, `results/mcptox/R005/`, `results/mcptox/R006/`, `results/mcptox/R007/`, `results/injecagent/R008/`, `results/injecagent/R012/`, `results/gateway/R009/`, and `results/online/R010/` exist |
 | Scripts checked in | partial | minimal checker, gateway replay, AgentDojo suite probe, AgentDojo goal-inference export adapter, MCPTox IntentCap export adapter, and mixed InjecAgent IntentCap export adapter exist |
 | External benchmark versions pinned | partial | AgentDojo shallow clone at `089ed468`; MCPTox shallow clone at `f85189f`; InjecAgent shallow clone at `f19c9f2`; other benchmarks pending |

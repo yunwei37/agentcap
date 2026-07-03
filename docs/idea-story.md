@@ -2,13 +2,13 @@
 
 Last updated: 2026-07-03
 Stage at update: stage 3/5 trace-level benchmark probes
-Source/command: AgentDojo, MCPTox, InjecAgent export/checker probes plus gateway replay, including R010 mixed replay and R011 AgentDojo goal inference
+Source/command: AgentDojo, MCPTox, InjecAgent export/checker probes plus gateway replay, including R010 mixed replay, R011 AgentDojo goal inference, and R012 InjecAgent enhanced replay
 Completeness: partial
 
 ## Current State
 - Stage: Stage 3 design/prototype and Stage 5 evaluation probes are active. Stage 0 framing is good enough to seed claims, and the first benchmark artifacts are now locally probed.
-- Blocking gate: no live IntentCap-wrapper benchmark utility/security run yet; current evidence is trace-level gateway replay across AgentDojo, MCPTox, and InjecAgent, a mixed InjecAgent replay where trusted user-tool choices execute and injected attacker-tool choices are blocked, and an AgentDojo goal-inferred replay for natural-language-only injection tasks.
-- Next action: implement the next evidence step, either audit AgentDojo goal-inferred labels against security checks, export InjecAgent enhanced setting, reconcile MCPTox oracle/counts, or build a small live gateway baseline.
+- Blocking gate: no live IntentCap-wrapper benchmark utility/security run yet; current evidence is trace-level gateway replay across AgentDojo, MCPTox, and InjecAgent, a mixed InjecAgent replay where trusted user-tool choices execute and injected attacker-tool choices are blocked, an AgentDojo goal-inferred replay for natural-language-only injection tasks, and an InjecAgent enhanced-setting consistency replay.
+- Next action: implement the next evidence step, either audit AgentDojo goal-inferred labels against security checks, reconcile MCPTox oracle/counts, or build a small live gateway baseline.
 - Paper boundary: the existing two-page English workshop paper is frozen under `docs/paper-workshop/`; auto-research drafts go under `docs/autopaper/`.
 
 ## Downstream Document Index
@@ -113,7 +113,7 @@ Completeness: partial.
 ### Claim Ledger
 | ID | Claim | Scope | Metric/evidence needed | Status |
 |---|---|---|---|---|
-| C1 | IntentCap blocks unauthorized context-to-decision influence while allowing authorized data use. | AgentDojo/InjecAgent/MCPTox-style adversarial workflows with protected decisions. | Attack success rate, influence-violation denial counts, benign utility, false denial recovery. | partial: local trace plus AgentDojo, MCPTox, InjecAgent, mixed InjecAgent, and AgentDojo goal-inferred gateway replay; no live online utility run yet |
+| C1 | IntentCap blocks unauthorized context-to-decision influence while allowing authorized data use. | AgentDojo/InjecAgent/MCPTox-style adversarial workflows with protected decisions. | Attack success rate, influence-violation denial counts, benign utility, false denial recovery. | partial: local trace plus AgentDojo, MCPTox, InjecAgent, mixed InjecAgent, AgentDojo goal-inferred, and InjecAgent enhanced consistency replay; no live online utility run yet |
 | C2 | Intent-carrying leases reduce over-privilege relative to static tool/server/Skill policies. | Skills, MCP tools, local scripts, and subagent delegation in mixed workflows. | Risk-weighted authority score vs static allowlist, Skill manifest, human approval, and expert oracle. | proposed |
 | C3 | The compiler/checker split keeps LLM policy synthesis outside the trusted computing base. | Candidate lease generation from plans and extension metadata. | Invalid proposals rejected, valid proposals accepted, proof completeness, checker coverage. | proposed |
 
@@ -135,7 +135,7 @@ Completeness: partial.
 ### Expansion Agenda
 | Expansion axis | Bigger experiment | Claim upside | Cost/risk | Probe |
 |---|---|---|---|---|
-| Benchmark breadth | AgentDojo + InjecAgent + MCPTox + tau/MCP utility tasks | cross-ecosystem claim | medium setup cost | three security benchmark adapters and a gateway replay path exist; R010 adds mixed benign/attack replay; R011 adds AgentDojo goal-inferred coverage; live utility benchmark still pending |
+| Benchmark breadth | AgentDojo + InjecAgent + MCPTox + tau/MCP utility tasks | cross-ecosystem claim | medium setup cost | three security benchmark adapters and a gateway replay path exist; R010 adds mixed benign/attack replay; R011 adds AgentDojo goal-inferred coverage; R012 checks InjecAgent enhanced consistency; live utility benchmark still pending |
 | Enforcement backend | tool gateway + MCP broker + sandbox lowering | backend-independent authorization claim | implementation cost | offline checker first, runtime enforcement second |
 | Authority minimization | compare generated leases to expert oracle | least-privilege claim | requires manual oracle design | start with 10 tasks |
 | Refinement | denied action -> narrower lease -> continue | utility preservation claim | requires agent loop integration | simulate with recorded traces |

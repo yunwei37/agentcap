@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-03
 Stage at update: stage 4 implementation probes
-Source/command: local checker, gateway replay, AgentDojo/MCPTox/InjecAgent export adapters, R010 mixed replay, R011 AgentDojo goal inference
+Source/command: local checker, gateway replay, AgentDojo/MCPTox/InjecAgent export adapters, R010 mixed replay, R011 AgentDojo goal inference, R012 InjecAgent enhanced replay
 Completeness: partial
 
 ## Repository Layout Relevant To The Project
@@ -24,7 +24,7 @@ Completeness: partial
 | `scripts/export_injecagent_intentcap.py` | exports InjecAgent synthesized attacker-tool cases into IntentCap JSON traces | created |
 | `scripts/replay_intentcap_gateway.py` | replays exported traces through the IntentCap gateway abstraction | created |
 | `benchmarks/` | ignored external benchmark clone workspace | created; AgentDojo cloned locally |
-| `results/` | raw result outputs and run logs | created; R001-R011 recorded |
+| `results/` | raw result outputs and run logs | created; R001-R012 recorded |
 
 ## Implementation Milestones
 | Milestone | Deliverable | Exit condition | Status |
@@ -52,10 +52,11 @@ Completeness: partial
 - InjecAgent is cloned locally under ignored `benchmarks/injecagent` at commit `f19c9f2`; `results/injecagent/R008/` records base-setting schema/export/checker outputs.
 - R008 exports 1,598 protected-decision events from 1,054 base-setting InjecAgent cases; the checker denies all 1,598 as untrusted tool-response control over `authorize` or `sink_select` decisions.
 - The InjecAgent exporter now supports `--include-user-tool-events`, which emits the benchmark's original user-tool call as trusted user-intent control before replaying injected attacker-tool calls from the same case.
+- R012 exports enhanced-setting InjecAgent mixed traces with the same coverage as R010: 1,054 trusted user-tool events allowed/executed and 1,598 injected attacker-tool events denied/blocked. The saved base-vs-enhanced comparison has zero deltas for key counts under the current adapter.
 - A reusable `TraceGateway` exists under `src/intentcap/gateway.py`; it exposes leased operation/object pairs, checks one attempted event at a time, and emits block/execute decisions plus aggregate summaries.
 - R009 replays AgentDojo R004, MCPTox R007, and InjecAgent R008 through the gateway. The gateway blocks 3,756 of 3,756 attempted protected events.
 - R010 replays mixed InjecAgent base-setting traces through the checker and gateway. The checker allows 1,054 trusted user-tool events and denies 1,598 injected attacker-tool events; the gateway executes the same 1,054 events and blocks the same 1,598 events.
-- The next benchmark step is to audit the AgentDojo goal-inferred labels, export InjecAgent enhanced setting, or build a true live wrapper baseline with model/tool utility.
+- The next benchmark step is to audit the AgentDojo goal-inferred labels, reconcile MCPTox fallback/oracle semantics, or build a true live wrapper baseline with model/tool utility.
 
 ## Build/Run Commands
 | Purpose | Command | Status |
@@ -72,8 +73,10 @@ Completeness: partial
 | MCPTox IntentCap trace export | `PYTHONPATH=src python scripts/export_mcptox_intentcap.py --benchmark-dir benchmarks/mcptox --output-dir results/mcptox/R007 --check` | works; exports 2,148 events and denies all 2,148 under current labels |
 | InjecAgent IntentCap trace export | `PYTHONPATH=src python scripts/export_injecagent_intentcap.py --benchmark-dir benchmarks/injecagent --setting base --attack-family all --output-dir results/injecagent/R008 --check` | works; exports 1,598 events and denies all 1,598 under current labels |
 | InjecAgent mixed benign/attack export | `PYTHONPATH=src python scripts/export_injecagent_intentcap.py --benchmark-dir benchmarks/injecagent --setting base --attack-family all --include-user-tool-events --output-dir results/online/R010/export --check` | works; exports 1,054 trusted user-tool events and 1,598 injected attacker-tool events |
+| InjecAgent enhanced mixed export | `PYTHONPATH=src python scripts/export_injecagent_intentcap.py --benchmark-dir benchmarks/injecagent --setting enhanced --attack-family all --include-user-tool-events --output-dir results/injecagent/R012/export --check` | works; same event/verdict counts as R010 under current adapter |
 | Gateway replay | `PYTHONPATH=src python scripts/replay_intentcap_gateway.py results/injecagent/R008/intentcap_trace.json --output-dir /tmp/intentcap-gateway-smoke` | works; R009 records AgentDojo, MCPTox, and InjecAgent replay |
 | Mixed InjecAgent gateway replay | `PYTHONPATH=src python scripts/replay_intentcap_gateway.py results/online/R010/export/intentcap_trace.json --output-dir results/online/R010/gateway` | works; R010 executes 1,054 trusted events and blocks 1,598 injected events |
+| Enhanced InjecAgent gateway replay | `PYTHONPATH=src python scripts/replay_intentcap_gateway.py results/injecagent/R012/export/intentcap_trace.json --output-dir results/injecagent/R012/gateway` | works; R012 executes 1,054 trusted events and blocks 1,598 injected events |
 | AgentDojo goal-inferred gateway replay | `PYTHONPATH=src python scripts/replay_intentcap_gateway.py results/agentdojo/R011/intentcap_trace.json --output-dir results/agentdojo/R011/gateway` | works; R011 blocks all 64 events |
 
 ## Integration Constraints
@@ -94,4 +97,4 @@ Completeness: partial
 - Need decide whether to keep external benchmark clones only as ignored local state or convert selected ones into submodules later.
 
 ## Next Engineering Action
-Build the next evidence step: either audit AgentDojo goal-inferred event templates against task security checks, export InjecAgent enhanced setting, or connect the gateway to a small live benchmark/tool subset to measure model utility and attack blocking under actual tool exposure.
+Build the next evidence step: either audit AgentDojo goal-inferred event templates against task security checks, reconcile MCPTox fallback/oracle semantics, or connect the gateway to a small live benchmark/tool subset to measure model utility and attack blocking under actual tool exposure.
