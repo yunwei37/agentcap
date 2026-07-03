@@ -1,0 +1,1 @@
+. .venv/bin/activate && python scripts/probe_agentdojo.py --benchmark-version v1.2.2 --suite workspace --check > results/agentdojo/R003/workspace_check.txt

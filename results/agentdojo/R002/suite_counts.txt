@@ -1,0 +1,4 @@
+workspace user_tasks=40 injection_tasks=14 tools=24
+slack user_tasks=21 injection_tasks=5 tools=11
+travel user_tasks=20 injection_tasks=7 tools=28
+banking user_tasks=16 injection_tasks=9 tools=11

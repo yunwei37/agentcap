@@ -1,0 +1,1 @@
+. .venv/bin/activate && for suite in workspace slack travel banking; do python scripts/probe_agentdojo.py --benchmark-version v1.2.2 --suite "$suite"; done > results/agentdojo/R002/suite_counts.txt

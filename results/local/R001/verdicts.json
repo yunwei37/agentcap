@@ -1,0 +1,20 @@
+[
+  {
+    "allowed": true,
+    "event_id": "pdf_to_xlsx_cells",
+    "lease_id": "use_pdf_for_cells",
+    "reason": "allowed"
+  },
+  {
+    "allowed": true,
+    "event_id": "user_selected_repo_issue",
+    "lease_id": "create_issue_in_user_repo",
+    "reason": "allowed"
+  },
+  {
+    "allowed": false,
+    "event_id": "pdf_injected_repo_issue",
+    "lease_id": null,
+    "reason": "no matching lease"
+  }
+]

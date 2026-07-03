@@ -25,3 +25,9 @@ comment.cut
 # Python
 __pycache__/
 *.pyc
+.pytest_cache/
+
+# Local benchmark clones and environments
+benchmarks/*
+!benchmarks/README.md
+.venv/

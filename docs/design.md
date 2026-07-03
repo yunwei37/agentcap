@@ -1,0 +1,85 @@
+# Design
+
+Last updated: 2026-07-02 America/Vancouver
+Stage at update: stage 3 startup skeleton
+Source/command: research-experiment-design startup skeleton via auto-research goal
+Completeness: partial
+
+## System-Under-Test Model
+IntentCap is evaluated as a run-time authorization layer for LLM agent extensions. The first prototype should support two modes:
+
+1. Offline trace checker: consumes benchmark trajectories, reconstructed plans, context labels, and candidate actions; reports whether each high-impact event has an authorized lease and allowed control provenance.
+2. Online harness wrapper: exposes leased tools/MCP methods to an agent, validates arguments, and records provenance decisions before allowing execution.
+
+The offline checker is the cheapest path to validate the core idea against existing benchmarks before implementing every enforcement adapter.
+
+## Components And Data/Control Flow
+| Component | Role | Trusted? | Inputs | Outputs |
+|---|---|---|---|---|
+| Intent certificate issuer | Canonicalizes user goal, selected objects, sinks, constraints, approvals, expiry | trusted | user request, selected files/resources, admin policy | structured intent certificate |
+| Context labeler | Assigns origin, integrity, confidentiality, purpose, and influence modes | trusted for labels, not for content | tool outputs, documents, Skill/MCP metadata, user inputs | labeled context cells |
+| Effect extractor | Converts plans/trajectories/actions into security-relevant events | untrusted/checked | model plan, benchmark trace, tool call, script call | effect IR with data/control provenance |
+| Lease compiler | Proposes minimum-risk leases | untrusted | intent, labels, effect graph, extension summaries | candidate leases and proof objects |
+| Deterministic checker | Accepts or rejects leases/events | trusted | policy, intent, labels, leases, effect | allow/deny plus reason |
+| Runtime adapters | Enforce accepted leases | trusted per boundary | accepted lease set, event stream | scoped context, exposed tools, MCP calls, sandbox policies |
+| Audit logger | Preserves decisions for analysis | trusted | checker verdicts, runtime events | result files for evaluation |
+
+## Interfaces And Instrumentation Points
+- Intent certificate format: JSON/YAML object with actor, goal, objects, sinks, constraints, approvals, expiry.
+- Context label format: JSON/YAML object keyed by context source ID and allowed influence modes per decision class.
+- Effect IR: `ctx.use`, `tool.call`, `mcp.call`, `fs.read`, `fs.write`, `exec.run`, `net.connect`, `approve.request`, `subagent.spawn`.
+- Lease format: holder, operation, object predicate, argument predicate, intent reference, influence constraints, flow constraints, temporal guards, budget, expiry, delegation.
+- Checker API: `check_event(policy, state, leases, event) -> verdict`.
+- Benchmark adapter API: `load_tasks()`, `label_context(task)`, `events_from_trace(trace)`, `oracle(task, verdicts)`.
+
+## Protected Decision Classes
+| Decision class | Examples | Required influence authority |
+|---|---|---|
+| Tool choice | choose Gmail vs GitHub vs shell | plan/tool-select |
+| Sink selection | repo, recipient, host, account, ticket project | sink-select/authorize |
+| Approval scope | request one issue vs broad repo token | authorize |
+| Delegation | spawn subagent with context/leases | delegate |
+| Policy update | load Skill, expand allowlist, change constraints | authorize |
+| Local execution | script path, argv, file writes, network endpoint | execute/parameterize with trusted control |
+| Data content | spreadsheet cells, issue body, summary text | quote/summarize/parameterize |
+
+## Durable State And Trust/Failure Boundaries
+- Trusted state: intent certificates, global policy, label rules, checker state, active leases, budgets, audit log.
+- Untrusted state: LLM-generated plans, Skill instructions unless signed/trusted, MCP tool descriptions/results unless server trusted, external documents, subagent summaries, script stdout/stderr.
+- Failure boundary: if provenance is unknown, the checker denies protected decisions but may allow low-authority data use.
+- Delegation invariant: a child lease set must be a subset of parent authority unless a trusted issuer creates a fresh lease.
+
+## Assumptions And Invariants
+- The LLM can propose but cannot decide authority.
+- A high-impact event must match an active lease and derive from the current intent certificate.
+- Data provenance and control provenance are distinct; untrusted context may be data provenance for output content without being control provenance for sink/tool/approval decisions.
+- Runtime adapters can enforce concrete allow/deny outcomes for the boundaries they cover.
+- The first prototype may over-approximate provenance; false denials are acceptable if they are measured and recoverable.
+
+## Alternatives Considered
+| Alternative | Why insufficient alone | How IntentCap uses or compares |
+|---|---|---|
+| Static tool allowlist | misses context influence and is often over-broad | baseline |
+| Skill manifest policy | Skill-centric rather than run-centric | baseline for Skill workflows |
+| Human approval | users may approve broad scopes and may not see hidden influence | baseline and fresh intent source |
+| OS monitor only | enforces effects after policy exists; does not know policy provenance | optional backend |
+| Prompt-only defense | model remains the component being attacked | out-of-TCB comparison |
+| CaMeL-style control/data split | strong but oriented around trusted-query program flow | closest conceptual comparison |
+
+## Design Risks And Validation Hooks
+| Risk | Validation hook |
+|---|---|
+| Control provenance is too hard to infer from natural model traces. | Start with benchmark traces and explicit event instrumentation; measure unknown-provenance denials. |
+| Lease compiler overfits to hand-written policies. | Compare expert oracle, LLM-only compiler, and deterministic checker acceptance. |
+| Intent certificates become broad approvals. | Track approval scope breadth and wrong-sink denials. |
+| Utility collapses under strict checking. | Measure benign task completion and structured denial recovery. |
+| Same-claim risk with CaMeL/Task Shield/Progent. | Keep ablations that isolate intent certificates, influence modes, and proof-carrying leases. |
+
+## Next Design Action
+Implement a minimal offline checker and AgentDojo adapter that can classify a small set of actions as:
+
+- allowed data use,
+- denied wrong-sink influence,
+- denied unauthorized tool choice,
+- denied approval-scope inflation,
+- unknown provenance false denial.
