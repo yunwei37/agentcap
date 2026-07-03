@@ -1,0 +1,19 @@
+## main...origin/main
+ M docs/autopaper/intentcap-autopaper.md
+ M docs/background-related-work.md
+ M docs/design.md
+ M docs/evaluation.md
+ M docs/idea-story.md
+ M docs/implementation.md
+ M scripts/export_agentdojo_intentcap.py
+?? results/agentdojo/R011/agentdojo-head.txt
+?? results/agentdojo/R011/catalog.json
+?? results/agentdojo/R011/command.txt
+?? results/agentdojo/R011/gateway/exposed_objects.json
+?? results/agentdojo/R011/gateway/gateway_decisions.json
+?? results/agentdojo/R011/gateway/gateway_summary.json
+?? results/agentdojo/R011/git-status.txt
+?? results/agentdojo/R011/intentcap_trace.json
+?? results/agentdojo/R011/intentcap_verdicts.json
+?? results/agentdojo/R011/summary.json
+?? tests/test_export_agentdojo.py

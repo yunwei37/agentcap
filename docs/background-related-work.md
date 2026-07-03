@@ -67,7 +67,7 @@ Completeness: partial
 ## Absorbable Ideas
 | Source/community | Idea to absorb | Claim expansion enabled | Experiment implication | Risk |
 |---|---|---|---|---|
-| AgentDojo | Formal utility/security check functions over environment state | avoids LLM-as-judge for security metrics | implement IntentCap as agent wrapper or offline trajectory checker | adapter work |
+| AgentDojo | Formal utility/security check functions over environment state | avoids LLM-as-judge for security metrics | implement IntentCap as agent wrapper or offline trajectory checker; R011 now covers natural-language-only injection goals with marked inferred events | adapter labels need audit |
 | CaMeL | Query-derived control/data-flow extraction | stronger theorem and clearer TCB | compare IntentCap control provenance to CaMeL flows | same-claim risk |
 | Task Shield | Objective-serving action check | better intent derivation rule | action must both serve intent and have provenance-authorized control | may blur novelty |
 | MCPTox | Poisoned tool descriptions where poisoned tool is not executed | shows description/context influence can be dangerous without direct action | label MCP descriptions as forbidden for authorize/sink/tool-select decisions | artifact available; adapter has full `Success`-label coverage; count/oracle reconciliation and live wrapper pending |
@@ -107,4 +107,4 @@ Completeness: partial
 - Larger claim opportunities: portable intent-provenance-aware policy compiler for agent extension ecosystems; offline trace checker first, runtime enforcer second.
 - Absorbable ideas to import: AgentDojo oracles, CaMeL flow split, Task Shield goal alignment, MCPTox poisoned-tool-description cases, tau domain policies.
 - Mandatory baselines: vanilla, static allowlist/tool filter, Task Shield, CaMeL, Progent-style policy, Skill manifest/SkillGuard-style policy, OS enforcement only.
-- Next action: harden benchmark evidence, with priority on AgentDojo natural-language attack-goal extraction, InjecAgent enhanced-setting export, MCPTox oracle/count reconciliation, or a small live wrapper baseline. R010 already adds deterministic mixed benign/attack replay for InjecAgent, but not live model/tool execution.
+- Next action: harden benchmark evidence, with priority on auditing R011 AgentDojo goal-inferred labels, InjecAgent enhanced-setting export, MCPTox oracle/count reconciliation, or a small live wrapper baseline. R010 adds deterministic mixed benign/attack replay for InjecAgent and R011 adds AgentDojo natural-language goal replay, but neither is live model/tool execution.

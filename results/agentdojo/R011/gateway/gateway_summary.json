@@ -1,0 +1,22 @@
+{
+  "active_leases": 64,
+  "attempted_events": 64,
+  "blocked_events": 64,
+  "blocked_mode_counts": {
+    "authorize": 41,
+    "sink_select": 23
+  },
+  "blocked_op_counts": {
+    "tool.call": 64
+  },
+  "executed_events": 0,
+  "exposed_objects": 10,
+  "labels": 14,
+  "mode_counts": {
+    "authorize": 41,
+    "sink_select": 23
+  },
+  "op_counts": {
+    "tool.call": 64
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "benchmark_version": "v1.2.2",
+  "checker_allowed": 0,
+  "checker_denied": 64,
+  "goal_inferred_events": 54,
+  "ground_truth_events": 10,
+  "include_goal_inferred_events": true,
+  "injection_tasks": 14,
+  "injection_tasks_with_goal_inferred_events": 8,
+  "injection_tasks_with_ground_truth": 6,
+  "suite": "workspace",
+  "tools": 24,
+  "trace_events": 64,
+  "user_tasks": 40
+}

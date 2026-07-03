@@ -1,0 +1,2 @@
+. .venv/bin/activate && PYTHONPATH=src python scripts/export_agentdojo_intentcap.py --benchmark-version v1.2.2 --suite workspace --include-goal-inferred-events --output-dir results/agentdojo/R011 --check
+PYTHONPATH=src python scripts/replay_intentcap_gateway.py results/agentdojo/R011/intentcap_trace.json --output-dir results/agentdojo/R011/gateway
