@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-03
 Stage at update: stage 4 implementation probes
-Source/command: local checker, AgentDojo export adapter, MCPTox artifact probe
+Source/command: local checker, AgentDojo export adapter, MCPTox artifact and response export probes
 Completeness: partial
 
 ## Repository Layout Relevant To The Project
@@ -19,8 +19,9 @@ Completeness: partial
 | `src/intentcap/` | prototype checker package | created |
 | `scripts/probe_agentdojo.py` | AgentDojo setup/suite sanity probe | created |
 | `scripts/export_agentdojo_intentcap.py` | exports AgentDojo task/tool/injection metadata and injection ground-truth calls into IntentCap JSON traces | created |
+| `scripts/export_mcptox_intentcap.py` | exports MCPTox labeled successful model responses into IntentCap JSON traces | created |
 | `benchmarks/` | ignored external benchmark clone workspace | created; AgentDojo cloned locally |
-| `results/` | raw result outputs and run logs | created; R001-R005 recorded |
+| `results/` | raw result outputs and run logs | created; R001-R006 recorded |
 
 ## Implementation Milestones
 | Milestone | Deliverable | Exit condition | Status |
@@ -29,7 +30,7 @@ Completeness: partial
 | M1: Core schema/checker | Python checker for intent labels, effects, leases, and verdicts | unit tests for allow/deny examples | partial: minimal JSON checker exists |
 | M2: Offline trace checker | CLI that reads JSON events and policy/lease files | can reproduce the PDF wrong-sink example without an LLM | partial: local sanity trace passes |
 | M3: AgentDojo adapter | load AgentDojo task metadata/traces or wrap benchmark agent calls | one benign and one adversarial task dry-run logged | partial: metadata and injection ground-truth export works; natural-language-only attack goals still pending |
-| M4: InjecAgent/MCPTox adapters | parse cases into protected decision events | at least one setup/dry-run or documented blocker per benchmark | partial: MCPTox official artifact cloned and schema-count probe recorded; adapter pending |
+| M4: InjecAgent/MCPTox adapters | parse cases into protected decision events | at least one setup/dry-run or documented blocker per benchmark | partial: MCPTox official artifact cloned, schema-count probe recorded, and successful-response trace exporter works; InjecAgent pending |
 | M5: Lease compiler prototype | heuristic compiler from task intent and effect list to candidate leases | compares LLM-only/wide leases vs minimized leases | todo |
 | M6: Online enforcement harness | tool gateway/MCP broker/context constructor wrappers | blocks wrong sink in a live toy workflow | todo |
 | M7: Evaluation scripts | aggregate utility, attack success, over-privilege, false denial, recovery | generates tables for `docs/autopaper` | todo |
@@ -41,7 +42,8 @@ Completeness: partial
 - AgentDojo suite metadata, workspace ground-truth checks, and IntentCap trace export/checker outputs are recorded in `results/agentdojo/R002/`, `results/agentdojo/R003/`, and `results/agentdojo/R004/`.
 - R004 exports 10 protected-decision events from the 6 AgentDojo workspace injection tasks that provide non-empty ground-truth tool calls; the checker denies all 10 as untrusted injection-goal control over `sink_select`/`authorize` decisions.
 - MCPTox is cloned locally under ignored `benchmarks/mcptox` at commit `f85189f`; `results/mcptox/R005/` records an artifact probe over its JSON files.
-- The next benchmark step is to implement either an AgentDojo natural-language attack-goal adapter for tasks without ground-truth calls or a MCPTox poisoned-tool-description adapter.
+- R006 exports 2,033 protected-decision events from MCPTox responses labeled `Success`; the checker denies all 2,033 as poisoned tool-description control over `authorize`, `sink_select`, or `tool_select` decisions.
+- The next benchmark step is to implement either an AgentDojo natural-language attack-goal adapter, improve MCPTox parser/oracle coverage, or add a small online wrapper baseline.
 
 ## Build/Run Commands
 | Purpose | Command | Status |
@@ -54,6 +56,7 @@ Completeness: partial
 | AgentDojo workspace ground-truth check | `. .venv/bin/activate && python scripts/probe_agentdojo.py --benchmark-version v1.2.2 --suite workspace --check` | warning; see `results/agentdojo/R003/` |
 | AgentDojo IntentCap trace export | `. .venv/bin/activate && PYTHONPATH=src python scripts/export_agentdojo_intentcap.py --benchmark-version v1.2.2 --suite workspace --output-dir results/agentdojo/R004 --check` | works; exports 10 events and denies all 10 under current labels |
 | MCPTox artifact probe | `git clone --depth 1 https://github.com/zhiqiangwang4/MCPTox-Benchmark benchmarks/mcptox`; local JSON count probe in `results/mcptox/R005/schema_probe.txt` | works; 45 server groups, 485 tool entries/files, 1,348 cases |
+| MCPTox IntentCap trace export | `PYTHONPATH=src python scripts/export_mcptox_intentcap.py --benchmark-dir benchmarks/mcptox --output-dir results/mcptox/R006 --check` | works; exports 2,033 events and denies all 2,033 under current labels |
 
 ## Integration Constraints
 - Do not mutate the frozen workshop paper unless explicitly requested.
@@ -66,8 +69,9 @@ Completeness: partial
 - Need formalize the trace JSON schema currently implied by `src/intentcap/checker.py` and `scripts/export_agentdojo_intentcap.py`.
 - Need improve checker denial selection once there are multiple plausible leases for the same operation; R004 uses a synthetic `_intentcap_event_id` field for deterministic event-scoped replay.
 - Need implement natural-language attack-goal extraction for AgentDojo injection tasks with empty ground-truth calls.
-- Need implement MCPTox adapter from poisoned tool metadata to `mcp.tool_description -> protected decision` events.
+- Need improve MCPTox response parser coverage: 97 `Success`-labeled responses remain unparsed because of malformed Python/JSON-like outputs or nested code strings.
+- Need implement an online wrapper baseline so trace-level denials can be paired with utility/attack-success metrics.
 - Need decide whether to keep external benchmark clones only as ignored local state or convert selected ones into submodules later.
 
 ## Next Engineering Action
-Build the next adapter: either classify AgentDojo natural-language injection goals into protected decision events, or parse MCPTox poisoned tool definitions into IntentCap trace events where MCP tool descriptions are untrusted control provenance for tool/sink/authorization decisions.
+Build the next evidence step: either classify AgentDojo natural-language injection goals into protected decision events, close the MCPTox unparsed-success gap, or wrap a small live benchmark subset to measure utility and attack blocking under actual tool exposure.

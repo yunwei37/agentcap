@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-03
 Stage at update: stage 3 adapter-informed design
-Source/command: AgentDojo export adapter and MCPTox artifact probe
+Source/command: AgentDojo export adapter and MCPTox artifact/response export probes
 Completeness: partial
 
 ## System-Under-Test Model
@@ -79,6 +79,8 @@ The offline checker is the cheapest path to validate the core idea against exist
 - AgentDojo workspace injection tasks split into two useful classes. Six of 14 injection tasks provide non-empty ground-truth tool-call traces, which can be replayed as explicit protected-decision events. The remaining eight are natural-language attack goals without ground-truth calls, so they need a separate goal-to-event classifier or online agent run.
 - The current AgentDojo exporter labels `agentdojo_injection_goal:*` as untrusted context that may `parameterize` tool arguments or be summarized, but may not control `sink_select` or `authorize` decisions. This directly tests IntentCap's central distinction between data influence and authority-bearing control influence.
 - MCPTox should be modeled differently from AgentDojo replay: the poisoned MCP tool description is the untrusted context source, and the protected event is often a legitimate downstream tool call selected or parameterized under that metadata's control. The adapter should therefore emit provenance such as `mcp_tool_description:<server>:<tool>` rather than treating the tool output as the attacker source.
+- The first MCPTox exporter follows that model: each response labeled `Success` is parsed into one or more concrete `mcp.call` events, while the poisoned tool description is recorded as control and data provenance. The label for that metadata allows only quote/summarize use, so protected `authorize`, `sink_select`, and `tool_select` decisions are denied even if an overbroad operation lease exists.
+- MCPTox also creates a useful parser robustness problem: some successful responses contain malformed dicts, embedded JavaScript, or nested code blocks. These should become parser-coverage and oracle-quality metrics rather than silent drops.
 - Benchmark adapters should preserve raw benchmark identifiers in each event so denial explanations can be traced back to a task, server, tool, attack template, or risk category.
 
 ## Next Design Action
