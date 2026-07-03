@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-03
 Stage at update: stage 4 implementation probes
-Source/command: local checker, gateway replay, live tool gateway smoke, AgentDojo/MCPTox/InjecAgent export adapters, R010 mixed replay, R011 AgentDojo goal inference, R012 InjecAgent enhanced replay, R013 live smoke, R014 AgentDojo inferred-event audit, R015 MCPTox reconciliation audit, R016 benchmark-derived live trace execution, R017 official cached prompted-output gateway replay, R018 cached-output aggregate, R019 InjecAgent authority-minimization analysis, R020 MCPTox authority-minimization analysis, R021 tau2/tau3 artifact probe, and R022 tau2/tau3 reference-action authority minimization
+Source/command: local checker, gateway replay, live tool gateway smoke, AgentDojo/MCPTox/InjecAgent export adapters, R010 mixed replay, R011 AgentDojo goal inference, R012 InjecAgent enhanced replay, R013 live smoke, R014 AgentDojo inferred-event audit, R015 MCPTox reconciliation audit, R016 benchmark-derived live trace execution, R017 official cached prompted-output gateway replay, R018 cached-output aggregate, R019 InjecAgent authority-minimization analysis, R020 MCPTox authority-minimization analysis, R021 tau2/tau3 artifact probe, R022 tau2/tau3 reference-action authority minimization, and R023 tau2/tau3 reference-action live gateway execution
 Completeness: partial
 
 ## Repository Layout Relevant To The Project
@@ -34,8 +34,9 @@ Completeness: partial
 | `scripts/analyze_mcptox_authority_minimization.py` | compares IntentCap provenance leases against exact-tool and MCP server/global object-scope policies over MCPTox | created |
 | `scripts/probe_tau2_bench.py` | probes tau2/tau3 task, policy, tool, document, and reference-action artifacts without model/API execution | created |
 | `scripts/analyze_tau2_authority_minimization.py` | compares tau2/tau3 exact reference-action leases against task/domain/global static tool scopes | created |
+| `scripts/run_tau2_reference_actions_live_gateway.py` | executes tau2/tau3 assistant reference actions through `LiveToolGateway` and real tau2 domain toolkit callables | created |
 | `benchmarks/` | ignored external benchmark clone workspace | created; AgentDojo cloned locally |
-| `results/` | raw result outputs and run logs | created; R001-R022 recorded |
+| `results/` | raw result outputs and run logs | created; R001-R023 recorded |
 
 ## Implementation Milestones
 | Milestone | Deliverable | Exit condition | Status |
@@ -80,6 +81,7 @@ Completeness: partial
 - tau2-bench is cloned locally under ignored `benchmarks/tau2-bench` at commit `1901a301961cbbe3fd11f3e84a2a376530c759e3`.
 - R021 probes tau2/tau3 artifacts without running simulations or model APIs. It records 5 domains, 2,556 tasks, 385 base-split tasks, 14,842 reference actions, 18,462 initialization actions, 698 documents, 67 ordinary assistant tools, 48 discoverable assistant tools, and 32 user tools in `results/tau2/R021/`.
 - R022 analyzes tau2/tau3 assistant reference-action authority. It covers all 3,813 assistant-side reference actions with exact event leases, while static domain regular assistant ACLs expose 34,209 tool slots and global all-tool ACLs expose 388,512 slots. The analyzer also records 11,029 user-side simulator reference actions separately.
+- R023 executes tau2/tau3 assistant reference actions through `LiveToolGateway` and real tau2 domain toolkit callables. It covers all 3,813 assistant reference actions across `mock`, `airline`, `retail`, `telecom`, and `banking_knowledge`; 3,813 pass exact lease checks and invoke registered toolkit methods, 3,795 complete without tool exception, 18 raise direct-replay `ValueError`s, and 0 are checker-blocked or unsupported. The runner uses local import shims for missing optional tau2 dependencies instead of mutating the system Python environment.
 - The next benchmark step is to build an online model/API wrapper, a tau2/tau3 simulator-backed utility subset, or expert-oracle lease scoring.
 
 ## Build/Run Commands
@@ -87,7 +89,7 @@ Completeness: partial
 |---|---|---|
 | Build current workshop PDF | `make` | works as of commit `4ce9892`; root paper should remain frozen |
 | Verify workshop PDF page count | `pdfinfo main.pdf | rg '^Pages'` | works; expected `Pages: 2` |
-| Unit tests | `PYTHONPATH=src python -m pytest -q` | works: 23 tests passed; `pytest.ini` restricts discovery to this repo's `tests/` |
+| Unit tests | `PYTHONPATH=src python -m pytest -q` | works: 25 tests passed; `pytest.ini` restricts discovery to this repo's `tests/` |
 | Local checker sanity | `PYTHONPATH=src python -m intentcap.checker examples/local_pdf_wrong_sink.json` | works; see `results/local/R001/verdicts.json` |
 | AgentDojo suite count probe | `. .venv/bin/activate && python scripts/probe_agentdojo.py --benchmark-version v1.2.2 --suite workspace` | works; see `results/agentdojo/R002/` |
 | AgentDojo workspace ground-truth check | `. .venv/bin/activate && python scripts/probe_agentdojo.py --benchmark-version v1.2.2 --suite workspace --check` | warning; see `results/agentdojo/R003/` |
@@ -112,6 +114,7 @@ Completeness: partial
 | MCPTox authority minimization | `PYTHONPATH=src python scripts/analyze_mcptox_authority_minimization.py --trace results/mcptox/R007/intentcap_trace.json --response-all benchmarks/mcptox/response_all.json --output-dir results/mcptox/R020` | works; R020 compares provenance-checked exact MCP leases with exact-tool, server-level, and global object-only policies |
 | tau2/tau3 artifact probe | `PYTHONPATH=src python scripts/probe_tau2_bench.py --benchmark-dir benchmarks/tau2-bench --output-dir results/tau2/R021` | works; R021 records task, tool, policy, document, initialization, and reference-action artifacts without model/API execution |
 | tau2/tau3 authority minimization | `PYTHONPATH=src python scripts/analyze_tau2_authority_minimization.py --benchmark-dir benchmarks/tau2-bench --output-dir results/tau2/R022` | works; R022 compares exact assistant reference-action leases with task-reference, domain, and global static tool scopes |
+| tau2/tau3 reference-action live gateway | `PYTHONPATH=src python scripts/run_tau2_reference_actions_live_gateway.py --benchmark-dir benchmarks/tau2-bench --domains mock airline retail telecom banking_knowledge --output-dir results/tau2/R023` | works; R023 executes 3,813 checker-approved assistant reference actions against real tau2 toolkit callables, with 3,795 successful tool executions and 18 direct-replay `ValueError`s |
 
 ## Integration Constraints
 - Do not mutate the frozen workshop paper unless explicitly requested.
@@ -132,6 +135,7 @@ Completeness: partial
 - R020 is object-scope/provenance authority analysis over saved MCPTox successful responses. It is not yet a live MCP broker run or utility benchmark.
 - R021 is tau2/tau3 artifact/schema analysis only. It does not measure task success, simulator rewards, model behavior, denial recovery, or IntentCap lease quality.
 - R022 is tau2/tau3 reference-action authority analysis only. It uses benchmark labels as a utility-side proxy and does not run the simulator or measure task completion.
+- R023 executes real tau2 toolkit methods but still uses benchmark reference labels as the event stream. It does not run an LLM agent, user simulator, reward calculation, or denial-recovery loop; direct tool exceptions should be reported as replay limitations, not checker denials.
 - Need reconcile InjecAgent README count of 62 attacker tools with the local base-case count of 63 unique attacker-tool names, where `GmailSendEmail` is the repeated exfiltration sink.
 - Need implement an online model/API benchmark wrapper so deterministic trace-level denials, local live execution, and cached model-output replay can be paired with fresh model/tool utility and attack-success metrics.
 - Need convert tau2/tau3 reference-action lease scopes into a small simulator-backed utility run.
@@ -139,4 +143,4 @@ Completeness: partial
 - Need decide whether to keep external benchmark clones only as ignored local state or convert selected ones into submodules later.
 
 ## Next Engineering Action
-Build the next evidence step: connect the live gateway to an online model/API benchmark subset, turn R021 into a tau2/tau3 simulator-backed utility run, or add expert-oracle lease scoring for R019/R020-style minimization.
+Build the next evidence step: connect the live gateway to an online model/API benchmark subset, turn R023 into a tau2/tau3 simulator-backed utility run, or add expert-oracle lease scoring for R019/R020-style minimization.

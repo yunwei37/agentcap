@@ -1,0 +1,1 @@
+PYTHONPATH=src /usr/bin/python scripts/run_tau2_reference_actions_live_gateway.py --benchmark-dir benchmarks/tau2-bench --domains mock airline retail telecom banking_knowledge --output-dir results/tau2/R023
