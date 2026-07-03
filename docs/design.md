@@ -22,6 +22,7 @@ The offline checker is the cheapest path to validate the core idea against exist
 | Lease compiler | Proposes minimum-risk leases | untrusted | intent, labels, effect graph, extension summaries | candidate leases and proof objects |
 | Deterministic checker | Accepts or rejects leases/events | trusted | policy, intent, labels, leases, effect | allow/deny plus reason |
 | Gateway replay/runtime adapter | Enforce accepted leases one attempted event at a time | trusted per boundary | accepted lease set, event stream | exposed operation/object pairs, block/execute decisions, summaries |
+| Live tool gateway | Execute registered tool callables only after checker allow decisions | trusted per boundary | accepted lease set, event stream, tool registry | tool results, blocked actions, side-effect audit |
 | Audit logger | Preserves decisions for analysis | trusted | checker verdicts, runtime events | result files for evaluation |
 
 ## Interfaces And Instrumentation Points
@@ -87,10 +88,11 @@ The offline checker is the cheapest path to validate the core idea against exist
 - The first runtime-facing layer is `TraceGateway`, a gateway replay adapter over the checker. It exposes leased operation/object pairs, authorizes each attempted event independently, and records whether the action would execute or be blocked. R009 validates the same gateway path over AgentDojo, MCPTox, and InjecAgent traces.
 - R010 adds a mixed InjecAgent replay path: the benchmark's original user-tool call is labeled as trusted user-intent control and allowed as `tool_select`, while attacker-tool calls from the injected tool response remain denied as `authorize` or `sink_select`. This is the first adapter result that exercises allowed benign control and denied injected control in the same trace, though it is still deterministic replay rather than live model execution.
 - R012 repeats the mixed InjecAgent replay on the enhanced setting. Under the current event extractor, enhanced and base settings produce identical event/verdict counts, so enhanced does not currently exercise a different IntentCap mechanism; it is a consistency check for the adapter.
+- R013 adds a local `LiveToolGateway` smoke test. A trusted `product.lookup` callable executes and returns data, while a registered `email.send` callable controlled by untrusted product-review text is blocked before side effects occur. This validates the runtime boundary shape, but not model-driven benchmark utility.
 - Benchmark adapters should preserve raw benchmark identifiers in each event so denial explanations can be traced back to a task, server, tool, attack template, or risk category.
 
 ## Next Design Action
-Implement the next benchmark audit or live wrapper that can classify a small set of actions as:
+Implement the next benchmark audit or model/tool live wrapper that can classify a small set of actions as:
 
 - allowed data use,
 - denied wrong-sink influence,

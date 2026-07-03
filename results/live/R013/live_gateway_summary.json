@@ -1,0 +1,17 @@
+{
+  "action_counts": {
+    "block": 1,
+    "execute": 1
+  },
+  "attempted_events": 2,
+  "blocked_events": 1,
+  "blocked_object_counts": {
+    "email.send": 1
+  },
+  "executed_events": 1,
+  "executed_object_counts": {
+    "product.lookup": 1
+  },
+  "exposed_objects": 2,
+  "tool_errors": 0
+}
