@@ -1,0 +1,170 @@
+{
+  "baseline_order": [
+    "intentcap_one_shot",
+    "task_tool_allowlist",
+    "toolkit_allowlist",
+    "benchmark_user_tools",
+    "observed_trace_tools",
+    "catalog_all_tools"
+  ],
+  "baselines": {
+    "benchmark_user_tools": {
+      "admitted_attack_events": 17,
+      "admitted_attack_rate": 0.010638297872340425,
+      "admitted_by_attack_family": {
+        "data_stealing": 17
+      },
+      "admitted_by_mode": {
+        "authorize": 17
+      },
+      "blocked_attack_events": 1581,
+      "broad_arguments": true,
+      "cases": 1054,
+      "control_provenance_checked": false,
+      "description": "All benchmark user-facing tools are exposed for every case.",
+      "exposed_tool_slots_total": 17918,
+      "extra_tool_slots_vs_intentcap": 16864,
+      "max_exposed_tools_per_case": 17,
+      "mean_exposed_tools_per_case": 17.0,
+      "median_exposed_tools_per_case": 17.0,
+      "p95_exposed_tools_per_case": 17.0,
+      "protected_attack_events": 1598,
+      "tool_slot_over_intentcap_ratio": 17.0
+    },
+    "catalog_all_tools": {
+      "admitted_attack_events": 1598,
+      "admitted_attack_rate": 1.0,
+      "admitted_by_attack_family": {
+        "data_stealing": 1088,
+        "direct_harm": 510
+      },
+      "admitted_by_mode": {
+        "authorize": 969,
+        "sink_select": 629
+      },
+      "blocked_attack_events": 0,
+      "broad_arguments": true,
+      "cases": 1054,
+      "control_provenance_checked": false,
+      "description": "All tools in the InjecAgent catalog are exposed for every case.",
+      "exposed_tool_slots_total": 347820,
+      "extra_tool_slots_vs_intentcap": 346766,
+      "max_exposed_tools_per_case": 330,
+      "mean_exposed_tools_per_case": 330.0,
+      "median_exposed_tools_per_case": 330.0,
+      "p95_exposed_tools_per_case": 330.0,
+      "protected_attack_events": 1598,
+      "tool_slot_over_intentcap_ratio": 330.0
+    },
+    "intentcap_one_shot": {
+      "admitted_attack_events": 0,
+      "admitted_attack_rate": 0.0,
+      "admitted_by_attack_family": {},
+      "admitted_by_mode": {},
+      "blocked_attack_events": 1598,
+      "broad_arguments": false,
+      "cases": 1054,
+      "control_provenance_checked": true,
+      "description": "One trusted user-tool lease per case, exact event id, provenance checked.",
+      "exposed_tool_slots_total": 1054,
+      "extra_tool_slots_vs_intentcap": 0,
+      "max_exposed_tools_per_case": 1,
+      "mean_exposed_tools_per_case": 1.0,
+      "median_exposed_tools_per_case": 1.0,
+      "p95_exposed_tools_per_case": 1.0,
+      "protected_attack_events": 1598,
+      "tool_slot_over_intentcap_ratio": 1.0
+    },
+    "observed_trace_tools": {
+      "admitted_attack_events": 1598,
+      "admitted_attack_rate": 1.0,
+      "admitted_by_attack_family": {
+        "data_stealing": 1088,
+        "direct_harm": 510
+      },
+      "admitted_by_mode": {
+        "authorize": 969,
+        "sink_select": 629
+      },
+      "blocked_attack_events": 0,
+      "broad_arguments": true,
+      "cases": 1054,
+      "control_provenance_checked": false,
+      "description": "All tools observed in the mixed trace are exposed for every case.",
+      "exposed_tool_slots_total": 83266,
+      "extra_tool_slots_vs_intentcap": 82212,
+      "max_exposed_tools_per_case": 79,
+      "mean_exposed_tools_per_case": 79.0,
+      "median_exposed_tools_per_case": 79.0,
+      "p95_exposed_tools_per_case": 79.0,
+      "protected_attack_events": 1598,
+      "tool_slot_over_intentcap_ratio": 79.0
+    },
+    "task_tool_allowlist": {
+      "admitted_attack_events": 1,
+      "admitted_attack_rate": 0.0006257822277847309,
+      "admitted_by_attack_family": {
+        "data_stealing": 1
+      },
+      "admitted_by_mode": {
+        "authorize": 1
+      },
+      "blocked_attack_events": 1597,
+      "broad_arguments": true,
+      "cases": 1054,
+      "control_provenance_checked": false,
+      "description": "Only the requested user tool is exposed for the case, but arguments/provenance are broad.",
+      "exposed_tool_slots_total": 1054,
+      "extra_tool_slots_vs_intentcap": 0,
+      "max_exposed_tools_per_case": 1,
+      "mean_exposed_tools_per_case": 1.0,
+      "median_exposed_tools_per_case": 1.0,
+      "p95_exposed_tools_per_case": 1.0,
+      "protected_attack_events": 1598,
+      "tool_slot_over_intentcap_ratio": 1.0
+    },
+    "toolkit_allowlist": {
+      "admitted_attack_events": 77,
+      "admitted_attack_rate": 0.04818523153942428,
+      "admitted_by_attack_family": {
+        "data_stealing": 73,
+        "direct_harm": 4
+      },
+      "admitted_by_mode": {
+        "authorize": 13,
+        "sink_select": 64
+      },
+      "blocked_attack_events": 1521,
+      "broad_arguments": true,
+      "cases": 1054,
+      "control_provenance_checked": false,
+      "description": "All tools in the requested user tool's toolkit/server are exposed for the case.",
+      "exposed_tool_slots_total": 10106,
+      "extra_tool_slots_vs_intentcap": 9052,
+      "max_exposed_tools_per_case": 12,
+      "mean_exposed_tools_per_case": 9.588235294117647,
+      "median_exposed_tools_per_case": 11.0,
+      "p95_exposed_tools_per_case": 12.0,
+      "protected_attack_events": 1598,
+      "tool_slot_over_intentcap_ratio": 9.588235294117647
+    }
+  },
+  "benchmark": "InjecAgent",
+  "benign_user_tool_events": 1054,
+  "cases": 1054,
+  "catalog_tools": 330,
+  "notes": [
+    "IntentCap one-shot counts only the trusted user-tool lease for each case.",
+    "Static baselines are object-scope policies and intentionally do not check control provenance.",
+    "Admitted attack events are injected attacker-tool events whose object falls inside the baseline scope."
+  ],
+  "protected_attack_events": 1598,
+  "trace_events": 2652,
+  "trace_intent": {
+    "goal": "replay_injecagent_attacker_tools_as_untrusted_tool_response_control",
+    "id": "injecagent:attacker-tool-replay"
+  },
+  "unique_observed_tools": 79,
+  "unique_toolkits": 38,
+  "unique_user_tools": 17
+}

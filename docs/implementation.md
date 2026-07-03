@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-03
 Stage at update: stage 4 implementation probes
-Source/command: local checker, gateway replay, live tool gateway smoke, AgentDojo/MCPTox/InjecAgent export adapters, R010 mixed replay, R011 AgentDojo goal inference, R012 InjecAgent enhanced replay, R013 live smoke, R014 AgentDojo inferred-event audit, R015 MCPTox reconciliation audit, R016 benchmark-derived live trace execution, R017 official cached prompted-output gateway replay, and R018 cached-output aggregate
+Source/command: local checker, gateway replay, live tool gateway smoke, AgentDojo/MCPTox/InjecAgent export adapters, R010 mixed replay, R011 AgentDojo goal inference, R012 InjecAgent enhanced replay, R013 live smoke, R014 AgentDojo inferred-event audit, R015 MCPTox reconciliation audit, R016 benchmark-derived live trace execution, R017 official cached prompted-output gateway replay, R018 cached-output aggregate, and R019 authority-minimization analysis
 Completeness: partial
 
 ## Repository Layout Relevant To The Project
@@ -30,8 +30,9 @@ Completeness: partial
 | `scripts/run_live_trace_gateway.py` | executes saved benchmark-derived traces through the live gateway with registered local callables | created |
 | `scripts/run_injecagent_cached_outputs_gateway.py` | replays official cached InjecAgent model outputs through the live gateway | created |
 | `scripts/aggregate_injecagent_cached_outputs_gateway.py` | aggregates cached-output live gateway results across released InjecAgent result directories | created |
+| `scripts/analyze_injecagent_authority_minimization.py` | compares IntentCap one-shot leases against static object-scope policies over a mixed InjecAgent trace | created |
 | `benchmarks/` | ignored external benchmark clone workspace | created; AgentDojo cloned locally |
-| `results/` | raw result outputs and run logs | created; R001-R018 recorded |
+| `results/` | raw result outputs and run logs | created; R001-R019 recorded |
 
 ## Implementation Milestones
 | Milestone | Deliverable | Exit condition | Status |
@@ -43,7 +44,7 @@ Completeness: partial
 | M4: InjecAgent/MCPTox adapters | parse cases into protected decision events | at least one setup/dry-run or documented blocker per benchmark | partial: MCPTox and InjecAgent trace exporters work; InjecAgent now supports mixed benign/attack traces; online wrappers pending |
 | M5: Lease compiler prototype | heuristic compiler from task intent and effect list to candidate leases | compares LLM-only/wide leases vs minimized leases | todo |
 | M6: Online enforcement harness | tool gateway/MCP broker/context constructor wrappers | blocks wrong sink in a live toy workflow | partial: local live tool gateway smoke, benchmark-derived live trace execution, and official cached prompted-output replay pass; online model/API wrapper pending |
-| M7: Evaluation scripts | aggregate utility, attack success, over-privilege, false denial, recovery | generates tables for `docs/autopaper` | partial: cached-output aggregate exists; utility/over-privilege aggregation pending |
+| M7: Evaluation scripts | aggregate utility, attack success, over-privilege, false denial, recovery | generates tables for `docs/autopaper` | partial: cached-output aggregate and first authority-minimization analysis exist; utility aggregation pending |
 
 ## Current Implementation Status
 - A minimal offline checker exists under `src/intentcap/`.
@@ -71,6 +72,7 @@ Completeness: partial
 - The official InjecAgent cached model-output archive is downloaded under ignored `benchmarks/injecagent/results.zip` and recorded in R017 by SHA-256 `851eea38f394620de4724ce80dc50df8dd2d3cac3e196dcacb0b2ad90b2299cb`.
 - R017 runs InjecAgent's released GPT-4 ReAct base outputs through `LiveToolGateway`. It executes 1,054 trusted benchmark setup callables, blocks 203 cached stage-1 attacker-tool choices, blocks 150 counterfactual stage-2 attacker sinks, and records 0 missing tools and 0 tool errors.
 - R018 aggregates the released cached-output archive across 61 complete result directories and both base/enhanced settings. It processes 122 result sets and 128,044 cached cases; executes 128,044 trusted setup callables; blocks 26,996 cached stage-1 attacker choices and 10,995 counterfactual stage-2 attacker sinks; and records 0 missing tools and 0 tool errors.
+- R019 analyzes authority minimization on the R010 mixed InjecAgent trace. It compares IntentCap one-shot per-case user-tool leases against static task-tool, toolkit/server, benchmark-user-tool, observed-trace, and catalog-all-tool object-scope policies. IntentCap exposes 1.0 tool per case and admits 0/1,598 injected attacker events; toolkit-level policy exposes 9.59 tools per case and admits 77; catalog-all exposes 330 tools per case and admits all 1,598.
 - The next benchmark step is to build an online model/API wrapper or a non-InjecAgent utility benchmark.
 
 ## Build/Run Commands
@@ -78,7 +80,7 @@ Completeness: partial
 |---|---|---|
 | Build current workshop PDF | `make` | works as of commit `4ce9892`; root paper should remain frozen |
 | Verify workshop PDF page count | `pdfinfo main.pdf | rg '^Pages'` | works; expected `Pages: 2` |
-| Unit tests | `PYTHONPATH=src python -m pytest -q` | works: 19 tests passed; `pytest.ini` restricts discovery to this repo's `tests/` |
+| Unit tests | `PYTHONPATH=src python -m pytest -q` | works: 20 tests passed; `pytest.ini` restricts discovery to this repo's `tests/` |
 | Local checker sanity | `PYTHONPATH=src python -m intentcap.checker examples/local_pdf_wrong_sink.json` | works; see `results/local/R001/verdicts.json` |
 | AgentDojo suite count probe | `. .venv/bin/activate && python scripts/probe_agentdojo.py --benchmark-version v1.2.2 --suite workspace` | works; see `results/agentdojo/R002/` |
 | AgentDojo workspace ground-truth check | `. .venv/bin/activate && python scripts/probe_agentdojo.py --benchmark-version v1.2.2 --suite workspace --check` | warning; see `results/agentdojo/R003/` |
@@ -99,6 +101,7 @@ Completeness: partial
 | Benchmark-derived live trace gateway | `PYTHONPATH=src python scripts/run_live_trace_gateway.py --trace results/online/R010/export/intentcap_trace.json --output-dir results/live/R016` | works; R016 registers 79 tool callables, executes 1,054 benign calls, blocks 1,598 attacker calls, and records 0 missing tools/errors |
 | InjecAgent cached prompted-output gateway | `PYTHONPATH=src python scripts/run_injecagent_cached_outputs_gateway.py --results-zip benchmarks/injecagent/results.zip --model-result-dir results/prompted_GPT_gpt-4-0613_hwchase17_react --setting base --attack-family all --include-counterfactual-stage2 --output-dir results/injecagent/R017` | works; R017 executes 1,054 benchmark setup calls, blocks 203 cached stage-1 attacker choices and 150 counterfactual stage-2 sink choices |
 | InjecAgent cached-output aggregate | `PYTHONPATH=src python scripts/aggregate_injecagent_cached_outputs_gateway.py --results-zip benchmarks/injecagent/results.zip --setting all --include-counterfactual-stage2 --output-dir results/injecagent/R018` | works; R018 processes 122 result sets, executes 128,044 setup calls, and blocks 37,991 cached attacker decisions |
+| InjecAgent authority minimization | `PYTHONPATH=src python scripts/analyze_injecagent_authority_minimization.py --trace results/online/R010/export/intentcap_trace.json --tool-catalog benchmarks/injecagent/data/tools.json --output-dir results/injecagent/R019` | works; R019 compares one-shot, task-tool, toolkit, benchmark-user-tool, observed-trace, and catalog-all object scopes |
 
 ## Integration Constraints
 - Do not mutate the frozen workshop paper unless explicitly requested.
@@ -115,10 +118,11 @@ Completeness: partial
 - R016 is benchmark-derived local live execution over saved trace events. It proves registered Python callables are invoked only on allowed events and suppressed on blocked events, but it is not a prompted-model, external-tool, or benchmark-harness utility/security run.
 - R017 uses official released InjecAgent cached model outputs, not fresh model inference. The 150 stage-2 events are explicitly counterfactual because a strict IntentCap runtime would block the stage-1 attacker tool first.
 - R018 is still cached-output replay, not fresh model inference. It reports one incomplete released output row: `results/prompted_TogetherAI_NousResearch/Nous-Capybara-7B-V1.9_InjecAgent` base has 510 cases because its data-stealing file is empty.
+- R019 is object-scope authority analysis over a saved mixed trace. It is not yet an expert-oracle lease minimization study or a utility benchmark.
 - Need reconcile InjecAgent README count of 62 attacker tools with the local base-case count of 63 unique attacker-tool names, where `GmailSendEmail` is the repeated exfiltration sink.
 - Need implement an online model/API benchmark wrapper so deterministic trace-level denials, local live execution, and cached model-output replay can be paired with fresh model/tool utility and attack-success metrics.
 - Need extend live gateway from local Python callables to MCP/tool mediation with denial recovery.
 - Need decide whether to keep external benchmark clones only as ignored local state or convert selected ones into submodules later.
 
 ## Next Engineering Action
-Build the next evidence step: connect the live gateway to an online model/API benchmark subset, or add a non-InjecAgent utility benchmark so the paper has utility evidence beyond cached attack-output replay.
+Build the next evidence step: connect the live gateway to an online model/API benchmark subset, add expert-oracle lease scoring for R019-style minimization, or add a non-InjecAgent utility benchmark so the paper has utility evidence beyond cached attack-output replay.

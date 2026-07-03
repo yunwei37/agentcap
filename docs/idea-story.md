@@ -2,13 +2,13 @@
 
 Last updated: 2026-07-03
 Stage at update: stage 3/5 trace-level benchmark probes
-Source/command: AgentDojo, MCPTox, InjecAgent export/checker probes plus gateway replay, including R010 mixed replay, R011 AgentDojo goal inference, R012 InjecAgent enhanced replay, R013 local live smoke, R014 AgentDojo inferred-event audit, R015 MCPTox reconciliation audit, R016 benchmark-derived live gateway execution, R017 official cached prompted-output gateway replay, and R018 cached-output aggregate
+Source/command: AgentDojo, MCPTox, InjecAgent export/checker probes plus gateway replay, including R010 mixed replay, R011 AgentDojo goal inference, R012 InjecAgent enhanced replay, R013 local live smoke, R014 AgentDojo inferred-event audit, R015 MCPTox reconciliation audit, R016 benchmark-derived live gateway execution, R017 official cached prompted-output gateway replay, R018 cached-output aggregate, and R019 authority-minimization analysis
 Completeness: partial
 
 ## Current State
 - Stage: Stage 3 design/prototype and Stage 5 evaluation probes are active. Stage 0 framing is good enough to seed claims, and the first benchmark artifacts are now locally probed.
-- Blocking gate: no fresh online model/API IntentCap-wrapper utility/security run yet; current evidence is trace-level gateway replay across AgentDojo, MCPTox, and InjecAgent, a mixed InjecAgent replay where trusted user-tool choices execute and injected attacker-tool choices are blocked, an audited AgentDojo goal-inferred replay for natural-language-only injection tasks, reconciled MCPTox count/oracle units, an InjecAgent enhanced-setting consistency replay, a local live tool gateway smoke, a benchmark-derived local live gateway run over saved InjecAgent trace events, official cached GPT-4 ReAct InjecAgent output replay, and a multi-model cached-output aggregate over the released InjecAgent archive.
-- Next action: connect `LiveToolGateway` to a fresh online model/API benchmark subset, or add a non-InjecAgent utility benchmark to balance the current attack-heavy evidence.
+- Blocking gate: no fresh online model/API IntentCap-wrapper utility/security run yet; current evidence is trace-level gateway replay across AgentDojo, MCPTox, and InjecAgent, a mixed InjecAgent replay where trusted user-tool choices execute and injected attacker-tool choices are blocked, an audited AgentDojo goal-inferred replay for natural-language-only injection tasks, reconciled MCPTox count/oracle units, an InjecAgent enhanced-setting consistency replay, a local live tool gateway smoke, a benchmark-derived local live gateway run over saved InjecAgent trace events, official cached GPT-4 ReAct InjecAgent output replay, a multi-model cached-output aggregate over the released InjecAgent archive, and first object-scope authority-minimization evidence from R019.
+- Next action: connect `LiveToolGateway` to a fresh online model/API benchmark subset, add a non-InjecAgent utility benchmark, or extend R019 into expert-oracle lease scoring.
 - Paper boundary: the existing two-page English workshop paper is frozen under `docs/paper-workshop/`; auto-research drafts go under `docs/autopaper/`.
 
 ## Downstream Document Index
@@ -17,7 +17,7 @@ Completeness: partial
 | `docs/background-related-work.md` | novelty, closest work, benchmarks, baselines | partial | add online-baseline notes after first benchmark live-wrapper run |
 | `docs/design.md` | mechanism and artifact boundary | partial | refine checker semantics after parser/oracle and online-wrapper results |
 | `docs/implementation.md` | prototype milestones and runnable commands | partial | formalize trace schema and improve adapter coverage |
-| `docs/evaluation.md` | experiment plan, run tracker, results, claim verdict | partial | add online model/API utility/attack run or non-InjecAgent utility benchmark |
+| `docs/evaluation.md` | experiment plan, run tracker, results, claim verdict | partial | add online model/API utility/attack run, expert-oracle lease scoring, or non-InjecAgent utility benchmark |
 
 ## Intro P1: Problem And Stakes
 Purpose: Establish why agent extension security is not just tool ACL security.
@@ -114,7 +114,7 @@ Completeness: partial.
 | ID | Claim | Scope | Metric/evidence needed | Status |
 |---|---|---|---|---|
 | C1 | IntentCap blocks unauthorized context-to-decision influence while allowing authorized data use. | AgentDojo/InjecAgent/MCPTox-style adversarial workflows with protected decisions. | Attack success rate, influence-violation denial counts, benign utility, false denial recovery. | partial: local trace plus AgentDojo, reconciled MCPTox, InjecAgent, mixed InjecAgent, audited AgentDojo goal-inferred, InjecAgent enhanced consistency replay, local live gateway smoke, benchmark-derived local live InjecAgent execution, official cached GPT-4 ReAct output replay, and multi-model cached-output aggregate; no fresh online model/API benchmark run yet |
-| C2 | Intent-carrying leases reduce over-privilege relative to static tool/server/Skill policies. | Skills, MCP tools, local scripts, and subagent delegation in mixed workflows. | Risk-weighted authority score vs static allowlist, Skill manifest, human approval, and expert oracle. | proposed |
+| C2 | Intent-carrying leases reduce over-privilege relative to static tool/server/Skill policies. | Skills, MCP tools, local scripts, and subagent delegation in mixed workflows. | Risk-weighted authority score vs static allowlist, Skill manifest, human approval, and expert oracle. | partial: R019 shows one-shot IntentCap leases expose 1.0 tool/case and admit 0/1,598 injected attacker events on the InjecAgent mixed trace, while toolkit/static policies expose more tools and admit more attacks; expert oracle and non-InjecAgent minimization remain pending |
 | C3 | The compiler/checker split keeps LLM policy synthesis outside the trusted computing base. | Candidate lease generation from plans and extension metadata. | Invalid proposals rejected, valid proposals accepted, proof completeness, checker coverage. | proposed |
 
 ### Largest Plausible Claim
@@ -135,9 +135,9 @@ Completeness: partial.
 ### Expansion Agenda
 | Expansion axis | Bigger experiment | Claim upside | Cost/risk | Probe |
 |---|---|---|---|---|
-| Benchmark breadth | AgentDojo + InjecAgent + MCPTox + tau/MCP utility tasks | cross-ecosystem claim | medium setup cost | three security benchmark adapters and a gateway replay path exist; R010 adds mixed benign/attack replay; R011 adds AgentDojo goal-inferred coverage; R012 checks InjecAgent enhanced consistency; R013 adds local live wrapper mechanics; R014 audits AgentDojo paper-ready versus adapter-only events; R015 reconciles MCPTox count units; R016 adds benchmark-derived local live execution; R017 adds official cached GPT-4 ReAct output replay; R018 broadens cached-output replay across released InjecAgent result sets; fresh online model utility still pending |
+| Benchmark breadth | AgentDojo + InjecAgent + MCPTox + tau/MCP utility tasks | cross-ecosystem claim | medium setup cost | three security benchmark adapters and a gateway replay path exist; R010 adds mixed benign/attack replay; R011 adds AgentDojo goal-inferred coverage; R012 checks InjecAgent enhanced consistency; R013 adds local live wrapper mechanics; R014 audits AgentDojo paper-ready versus adapter-only events; R015 reconciles MCPTox count units; R016 adds benchmark-derived local live execution; R017 adds official cached GPT-4 ReAct output replay; R018 broadens cached-output replay across released InjecAgent result sets; R019 adds first authority-minimization evidence; fresh online model utility still pending |
 | Enforcement backend | tool gateway + MCP broker + sandbox lowering | backend-independent authorization claim | implementation cost | offline checker first, runtime enforcement second |
-| Authority minimization | compare generated leases to expert oracle | least-privilege claim | requires manual oracle design | start with 10 tasks |
+| Authority minimization | compare generated leases to expert oracle | least-privilege claim | requires manual oracle design | R019 compares object-scope policies on InjecAgent; next add expert oracle leases and a second benchmark |
 | Refinement | denied action -> narrower lease -> continue | utility preservation claim | requires agent loop integration | simulate with recorded traces |
 
 ### Reviewer Attack Surface
@@ -151,4 +151,4 @@ Completeness: partial.
 - How much control-provenance tracking can be extracted from existing agent harnesses without modifying model internals?
 - Should the first prototype be online enforcement or offline trace checking?
 - Which benchmark exposes the cleanest wrong-sink and approval-scope tests beyond the current audited AgentDojo goal-inferred replay?
-- Which fresh online model/API or non-InjecAgent utility benchmark is cheapest to add without losing the current provenance rigor?
+- Which fresh online model/API, expert-oracle lease scoring, or non-InjecAgent utility benchmark is cheapest to add without losing the current provenance rigor?
