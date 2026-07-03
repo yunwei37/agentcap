@@ -36,10 +36,20 @@ def check_trace(trace: dict[str, Any]) -> list[dict[str, Any]]:
     labels = trace.get("labels", {})
     leases = trace.get("leases", [])
     verdicts = [
-        _check_event(event, leases, labels).to_dict()
+        check_event(event, leases, labels)
         for event in trace.get("events", [])
     ]
     return verdicts
+
+
+def check_event(
+    event: dict[str, Any],
+    leases: list[dict[str, Any]],
+    labels: dict[str, Any],
+) -> dict[str, Any]:
+    """Check one event against active leases and labels."""
+
+    return _check_event(event, leases, labels).to_dict()
 
 
 def _check_event(

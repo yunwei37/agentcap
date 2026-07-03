@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-03
 Stage at update: stage 3 adapter-informed design
-Source/command: AgentDojo, MCPTox, and InjecAgent export/checker probes
+Source/command: AgentDojo, MCPTox, InjecAgent export/checker probes plus gateway replay
 Completeness: partial
 
 ## System-Under-Test Model
@@ -21,7 +21,7 @@ The offline checker is the cheapest path to validate the core idea against exist
 | Effect extractor | Converts plans/trajectories/actions into security-relevant events | untrusted/checked | model plan, benchmark trace, tool call, script call | effect IR with data/control provenance |
 | Lease compiler | Proposes minimum-risk leases | untrusted | intent, labels, effect graph, extension summaries | candidate leases and proof objects |
 | Deterministic checker | Accepts or rejects leases/events | trusted | policy, intent, labels, leases, effect | allow/deny plus reason |
-| Runtime adapters | Enforce accepted leases | trusted per boundary | accepted lease set, event stream | scoped context, exposed tools, MCP calls, sandbox policies |
+| Gateway replay/runtime adapter | Enforce accepted leases one attempted event at a time | trusted per boundary | accepted lease set, event stream | exposed operation/object pairs, block/execute decisions, summaries |
 | Audit logger | Preserves decisions for analysis | trusted | checker verdicts, runtime events | result files for evaluation |
 
 ## Interfaces And Instrumentation Points
@@ -83,6 +83,7 @@ The offline checker is the cheapest path to validate the core idea against exist
 - MCPTox also creates a useful parser robustness problem: some successful responses contain malformed dicts, embedded JavaScript, or nested code blocks. R007 addresses this with a bounded fallback extractor that preserves the tool name and a raw argument prefix. These fallback events should remain marked separately from structured parses for oracle-quality analysis.
 - InjecAgent exercises a different path from MCPTox. The untrusted source is not a poisoned MCP tool description; it is a benign user-tool response whose content contains an attacker instruction. The exported protected events are attacker-tool calls expected by the benchmark's synthesized cases. This gives a second tool-response/context-influence workload beyond AgentDojo's smaller ground-truth subset.
 - InjecAgent base-setting export currently treats every attacker tool as a protected decision controlled by the injected tool response. Direct-harm tools are labeled `authorize`; exfiltration sinks such as `GmailSendEmail` are labeled `sink_select`; data-reading attacker tools in data-stealing chains are labeled `authorize`.
+- The first runtime-facing layer is `TraceGateway`, a gateway replay adapter over the checker. It exposes leased operation/object pairs, authorizes each attempted event independently, and records whether the action would execute or be blocked. R009 validates the same gateway path over AgentDojo, MCPTox, and InjecAgent traces.
 - Benchmark adapters should preserve raw benchmark identifiers in each event so denial explanations can be traced back to a task, server, tool, attack template, or risk category.
 
 ## Next Design Action

@@ -1,0 +1,3 @@
+PYTHONPATH=src python scripts/replay_intentcap_gateway.py results/agentdojo/R004/intentcap_trace.json --output-dir results/gateway/R009/agentdojo
+PYTHONPATH=src python scripts/replay_intentcap_gateway.py results/mcptox/R007/intentcap_trace.json --output-dir results/gateway/R009/mcptox
+PYTHONPATH=src python scripts/replay_intentcap_gateway.py results/injecagent/R008/intentcap_trace.json --output-dir results/gateway/R009/injecagent

@@ -1,0 +1,1138 @@
+[
+  {
+    "object": "12306-mcp.search",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AWSKnowledgeBase.retrieve_from_aws_kb",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AdFin.put_customers",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AdFin.put_customers_id_directdebitmandates",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AdFin.put_invoices_id_mark_as_paid",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AdFin.put_invoices_id_void",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AdFin.put_schedules",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AdFin.simple_addition",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AdFin.simple_mulitplication",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AdFin.upload_invoice_to_adfin",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AgentQL.extract-web-data",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AlphaVantage.analytics_fixed_window",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AlphaVantage.company_overview",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AlphaVantage.etf_profile",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AlphaVantage.news_sentiment",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AlphaVantage.realtime_options",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AlphaVantage.stock_quote",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AlphaVantage.symbol_search",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AlphaVantage.top_gainers_losers",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AmapMap.maps_around_search",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AmapMap.maps_bicycling",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AmapMap.maps_direction_driving",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AmapMap.maps_direction_walking",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AmapMap.maps_distance",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AmapMap.maps_geo",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AmapMap.maps_ip_location",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AmapMap.maps_regeocode",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AmapMap.maps_search_detail",
+    "op": "mcp.call"
+  },
+  {
+    "object": "AmapMap.maps_text_search",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Apify.abort-actor-run",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Apify.get-actor",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Apify.get-actor-details",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Apify.get-actor-log",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Apify.get-actor-run-list",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Apify.get-dataset",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Apify.get-dataset-items",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Apify.get-key-value-store",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Apify.get-key-value-store-record",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Apify.search-actors",
+    "op": "mcp.call"
+  },
+  {
+    "object": "BaiduMap.map_directions",
+    "op": "mcp.call"
+  },
+  {
+    "object": "BaiduMap.map_distance_matrix",
+    "op": "mcp.call"
+  },
+  {
+    "object": "BaiduMap.map_gecode",
+    "op": "mcp.call"
+  },
+  {
+    "object": "BaiduMap.map_geocode",
+    "op": "mcp.call"
+  },
+  {
+    "object": "BaiduMap.map_ip_location",
+    "op": "mcp.call"
+  },
+  {
+    "object": "BaiduMap.map_place_details",
+    "op": "mcp.call"
+  },
+  {
+    "object": "BaiduMap.map_poi_extract",
+    "op": "mcp.call"
+  },
+  {
+    "object": "BaiduMap.map_reverse_geocode",
+    "op": "mcp.call"
+  },
+  {
+    "object": "BaiduMap.map_road_traffic",
+    "op": "mcp.call"
+  },
+  {
+    "object": "BaiduMap.map_search_places",
+    "op": "mcp.call"
+  },
+  {
+    "object": "BaiduMap.map_weather",
+    "op": "mcp.call"
+  },
+  {
+    "object": "BraveSearch.brave_local_search",
+    "op": "mcp.call"
+  },
+  {
+    "object": "BraveSearch.brave_web_search",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Claude Post.count-daily-emails",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Claude Post.get-email-content",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Claude Post.search-emails",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Claude Post.send-email",
+    "op": "mcp.call"
+  },
+  {
+    "object": "ClickHouse.defragment_table",
+    "op": "mcp.call"
+  },
+  {
+    "object": "ClickHouse.list_databases",
+    "op": "mcp.call"
+  },
+  {
+    "object": "ClickHouse.list_tables",
+    "op": "mcp.call"
+  },
+  {
+    "object": "ClickHouse.run_select_query",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Commander.create_directory",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Commander.execute_command",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Commander.get_file_info",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Commander.list_directory",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Commander.list_processes",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Commander.move_file",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Commander.read_file",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Commander.search_code",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Commander.set_config_value",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Commander.write_file",
+    "op": "mcp.call"
+  },
+  {
+    "object": "DoDo Payments.activate_licenses",
+    "op": "mcp.call"
+  },
+  {
+    "object": "DoDo Payments.change_plan_subscriptions",
+    "op": "mcp.call"
+  },
+  {
+    "object": "DoDo Payments.create_payments",
+    "op": "mcp.call"
+  },
+  {
+    "object": "DoDo Payments.deactivate_licenses",
+    "op": "mcp.call"
+  },
+  {
+    "object": "DoDo Payments.list_license_keys",
+    "op": "mcp.call"
+  },
+  {
+    "object": "DoDo Payments.list_payments",
+    "op": "mcp.call"
+  },
+  {
+    "object": "DoDo Payments.list_subscriptions",
+    "op": "mcp.call"
+  },
+  {
+    "object": "DoDo Payments.retrieve_license_keys",
+    "op": "mcp.call"
+  },
+  {
+    "object": "DumplingAI.crawl",
+    "op": "mcp.call"
+  },
+  {
+    "object": "DumplingAI.extract-video",
+    "op": "mcp.call"
+  },
+  {
+    "object": "DumplingAI.get-autocomplete",
+    "op": "mcp.call"
+  },
+  {
+    "object": "DumplingAI.get-google-reviews",
+    "op": "mcp.call"
+  },
+  {
+    "object": "DumplingAI.get-youtube-transcript",
+    "op": "mcp.call"
+  },
+  {
+    "object": "DumplingAI.screenshot",
+    "op": "mcp.call"
+  },
+  {
+    "object": "DumplingAI.search",
+    "op": "mcp.call"
+  },
+  {
+    "object": "DumplingAI.search-maps",
+    "op": "mcp.call"
+  },
+  {
+    "object": "DumplingAI.search-news",
+    "op": "mcp.call"
+  },
+  {
+    "object": "DumplingAI.trim-video",
+    "op": "mcp.call"
+  },
+  {
+    "object": "E2B.common_validation",
+    "op": "mcp.call"
+  },
+  {
+    "object": "E2B.run_code",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Email.calculate_sum",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Email.check_quota",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Email.check_status",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Email.count_messages",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Email.deleteEmail",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Email.fetch_date",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Email.generate_id",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Email.getAttachment",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Email.getContacts",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Email.getEmailDetail",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Email.listEmails",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Email.listFolders",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Email.markAsRead",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Email.markMultipleAsRead",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Email.markMultipleAsUnread",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Email.monitor_activity",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Email.moveEmail",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Email.searchEmails",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Email.sendBulkMail",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Email.sendHtmlMail",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Email.sendMail",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Email.sendSimpleMail",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Email.sync_calendar",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Email.validate_email",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Email.waitForReply",
+    "op": "mcp.call"
+  },
+  {
+    "object": "EverArt.generate_image",
+    "op": "mcp.call"
+  },
+  {
+    "object": "EverArt.pre_generation_check",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Everything.add",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Everything.annotatedMessage",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Everything.echo",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Everything.getResourceReference",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Everything.getTinyImage",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Everything.get_system_time",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Everything.longRunningOperation",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Everything.printEnv",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Everything.sampleLLM",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Fetch.fetch",
+    "op": "mcp.call"
+  },
+  {
+    "object": "FileSystem.create_directory",
+    "op": "mcp.call"
+  },
+  {
+    "object": "FileSystem.edit_file",
+    "op": "mcp.call"
+  },
+  {
+    "object": "FileSystem.get_current_time",
+    "op": "mcp.call"
+  },
+  {
+    "object": "FileSystem.get_file_info",
+    "op": "mcp.call"
+  },
+  {
+    "object": "FileSystem.list_allowed_directories",
+    "op": "mcp.call"
+  },
+  {
+    "object": "FileSystem.move_file",
+    "op": "mcp.call"
+  },
+  {
+    "object": "FileSystem.read_file",
+    "op": "mcp.call"
+  },
+  {
+    "object": "FileSystem.read_multiple_files",
+    "op": "mcp.call"
+  },
+  {
+    "object": "FileSystem.search_files",
+    "op": "mcp.call"
+  },
+  {
+    "object": "FileSystem.simple_addition",
+    "op": "mcp.call"
+  },
+  {
+    "object": "FileSystem.simple_division",
+    "op": "mcp.call"
+  },
+  {
+    "object": "FileSystem.simple_multiplication",
+    "op": "mcp.call"
+  },
+  {
+    "object": "FileSystem.simple_subtraction",
+    "op": "mcp.call"
+  },
+  {
+    "object": "FileSystem.write_file",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Financial Dataset.get_analyst_ratings",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Financial Dataset.get_available_crypto_tickers",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Financial Dataset.get_cash_flow_statements",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Financial Dataset.get_company_news",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Financial Dataset.get_current_crypto_price",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Financial Dataset.get_current_stock_price",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Financial Dataset.get_historical_crypto_prices",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Financial Dataset.get_historical_stock_prices",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Financial Dataset.get_income_statements",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Financial Dataset.get_market_sentiment",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Financial Dataset.get_sec_filings",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Flomo.write_note",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Git.git_add",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Git.git_checkout",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Git.git_commit",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Git.git_create_branch",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Git.git_diff",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Git.git_diff_staged",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Git.git_diff_unstaged",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Git.git_log",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Git.git_reset",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Git.git_show",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Git.git_status",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Github.create_branch",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Github.create_issue",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Github.create_or_update_file",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Github.create_pull_request_review",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Github.create_repository",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Github.fork_repository",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Github.get_file_contents",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Github.get_pull_request",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Github.list_pull_requests",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Github.push_files",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Github.search_code",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Github.search_repositories",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Github.update_issue",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Gitlab.create_branch",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Gitlab.create_issue",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Gitlab.create_merge_request",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Gitlab.create_or_update_file",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Gitlab.create_repository",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Gitlab.fork_repository",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Gitlab.get_file_contents",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Gitlab.get_timestamp",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Gitlab.push_files",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Gitlab.search_repositories",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Google Maps.maps_geocode",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Google Maps.maps_place_details",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Google Maps.maps_reverse_geocode",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Google Maps.maps_search_places",
+    "op": "mcp.call"
+  },
+  {
+    "object": "GoogleDrive.search",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Gyazo.gyazo_image",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Gyazo.gyazo_search",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Gyazo.gyazo_upload",
+    "op": "mcp.call"
+  },
+  {
+    "object": "HyperBrowser.browser_use_agent",
+    "op": "mcp.call"
+  },
+  {
+    "object": "HyperBrowser.crawl_webpages",
+    "op": "mcp.call"
+  },
+  {
+    "object": "HyperBrowser.create_profile",
+    "op": "mcp.call"
+  },
+  {
+    "object": "HyperBrowser.delete_profile",
+    "op": "mcp.call"
+  },
+  {
+    "object": "HyperBrowser.get_current_time",
+    "op": "mcp.call"
+  },
+  {
+    "object": "HyperBrowser.list_profiles",
+    "op": "mcp.call"
+  },
+  {
+    "object": "HyperBrowser.openai_computer_use_agent",
+    "op": "mcp.call"
+  },
+  {
+    "object": "HyperBrowser.scrape_webpage",
+    "op": "mcp.call"
+  },
+  {
+    "object": "HyperBrowser.simple_addition",
+    "op": "mcp.call"
+  },
+  {
+    "object": "HyperBrowser.simple_subtraction",
+    "op": "mcp.call"
+  },
+  {
+    "object": "KeywordsPeopleUse.forums",
+    "op": "mcp.call"
+  },
+  {
+    "object": "KeywordsPeopleUse.people-also-ask",
+    "op": "mcp.call"
+  },
+  {
+    "object": "KeywordsPeopleUse.semantic-keywords",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Memory.add_observations",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Memory.create_entities",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Memory.delete_entities",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Memory.delete_observations",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Memory.open_nodes",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Memory.read_graph",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Memory.search_nodes",
+    "op": "mcp.call"
+  },
+  {
+    "object": "OP.GG.esports-lol-schedules",
+    "op": "mcp.call"
+  },
+  {
+    "object": "OP.GG.esports-lol-team-standings",
+    "op": "mcp.call"
+  },
+  {
+    "object": "OP.GG.lol-champion-analysis",
+    "op": "mcp.call"
+  },
+  {
+    "object": "OP.GG.lol-champion-leader-board",
+    "op": "mcp.call"
+  },
+  {
+    "object": "OP.GG.lol-champion-meta-data",
+    "op": "mcp.call"
+  },
+  {
+    "object": "OP.GG.lol-champion-positions-data",
+    "op": "mcp.call"
+  },
+  {
+    "object": "OP.GG.lol-summoner-game-history",
+    "op": "mcp.call"
+  },
+  {
+    "object": "OP.GG.lol-summoner-renewal",
+    "op": "mcp.call"
+  },
+  {
+    "object": "OP.GG.lol-summoner-search",
+    "op": "mcp.call"
+  },
+  {
+    "object": "OP.GG.profile_anonymizer",
+    "op": "mcp.call"
+  },
+  {
+    "object": "OP.GG.tft-champion-item-build",
+    "op": "mcp.call"
+  },
+  {
+    "object": "OP.GG.tft-meta-item-combinations",
+    "op": "mcp.call"
+  },
+  {
+    "object": "OP.GG.tft-meta-trend-deck-list",
+    "op": "mcp.call"
+  },
+  {
+    "object": "OP.GG.tft-play-style-comment",
+    "op": "mcp.call"
+  },
+  {
+    "object": "OP.GG.tft-recommend-champion-for-item",
+    "op": "mcp.call"
+  },
+  {
+    "object": "OP.GG.valorant-characters-statistics",
+    "op": "mcp.call"
+  },
+  {
+    "object": "OP.GG.valorant-leaderboard",
+    "op": "mcp.call"
+  },
+  {
+    "object": "OP.GG.valorant-meta-characters",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Prisma.Create-Prisma-Postgres-Database",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Prisma.Prisma-Studio",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Prisma.migrate-dev",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Prisma.migrate-reset",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Prisma.migrate-status",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Prisma.migration_squasher",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Prisma.security_audit",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Prisma.user_logout_procedure",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Puppeteer.get_current_time",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Puppeteer.poly",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Puppeteer.puppeteer_click",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Puppeteer.puppeteer_evaluate",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Puppeteer.puppeteer_fill",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Puppeteer.puppeteer_hover",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Puppeteer.puppeteer_navigate",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Puppeteer.puppeteer_screenshot",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Puppeteer.puppeteer_select",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Puppeteer.simple_addition",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Puppeteer.simple_subtraction",
+    "op": "mcp.call"
+  },
+  {
+    "object": "QuickChart.generate_chart",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Redis.delete",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Redis.fetch_current_time",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Redis.get",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Redis.list",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Redis.set",
+    "op": "mcp.call"
+  },
+  {
+    "object": "SQLite.create_table",
+    "op": "mcp.call"
+  },
+  {
+    "object": "SQLite.describe_table",
+    "op": "mcp.call"
+  },
+  {
+    "object": "SQLite.heaven",
+    "op": "mcp.call"
+  },
+  {
+    "object": "SQLite.list_tables",
+    "op": "mcp.call"
+  },
+  {
+    "object": "SQLite.read_query",
+    "op": "mcp.call"
+  },
+  {
+    "object": "SQLite.write_query",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Sentry.get_sentry_issue",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Sequential Thinking.sequentialthinking",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Slack.get_time",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Slack.slack_add_reaction",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Slack.slack_get_thread_replies",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Slack.slack_get_user_profile",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Slack.slack_get_users",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Slack.slack_list_channels",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Slack.slack_post_message",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Slack.slack_reply_to_thread",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Tavily.tavily-crawl",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Tavily.tavily-extract",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Tavily.tavily-search",
+    "op": "mcp.call"
+  },
+  {
+    "object": "Tavily.trusted_search_filter",
+    "op": "mcp.call"
+  },
+  {
+    "object": "gNucleus Text to CAD.text_to_cad",
+    "op": "mcp.call"
+  },
+  {
+    "object": "mcp-simple-arxiv.get_paper_data",
+    "op": "mcp.call"
+  },
+  {
+    "object": "mcp-simple-arxiv.list_categories",
+    "op": "mcp.call"
+  },
+  {
+    "object": "mcp-simple-arxiv.search_papers",
+    "op": "mcp.call"
+  },
+  {
+    "object": "mcp-simple-arxiv.update_categories",
+    "op": "mcp.call"
+  },
+  {
+    "object": "wechat.send-whatsapp-message",
+    "op": "mcp.call"
+  }
+]

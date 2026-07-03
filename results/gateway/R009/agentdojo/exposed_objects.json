@@ -1,0 +1,22 @@
+[
+  {
+    "object": "create_calendar_event",
+    "op": "tool.call"
+  },
+  {
+    "object": "delete_email",
+    "op": "tool.call"
+  },
+  {
+    "object": "delete_file",
+    "op": "tool.call"
+  },
+  {
+    "object": "search_emails",
+    "op": "tool.call"
+  },
+  {
+    "object": "send_email",
+    "op": "tool.call"
+  }
+]

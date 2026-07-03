@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-03
 Stage at update: stage 4 implementation probes
-Source/command: local checker, AgentDojo/MCPTox/InjecAgent export adapters
+Source/command: local checker, gateway replay, AgentDojo/MCPTox/InjecAgent export adapters
 Completeness: partial
 
 ## Repository Layout Relevant To The Project
@@ -17,12 +17,14 @@ Completeness: partial
 | `docs/implementation.md` | canonical implementation plan and commands | this file |
 | `docs/evaluation.md` | canonical experiment plan and run tracker | created |
 | `src/intentcap/` | prototype checker package | created |
+| `src/intentcap/gateway.py` | gateway-style block/execute replay layer over checker verdicts | created |
 | `scripts/probe_agentdojo.py` | AgentDojo setup/suite sanity probe | created |
 | `scripts/export_agentdojo_intentcap.py` | exports AgentDojo task/tool/injection metadata and injection ground-truth calls into IntentCap JSON traces | created |
 | `scripts/export_mcptox_intentcap.py` | exports MCPTox labeled successful model responses into IntentCap JSON traces | created |
 | `scripts/export_injecagent_intentcap.py` | exports InjecAgent synthesized attacker-tool cases into IntentCap JSON traces | created |
+| `scripts/replay_intentcap_gateway.py` | replays exported traces through the IntentCap gateway abstraction | created |
 | `benchmarks/` | ignored external benchmark clone workspace | created; AgentDojo cloned locally |
-| `results/` | raw result outputs and run logs | created; R001-R008 recorded |
+| `results/` | raw result outputs and run logs | created; R001-R009 recorded |
 
 ## Implementation Milestones
 | Milestone | Deliverable | Exit condition | Status |
@@ -33,7 +35,7 @@ Completeness: partial
 | M3: AgentDojo adapter | load AgentDojo task metadata/traces or wrap benchmark agent calls | one benign and one adversarial task dry-run logged | partial: metadata and injection ground-truth export works; natural-language-only attack goals still pending |
 | M4: InjecAgent/MCPTox adapters | parse cases into protected decision events | at least one setup/dry-run or documented blocker per benchmark | partial: MCPTox and InjecAgent trace exporters work; online wrappers pending |
 | M5: Lease compiler prototype | heuristic compiler from task intent and effect list to candidate leases | compares LLM-only/wide leases vs minimized leases | todo |
-| M6: Online enforcement harness | tool gateway/MCP broker/context constructor wrappers | blocks wrong sink in a live toy workflow | todo |
+| M6: Online enforcement harness | tool gateway/MCP broker/context constructor wrappers | blocks wrong sink in a live toy workflow | partial: gateway replay layer exists; live tool execution wrapper pending |
 | M7: Evaluation scripts | aggregate utility, attack success, over-privilege, false denial, recovery | generates tables for `docs/autopaper` | todo |
 
 ## Current Implementation Status
@@ -47,7 +49,9 @@ Completeness: partial
 - R007 improves parser coverage by adding bounded fallback extraction for malformed Python/JSON-like responses and nested code strings. It exports 2,148 protected-decision events from all 1,834 MCPTox `Success` labels; the checker denies all 2,148.
 - InjecAgent is cloned locally under ignored `benchmarks/injecagent` at commit `f19c9f2`; `results/injecagent/R008/` records base-setting schema/export/checker outputs.
 - R008 exports 1,598 protected-decision events from 1,054 base-setting InjecAgent cases; the checker denies all 1,598 as untrusted tool-response control over `authorize` or `sink_select` decisions.
-- The next benchmark step is to implement either an AgentDojo natural-language attack-goal adapter, an enhanced-setting InjecAgent export, or a small online wrapper baseline.
+- A reusable `TraceGateway` exists under `src/intentcap/gateway.py`; it exposes leased operation/object pairs, checks one attempted event at a time, and emits block/execute decisions plus aggregate summaries.
+- R009 replays AgentDojo R004, MCPTox R007, and InjecAgent R008 through the gateway. The gateway blocks 3,756 of 3,756 attempted protected events.
+- The next benchmark step is to implement either an AgentDojo natural-language attack-goal adapter, an enhanced-setting InjecAgent export, or a true live wrapper baseline with benign utility.
 
 ## Build/Run Commands
 | Purpose | Command | Status |
@@ -62,6 +66,7 @@ Completeness: partial
 | MCPTox artifact probe | `git clone --depth 1 https://github.com/zhiqiangwang4/MCPTox-Benchmark benchmarks/mcptox`; local JSON count probe in `results/mcptox/R005/schema_probe.txt` | works; 45 server groups, 485 tool entries/files, 1,348 cases |
 | MCPTox IntentCap trace export | `PYTHONPATH=src python scripts/export_mcptox_intentcap.py --benchmark-dir benchmarks/mcptox --output-dir results/mcptox/R007 --check` | works; exports 2,148 events and denies all 2,148 under current labels |
 | InjecAgent IntentCap trace export | `PYTHONPATH=src python scripts/export_injecagent_intentcap.py --benchmark-dir benchmarks/injecagent --setting base --attack-family all --output-dir results/injecagent/R008 --check` | works; exports 1,598 events and denies all 1,598 under current labels |
+| Gateway replay | `PYTHONPATH=src python scripts/replay_intentcap_gateway.py results/injecagent/R008/intentcap_trace.json --output-dir /tmp/intentcap-gateway-smoke` | works; R009 records AgentDojo, MCPTox, and InjecAgent replay |
 
 ## Integration Constraints
 - Do not mutate the frozen workshop paper unless explicitly requested.
@@ -77,7 +82,8 @@ Completeness: partial
 - Need reconcile MCPTox fallback-extracted events with benchmark oracle semantics before reporting paper-level counts; R007 closes parser coverage but 115 events use bounded raw argument snippets rather than structured arguments.
 - Need reconcile InjecAgent README count of 62 attacker tools with the local base-case count of 63 unique attacker-tool names, where `GmailSendEmail` is the repeated exfiltration sink.
 - Need implement an online wrapper baseline so trace-level denials can be paired with utility/attack-success metrics.
+- Need extend gateway from replay-only to live tool/MCP mediation with benign allowed events and denial recovery.
 - Need decide whether to keep external benchmark clones only as ignored local state or convert selected ones into submodules later.
 
 ## Next Engineering Action
-Build the next evidence step: either classify AgentDojo natural-language injection goals into protected decision events, export InjecAgent enhanced setting, or wrap a small live benchmark subset to measure utility and attack blocking under actual tool exposure.
+Build the next evidence step: either classify AgentDojo natural-language injection goals into protected decision events, export InjecAgent enhanced setting, or connect the gateway to a small live benchmark/tool subset to measure utility and attack blocking under actual tool exposure.

@@ -1,0 +1,10 @@
+ M docs/autopaper/intentcap-autopaper.md
+ M docs/design.md
+ M docs/evaluation.md
+ M docs/idea-story.md
+ M docs/implementation.md
+ M src/intentcap/checker.py
+?? results/gateway/
+?? scripts/replay_intentcap_gateway.py
+?? src/intentcap/gateway.py
+?? tests/test_gateway.py

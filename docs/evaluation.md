@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-03
 Stage at update: stage 5 evaluation probes started
-Source/command: AgentDojo, MCPTox, and InjecAgent trace export/checker probes
+Source/command: AgentDojo, MCPTox, InjecAgent trace exports plus IntentCap gateway replay
 Completeness: partial
 
 ## Claim-To-Experiment Map
@@ -80,7 +80,8 @@ Completeness: partial
 | R006 | C1 | MCPTox successful-response export into IntentCap trace format | `PYTHONPATH=src python scripts/export_mcptox_intentcap.py --benchmark-dir benchmarks/mcptox --output-dir results/mcptox/R006 --check` | MCPTox `f85189f`; project pre-commit dirty status in `results/mcptox/R006/git-status.txt` | Linux `lab` 6.15.11 x86_64 | deterministic labeled-response replay | `results/mcptox/R006/` | done |
 | R007 | C1 | MCPTox parser-refined successful-response export | `PYTHONPATH=src python scripts/export_mcptox_intentcap.py --benchmark-dir benchmarks/mcptox --output-dir results/mcptox/R007 --check` | MCPTox `f85189f`; project pre-commit dirty status in `results/mcptox/R007/git-status.txt` | Linux `lab` 6.15.11 x86_64 | deterministic labeled-response replay | `results/mcptox/R007/` | done |
 | R008 | C1 | InjecAgent base-setting attacker-tool export into IntentCap trace format | `PYTHONPATH=src python scripts/export_injecagent_intentcap.py --benchmark-dir benchmarks/injecagent --setting base --attack-family all --output-dir results/injecagent/R008 --check` | InjecAgent `f19c9f2`; project pre-commit dirty status in `results/injecagent/R008/git-status.txt` | Linux `lab` 6.15.11 x86_64 | deterministic synthesized-case replay | `results/injecagent/R008/` | done |
-| R009 | C1/C2 | online wrapper baseline on a small benchmark subset | pending | pending | pending | N/A | `results/online/R009/` | todo |
+| R009 | C1/C2 | gateway replay over exported benchmark traces | `PYTHONPATH=src python scripts/replay_intentcap_gateway.py <trace> --output-dir results/gateway/R009/<benchmark>` for AgentDojo R004, MCPTox R007, and InjecAgent R008 | project pre-commit dirty status in `results/gateway/R009/git-status.txt` | Linux `lab` 6.15.11 x86_64 | deterministic trace replay | `results/gateway/R009/` | done |
+| R010 | C1/C2 | online wrapper baseline on a small benchmark subset | pending | pending | pending | N/A | `results/online/R010/` | todo |
 
 ## Result Summary And Anomalies
 - R001 local sanity passed: `pdf_to_xlsx_cells` and `user_selected_repo_issue` are allowed; `pdf_injected_repo_issue` is denied with `no matching lease`.
@@ -96,13 +97,15 @@ Completeness: partial
 - R008 InjecAgent setup/export succeeded: the base setting contains 1,054 synthesized test cases, matching the benchmark's headline test-case count. Those cases produce 1,598 attacker-tool events across 17 user tools and 63 unique attacker-tool names in the local artifact. The checker denied all 1,598 events as untrusted tool-response control over protected decisions.
 - R008 decision-class breakdown: 969 `authorize` and 629 `sink_select` events. The base cases contain 510 direct-harm cases and 544 data-stealing cases.
 - R008 count note: the README says InjecAgent spans 62 attacker tools, while the local base cases expose 63 unique attacker-tool names because `GmailSendEmail` appears as the exfiltration sink in every data-stealing case. Treat this as artifact/count reconciliation before final paper numbers.
+- R009 gateway replay succeeded across the exported benchmark traces. The gateway blocked 3,756 of 3,756 attempted protected events: AgentDojo R004 blocked 10/10, MCPTox R007 blocked 2,148/2,148, and InjecAgent R008 blocked 1,598/1,598. The replay exposed 352 leased operation/object pairs across the three traces.
+- R009 decision-class breakdown: 2,231 `authorize`, 1,304 `sink_select`, and 221 `tool_select` blocked events.
 - No online IntentCap-wrapper external benchmark experiment has run yet.
-- The next useful result is either an AgentDojo natural-language attack-goal adapter, an enhanced-setting InjecAgent export, or a small online wrapper baseline.
+- The next useful result is either an AgentDojo natural-language attack-goal adapter, an enhanced-setting InjecAgent export, or a true online wrapper baseline with benign utility measurement.
 
 ## Claim Verdict Table
 | Claim | Verdict | Evidence | Current supported wording | Maximal plausible wording | Expansion experiments |
 |---|---|---|---|---|---|
-| C1 | partial | R001 proves the local motivating wrong-sink trace; R004 proves AgentDojo injection ground-truth calls can be replayed as denied protected-decision events; R007 proves all MCPTox `Success`-labeled tool-poisoning responses can be replayed as denied metadata-to-decision influence events; R008 adds InjecAgent base-setting attacker-tool replay. None yet measure model utility under an online wrapper. | IntentCap's minimal checker can distinguish allowed data use from denied untrusted-context control over protected decisions in toy traces and three exported benchmark families: AgentDojo, MCPTox, and InjecAgent. | IntentCap blocks unauthorized context-to-decision influence across multiple agent security benchmarks while preserving utility through an online wrapper | E1-E3 plus live utility runs |
+| C1 | partial | R001 proves the local motivating wrong-sink trace; R004 proves AgentDojo injection ground-truth calls can be replayed as denied protected-decision events; R007 proves all MCPTox `Success`-labeled tool-poisoning responses can be replayed as denied metadata-to-decision influence events; R008 adds InjecAgent base-setting attacker-tool replay; R009 shows the same traces replay through a gateway-style block/execute interface. None yet measure model utility under an online wrapper. | IntentCap's checker and gateway can distinguish allowed data use from denied untrusted-context control over protected decisions in toy traces and three exported benchmark families: AgentDojo, MCPTox, and InjecAgent. | IntentCap blocks unauthorized context-to-decision influence across multiple agent security benchmarks while preserving utility through an online wrapper | E1-E3 plus live utility runs |
 | C2 | unsupported | no oracle leases yet | none | IntentCap produces run-time leases closer to expert oracle than static policies while preserving utility | E4-E5 |
 | C3 | unsupported | checker exists, but no LLM-proposed lease corpus or compiler/checker ablation has run | none | Deterministic checking keeps LLM-generated policy outside the TCB across extension types | E6 |
 
@@ -121,7 +124,7 @@ Completeness: partial
 | P1 | MCPTox poisoned-tool adapter | tests whether tool metadata is treated as context without authority |
 | P1 | MCPTox parser/oracle refinement | closed the R006 97 unparsed-success gap in R007; next refinement is reconciling fallback events with benchmark oracle semantics |
 | P1 | InjecAgent enhanced-setting export | checks whether the added hacking prompt changes coverage or only duplicates base semantics |
-| P1 | Online wrapper subset | converts trace-level denials into utility/attack-blocking evidence |
+| P1 | Online wrapper subset | converts gateway replay denials into utility/attack-blocking evidence |
 | P2 | tau3 benign utility probe | tests policy-following utility beyond attacks |
 
 ## Integrity Audit Notes
@@ -132,16 +135,17 @@ Completeness: partial
 - R006 is trace-level replay of MCPTox-labeled successful responses; it is stronger than setup evidence but still not an online IntentCap wrapper result.
 - R007 supersedes R006 for parser coverage, but it remains trace-level replay and does not measure utility or recovery.
 - R008 is trace-level replay of InjecAgent synthesized attacker tools, not a prompted-agent or fine-tuned-agent model run.
+- R009 uses the gateway abstraction but still replays recorded traces; it is not a live model or live tool-execution run.
 - Model-based benchmark claims are not yet reproduced locally; current benchmark evidence is setup/schema plus offline trace replay.
 - Documentation compliance gate is not passed because independent subagent review has not been run.
 
 ## Reproducibility Checklist
 | Item | Status | Notes |
 |---|---|---|
-| Exact commands recorded | partial | recorded for R001-R008 |
-| Commit recorded per run | partial | local/project dirty status and external benchmark commits recorded for R001-R008 |
-| Machine recorded per run | partial | R001-R008 record Linux host class where applicable |
-| Seeds/repetitions recorded | partial | R001-R008 deterministic probes; no model benchmark seeds yet |
-| Raw result paths exist | partial | `results/local/R001/`, `results/agentdojo/R002/`, `results/agentdojo/R003/`, `results/agentdojo/R004/`, `results/mcptox/R005/`, `results/mcptox/R006/`, `results/mcptox/R007/`, `results/injecagent/R008/` exist |
-| Scripts checked in | partial | minimal checker, AgentDojo suite probe, AgentDojo IntentCap export adapter, MCPTox IntentCap export adapter, and InjecAgent IntentCap export adapter exist |
+| Exact commands recorded | partial | recorded for R001-R009 |
+| Commit recorded per run | partial | local/project dirty status and external benchmark commits recorded for R001-R009 |
+| Machine recorded per run | partial | R001-R009 record Linux host class where applicable |
+| Seeds/repetitions recorded | partial | R001-R009 deterministic probes; no model benchmark seeds yet |
+| Raw result paths exist | partial | `results/local/R001/`, `results/agentdojo/R002/`, `results/agentdojo/R003/`, `results/agentdojo/R004/`, `results/mcptox/R005/`, `results/mcptox/R006/`, `results/mcptox/R007/`, `results/injecagent/R008/`, `results/gateway/R009/` exist |
+| Scripts checked in | partial | minimal checker, gateway replay, AgentDojo suite probe, AgentDojo IntentCap export adapter, MCPTox IntentCap export adapter, and InjecAgent IntentCap export adapter exist |
 | External benchmark versions pinned | partial | AgentDojo shallow clone at `089ed468`; MCPTox shallow clone at `f85189f`; InjecAgent shallow clone at `f19c9f2`; other benchmarks pending |
