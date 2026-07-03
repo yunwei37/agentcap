@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-03
 Stage at update: stage 1 novelty scan plus artifact probes
-Source/command: web search over primary benchmark, paper, and artifact pages; local MCPTox and InjecAgent clone/schema/export probes
+Source/command: web search over primary benchmark, paper, and artifact pages; local MCPTox and InjecAgent clone/schema/export probes plus R014 AgentDojo inferred-event audit
 Completeness: partial
 
 ## Search Log
@@ -16,6 +16,7 @@ Completeness: partial
 | 2026-07-02 | `Task Shield CaMeL Progent prompt injection defense LLM agents` | Find defense baselines | Task Shield evaluates on AgentDojo; CaMeL provides control/data-flow design and code; Progent provides privilege-control DSL baseline: https://aclanthology.org/2025.acl-long.1435/, https://arxiv.org/abs/2503.18813, https://arxiv.org/html/2504.11703v2 |
 | 2026-07-03 | `MCPTox MCP tool poisoning benchmark GitHub` plus local clone/export | Verify MCP security benchmark artifact availability and adapter viability | Official MCPTox repository exists at https://github.com/zhiqiangwang4/MCPTox-Benchmark. Local R005 clone at `f85189f` contains 45 server groups, 485 tool entries/files, 11 attack scopes, and 1,348 cases. R007 exports 2,148 protected events from all 1,834 benchmark responses labeled `Success`, including 115 bounded fallback parses. An Inspect AI reimplementation also exists at https://github.com/stefanoamorelli/inspect-evals-mcptox. |
 | 2026-07-03 | local InjecAgent clone/export | Verify broad IPI benchmark artifact and adapter viability | Local R008 clone at `f19c9f2` contains 1,054 base-setting synthesized cases across 17 user tools, matching the benchmark headline count. The base cases expose 63 unique attacker-tool names in the artifact and export 1,598 protected attacker-tool events. |
+| 2026-07-03 | local AgentDojo R011/R014 audit | Verify which AgentDojo adapter events are official trajectories | R014 audits saved R011 artifacts and splits 64 events into 10 paper-ready benchmark ground-truth events from 6 tasks and 54 adapter-only goal-inferred events from 8 tasks. All 64 are denied/blocked, but only the 10 ground-truth events should be counted as benchmark-provided trajectories. |
 
 ## PDF Corpus
 | Work | Local PDF path | Verification status | Why kept |
@@ -67,7 +68,7 @@ Completeness: partial
 ## Absorbable Ideas
 | Source/community | Idea to absorb | Claim expansion enabled | Experiment implication | Risk |
 |---|---|---|---|---|
-| AgentDojo | Formal utility/security check functions over environment state | avoids LLM-as-judge for security metrics | implement IntentCap as agent wrapper or offline trajectory checker; R011 now covers natural-language-only injection goals with marked inferred events | adapter labels need audit |
+| AgentDojo | Formal utility/security check functions over environment state | avoids LLM-as-judge for security metrics | implement IntentCap as agent wrapper or offline trajectory checker; R014 audits R011 and separates 10 official ground-truth events from 54 adapter-only inferred events | still needs online model trajectories and utility/security checks |
 | CaMeL | Query-derived control/data-flow extraction | stronger theorem and clearer TCB | compare IntentCap control provenance to CaMeL flows | same-claim risk |
 | Task Shield | Objective-serving action check | better intent derivation rule | action must both serve intent and have provenance-authorized control | may blur novelty |
 | MCPTox | Poisoned tool descriptions where poisoned tool is not executed | shows description/context influence can be dangerous without direct action | label MCP descriptions as forbidden for authorize/sink/tool-select decisions | artifact available; adapter has full `Success`-label coverage; count/oracle reconciliation and benchmark/model live wrapper pending |
@@ -107,4 +108,4 @@ Completeness: partial
 - Larger claim opportunities: portable intent-provenance-aware policy compiler for agent extension ecosystems; offline trace checker first, runtime enforcer second.
 - Absorbable ideas to import: AgentDojo oracles, CaMeL flow split, Task Shield goal alignment, MCPTox poisoned-tool-description cases, tau domain policies.
 - Mandatory baselines: vanilla, static allowlist/tool filter, Task Shield, CaMeL, Progent-style policy, Skill manifest/SkillGuard-style policy, OS enforcement only.
-- Next action: harden benchmark evidence, with priority on auditing R011 AgentDojo goal-inferred labels, MCPTox oracle/count reconciliation, or a small benchmark/model live wrapper baseline. R010 adds deterministic mixed benign/attack replay for InjecAgent, R011 adds AgentDojo natural-language goal replay, R012 confirms InjecAgent enhanced-setting consistency, and R013 adds a local live gateway smoke, but none is a live model/benchmark execution.
+- Next action: harden benchmark evidence, with priority on MCPTox oracle/count reconciliation or a small benchmark/model live wrapper baseline. R010 adds deterministic mixed benign/attack replay for InjecAgent, R011 adds AgentDojo natural-language goal replay, R012 confirms InjecAgent enhanced-setting consistency, R013 adds a local live gateway smoke, and R014 audits the AgentDojo ground-truth/inferred split, but none is a live model/benchmark execution.

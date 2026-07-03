@@ -1,0 +1,14 @@
+## main...origin/main
+M  docs/autopaper/intentcap-autopaper.md
+M  docs/background-related-work.md
+M  docs/design.md
+M  docs/evaluation.md
+M  docs/idea-story.md
+M  docs/implementation.md
+A  results/agentdojo/R014/agentdojo-head.txt
+A  results/agentdojo/R014/command.txt
+A  results/agentdojo/R014/summary.json
+A  results/agentdojo/R014/task_audit.csv
+A  results/agentdojo/R014/task_audit.json
+A  scripts/audit_agentdojo_goal_inferred.py
+A  tests/test_audit_agentdojo.py

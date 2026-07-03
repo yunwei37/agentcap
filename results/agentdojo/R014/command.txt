@@ -1,0 +1,1 @@
+PYTHONPATH=src /usr/bin/python scripts/audit_agentdojo_goal_inferred.py --trace results/agentdojo/R011/intentcap_trace.json --verdicts results/agentdojo/R011/intentcap_verdicts.json --gateway-decisions results/agentdojo/R011/gateway/gateway_decisions.json --output-dir results/agentdojo/R014
