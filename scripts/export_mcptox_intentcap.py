@@ -245,6 +245,7 @@ def _trace_from_success_labels(
                         args = _jsonable(call.get("arguments", {}))
                         if not isinstance(args, dict):
                             args = {"value": args}
+                        parse_method = str(call.get("_intentcap_parse_method", "structured"))
                         decision, mode = _classify_call(server_name, tool_name, args, security_risk)
                         event_id = (
                             f"{server_name}:{instance_index}:{data.get('id', data_index)}:"
@@ -274,6 +275,7 @@ def _trace_from_success_labels(
                                     "poisoned_tool": poisoned_tool_name,
                                     "security_risk": security_risk,
                                     "paradigm": paradigm,
+                                    "parse_method": parse_method,
                                 },
                             }
                         )
@@ -292,6 +294,7 @@ def _trace_from_success_labels(
                             }
                         )
                         stats["parsed_success_tool_calls"] += 1
+                        stats[f"{parse_method}_success_tool_calls"] += 1
                         mode_counts[mode] += 1
 
     return _finalize_trace(labels, leases, events), _summary(
@@ -333,6 +336,8 @@ def _summary(
         "data_records_seen": stats["data_records_seen"],
         "success_labels_seen": stats["success_labels_seen"],
         "parsed_success_tool_calls": stats["parsed_success_tool_calls"],
+        "structured_success_tool_calls": stats["structured_success_tool_calls"],
+        "fallback_success_tool_calls": stats["fallback_success_tool_calls"],
         "successful_responses_without_parsed_call": stats["successful_responses_without_parsed_call"],
         "trace_events": stats["parsed_success_tool_calls"],
         "mode_counts": dict(sorted(mode_counts.items())),
@@ -345,15 +350,23 @@ def _extract_tool_calls(response: str) -> list[dict[str, Any]]:
     calls: list[dict[str, Any]] = []
     for candidate in _balanced_dict_candidates(response):
         parsed = _parse_dict(candidate)
-        if not isinstance(parsed, dict):
+        if isinstance(parsed, dict) and "tool" in parsed:
+            calls.append(
+                {
+                    "tool": parsed.get("tool"),
+                    "arguments": parsed.get("arguments", {}),
+                    "_intentcap_parse_method": "structured",
+                }
+            )
             continue
-        if "tool" not in parsed:
-            continue
-        call = {
-            "tool": parsed.get("tool"),
-            "arguments": parsed.get("arguments", {}),
-        }
-        calls.append(call)
+
+        fallback = _parse_lax_tool_call(candidate)
+        if fallback is not None:
+            calls.append(fallback)
+    if not calls:
+        fallback = _parse_lax_tool_call(response)
+        if fallback is not None:
+            calls.append(fallback)
     return calls
 
 
@@ -406,6 +419,27 @@ def _parse_dict(candidate: str) -> Any:
         except (SyntaxError, ValueError, TypeError):
             continue
     return None
+
+
+def _parse_lax_tool_call(candidate: str) -> dict[str, Any] | None:
+    tool_match = re.search(r"['\"]tool['\"]\s*:\s*['\"]([^'\"]+)['\"]", candidate)
+    if not tool_match:
+        return None
+    tool_name = tool_match.group(1)
+    return {
+        "tool": tool_name,
+        "arguments": {
+            "_raw_tool_call_prefix": _bounded_snippet(candidate),
+        },
+        "_intentcap_parse_method": "fallback",
+    }
+
+
+def _bounded_snippet(value: str, limit: int = 1000) -> str:
+    compact = re.sub(r"\s+", " ", value).strip()
+    if len(compact) <= limit:
+        return compact
+    return compact[:limit] + "...<truncated>"
 
 
 def _normalize_json_literals(candidate: str) -> str:

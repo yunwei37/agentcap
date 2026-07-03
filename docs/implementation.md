@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-03
 Stage at update: stage 4 implementation probes
-Source/command: local checker, AgentDojo export adapter, MCPTox artifact and response export probes
+Source/command: local checker, AgentDojo export adapter, MCPTox artifact/response/parser probes
 Completeness: partial
 
 ## Repository Layout Relevant To The Project
@@ -21,7 +21,7 @@ Completeness: partial
 | `scripts/export_agentdojo_intentcap.py` | exports AgentDojo task/tool/injection metadata and injection ground-truth calls into IntentCap JSON traces | created |
 | `scripts/export_mcptox_intentcap.py` | exports MCPTox labeled successful model responses into IntentCap JSON traces | created |
 | `benchmarks/` | ignored external benchmark clone workspace | created; AgentDojo cloned locally |
-| `results/` | raw result outputs and run logs | created; R001-R006 recorded |
+| `results/` | raw result outputs and run logs | created; R001-R007 recorded |
 
 ## Implementation Milestones
 | Milestone | Deliverable | Exit condition | Status |
@@ -43,7 +43,8 @@ Completeness: partial
 - R004 exports 10 protected-decision events from the 6 AgentDojo workspace injection tasks that provide non-empty ground-truth tool calls; the checker denies all 10 as untrusted injection-goal control over `sink_select`/`authorize` decisions.
 - MCPTox is cloned locally under ignored `benchmarks/mcptox` at commit `f85189f`; `results/mcptox/R005/` records an artifact probe over its JSON files.
 - R006 exports 2,033 protected-decision events from MCPTox responses labeled `Success`; the checker denies all 2,033 as poisoned tool-description control over `authorize`, `sink_select`, or `tool_select` decisions.
-- The next benchmark step is to implement either an AgentDojo natural-language attack-goal adapter, improve MCPTox parser/oracle coverage, or add a small online wrapper baseline.
+- R007 improves parser coverage by adding bounded fallback extraction for malformed Python/JSON-like responses and nested code strings. It exports 2,148 protected-decision events from all 1,834 MCPTox `Success` labels; the checker denies all 2,148.
+- The next benchmark step is to implement either an AgentDojo natural-language attack-goal adapter, a small online wrapper baseline, or an InjecAgent setup/adaptation probe.
 
 ## Build/Run Commands
 | Purpose | Command | Status |
@@ -56,7 +57,7 @@ Completeness: partial
 | AgentDojo workspace ground-truth check | `. .venv/bin/activate && python scripts/probe_agentdojo.py --benchmark-version v1.2.2 --suite workspace --check` | warning; see `results/agentdojo/R003/` |
 | AgentDojo IntentCap trace export | `. .venv/bin/activate && PYTHONPATH=src python scripts/export_agentdojo_intentcap.py --benchmark-version v1.2.2 --suite workspace --output-dir results/agentdojo/R004 --check` | works; exports 10 events and denies all 10 under current labels |
 | MCPTox artifact probe | `git clone --depth 1 https://github.com/zhiqiangwang4/MCPTox-Benchmark benchmarks/mcptox`; local JSON count probe in `results/mcptox/R005/schema_probe.txt` | works; 45 server groups, 485 tool entries/files, 1,348 cases |
-| MCPTox IntentCap trace export | `PYTHONPATH=src python scripts/export_mcptox_intentcap.py --benchmark-dir benchmarks/mcptox --output-dir results/mcptox/R006 --check` | works; exports 2,033 events and denies all 2,033 under current labels |
+| MCPTox IntentCap trace export | `PYTHONPATH=src python scripts/export_mcptox_intentcap.py --benchmark-dir benchmarks/mcptox --output-dir results/mcptox/R007 --check` | works; exports 2,148 events and denies all 2,148 under current labels |
 
 ## Integration Constraints
 - Do not mutate the frozen workshop paper unless explicitly requested.
@@ -69,9 +70,9 @@ Completeness: partial
 - Need formalize the trace JSON schema currently implied by `src/intentcap/checker.py` and `scripts/export_agentdojo_intentcap.py`.
 - Need improve checker denial selection once there are multiple plausible leases for the same operation; R004 uses a synthetic `_intentcap_event_id` field for deterministic event-scoped replay.
 - Need implement natural-language attack-goal extraction for AgentDojo injection tasks with empty ground-truth calls.
-- Need improve MCPTox response parser coverage: 97 `Success`-labeled responses remain unparsed because of malformed Python/JSON-like outputs or nested code strings.
+- Need reconcile MCPTox fallback-extracted events with benchmark oracle semantics before reporting paper-level counts; R007 closes parser coverage but 115 events use bounded raw argument snippets rather than structured arguments.
 - Need implement an online wrapper baseline so trace-level denials can be paired with utility/attack-success metrics.
 - Need decide whether to keep external benchmark clones only as ignored local state or convert selected ones into submodules later.
 
 ## Next Engineering Action
-Build the next evidence step: either classify AgentDojo natural-language injection goals into protected decision events, close the MCPTox unparsed-success gap, or wrap a small live benchmark subset to measure utility and attack blocking under actual tool exposure.
+Build the next evidence step: either classify AgentDojo natural-language injection goals into protected decision events, wrap a small live benchmark subset to measure utility and attack blocking under actual tool exposure, or add InjecAgent as a third benchmark family.

@@ -1,0 +1,35 @@
+{
+  "benchmark_data_length": 1348,
+  "benchmark_dir": "benchmarks/mcptox",
+  "checker_allowed": 0,
+  "checker_denied": 2148,
+  "data_records_seen": 1348,
+  "fallback_success_tool_calls": 115,
+  "malicious_instances_seen": 1348,
+  "mode_counts": {
+    "authorize": 1260,
+    "sink_select": 667,
+    "tool_select": 221
+  },
+  "parse_failure_samples": [],
+  "parsed_success_tool_calls": 2148,
+  "risk_counts": {
+    "Code Injection": 63,
+    "Credential Leakage": 115,
+    "Data Tampering": 120,
+    "Financial Loss": 55,
+    "Information Manipulation": 281,
+    "Infrastructure Damage": 124,
+    "Instruction Tampering": 57,
+    "Message Hijacking": 44,
+    "Other": 4,
+    "Privacy Leakage": 276,
+    "Service Disruption": 209
+  },
+  "servers": 45,
+  "structured_success_tool_calls": 2033,
+  "success_label": "Success",
+  "success_labels_seen": 1834,
+  "successful_responses_without_parsed_call": 0,
+  "trace_events": 2148
+}
