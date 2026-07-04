@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-04
 Stage at update: stage 4 compiler-corpus task-loop design audit
-Source/command: AgentDojo, MCPTox, InjecAgent export/checker probes plus gateway replay, R014-R025 adapter/live/evaluator/checker evidence, R026 web-only eval-dataset ranking, R027-R078 authority/compiler/gateway diagnostics, R079 strict compiler-corpus local Qwen3.6 task-loop run, R080 R079 mismatch analysis, and 2026-07-04 closest-work PDF collection
+Source/command: AgentDojo, MCPTox, InjecAgent export/checker probes plus gateway replay, R014-R025 adapter/live/evaluator/checker evidence, R026 web-only eval-dataset ranking, R027-R078 authority/compiler/gateway diagnostics, R079 strict compiler-corpus local Qwen3.6 task-loop run, R080 R079 mismatch analysis, R081 top-conference claim evidence matrix, and 2026-07-04 expanded 42-PDF closest-work collection
 Completeness: partial
 
 ## Top-Conference Artifact Boundary
@@ -17,7 +17,7 @@ The defensible novelty is narrower than "agent permissions." IntentCap's artifac
 5. A deterministic checker that accepts or rejects LLM-proposed leases/events.
 6. Enforcement adapters that lower accepted leases to context/tool/MCP/process/network/delegation boundaries.
 
-EIM/bpftime remains related work for extension-resource models, and ActPlane remains a possible enforcement backend. The main comparison should be against CaMeL, Progent, SkillGuard, Task Shield/DRIFT, static tool/server allowlists, and LLM-only policy generation.
+EIM/bpftime remains related work for extension-resource models, and ActPlane remains a possible enforcement backend. The main comparison should be against CaMeL/PFI-style flow defenses, AgentSecBench/formal contextual-security framing, Progent, SkillGuard/SkillScope, Task Shield/DRIFT, static tool/server allowlists, model-internal authorization, and LLM-only policy generation.
 
 ## System-Under-Test Model
 IntentCap is evaluated as a run-time authorization layer for LLM agent extensions. The first prototype should support two modes:
@@ -79,9 +79,10 @@ The offline checker is the cheapest path to validate the core idea against exist
 | Human approval | users may approve broad scopes and may not see hidden influence | baseline and fresh intent source |
 | OS monitor only | enforces effects after policy exists; does not know policy provenance | optional backend |
 | Prompt-only defense | model remains the component being attacked | out-of-TCB comparison |
-| CaMeL-style control/data split | strong but oriented around trusted-query program flow | closest conceptual comparison |
+| CaMeL/PFI-style control-data-flow defense | strong but oriented around trusted-query/program-flow or privilege-escalation flow validation | closest conceptual comparison |
+| AgentSecBench/formal contextual-security framing | close intent-to-execution/noninterference language but not an extension lease compiler | theory/evaluation framing comparison |
 | Progent-style privilege DSL | deterministic tool-call policy is close, but does not by itself model context influence modes | mandatory baseline |
-| SkillGuard-style Skill policy | closest Skill-specific permission framework | baseline and same-claim risk for Skill workflows |
+| SkillGuard/SkillScope-style Skill policy | closest Skill-specific permission frameworks | baseline and same-claim risk for Skill workflows |
 | ActPlane-style OS enforcement | catches indirect OS effects after policy exists | optional backend and OS-only baseline |
 
 ## Design Risks And Validation Hooks
@@ -91,7 +92,7 @@ The offline checker is the cheapest path to validate the core idea against exist
 | Lease compiler overfits to hand-written policies. | Compare expert oracle, LLM-only compiler, and deterministic checker acceptance. |
 | Intent certificates become broad approvals. | Track approval scope breadth and wrong-sink denials. |
 | Utility collapses under strict checking. | Measure benign task completion and structured denial recovery. |
-| Same-claim risk with CaMeL/Task Shield/Progent. | Keep ablations that isolate intent certificates, influence modes, and proof-carrying leases. |
+| Same-claim risk with CaMeL/PFI/AgentSecBench/Task Shield/Progent. | Keep ablations that isolate intent certificates, influence modes, and proof-carrying leases. |
 
 ## Adapter Findings So Far
 - AgentDojo workspace injection tasks split into two useful classes. Six of 14 injection tasks provide non-empty ground-truth tool-call traces, which can be replayed as explicit protected-decision events. The remaining eight are natural-language attack goals without ground-truth calls; R011 adds a conservative goal-inferred adapter for them, but those inferred events are explicitly not official benchmark trajectories.
@@ -120,6 +121,7 @@ The offline checker is the cheapest path to validate the core idea against exist
 - R025 validates the checker/LLM split as an ablation over saved traces. On 8,680 events from local, AgentDojo, MCPTox, InjecAgent, and tau2 traces, object-only and full-event-args/no-provenance acceptance would each admit all 3,811 checker-denied events, while saved-lease-constraints/no-provenance acceptance would admit 3,810 of them. The design implication is that even complete-looking operation/object/argument constraints are not enough if they bypass context labels and control/data provenance; influence modes must stay in the deterministic TCB. The remaining design gap is to replace these synthetic ablated policies with a real LLM-proposed lease corpus and proof-completeness check.
 - R026 adds a design rule for expanding evidence without uncontrolled benchmark sprawl: candidate workloads should be ranked from official metadata before any local import. Its top web-only candidates are Skill-Inject and MCPSecBench for Skill/MCP security, followed by MCP-Bench/ToolSandbox/WorkBench-style utility and recovery substrates. HarmfulSkillBench/AgentHarm-style data must be gated by a safety protocol before any download.
 - R079/R080 close the first integration gap between saved compiler-corpus leases and the live local task loop. R079 uses R074 saved compiler output as the only lease source, activates only strict non-empty `equals_any` argument policies, disables state-grounded reference hints, and executes 9 local Qwen3.6 calls with 0 gateway errors. R080 shows 7 calls exactly bind references and 2 are wrong/hallucinated tools. The design implication is that strict compiler leases can safely drive runtime, but current compiler coverage and task completion are too weak for utility; the next mechanism needs exact argument synthesis, safe runtime binding, and repair before execution.
+- R081 connects the mechanism to the paper's top-level claim. It shows that even same-exposure object ACLs can admit unsafe protected decisions when provenance is ignored, so the design cannot collapse context authority into tool/resource exposure. The design implication is that `control_provenance`, influence modes, and event/argument binding are not optional precision features; they are the boundary that differentiates IntentCap from ordinary ACLs.
 - Benchmark adapters should preserve raw benchmark identifiers in each event so denial explanations can be traced back to a task, server, tool, attack template, or risk category.
 - New benchmark candidates should be chosen through web metadata first. Do not sync new eval datasets into local state unless the experiment, source, and download boundary are explicitly approved.
 

@@ -1,22 +1,22 @@
 # Idea Story
 
 Last updated: 2026-07-04
-Stage at update: stage 4/5 compiler-corpus lower-bound plus novelty audit
-Source/command: AgentDojo, MCPTox, InjecAgent export/checker probes plus gateway replay; R019/R020/R022/R027 authority-minimization and oracle-distance scoring; R021-R024 tau2/tau3 artifact/reference/evaluator-backed replay; R025 checker ablation; R026 web-only eval-dataset ranking; R028-R030 local Qwen lease/action corpus; R031-R069 local Qwen3.6 tau2 task-gateway and user-simulator diagnostics; R070-R078 non-evaluation-task-JSON compiler/gateway diagnostics; R079 strict compiler-corpus local Qwen3.6 task-loop run; R080 R079 mismatch analysis; and 2026-07-04 closest-work PDF collection
+Stage at update: stage 4/5 compiler-corpus lower-bound plus expanded novelty audit
+Source/command: AgentDojo, MCPTox, InjecAgent export/checker probes plus gateway replay; R019/R020/R022/R027 authority-minimization and oracle-distance scoring; R021-R024 tau2/tau3 artifact/reference/evaluator-backed replay; R025 checker ablation; R026 web-only eval-dataset ranking; R028-R030 local Qwen lease/action corpus; R031-R069 local Qwen3.6 tau2 task-gateway and user-simulator diagnostics; R070-R078 non-evaluation-task-JSON compiler/gateway diagnostics; R079 strict compiler-corpus local Qwen3.6 task-loop run; R080 R079 mismatch analysis; R081 top-conference claim evidence matrix; and 2026-07-04 closest-work plus 2026 agent-security PDF collection
 Completeness: partial
 
 ## Current State
 - Stage: Stage 3 design/prototype and Stage 5 evaluation probes are active. The project now has security replay evidence, authority-surface evidence, exact-oracle task-loop utility pilots, and the first strict non-oracle compiler-corpus task-loop integration.
-- Blocking gate: the strongest utility results still depend on exact oracle leases or reference-user simulator replay. R079/R080 connect saved R074 compiler-corpus leases to the local Qwen3.6 task loop under strict lowering, but they are a negative lower-bound result: 11 evaluated tasks, 14 active compiler leases, 9 model calls, 9 gateway-allowed/executed calls, 0 tool errors, 7 exact bound reference calls, 2 all-reference-actions-executed tasks, and 0/11 tool-oracle pass. The current compiler is safe under strict checking but not utility-ready.
-- Novelty gate: the idea is defensible but not risk-free. Same-claim pressure is medium to medium-high from CaMeL, Progent, SkillGuard, Task Shield/DRIFT, and ActPlane. The claim must stay narrow: IntentCap is a run-centric intent/provenance capability compiler/checker for authority-bearing decisions, not the first generic agent permission model and not a prompt-injection solution.
-- Reference gate: 23 closest-work and benchmark PDFs are now stored under `docs/reference/` and verified locally as PDFs. This is a source corpus only; no new eval dataset was synced or executed.
-- Next action: improve non-oracle compiler utility after R079/R080 by adding exact argument synthesis, safe runtime binding for placeholder arguments, broad/runtime policy repair before execution, independent validity labels, and expert-oracle lease scoring. Do not sync new eval datasets by default; use official web metadata first and ask before cloning/downloading.
+- Blocking gate: R081 strengthens the saved-result TC1/TC2 security and authority story, but the strongest utility results still depend on exact oracle leases or reference-user simulator replay. R079/R080 connect saved R074 compiler-corpus leases to the local Qwen3.6 task loop under strict lowering, but they are a negative lower-bound result: 11 evaluated tasks, 14 active compiler leases, 9 model calls, 9 gateway-allowed/executed calls, 0 tool errors, 7 exact bound reference calls, 2 all-reference-actions-executed tasks, and 0/11 tool-oracle pass. The current compiler is safe under strict checking but not utility-ready.
+- Novelty gate: the idea is defensible but not risk-free. Same-claim pressure is medium-high after adding Intent-to-Execution Integrity, Formalizing LLM Agent Security, AgentSecBench, Prompt Flow Integrity, SkillScope, and MCP description/code inconsistency work. The claim must stay narrow: IntentCap is a run-centric intent/provenance capability compiler/checker that turns context influence over authority-bearing decisions into proof-carrying leases; it is not the first generic agent permission model, not the first intent-to-execution framing, and not a prompt-injection solution.
+- Reference gate: 42 closest-work and benchmark PDFs are now stored under `docs/reference/` and verified locally as PDFs. This is a source corpus only; no new eval dataset was synced or executed.
+- Next action: either improve non-oracle compiler utility after R079/R080 by adding exact argument synthesis, safe runtime binding for placeholder arguments, and broad/runtime policy repair before execution; or convert R081 into a stronger blinded expert-oracle and independent-validity-label study. Do not sync new eval datasets by default; use official web metadata first and ask before cloning/downloading.
 - Paper boundary: the existing two-page English workshop paper is frozen under `docs/paper-workshop/`; auto-research drafts go under `docs/autopaper/`.
 
 ## Downstream Document Index
 | Doc | Role | Current status | Next required update |
 |---|---|---|---|
-| `docs/background-related-work.md` | novelty, closest work, benchmarks, baselines | partial; 23 PDFs collected under `docs/reference/` | full-text notes and baseline reproduction decisions for CaMeL, Progent, SkillGuard, Task Shield/DRIFT |
+| `docs/background-related-work.md` | novelty, closest work, benchmarks, baselines | partial; 42 PDFs collected under `docs/reference/` | full-text notes and baseline reproduction decisions for CaMeL, PFI/AgentSecBench/Formalizing LLM Agent Security, Progent, SkillGuard/SkillScope, Task Shield/DRIFT |
 | `docs/design.md` | mechanism and artifact boundary | partial | refine checker semantics after parser/oracle and online-wrapper results |
 | `docs/implementation.md` | prototype milestones and runnable commands | partial | improve compiler-corpus task-loop support after R079/R080 |
 | `docs/evaluation.md` | experiment plan, run tracker, results, claim verdict | partial | add exact-argument compiler repair, expert-oracle lease scoring, and stronger baseline comparisons |
@@ -89,7 +89,7 @@ Completeness: partial.
 
 ### Target Audience And Venue Bar
 - Venue family: systems/security/agent infrastructure workshop first; OSDI/SOSP/USENIX Security style if prototype and evaluation become strong.
-- Reviewer expectation: clear threat model, exact boundaries, meaningful baselines, no overclaim that prompt injection is solved.
+- Reviewer expectation: clear threat model, exact boundaries, meaningful baselines, no overclaim that prompt injection is solved and no claim that user-intent/contextual security itself is new.
 
 ### Method Thesis
 - Thesis sentence: IntentCap improves least-privilege security for LLM agent extensions because it authorizes context influence over authority-bearing decisions, not only tool/resource operations.
@@ -115,9 +115,9 @@ Completeness: partial.
 ### Claim Ledger
 | ID | Claim | Scope | Metric/evidence needed | Status |
 |---|---|---|---|---|
-| C1 | IntentCap blocks unauthorized context-to-decision influence while allowing authorized data use. | AgentDojo/InjecAgent/MCPTox-style adversarial workflows with protected decisions. | Attack success rate, influence-violation denial counts, benign utility, false denial recovery. | partial: local trace plus AgentDojo, reconciled MCPTox, InjecAgent, mixed InjecAgent, cached-output replay, and MCPTox provenance results; still needs strong baseline reproduction and fresh online model/API wrapper |
-| C2 | Intent-carrying leases reduce over-privilege relative to static tool/server/Skill policies. | Skills, MCP tools, local scripts, and subagent delegation in mixed workflows. | Risk-weighted authority score vs static allowlist, Skill manifest/SkillGuard-style policy, human approval, and expert oracle. | partial: R019/R020/R022/R027 show authority-surface reduction; R023/R024 show exact leases execute/evaluate on tau2 reference trajectories; R031-R069 show exact-oracle local Qwen3.6 task-loop pilots; expert oracle and non-oracle utility remain pending |
-| C3 | The compiler/checker split keeps LLM policy synthesis outside the trusted computing base. | Candidate lease generation from plans and extension metadata. | Invalid proposals rejected, valid proposals accepted, proof completeness, checker coverage. | partial: R025 shows provenance checking prevents no-provenance false accepts; R028-R030 use local Qwen lease/action proposals; R070-R080 expose non-oracle compiler/gateway/task-loop failure surfaces under strict checking; independent labels and proof-completeness evaluation remain pending |
+| C1 | IntentCap blocks unauthorized context-to-decision influence while allowing authorized data use. | AgentDojo/InjecAgent/MCPTox-style adversarial workflows with protected decisions. | Attack success rate, influence-violation denial counts, benign utility, false denial recovery. | partial but stronger: R081 shows object-only policies false-accept 3,811/3,811 checker-denied protected decisions and same-exposure ACL profiles produce 2,149 unsafe event admissions; still needs strong baseline reproduction and fresh online model/API wrapper |
+| C2 | Intent-carrying leases reduce over-privilege relative to static tool/server/Skill policies. | Skills, MCP tools, local scripts, and subagent delegation in mixed workflows. | Risk-weighted authority score vs static allowlist, Skill manifest/SkillGuard-style policy, human approval, and expert oracle. | partial but stronger: R019/R020/R022/R027/R081 show authority-surface reduction, 13,851 non-oracle unsafe event admissions over 3,746 unique unsafe events, and up to 756,096 extra authority slots; expert-blind oracle and non-oracle utility remain pending |
+| C3 | The compiler/checker split keeps LLM policy synthesis outside the trusted computing base. | Candidate lease generation from plans and extension metadata. | Invalid proposals rejected, valid proposals accepted, proof completeness, checker coverage. | partial: R025/R081 show provenance checking prevents no-provenance false accepts; R028-R030 use local Qwen lease/action proposals; R070-R080 expose non-oracle compiler/gateway/task-loop failure surfaces under strict checking; independent labels and proof-completeness evaluation remain pending |
 | C4 | Narrow non-oracle compiler leases can preserve useful task progress after repair. | tau2/tau3 and MCP/Skill workflows with model-generated leases. | Task success, exact argument coverage, broad/runtime-policy rate, recovery rate, false denials. | weak: R079/R080 prove strict saved compiler-corpus leases can drive the task loop safely, but utility is currently 0/11 tool-oracle pass |
 
 ### Largest Plausible Claim
@@ -144,8 +144,8 @@ Completeness: partial.
 | Refinement | denied action -> narrower lease -> continue | utility preservation claim | requires agent loop integration | simulate with recorded traces |
 
 ### Reviewer Attack Surface
-- "This is CaMeL with different words." Response must show intent certificate, decision-class influence authority, and cross-extension leases.
-- "This is Progent or SkillGuard." Response must show run-centric, context-provenance-aware lease derivation beyond tool-call DSLs or skill manifests.
+- "This is CaMeL/PFI/AgentSecBench with different words." Response must show intent certificate, decision-class influence authority, proof-carrying leases, and cross-extension enforcement rather than only trusted/untrusted flow separation.
+- "This is Progent, SkillGuard, or SkillScope." Response must show run-centric, context-provenance-aware lease derivation beyond tool-call DSLs, skill manifests, or skill graph analysis.
 - "This is ActPlane policy synthesis." Response must show context construction and policy origin are central; OS enforcement is optional.
 - "How do you know control provenance?" Need a concrete instrumentation story for plans, arguments, and benchmark traces.
 - "Does it preserve utility?" Need benchmark results and recovery from false denials.

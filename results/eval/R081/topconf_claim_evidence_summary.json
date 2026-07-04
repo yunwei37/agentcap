@@ -1,0 +1,47 @@
+{
+  "analysis": "top-conference claim evidence matrix over saved IntentCap results",
+  "checker_denied_by_mode": {
+    "authorize": 2270,
+    "sink_select": 1320,
+    "tool_select": 221
+  },
+  "checker_denied_protected_decisions": 3811,
+  "checker_events": 8680,
+  "claim_rows": 4,
+  "claim_verdict": {
+    "TC1": "partial but strong saved-trace security evidence",
+    "TC2": "partial but strong saved-result authority evidence",
+    "TC3": "partial checker-ablation evidence",
+    "TC4": "weak/partial utility evidence"
+  },
+  "full_event_args_no_provenance_false_accepts": 3811,
+  "git_status": "M docs/autopaper/intentcap-autopaper.md\n M docs/background-related-work.md\n M docs/design.md\n M docs/evaluation.md\n M docs/idea-story.md\n M docs/implementation.md\n?? results/eval/R081/\n?? scripts/analyze_topconf_claim_evidence.py\n?? tests/test_analyze_topconf_claim_evidence.py",
+  "input_digests": [
+    {
+      "bytes": 3084,
+      "path": "results/checker/R025/checker_ablation_summary.json",
+      "sha256": "aa4c0d551b9ae5421c913a6bf89784bd40fa0bc516826eba94ee41b8851ab66b"
+    },
+    {
+      "bytes": 5323,
+      "path": "results/eval/R027/baseline_oracle_distance.csv",
+      "sha256": "89469fd73c3753164e811256655f58fc79063d3a0c542b8a05321b1ef1096adf"
+    }
+  ],
+  "lease_no_provenance_false_accepts": 3810,
+  "machine": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "max_extra_authority_slots_vs_oracle": 756096.0,
+  "non_oracle_baseline_rows": 15,
+  "non_oracle_unsafe_event_admissions": 13851,
+  "notes": [
+    "R081 does not run models, execute tools, clone benchmarks, sync datasets, or download data.",
+    "Same-exposure unsafe event admissions are important because they show a tool/object ACL can expose no more objects than IntentCap and still admit unsafe protected decisions when provenance is ignored.",
+    "The result supports conservative saved-trace wording, not final benchmark-scale online utility or approval-burden claims."
+  ],
+  "object_only_false_accepts": 3811,
+  "project_head": "88b03e624243e79732b4231121fdd59393742fd2",
+  "run_id": "R081",
+  "same_exposure_unsafe_event_admissions": 2149,
+  "security_evidence_rows": 17,
+  "unique_unsafe_events_total": 3746
+}

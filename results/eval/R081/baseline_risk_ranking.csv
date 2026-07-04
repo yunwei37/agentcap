@@ -1,0 +1,16 @@
+benchmark,baseline,oracle_baseline,unsafe_events_total,unsafe_events_admitted,unsafe_admit_rate,extra_authority_slots_vs_oracle,oracle_distance_score,distance_over_oracle_slots,description
+MCPTox,global_observed_tools,intentcap_provenance,2148,2148,1.0,607884.0,2756334,1283.2094972067039,All MCP tools observed in successful parsed calls are exposed.
+MCPTox,observed_server_allowlist,intentcap_provenance,2148,2148,1.0,18949.0,2167399,1009.0311918063314,All MCP tools observed in successful parsed calls for the event's server are exposed.
+MCPTox,exact_tool_acl,intentcap_provenance,2148,2148,1.0,0.0,2148450,1000.2094972067039,"Only the called MCP tool object is exposed, but provenance and argument event-id constraints are not checked."
+MCPTox,global_authentic_tools,intentcap_provenance,2148,2058,0.9581005586592178,756096.0,2814546,1310.3100558659219,All authentic MCP tools from response_all.json are exposed.
+MCPTox,authentic_server_allowlist,intentcap_provenance,2148,2058,0.9581005586592178,18817.0,2077267,967.0702979515829,"All authentic tools for the event's MCP server are exposed, using response_all.json tool_names."
+InjecAgent,catalog_all_tools,intentcap_one_shot,1598,1598,1.0,346766.0,1945116,1845.46110056926,All tools in the InjecAgent catalog are exposed for every case.
+InjecAgent,observed_trace_tools,intentcap_one_shot,1598,1598,1.0,82212.0,1680562,1594.46110056926,All tools observed in the mixed trace are exposed for every case.
+InjecAgent,toolkit_allowlist,intentcap_one_shot,1598,77,0.04818523153942428,9052.0,86402,81.97533206831119,All tools in the requested user tool's toolkit/server are exposed for the case.
+InjecAgent,benchmark_user_tools,intentcap_one_shot,1598,17,0.010638297872340425,16864.0,34214,32.46110056925996,All benchmark user-facing tools are exposed for every case.
+InjecAgent,task_tool_allowlist,intentcap_one_shot,1598,1,0.0006257822277847309,0.0,1350,1.2808349146110056,"Only the requested user tool is exposed for the case, but arguments/provenance are broad."
+tau2-bench / tau3-bench,global_all_tools,intentcap_reference_events,0,0,0.0,384699.0,385149,101.00944138473643,"All parsed assistant, discoverable, user, and task-declared user tools across analyzed domains."
+tau2-bench / tau3-bench,global_assistant_regular,intentcap_reference_events,0,0,0.0,167439.0,167889,44.03068450039339,All ordinary non-discoverable assistant tools across analyzed domains.
+tau2-bench / tau3-bench,domain_assistant_all,intentcap_reference_events,0,0,0.0,35052.0,35502,9.310778914240755,"All assistant tools in the task domain, including discoverable tools."
+tau2-bench / tau3-bench,domain_assistant_regular,intentcap_reference_events,0,0,0.0,30396.0,30846,8.089693154996066,All ordinary non-discoverable assistant tools in the task domain.
+tau2-bench / tau3-bench,task_reference_tools,intentcap_reference_events,0,0,0.0,0.0,1141,0.2992394440073433,"Per-task ACL containing the unique assistant reference-action tool names, without event-id/provenance constraints."
