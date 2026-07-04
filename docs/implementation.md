@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-03
 Stage at update: stage 4 implementation probes
-Source/command: local checker, gateway replay, live tool gateway smoke, AgentDojo/MCPTox/InjecAgent export adapters, R010 mixed replay, R011 AgentDojo goal inference, R012 InjecAgent enhanced replay, R013 live smoke, R014 AgentDojo inferred-event audit, R015 MCPTox reconciliation audit, R016 benchmark-derived live trace execution, R017 official cached prompted-output gateway replay, R018 cached-output aggregate, R019 InjecAgent authority-minimization analysis, R020 MCPTox authority-minimization analysis, R021 tau2/tau3 artifact probe, R022 tau2/tau3 reference-action authority minimization, R023 tau2/tau3 reference-action live gateway execution, R024 tau2/tau3 evaluator-backed reference-action replay, R025 checker-ablation analysis, R026 web-only candidate ranking without new dataset sync, R027 oracle-distance scoring, R028 local Qwen lease-corpus run, and R029 local Qwen refinement-corpus run
+Source/command: local checker, gateway replay, live tool gateway smoke, AgentDojo/MCPTox/InjecAgent export adapters, R010 mixed replay, R011 AgentDojo goal inference, R012 InjecAgent enhanced replay, R013 live smoke, R014 AgentDojo inferred-event audit, R015 MCPTox count/oracle reconciliation, R016 benchmark-derived live trace execution, R017 official cached prompted-output gateway replay, R018 cached-output aggregate, R019 InjecAgent authority-minimization analysis, R020 MCPTox authority-minimization analysis, R021 tau2/tau3 artifact probe, R022 tau2/tau3 reference-action authority minimization, R023 tau2/tau3 reference-action live gateway execution, R024 tau2/tau3 evaluator-backed reference-action replay, R025 checker-ablation analysis, R026 web-only candidate ranking without new dataset sync, R027 oracle-distance scoring, R028 local Qwen lease-corpus run, R029 local Qwen refinement-corpus run, and R030 local Qwen gateway-recovery loop
 Completeness: partial
 
 ## Repository Layout Relevant To The Project
@@ -35,13 +35,14 @@ Completeness: partial
 | `scripts/analyze_checker_ablation.py` | compares the deterministic checker against object-only, saved-lease-constraints/no-provenance, and full-event-args/no-provenance acceptance over saved traces | created |
 | `scripts/score_oracle_lease_distance.py` | scores saved authority-minimization baselines against current IntentCap oracle profiles across InjecAgent, MCPTox, and tau2/tau3 | created |
 | `scripts/run_local_llm_lease_corpus.py` | runs a local llama.cpp/Qwen model as an untrusted lease-compiler frontend and validates generated leases with the deterministic checker | created |
+| `scripts/run_local_llm_gateway_recovery.py` | runs a local llama.cpp/Qwen model through `LiveToolGateway` action proposals plus one checker-feedback recovery round | created |
 | `scripts/rank_eval_dataset_candidates.py` | ranks web-discovered eval dataset candidates from official metadata without cloning, syncing, downloading, or executing new datasets | created |
 | `scripts/probe_tau2_bench.py` | probes tau2/tau3 task, policy, tool, document, and reference-action artifacts without model/API execution | created |
 | `scripts/analyze_tau2_authority_minimization.py` | compares tau2/tau3 exact reference-action leases against task/domain/global static tool scopes | created |
 | `scripts/run_tau2_reference_actions_live_gateway.py` | executes tau2/tau3 assistant reference actions through `LiveToolGateway` and real tau2 domain toolkit callables | created |
 | `scripts/run_tau2_evaluator_backed_replay.py` | replays tau2/tau3 reference trajectories through exact IntentCap event leases and official tau2 action/env evaluators | created |
 | `benchmarks/` | ignored external benchmark clone workspace | created; AgentDojo cloned locally |
-| `results/` | raw result outputs and run logs | created; R001-R029 recorded |
+| `results/` | raw result outputs and run logs | created; R001-R030 recorded |
 
 ## Implementation Milestones
 | Milestone | Deliverable | Exit condition | Status |
@@ -52,7 +53,7 @@ Completeness: partial
 | M3: AgentDojo adapter | load AgentDojo task metadata/traces or wrap benchmark agent calls | one benign and one adversarial task dry-run logged | partial: metadata, injection ground-truth export, and goal-inferred natural-language replay work; online agent trajectories still pending |
 | M4: InjecAgent/MCPTox adapters | parse cases into protected decision events | at least one setup/dry-run or documented blocker per benchmark | partial: MCPTox and InjecAgent trace exporters work; InjecAgent now supports mixed benign/attack traces; online wrappers pending |
 | M5: Lease compiler prototype | heuristic or LLM-assisted compiler from task intent and effect list to candidate leases | compares LLM-only/wide leases vs minimized leases | partial: R028/R029 local Qwen frontend emits candidate leases/denials, checker validates them, and R029 adds one-round checker-feedback refinement |
-| M6: Online enforcement harness | tool gateway/MCP broker/context constructor wrappers | blocks wrong sink in a live toy workflow | partial: local live tool gateway smoke, benchmark-derived live trace execution, and official cached prompted-output replay pass; online model/API wrapper pending |
+| M6: Online enforcement harness | tool gateway/MCP broker/context constructor wrappers | blocks wrong sink in a live toy workflow | partial: local live tool gateway smoke, benchmark-derived live trace execution, official cached prompted-output replay, and R030 local Qwen action-level gateway feedback pass; benchmark-scale online model/API wrapper pending |
 | M7: Evaluation scripts | aggregate utility, attack success, over-privilege, false denial, recovery | generates tables for `docs/autopaper` | partial: cached-output aggregate and InjecAgent/MCPTox authority-minimization analyses exist; utility aggregation pending |
 
 ## Current Implementation Status
@@ -93,7 +94,8 @@ Completeness: partial
 - R027 adds a saved-result oracle-distance scorer over R019/R020/R022 authority summaries. It writes common baseline rows to `results/eval/R027/baseline_oracle_distance.csv` and benchmark summaries to `results/eval/R027/benchmark_oracle_summary.csv`. The run has 18 baseline rows, 3 oracle rows, 15 non-oracle rows, and 13,851 total non-oracle unsafe events admitted. It does not run models or sync datasets.
 - R028 adds a local LLM lease-corpus runner. llama.cpp was pulled to `2d973636e`, rebuilt as version `9870` with CUDA on the RTX 5090, and invoked through `llama-completion` with local `qwen2.5-3b-instruct-q4_k_m.gguf`. The run samples 7 events from existing traces, records prompts/raw outputs, parses 6 model responses, accepts 3/3 reference-allowed candidate leases, records 1 correct denial, rejects 1 invalid generated lease, and has 0 dangerous false accepts.
 - R029 extends the local LLM lease-corpus runner with `--run-id` and one-round `--refinement-rounds` checker feedback. It samples 28 existing-trace events, parses 26 initial model responses, accepts 12/12 reference-allowed candidate leases, rejects 10 generated unsafe leases, records 2 correct initial denials, 2 invalid decisions, and 2 parse failures, then recovers all 14 initial failed/rejected outputs to correct deny after one feedback round. Final outcomes are 12 correct accepts, 16 correct denies, and 0 dangerous false accepts. It does not sync datasets or run an online agent loop.
-- New eval datasets should be selected through web metadata first and not cloned, synced, or bulk-downloaded without explicit approval. Existing local benchmark artifacts remain usable for the already recorded R001-R029 evidence chain.
+- R030 adds a local LLM gateway-recovery runner. It asks local Qwen to propose action events, sends calls through `LiveToolGateway`, and sends one structured feedback prompt after gateway blocks. On 18 existing-trace samples, Qwen initially proposes 18 calls; the gateway executes 8 valid events and blocks 10 unsafe calls that an LLM-only runner would execute. One feedback round recovers 6 of the 10 blocked unsafe calls to abort, leaves 4 still blocked by the gateway, and records 0 dangerous executions. It does not sync datasets or measure benchmark-scale task success.
+- New eval datasets should be selected through web metadata first and not cloned, synced, or bulk-downloaded without explicit approval. Existing local benchmark artifacts remain usable for the already recorded R001-R030 evidence chain.
 - The next benchmark step is to build an online model/API wrapper, a tau2/tau3 simulator-backed utility subset, a larger independently reviewed expert-oracle lease set, an independently labeled LLM-proposed candidate lease corpus, or an explicitly approved R026 top candidate.
 
 ## Build/Run Commands
@@ -134,6 +136,7 @@ Completeness: partial
 | llama.cpp local Qwen setup | `git pull --ff-only` and `cmake --build build --config Release -j "$(nproc)"` in `/home/yunwei37/workspace/llama.cpp-latest` | works for `llama-cli`/`llama-completion` version `9870 (2d973636e)` with CUDA/RTX 5090 visible; full build emitted a test-target `SNAPSHOT_DIR` compile/link error but completed exit 0 and produced usable inference binaries |
 | Local Qwen lease-corpus run | `PYTHONPATH=src python scripts/run_local_llm_lease_corpus.py --output-dir results/eval/R028 --samples-per-bucket 1 --max-events 8 --timeout-seconds 120 --n-predict 512 --ctx-size 4096` | works; R028 runs local Qwen through llama.cpp over 7 existing-trace events and validates candidate leases with the deterministic checker |
 | Local Qwen refinement-corpus run | `PYTHONPATH=src python scripts/run_local_llm_lease_corpus.py --run-id R029 --output-dir results/eval/R029 --samples-per-bucket 5 --max-events 30 --refinement-rounds 1 --timeout-seconds 120 --n-predict 512 --ctx-size 4096` | works; R029 runs local Qwen over 28 existing-trace events and uses one round of checker feedback to recover 14 initially invalid/rejected outputs to correct deny |
+| Local Qwen gateway-recovery run | `PYTHONPATH=src python scripts/run_local_llm_gateway_recovery.py --run-id R030 --output-dir results/eval/R030 --samples-per-bucket 3 --max-events 20 --feedback-rounds 1 --timeout-seconds 120 --n-predict 512 --ctx-size 4096` | works; R030 runs local Qwen over 18 existing-trace action proposals, executes 8 valid actions, blocks 10 unsafe calls, and recovers 6 blocked unsafe calls to abort after one feedback round |
 
 ## Integration Constraints
 - Do not mutate the frozen workshop paper unless explicitly requested.
@@ -161,6 +164,7 @@ Completeness: partial
 - R026 is a web-only ranking artifact, not a benchmark result. Its scores are hand-authored metadata weights for deciding what to request permission for next; they should not be reported as security, utility, or attack-success measurements.
 - R027 is saved-result oracle-distance scoring, not a new benchmark execution or a large independent expert-oracle annotation effort. It is useful for normalizing the existing authority-minimization baselines, but final paper claims still need a larger reviewed oracle set.
 - R028/R029 are local Qwen lease-compiler corpora, not online benchmark runs. R029 demonstrates one-round candidate-level checker-feedback repair, but it still does not test end-to-end agent replanning after tool denials, approval burden, task success, or fresh benchmark simulator utility.
+- R030 is an action-level local gateway feedback loop, not a benchmark-scale online model/API run. It executes through `LiveToolGateway` and measures blocked-call recovery, but it still does not run a task environment, user simulator, multi-step planner, approval UI, or end-to-end task-success oracle.
 - Need reconcile InjecAgent README count of 62 attacker tools with the local base-case count of 63 unique attacker-tool names, where `GmailSendEmail` is the repeated exfiltration sink.
 - Need implement an online model/API benchmark wrapper so deterministic trace-level denials, local live execution, and cached model-output replay can be paired with fresh model/tool utility and attack-success metrics.
 - Need convert tau2/tau3 reference-action lease scopes into a small simulator-backed utility run.
@@ -168,4 +172,4 @@ Completeness: partial
 - Need decide whether to keep external benchmark clones only as ignored local state or convert selected ones into submodules later.
 
 ## Next Engineering Action
-Build the next evidence step: connect the live gateway to an online model/API benchmark subset, turn R024 into a tau2/tau3 fresh model/user-simulator utility run, expand R027 into a reviewed expert-oracle lease study, add independent validity labels to the R029-style LLM-proposed lease corpus, or ask for explicit approval to import one R026 top-ranked web-only candidate.
+Build the next evidence step: connect the live gateway to a benchmark task environment, turn R024 into a tau2/tau3 fresh model/user-simulator utility run, expand R027 into a reviewed expert-oracle lease study, add independent validity labels to the R029/R030-style LLM corpora, or ask for explicit approval to import one R026 top-ranked web-only candidate.

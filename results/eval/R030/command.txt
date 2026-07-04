@@ -1,0 +1,1 @@
+PYTHONPATH=src /usr/bin/python scripts/run_local_llm_gateway_recovery.py --run-id R030 --output-dir results/eval/R030 --samples-per-bucket 3 --max-events 20 --feedback-rounds 1 --timeout-seconds 120 --n-predict 512 --ctx-size 4096
