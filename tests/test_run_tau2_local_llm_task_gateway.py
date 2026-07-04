@@ -118,3 +118,101 @@ def test_safe_id_keeps_paths_simple():
 def test_scope_note_distinguishes_mock_from_cross_domain_pilots():
     assert "mock-domain pilot" in runner._scope_note(("mock",))
     assert "small fixed-domain pilot" in runner._scope_note(("airline", "retail"))
+
+
+def test_feedback_prompt_reports_blocks_without_reference_actions():
+    prompt = runner.build_feedback_prompt(
+        domain="mock",
+        raw_task={
+            "id": "t",
+            "instruction": "Update the task.",
+            "evaluation_criteria": {
+                "actions": [
+                    {
+                        "name": "create_task",
+                        "arguments": {"title": "Hidden reference"},
+                    }
+                ]
+            },
+        },
+        tools=[{"name": "create_task", "parameters": {}}],
+        blocked_calls=[
+            {
+                "round": "initial",
+                "index": 0,
+                "tool": "create_task",
+                "arguments": {"title": "Wrong"},
+                "reason": "no matching lease",
+                "object": "tau2.mock.assistant.create_task",
+            }
+        ],
+        action_rows=[
+            {
+                "round": "initial",
+                "model_tool": "create_task",
+                "model_args_json": '{"title": "Wrong"}',
+                "gateway_action": "block",
+                "gateway_reason": "no matching lease",
+                "executed": False,
+            }
+        ],
+    )
+
+    assert "no matching lease" in prompt
+    assert "Hidden reference" not in prompt
+    assert "evaluation_criteria" not in prompt
+
+
+def test_summary_counts_feedback_rounds():
+    summary = runner.summarize(
+        run_id="RTEST",
+        task_rows=[
+            {
+                "parse_ok": True,
+                "model_calls": 2,
+                "initial_model_calls": 1,
+                "feedback_model_calls": 1,
+                "feedback_attempted": True,
+                "reference_actions": 1,
+                "bound_reference_calls": 1,
+                "off_lease_calls_blocked": 1,
+                "exact_sequence_match": False,
+                "all_reference_actions_executed": True,
+                "action_reward": 1.0,
+                "env_reward": 1.0,
+                "tool_oracle_applicable": True,
+                "tool_oracle_pass": True,
+            }
+        ],
+        action_rows=[
+            {
+                "round": "initial",
+                "gateway_allowed": False,
+                "executed": False,
+                "tool_error": False,
+            },
+            {
+                "round": "feedback_1",
+                "gateway_allowed": True,
+                "executed": True,
+                "tool_error": False,
+            },
+        ],
+        unsupported_rows=[],
+        domains=(),
+        benchmark_dir=Path("."),
+        llama_bin=Path("/missing/llama"),
+        model=Path("/missing/model"),
+        n_predict=1,
+        ctx_size=1,
+        gpu_layers=0,
+        timeout_seconds=1,
+        max_tasks_per_domain=1,
+        feedback_rounds=1,
+        dry_run=False,
+    )
+
+    assert summary["feedback_rounds"] == 1
+    assert summary["feedback_attempted_tasks"] == 1
+    assert summary["initial_gateway_blocked"] == 1
+    assert summary["feedback_gateway_allowed"] == 1

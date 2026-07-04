@@ -1,0 +1,83 @@
+{
+  "action_outcome_counts": {
+    "blocked": 12
+  },
+  "action_reward_pass_tasks": 0,
+  "all_reference_actions_executed_tasks": 0,
+  "analysis": "fresh local Qwen tau2 task proposals through exact IntentCap task leases",
+  "benchmark": "tau2-bench / tau3-bench",
+  "bound_reference_calls": 0,
+  "ctx_size": 8192,
+  "domains_requested": [
+    "airline",
+    "retail",
+    "telecom"
+  ],
+  "dry_run": false,
+  "env_reward_pass_tasks": 2,
+  "exact_sequence_match_tasks": 0,
+  "executed_calls": 0,
+  "feedback_attempted_tasks": 7,
+  "feedback_gateway_allowed": 0,
+  "feedback_gateway_blocked": 5,
+  "feedback_model_calls": 5,
+  "feedback_rounds": 1,
+  "gateway_allowed": 0,
+  "gateway_blocked": 12,
+  "git_status": "## main...origin/main\n M scripts/run_tau2_local_llm_task_gateway.py\n M tests/test_run_tau2_local_llm_task_gateway.py\n?? results/eval/R033/",
+  "gpu_layers": 999,
+  "initial_gateway_allowed": 0,
+  "initial_gateway_blocked": 7,
+  "initial_model_calls": 7,
+  "input_digests": [
+    {
+      "bytes": 155528,
+      "path": "benchmarks/tau2-bench/data/tau2/domains/airline/tasks.json",
+      "sha256": "ccd8ba737b4cc371415af70151187788f728d6108d0916e73bb4317b40542052"
+    },
+    {
+      "bytes": 345982,
+      "path": "benchmarks/tau2-bench/data/tau2/domains/retail/tasks.json",
+      "sha256": "8e03ebce7901bd6218e7a7dc3105faa9324091a68058f7fe61c65262868812e8"
+    },
+    {
+      "bytes": 13977063,
+      "path": "benchmarks/tau2-bench/data/tau2/domains/telecom/tasks.json",
+      "sha256": "37e562e1ae3242577407e1303b1548bc64e7ea68e37d36173e6747990ceaf8a4"
+    }
+  ],
+  "llama_bin": "/home/yunwei37/workspace/llama.cpp-latest/build/bin/llama-completion",
+  "llama_bin_sha256": "12761f8c49a086d648412d0f76f69cc18f17928662e38e005aee85e7135ffd84",
+  "llama_version": "version: 9870 (2d973636e)\nbuilt with GNU 13.3.0 for Linux x86_64",
+  "max_tasks_per_domain": 3,
+  "model": "/home/yunwei37/workspace/llama.cpp-latest/models/qwen2.5-3b-instruct-q4_k_m.gguf",
+  "model_bytes": 2104932768,
+  "model_calls": 12,
+  "model_parse_success_tasks": 7,
+  "n_predict": 768,
+  "notes": [
+    "This run uses the existing local tau2-bench artifact only; it does not clone, sync, or download datasets.",
+    "The model sees task text and tool schemas, but not evaluation_criteria.actions.",
+    "Exact reference-action leases are used as the oracle authorization profile; this is not a complete lease compiler evaluation.",
+    "This is a small fixed-domain pilot over the requested tau2 domains, not a benchmark-scale tau2/tau3 online run.",
+    "Feedback prompts include blocked calls and gateway reasons but still do not reveal evaluation_criteria.actions."
+  ],
+  "off_lease_calls_blocked": 12,
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "56d24becd220c0119b68a3db5da5114210521f2f",
+  "python": "3.12.3",
+  "reference_actions": 28,
+  "run_id": "R033",
+  "script_sha256": "d6c552ef65ce34617194ae2b352e2613f370e7d0b26982dc2190bb35da748cc7",
+  "tasks_evaluated": 7,
+  "tasks_with_model_calls": 7,
+  "timeout_seconds": 120,
+  "tool_error_calls": 0,
+  "tool_oracle_applicable_tasks": 7,
+  "tool_oracle_pass_rate": 0.0,
+  "tool_oracle_pass_tasks": 0,
+  "unsupported_reason_counts": {
+    "no_assistant_reference_actions": 2
+  },
+  "unsupported_tasks": 2
+}

@@ -1,0 +1,1 @@
+PYTHONPATH=src /usr/bin/python scripts/run_tau2_local_llm_task_gateway.py --run-id R033 --output-dir results/eval/R033 --domains airline retail telecom --max-tasks-per-domain 3 --timeout-seconds 120 --n-predict 768 --ctx-size 8192 --feedback-rounds 1
