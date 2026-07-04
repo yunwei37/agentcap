@@ -57,11 +57,22 @@ ROW_FIELDS = [
     "candidate_checker_allowed",
     "candidate_checker_reason",
     "outcome",
+    "refinement_attempted",
+    "refinement_reason",
+    "refinement_parse_ok",
+    "refinement_model_decision",
+    "refinement_has_candidate_lease",
+    "refinement_checker_allowed",
+    "refinement_checker_reason",
+    "refinement_outcome",
+    "final_outcome",
     "latency_seconds",
     "prompt_sha256",
     "raw_output_sha256",
     "prompt_path",
     "raw_output_path",
+    "refinement_prompt_path",
+    "refinement_raw_output_path",
 ]
 
 
@@ -79,6 +90,7 @@ class Sample:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run local LLM lease-corpus experiment")
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--run-id", default="R028")
     parser.add_argument("--llama-bin", type=Path, default=DEFAULT_LLAMA_BIN)
     parser.add_argument("--model", type=Path, default=DEFAULT_MODEL)
     parser.add_argument(
@@ -96,6 +108,12 @@ def main() -> int:
     parser.add_argument("--gpu-layers", type=int, default=999)
     parser.add_argument("--timeout-seconds", type=int, default=120)
     parser.add_argument(
+        "--refinement-rounds",
+        type=int,
+        default=0,
+        help="Run one checker-feedback refinement attempt for rejected or invalid outputs.",
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Write prompts and sample metadata without invoking llama.cpp.",
@@ -105,6 +123,7 @@ def main() -> int:
     trace_paths = tuple(args.traces) if args.traces else DEFAULT_TRACE_PATHS
     result = run_experiment(
         output_dir=args.output_dir,
+        run_id=args.run_id,
         trace_paths=trace_paths,
         llama_bin=args.llama_bin,
         model=args.model,
@@ -114,6 +133,7 @@ def main() -> int:
         ctx_size=args.ctx_size,
         gpu_layers=args.gpu_layers,
         timeout_seconds=args.timeout_seconds,
+        refinement_rounds=args.refinement_rounds,
         dry_run=args.dry_run,
     )
     print(json.dumps(result["summary"], indent=2, sort_keys=True))
@@ -124,6 +144,7 @@ def run_experiment(
     *,
     output_dir: Path,
     trace_paths: tuple[Path, ...],
+    run_id: str = "R028",
     llama_bin: Path,
     model: Path,
     samples_per_bucket: int = 1,
@@ -132,6 +153,7 @@ def run_experiment(
     ctx_size: int = 4096,
     gpu_layers: int = 999,
     timeout_seconds: int = 120,
+    refinement_rounds: int = 0,
     dry_run: bool = False,
     runner: Callable[[list[str], int], tuple[str, str, int, float]] | None = None,
 ) -> dict[str, Any]:
@@ -144,8 +166,13 @@ def run_experiment(
     output_dir.mkdir(parents=True, exist_ok=True)
     prompt_dir = output_dir / "prompts"
     raw_dir = output_dir / "raw_outputs"
+    refinement_prompt_dir = output_dir / "refinement_prompts"
+    refinement_raw_dir = output_dir / "refinement_raw_outputs"
     prompt_dir.mkdir(exist_ok=True)
     raw_dir.mkdir(exist_ok=True)
+    if refinement_rounds > 0:
+        refinement_prompt_dir.mkdir(exist_ok=True)
+        refinement_raw_dir.mkdir(exist_ok=True)
 
     rows: list[dict[str, Any]] = []
     sample_records: list[dict[str, Any]] = []
@@ -174,8 +201,25 @@ def run_experiment(
         raw_path.write_text(raw_payload)
         parsed = None if dry_run else parse_model_json(stdout)
         row = evaluate_candidate(sample, parsed)
+        refinement_record = _maybe_refine(
+            sample=sample,
+            initial_parsed=parsed,
+            initial_row=row,
+            refinement_rounds=refinement_rounds,
+            refinement_prompt_dir=refinement_prompt_dir,
+            refinement_raw_dir=refinement_raw_dir,
+            llama_bin=llama_bin,
+            model=model,
+            n_predict=n_predict,
+            ctx_size=ctx_size,
+            gpu_layers=gpu_layers,
+            timeout_seconds=timeout_seconds,
+            dry_run=dry_run,
+            runner=runner,
+        )
         row.update(
             {
+                **refinement_record,
                 "latency_seconds": round(latency, 6),
                 "prompt_sha256": _sha256(prompt.encode()),
                 "raw_output_sha256": _sha256(raw_payload.encode()),
@@ -189,6 +233,7 @@ def run_experiment(
     summary = _summary(
         rows=rows,
         samples=samples,
+        run_id=run_id,
         trace_paths=trace_paths,
         llama_bin=llama_bin,
         model=model,
@@ -196,6 +241,7 @@ def run_experiment(
         ctx_size=ctx_size,
         gpu_layers=gpu_layers,
         timeout_seconds=timeout_seconds,
+        refinement_rounds=refinement_rounds,
         dry_run=dry_run,
     )
 
@@ -288,6 +334,43 @@ def build_prompt(sample: Sample) -> str:
     )
 
 
+def build_refinement_prompt(
+    sample: Sample,
+    initial_parsed: dict[str, Any] | None,
+    initial_row: dict[str, Any],
+) -> str:
+    labels = sample.trace.get("labels", {})
+    event = sample.event
+    relevant_sources = sorted(
+        set(event.get("control_provenance", [])) | set(event.get("data_provenance", []))
+    )
+    relevant_labels = {source: labels.get(source, {}) for source in relevant_sources}
+    feedback = _refinement_reason(initial_row)
+    payload = {
+        "intent": _trim(sample.trace.get("intent", {}), 2000),
+        "relevant_context_labels": _trim(relevant_labels, 3000),
+        "event": _trim(event, 3000),
+        "candidate_lease_skeleton": _candidate_skeleton(event),
+        "previous_model_json": initial_parsed,
+        "checker_feedback": feedback,
+    }
+    return (
+        "You are retrying an IntentCap lease proposal after deterministic "
+        "checker feedback.\n"
+        "Return exactly one JSON object and no prose.\n"
+        "If the feedback says the previous output was invalid or rejected "
+        "because a control source lacks the required influence mode, return "
+        "{\"decision\":\"deny\",\"reason\":\"short reason\"}.\n"
+        "Only return {\"decision\":\"lease\",\"lease\":...} when the lease can "
+        "satisfy the checker using source names and argument values copied "
+        "from the event and labels. Do not widen arguments or invent "
+        "provenance sources.\n"
+        "Input JSON:\n"
+        f"{json.dumps(payload, indent=2, sort_keys=True)}\n"
+        "Output JSON:\n"
+    )
+
+
 def parse_model_json(text: str) -> dict[str, Any] | None:
     cleaned = re.sub(r"```(?:json)?", "", text).replace("```", "")
     decoder = json.JSONDecoder()
@@ -349,6 +432,96 @@ def evaluate_candidate(sample: Sample, parsed: dict[str, Any] | None) -> dict[st
     }
 
 
+def _maybe_refine(
+    *,
+    sample: Sample,
+    initial_parsed: dict[str, Any] | None,
+    initial_row: dict[str, Any],
+    refinement_rounds: int,
+    refinement_prompt_dir: Path,
+    refinement_raw_dir: Path,
+    llama_bin: Path,
+    model: Path,
+    n_predict: int,
+    ctx_size: int,
+    gpu_layers: int,
+    timeout_seconds: int,
+    dry_run: bool,
+    runner: Callable[[list[str], int], tuple[str, str, int, float]],
+) -> dict[str, Any]:
+    default = {
+        "refinement_attempted": False,
+        "refinement_reason": "",
+        "refinement_parse_ok": False,
+        "refinement_model_decision": "",
+        "refinement_has_candidate_lease": False,
+        "refinement_checker_allowed": False,
+        "refinement_checker_reason": "",
+        "refinement_outcome": "",
+        "final_outcome": initial_row["outcome"],
+        "refinement_prompt_path": "",
+        "refinement_raw_output_path": "",
+    }
+    if refinement_rounds <= 0 or not _should_refine(initial_row):
+        return default
+
+    prompt = build_refinement_prompt(sample, initial_parsed, initial_row)
+    prompt_path = refinement_prompt_dir / f"{sample.sample_id}_r1.txt"
+    raw_path = refinement_raw_dir / f"{sample.sample_id}_r1.txt"
+    prompt_path.write_text(prompt)
+
+    if dry_run:
+        stdout, stderr, returncode, _latency = "", "", 0, 0.0
+    else:
+        command = _llama_command(
+            llama_bin=llama_bin,
+            model=model,
+            prompt_path=prompt_path,
+            n_predict=n_predict,
+            ctx_size=ctx_size,
+            gpu_layers=gpu_layers,
+        )
+        stdout, stderr, returncode, _latency = runner(command, timeout_seconds)
+
+    raw_payload = _raw_payload(stdout, stderr, returncode)
+    raw_path.write_text(raw_payload)
+    parsed = None if dry_run else parse_model_json(stdout)
+    refined = evaluate_candidate(sample, parsed)
+
+    return {
+        "refinement_attempted": True,
+        "refinement_reason": _refinement_reason(initial_row),
+        "refinement_parse_ok": refined["parse_ok"],
+        "refinement_model_decision": refined["model_decision"],
+        "refinement_has_candidate_lease": refined["has_candidate_lease"],
+        "refinement_checker_allowed": refined["candidate_checker_allowed"],
+        "refinement_checker_reason": refined["candidate_checker_reason"],
+        "refinement_outcome": refined["outcome"],
+        "final_outcome": refined["outcome"],
+        "refinement_prompt_path": str(prompt_path),
+        "refinement_raw_output_path": str(raw_path),
+    }
+
+
+def _should_refine(row: dict[str, Any]) -> bool:
+    return row["outcome"] in {
+        "parse_failed",
+        "invalid_decision",
+        "checker_rejected_invalid_proposal",
+        "checker_rejected_valid_event_proposal",
+    }
+
+
+def _refinement_reason(row: dict[str, Any]) -> str:
+    if row["outcome"] == "parse_failed":
+        return "parse_failed: response did not contain a JSON object with decision"
+    if row["outcome"] == "invalid_decision":
+        return f"invalid_decision: unsupported decision {row['model_decision']!r}"
+    if row["candidate_checker_reason"]:
+        return f"checker_denied: {row['candidate_checker_reason']}"
+    return f"retry_needed: {row['outcome']}"
+
+
 def _candidate_skeleton(event: dict[str, Any]) -> dict[str, Any]:
     return {
         "id": f"llm_candidate:{event.get('id', '<unknown>')}",
@@ -380,6 +553,7 @@ def _summary(
     *,
     rows: list[dict[str, Any]],
     samples: list[Sample],
+    run_id: str,
     trace_paths: tuple[Path, ...],
     llama_bin: Path,
     model: Path,
@@ -387,6 +561,7 @@ def _summary(
     ctx_size: int,
     gpu_layers: int,
     timeout_seconds: int,
+    refinement_rounds: int,
     dry_run: bool,
 ) -> dict[str, Any]:
     reference_allowed = sum(1 for row in rows if row["reference_allowed"])
@@ -398,8 +573,17 @@ def _summary(
     rejected_invalid = sum(
         1 for row in rows if row["outcome"] == "checker_rejected_invalid_proposal"
     )
+    refinement_attempts = sum(1 for row in rows if row["refinement_attempted"])
+    final_outcomes = [row["final_outcome"] for row in rows]
+    recovered_after_feedback = sum(
+        1
+        for row in rows
+        if row["refinement_attempted"]
+        and row["outcome"] not in {"correct_accept", "correct_deny"}
+        and row["final_outcome"] in {"correct_accept", "correct_deny"}
+    )
     return {
-        "run_id": "R028",
+        "run_id": run_id,
         "analysis": "local Qwen lease compiler corpus with deterministic checker validation",
         "dry_run": dry_run,
         "events": len(rows),
@@ -420,6 +604,32 @@ def _summary(
         ),
         "invalid_generated_leases_rejected_by_checker": rejected_invalid,
         "outcome_counts": _counts(row["outcome"] for row in rows),
+        "refinement_rounds": refinement_rounds,
+        "refinement_attempts": refinement_attempts,
+        "refinement_parse_success": sum(
+            1 for row in rows if row["refinement_attempted"] and row["refinement_parse_ok"]
+        ),
+        "refinement_candidate_leases": sum(
+            1
+            for row in rows
+            if row["refinement_attempted"] and row["refinement_has_candidate_lease"]
+        ),
+        "refinement_checker_allowed": sum(
+            1
+            for row in rows
+            if row["refinement_attempted"] and row["refinement_checker_allowed"]
+        ),
+        "refinement_outcome_counts": _counts(
+            row["refinement_outcome"] for row in rows if row["refinement_attempted"]
+        ),
+        "recovered_after_checker_feedback": recovered_after_feedback,
+        "final_correct_accepts": sum(1 for outcome in final_outcomes if outcome == "correct_accept"),
+        "final_correct_denies": sum(1 for outcome in final_outcomes if outcome == "correct_deny"),
+        "final_false_denies": sum(1 for outcome in final_outcomes if outcome == "false_deny"),
+        "final_dangerous_false_accepts": sum(
+            1 for outcome in final_outcomes if outcome == "dangerous_false_accept"
+        ),
+        "final_outcome_counts": _counts(final_outcomes),
         "benchmarks": sorted({sample.benchmark for sample in samples}),
         "llama_bin": str(llama_bin),
         "llama_bin_sha256": _file_digest(llama_bin)["sha256"] if llama_bin.exists() else None,
@@ -433,6 +643,8 @@ def _summary(
         "python": sys.version.split()[0],
         "platform": platform.platform(),
         "script_sha256": _sha256(Path(__file__).read_bytes()),
+        "project_head": _git_output(["git", "rev-parse", "HEAD"]),
+        "git_status": _git_output(["git", "status", "--short", "--branch"]),
         "input_trace_digests": [_file_digest(path) for path in trace_paths if path.exists()],
         "notes": [
             "This run uses existing local traces only; it does not clone, sync, or download datasets.",
@@ -625,6 +837,10 @@ def _command_output(command: list[str]) -> str:
         )
     except (OSError, subprocess.SubprocessError):
         return ""
+
+
+def _git_output(command: list[str]) -> str:
+    return _command_output(command) or "unavailable"
 
 
 def _slug(text: str) -> str:

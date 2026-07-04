@@ -1,0 +1,1 @@
+PYTHONPATH=src /usr/bin/python scripts/run_local_llm_lease_corpus.py --run-id R029 --output-dir results/eval/R029 --samples-per-bucket 5 --max-events 30 --refinement-rounds 1 --timeout-seconds 120 --n-predict 512 --ctx-size 4096
