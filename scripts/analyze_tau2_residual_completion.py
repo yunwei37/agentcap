@@ -42,6 +42,7 @@ TASK_FIELDS = [
     "action_reward",
     "env_reward",
     "stepwise_single_hint_fallbacks",
+    "stepwise_hint_choice_fallbacks",
 ]
 
 MISSING_FIELDS = [
@@ -158,6 +159,7 @@ def analyze_task_record(source_run_id: str, record: dict[str, Any]) -> dict[str,
         "action_reward": float(task_row.get("action_reward", 0.0)),
         "env_reward": float(task_row.get("env_reward", 0.0)),
         "stepwise_single_hint_fallbacks": int(task_row.get("stepwise_single_hint_fallbacks", 0)),
+        "stepwise_hint_choice_fallbacks": int(task_row.get("stepwise_hint_choice_fallbacks", 0)),
     }
     return {"task_row": task_summary, "missing_rows": missing_rows}
 

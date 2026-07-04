@@ -416,6 +416,80 @@ def test_single_hint_fallback_requires_exactly_one_complete_hint():
     }
 
 
+def test_hint_choice_prompt_omits_reference_actions():
+    prompt = runner.build_hint_choice_prompt(
+        domain="retail",
+        raw_task={
+            "id": "t",
+            "instruction": "Handle the visible order.",
+            "evaluation_criteria": {
+                "actions": [
+                    {
+                        "name": "get_order_details",
+                        "arguments": {"order_id": "HIDDEN"},
+                    }
+                ]
+            },
+        },
+        step_index=3,
+        action_rows=[
+            {
+                "round": "step_2",
+                "model_tool": "get_user_details",
+                "model_args_json": '{"user_id": "u1"}',
+                "gateway_action": "execute",
+                "gateway_reason": "lease matched",
+                "executed": True,
+                "tool_result_preview": '{"orders":["#W2378156"]}',
+            }
+        ],
+        complete_hints=[
+            {
+                "tool": "get_order_details",
+                "arguments": {"order_id": "#W2378156"},
+                "complete_arguments": True,
+                "grounding": "visible",
+            }
+        ],
+    )
+
+    assert "complete_visible_authorized_hints" in prompt
+    assert "hint_0" in prompt
+    assert "#W2378156" in prompt
+    assert "HIDDEN" not in prompt
+    assert "evaluation_criteria" not in prompt
+
+
+def test_hint_choice_fallback_requires_valid_hint_id():
+    hints = [
+        {
+            "tool": "get_order_details",
+            "arguments": {"order_id": "#W2378156"},
+            "complete_arguments": True,
+        },
+        {
+            "tool": "get_product_details",
+            "arguments": {"product_id": "1656367028"},
+            "complete_arguments": True,
+        },
+    ]
+
+    assert runner.build_hint_choice_fallback_call(hints, {"selected_hint_id": None}) is None
+    assert runner.build_hint_choice_fallback_call(hints, {"selected_hint_id": "hint_99"}) is None
+    assert runner.build_hint_choice_fallback_call(hints, {"selected_hint_id": "unknown"}) is None
+
+    call = runner.build_hint_choice_fallback_call(hints, {"selected_hint_id": "hint_1"})
+
+    assert call == {
+        "tool": "get_product_details",
+        "arguments": {
+            "product_id": "1656367028",
+            "_intentcap_synthesized_from_hint": True,
+            "_intentcap_hint_choice_id": "hint_1",
+        },
+    }
+
+
 def test_step_prompt_default_omits_empty_retry_instruction():
     prompt = runner.build_step_prompt(
         domain="mock",
