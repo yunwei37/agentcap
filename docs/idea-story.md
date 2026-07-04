@@ -2,24 +2,24 @@
 
 Last updated: 2026-07-04
 Stage at update: stage 4/5 compiler-corpus lower-bound plus expanded novelty audit
-Source/command: AgentDojo, MCPTox, InjecAgent export/checker probes plus gateway replay; R019/R020/R022/R027 authority-minimization and oracle-distance scoring; R021-R024 tau2/tau3 artifact/reference/evaluator-backed replay; R025 checker ablation; R026 web-only eval-dataset ranking; R028-R030 local Qwen lease/action corpus; R031-R069 local Qwen3.6 tau2 task-gateway and user-simulator diagnostics; R070-R078 non-evaluation-task-JSON compiler/gateway diagnostics; R079 strict compiler-corpus local Qwen3.6 task-loop run; R080 R079 mismatch analysis; R081 top-conference claim evidence matrix; and 2026-07-04 closest-work plus 2026 agent-security PDF collection
+Source/command: AgentDojo, MCPTox, InjecAgent export/checker probes plus gateway replay; R019/R020/R022/R027 authority-minimization and oracle-distance scoring; R021-R024 tau2/tau3 artifact/reference/evaluator-backed replay; R025 checker ablation; R026 web-only eval-dataset ranking; R028-R030 local Qwen lease/action corpus; R031-R069 local Qwen3.6 tau2 task-gateway and user-simulator diagnostics; R070-R078 non-evaluation-task-JSON compiler/gateway diagnostics; R079 strict compiler-corpus local Qwen3.6 task-loop run; R080 R079 mismatch analysis; R081 top-conference claim evidence matrix; 2026-07-04 closest-work plus 2026 agent-security PDF collection; 2026-07-04 P0 full-text baseline pass; and 2026-07-04 online novelty sweep adding AuthGraph/PACT/AIRGuard/FIDES/RTBAS/NeuroTaint/PCAS/AgentSpec/AgentGuard/AgentBound/SecureClaw/AgentSentry/tracked-capability PDFs
 Completeness: partial
 
 ## Current State
 - Stage: Stage 3 design/prototype and Stage 5 evaluation probes are active. The project now has security replay evidence, authority-surface evidence, exact-oracle task-loop utility pilots, and the first strict non-oracle compiler-corpus task-loop integration.
 - Blocking gate: R081 strengthens the saved-result TC1/TC2 security and authority story, but the strongest utility results still depend on exact oracle leases or reference-user simulator replay. R079/R080 connect saved R074 compiler-corpus leases to the local Qwen3.6 task loop under strict lowering, but they are a negative lower-bound result: 11 evaluated tasks, 14 active compiler leases, 9 model calls, 9 gateway-allowed/executed calls, 0 tool errors, 7 exact bound reference calls, 2 all-reference-actions-executed tasks, and 0/11 tool-oracle pass. The current compiler is safe under strict checking but not utility-ready.
-- Novelty gate: the idea is defensible but not risk-free. Same-claim pressure is medium-high after adding Intent-to-Execution Integrity, Formalizing LLM Agent Security, AgentSecBench, Prompt Flow Integrity, SkillScope, and MCP description/code inconsistency work. The claim must stay narrow: IntentCap is a run-centric intent/provenance capability compiler/checker that turns context influence over authority-bearing decisions into proof-carrying leases; it is not the first generic agent permission model, not the first intent-to-execution framing, and not a prompt-injection solution.
-- Reference gate: 42 closest-work and benchmark PDFs are now stored under `docs/reference/` and verified locally as PDFs. This is a source corpus only; no new eval dataset was synced or executed.
-- Next action: either improve non-oracle compiler utility after R079/R080 by adding exact argument synthesis, safe runtime binding for placeholder arguments, and broad/runtime policy repair before execution; or convert R081 into a stronger blinded expert-oracle and independent-validity-label study. Do not sync new eval datasets by default; use official web metadata first and ask before cloning/downloading.
+- Novelty gate: the idea is defensible only under a narrow claim. Same-claim pressure is high after adding AuthGraph, PACT, AIRGuard, FIDES, RTBAS, NeuroTaint, PCAS, AgentSpec, AgentGuard, AgentBound, SecureClaw, AgentSentry, and tracked-capability work on top of the earlier CaMeL/PFI/AgentSecBench/Formalizing/Progent/SkillGuard/SkillScope/Task Shield/DRIFT set. The claim must be: IntentCap is a run-centric extension authorization compiler/checker that turns context influence over authority-bearing decisions into proof-carrying, attenuable leases across Skills, MCP, local execution, and subagents. It is not the first provenance-aware agent authorization system, not the first intent-to-execution framing, not the first flow/taint defense, not the first policy compiler, not the first Skill/MCP permission system, and not a prompt-injection solution.
+- Reference gate: 62 closest-work and benchmark PDFs are now stored under `docs/reference/` and verified locally as PDFs. This is a source corpus only, not proof of literature completeness; no new eval dataset was synced or executed.
+- Next action: implement trace-level baseline labelers for the closest families before claiming novelty: AuthGraph/PACT/AIRGuard-style provenance-authority checks, FIDES/RTBAS/CaMeL/PFI-style flow or taint checks, Progent/PCAS/AgentSpec-style tool/argument policies without influence modes, AgentGuard/AgentBound access-control labels, Task Shield/DRIFT alignment/minimal-trajectory labels, and SkillGuard/SkillScope Skill policy labels. In parallel, improve non-oracle compiler utility after R079/R080 with exact argument synthesis and safe runtime binding. Do not sync new eval datasets by default; use existing local artifacts and official metadata first.
 - Paper boundary: the existing two-page English workshop paper is frozen under `docs/paper-workshop/`; auto-research drafts go under `docs/autopaper/`.
 
 ## Downstream Document Index
 | Doc | Role | Current status | Next required update |
 |---|---|---|---|
-| `docs/background-related-work.md` | novelty, closest work, benchmarks, baselines | partial; 42 PDFs collected under `docs/reference/` | full-text notes and baseline reproduction decisions for CaMeL, PFI/AgentSecBench/Formalizing LLM Agent Security, Progent, SkillGuard/SkillScope, Task Shield/DRIFT |
+| `docs/background-related-work.md` | novelty, closest work, benchmarks, baselines | partial; 62 PDFs collected, P0 notes added, and new high-risk AuthGraph/PACT/AIRGuard-style baselines recorded | keep reproduction decisions current as artifacts are tested |
 | `docs/design.md` | mechanism and artifact boundary | partial | refine checker semantics after parser/oracle and online-wrapper results |
 | `docs/implementation.md` | prototype milestones and runnable commands | partial | improve compiler-corpus task-loop support after R079/R080 |
-| `docs/evaluation.md` | experiment plan, run tracker, results, claim verdict | partial | add exact-argument compiler repair, expert-oracle lease scoring, and stronger baseline comparisons |
+| `docs/evaluation.md` | experiment plan, run tracker, results, claim verdict | partial | add AuthGraph/PACT/AIRGuard/FIDES/RTBAS/PCAS/AgentBound-style trace labelers, exact-argument compiler repair, expert-oracle lease scoring, and stronger baseline comparisons |
 
 ## Intro P1: Problem And Stakes
 Purpose: Establish why agent extension security is not just tool ACL security.
@@ -33,7 +33,7 @@ Completeness: partial.
 ## Intro P2: Status Quo And Gap
 Purpose: Separate IntentCap from EIM/bpftime, ActPlane, SkillGuard, CaMeL, Task Shield, and Progent.
 
-Draft paragraph: Existing defenses cover important pieces of this problem. Static manifests and tool ACLs bound declared operations. Runtime guards decide whether a tool call matches a policy. OS-level monitors can enforce file, process, and network restrictions below the agent harness. Prompt-injection defenses such as task alignment and control/data separation reduce specific attack paths. What remains under-modeled is the authority of context itself: whether a PDF, tool result, Skill instruction, or subagent summary may influence a sink choice, policy request, delegation decision, or lease expansion.
+Draft paragraph: Existing defenses cover important pieces of this problem. Static manifests and tool ACLs bound declared operations. Runtime guards decide whether a tool call matches a policy. OS-level monitors can enforce file, process, and network restrictions below the agent harness. Recent provenance and authority-control defenses already compare clean user intent against execution provenance, assign trust contracts to authority-bearing arguments, and prevent untrusted resources from authorizing side effects. The remaining gap for IntentCap is narrower: a cross-extension compiler/checker that turns these authority constraints into proof-carrying, attenuable leases with explicit decision classes, temporal and budget guards, delegation bounds, and deterministic validation across Skills, MCP tools, local execution, and subagents.
 
 Evidence/claim dependency: Needs closest-work comparison in `docs/background-related-work.md`.
 
@@ -42,7 +42,7 @@ Completeness: partial.
 ## Intro P3: Key Insight And Thesis
 Purpose: State the paper's core abstraction.
 
-Draft paragraph: IntentCap starts from the observation that context influence should be a least-privilege capability. The same untrusted document may be safe to quote into a spreadsheet cell or summarize into an issue body, yet unsafe to choose the repository, request broader OAuth scope, or trigger delegation. IntentCap makes user intent the root of authority and labels each context source with the decision classes it may influence. A high-impact action is allowed only when its control provenance is authorized for that decision and the action is derivable from the current intent certificate.
+Draft paragraph: IntentCap's design choice is to make a proof-carrying lease the unit that connects intent, provenance, and extension authority. The same untrusted document may be safe to quote into a spreadsheet cell or summarize into an issue body, yet unsafe to choose the repository, request broader OAuth scope, or trigger delegation; prior work already motivates that distinction. IntentCap packages it into run-scoped leases that bind user intent, context labels, protected decision classes, temporal state, budget, and delegation. A high-impact action is allowed only when its active lease and control provenance both validate against the current intent certificate.
 
 Evidence/claim dependency: Needs formal checker invariant and benchmark cases where data use is allowed while authority influence is denied.
 
@@ -129,9 +129,10 @@ Completeness: partial.
 ### Adjacent Idea Intake
 | Adjacent idea/source | What can be absorbed | How it could expand the paper | Risk |
 |---|---|---|---|
-| CaMeL | explicit control/data flow extraction | strengthens provenance model and security theorem | close prior work; must show decision-class and intent-certificate delta |
+| AuthGraph / PACT / AIRGuard | clean user-intent authorization graph, argument-role provenance contracts, action-time authority control | mandatory closest-family baseline | very high overlap; must show proof-carrying extension leases, attenuation, temporal/delegation constraints, and cross-extension synthesis |
+| CaMeL / PFI / FIDES / RTBAS / NeuroTaint | explicit control/data flow, IFC/dependency screening, and taint tracking | strengthens provenance model and security theorem | close prior work; must show decision-class and intent-certificate delta |
 | Task Shield | user-objective alignment checks | useful baseline for "does this action serve the user goal?" | may look similar unless IntentCap emphasizes proof-carrying leases |
-| Progent | deterministic privilege DSL | baseline for tool-level policies | may overlap with runtime policy enforcement |
+| Progent / PCAS / AgentSpec / AgentGuard / AgentBound | deterministic privilege DSL, policy compiler, runtime DSL, ABAC, MCP access control | baseline for tool-level and access-control policies | may overlap with compiler/runtime enforcement claims |
 | AgentDojo | utility/security benchmark oracles | primary reproducible security testbed | adapters may need effort |
 | MCPTox | MCP tool poisoning cases | expands from document/tool output injection to tool-description poisoning | artifact and adapter are available; R015 reconciles count/oracle units; online utility still pending |
 
@@ -144,8 +145,9 @@ Completeness: partial.
 | Refinement | denied action -> narrower lease -> continue | utility preservation claim | requires agent loop integration | simulate with recorded traces |
 
 ### Reviewer Attack Surface
-- "This is CaMeL/PFI/AgentSecBench with different words." Response must show intent certificate, decision-class influence authority, proof-carrying leases, and cross-extension enforcement rather than only trusted/untrusted flow separation.
-- "This is Progent, SkillGuard, or SkillScope." Response must show run-centric, context-provenance-aware lease derivation beyond tool-call DSLs, skill manifests, or skill graph analysis.
+- "This is AuthGraph, PACT, or AIRGuard with different words." Response must show proof-carrying leases as the policy object, explicit influence modes and decision classes, attenuation, temporal/budget/delegation constraints, and cross-extension lease synthesis beyond clean graph comparison, argument-role contracts, or action-time authority guards.
+- "This is CaMeL/PFI/FIDES/RTBAS/NeuroTaint/AgentSecBench/Formalizing with different words." Response must show intent certificate, decision-class influence authority, proof-carrying leases, and cross-extension enforcement rather than only trusted/untrusted flow separation, taint tracking, dependency screening, or contextual security taxonomy.
+- "This is Progent, PCAS, AgentSpec, AgentGuard, AgentBound, SkillGuard, or SkillScope." Response must show run-centric, context-provenance-aware lease derivation beyond tool-call DSLs, policy compilers, ABAC/MCP policies, skill manifests, or skill graph analysis.
 - "This is ActPlane policy synthesis." Response must show context construction and policy origin are central; OS enforcement is optional.
 - "How do you know control provenance?" Need a concrete instrumentation story for plans, arguments, and benchmark traces.
 - "Does it preserve utility?" Need benchmark results and recovery from false denials.

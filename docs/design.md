@@ -1,8 +1,8 @@
 # Design
 
 Last updated: 2026-07-04
-Stage at update: stage 4 compiler-corpus task-loop design audit
-Source/command: AgentDojo, MCPTox, InjecAgent export/checker probes plus gateway replay, R014-R025 adapter/live/evaluator/checker evidence, R026 web-only eval-dataset ranking, R027-R078 authority/compiler/gateway diagnostics, R079 strict compiler-corpus local Qwen3.6 task-loop run, R080 R079 mismatch analysis, R081 top-conference claim evidence matrix, and 2026-07-04 expanded 42-PDF closest-work collection
+Stage at update: stage 4 compiler-corpus task-loop design audit plus expanded novelty audit
+Source/command: AgentDojo, MCPTox, InjecAgent export/checker probes plus gateway replay, R014-R025 adapter/live/evaluator/checker evidence, R026 web-only eval-dataset ranking, R027-R078 authority/compiler/gateway diagnostics, R079 strict compiler-corpus local Qwen3.6 task-loop run, R080 R079 mismatch analysis, R081 top-conference claim evidence matrix, 2026-07-04 expanded 62-PDF closest-work collection, 2026-07-04 P0 full-text baseline pass, and 2026-07-04 online novelty sweep adding AuthGraph/PACT/AIRGuard/FIDES/RTBAS/NeuroTaint/PCAS/AgentSpec/AgentGuard/AgentBound/SecureClaw/AgentSentry/tracked-capability work
 Completeness: partial
 
 ## Top-Conference Artifact Boundary
@@ -17,7 +17,9 @@ The defensible novelty is narrower than "agent permissions." IntentCap's artifac
 5. A deterministic checker that accepts or rejects LLM-proposed leases/events.
 6. Enforcement adapters that lower accepted leases to context/tool/MCP/process/network/delegation boundaries.
 
-EIM/bpftime remains related work for extension-resource models, and ActPlane remains a possible enforcement backend. The main comparison should be against CaMeL/PFI-style flow defenses, AgentSecBench/formal contextual-security framing, Progent, SkillGuard/SkillScope, Task Shield/DRIFT, static tool/server allowlists, model-internal authorization, and LLM-only policy generation.
+EIM/bpftime remains related work for extension-resource models, and ActPlane remains a possible enforcement backend. The main comparison should be against AuthGraph/PACT/AIRGuard-style provenance-authority defenses, CaMeL/PFI/FIDES/RTBAS/NeuroTaint-style flow or taint defenses, AgentSecBench/formal contextual-security framing, Progent/PCAS/AgentSpec/AgentGuard/AgentBound policy and access-control systems, SkillGuard/SkillScope, Task Shield/DRIFT, static tool/server allowlists, model-internal authorization, and LLM-only policy generation.
+
+P0 design implication: IntentCap must not present trusted/untrusted flow separation, parameter-source provenance, action-time authority control, task alignment, policy compilation, ABAC/MCP access control, or Skill least privilege as the core novelty. Those are covered by AuthGraph/PACT/AIRGuard, CaMeL/PFI/FIDES/RTBAS/NeuroTaint/AgentSecBench/Formalizing, Task Shield/DRIFT, Progent/PCAS/AgentSpec/AgentGuard/AgentBound, and SkillGuard/SkillScope respectively. The design boundary is narrower: leases encode which context sources may influence which protected decision classes under a structured intent certificate, and the checker rejects candidate leases even when an LLM, Skill manifest, MCP description, clean authorization graph, argument contract, or model-internal authorization trace claims they are safe.
 
 ## System-Under-Test Model
 IntentCap is evaluated as a run-time authorization layer for LLM agent extensions. The first prototype should support two modes:
@@ -79,10 +81,16 @@ The offline checker is the cheapest path to validate the core idea against exist
 | Human approval | users may approve broad scopes and may not see hidden influence | baseline and fresh intent source |
 | OS monitor only | enforces effects after policy exists; does not know policy provenance | optional backend |
 | Prompt-only defense | model remains the component being attacked | out-of-TCB comparison |
+| AuthGraph-style clean authorization graph | very close intent/provenance comparison but not a proof-carrying extension lease language | mandatory same-claim baseline |
+| PACT-style argument provenance contracts | very close for authority-bearing arguments but narrower than full lease attenuation/delegation semantics | mandatory same-claim baseline |
+| AIRGuard-style runtime authority control | very close authority-confusion framing but uses a different policy object | mandatory same-claim baseline |
 | CaMeL/PFI-style control-data-flow defense | strong but oriented around trusted-query/program-flow or privilege-escalation flow validation | closest conceptual comparison |
+| FIDES/RTBAS/NeuroTaint-style IFC or taint defense | strong flow/dependency/taint baseline for prompt injection and privacy leakage | mandatory baseline family |
 | AgentSecBench/formal contextual-security framing | close intent-to-execution/noninterference language but not an extension lease compiler | theory/evaluation framing comparison |
-| Progent-style privilege DSL | deterministic tool-call policy is close, but does not by itself model context influence modes | mandatory baseline |
+| Progent/PCAS/AgentSpec-style privilege or policy DSL | deterministic tool-call/policy enforcement is close, but does not by itself model proof-carrying context influence leases | mandatory baseline |
+| AgentGuard/AgentBound-style access control | close tool/MCP access-control baseline | mandatory baseline for C2 |
 | SkillGuard/SkillScope-style Skill policy | closest Skill-specific permission frameworks | baseline and same-claim risk for Skill workflows |
+| SecureClaw/AgentSentry/ARM-style runtime boundary or causal defense | catches effect-sink, context-purification, or denial-feedback failures | runtime/refinement comparison |
 | ActPlane-style OS enforcement | catches indirect OS effects after policy exists | optional backend and OS-only baseline |
 
 ## Design Risks And Validation Hooks
@@ -92,7 +100,8 @@ The offline checker is the cheapest path to validate the core idea against exist
 | Lease compiler overfits to hand-written policies. | Compare expert oracle, LLM-only compiler, and deterministic checker acceptance. |
 | Intent certificates become broad approvals. | Track approval scope breadth and wrong-sink denials. |
 | Utility collapses under strict checking. | Measure benign task completion and structured denial recovery. |
-| Same-claim risk with CaMeL/PFI/AgentSecBench/Task Shield/Progent. | Keep ablations that isolate intent certificates, influence modes, and proof-carrying leases. |
+| Same-claim risk with AuthGraph/PACT/AIRGuard, CaMeL/PFI/FIDES/RTBAS/NeuroTaint, AgentSecBench, Task Shield/DRIFT, Progent/PCAS/AgentSpec/AgentGuard/AgentBound, and SkillGuard/SkillScope. | Keep ablations that isolate proof-carrying leases, attenuation, influence modes, temporal/delegation constraints, and cross-extension synthesis. |
+| Baselines explain the same denies through simpler predicates. | Add trace-level AuthGraph/PACT/AIRGuard, IFC/taint, policy-DSL/access-control, Task Shield/DRIFT, and SkillGuard/SkillScope-style labels before making paper-level novelty claims. |
 
 ## Adapter Findings So Far
 - AgentDojo workspace injection tasks split into two useful classes. Six of 14 injection tasks provide non-empty ground-truth tool-call traces, which can be replayed as explicit protected-decision events. The remaining eight are natural-language attack goals without ground-truth calls; R011 adds a conservative goal-inferred adapter for them, but those inferred events are explicitly not official benchmark trajectories.
