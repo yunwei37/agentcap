@@ -44,10 +44,28 @@ def test_bind_model_call_adds_event_id_only_for_exact_reference_match():
     assert event["id"] == "mock:t:create_1"
     assert event["args"]["intentcap_event_id"] == "mock:t:create_1"
 
-    wrong_event, wrong_bound = runner.bind_model_call(
+    synthesized_event, synthesized_bound = runner.bind_model_call(
         domain="mock",
         task_id="t",
         index=1,
+        model_call={
+            "tool": "create_task",
+            "arguments": {
+                "user_id": "user_1",
+                "title": "Important Meeting",
+                "_intentcap_synthesized_from_hint": True,
+            },
+        },
+        pending_reference_actions=[action],
+    )
+
+    assert synthesized_bound == action
+    assert synthesized_event["id"] == "mock:t:create_1"
+
+    wrong_event, wrong_bound = runner.bind_model_call(
+        domain="mock",
+        task_id="t",
+        index=2,
         model_call={
             "tool": "create_task",
             "arguments": {"user_id": "user_1", "title": "Wrong"},
@@ -56,7 +74,7 @@ def test_bind_model_call_adds_event_id_only_for_exact_reference_match():
     )
 
     assert wrong_bound is None
-    assert wrong_event["id"] == "model:mock:t:1"
+    assert wrong_event["id"] == "model:mock:t:2"
     assert "intentcap_event_id" not in wrong_event["args"]
 
 
@@ -332,6 +350,7 @@ def test_state_grounded_arg_hints_only_expose_visible_lease_values():
         {
             "tool": "get_reservation_details",
             "arguments": {"reservation_id": "Q69X3R"},
+            "complete_arguments": True,
             "grounding": "active lease argument values also found in visible task text or executed tool results",
         }
     ]
@@ -358,6 +377,7 @@ def test_step_prompt_can_include_state_grounded_arg_hints_without_reference_acti
             {
                 "tool": "get_reservation_details",
                 "arguments": {"reservation_id": "Q69X3R"},
+                "complete_arguments": True,
                 "grounding": "active lease argument values also found in visible task text or executed tool results",
             }
         ],
@@ -367,6 +387,33 @@ def test_step_prompt_can_include_state_grounded_arg_hints_without_reference_acti
     assert "Q69X3R" in prompt
     assert "Hidden reference" not in prompt
     assert "evaluation_criteria" not in prompt
+
+
+def test_single_hint_fallback_requires_exactly_one_complete_hint():
+    incomplete = {
+        "tool": "create_task",
+        "arguments": {"user_id": "user_1"},
+        "complete_arguments": False,
+    }
+    complete = {
+        "tool": "create_task",
+        "arguments": {"user_id": "user_1", "title": "Important Meeting"},
+        "complete_arguments": True,
+    }
+
+    assert runner.build_single_hint_fallback_call([incomplete]) is None
+    assert runner.build_single_hint_fallback_call([complete, complete]) is None
+
+    call = runner.build_single_hint_fallback_call([complete])
+
+    assert call == {
+        "tool": "create_task",
+        "arguments": {
+            "user_id": "user_1",
+            "title": "Important Meeting",
+            "_intentcap_synthesized_from_hint": True,
+        },
+    }
 
 
 def test_step_prompt_default_omits_empty_retry_instruction():

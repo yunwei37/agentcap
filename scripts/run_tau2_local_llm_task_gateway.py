@@ -76,6 +76,7 @@ ROW_FIELDS = [
     "stepwise_empty_retry_steps",
     "stepwise_state_grounded_arg_hints",
     "stepwise_state_grounded_arg_hint_steps",
+    "stepwise_single_hint_fallbacks",
     "stepwise_steps_attempted",
     "stepwise_model_calls",
     "step_prompt_paths",
@@ -172,6 +173,16 @@ def main() -> int:
             "evaluation_criteria.actions."
         ),
     )
+    parser.add_argument(
+        "--stepwise-single-hint-fallback",
+        action="store_true",
+        help=(
+            "In stepwise mode, if the model returns no action and exactly one "
+            "complete state-grounded authorized argument hint is visible, "
+            "synthesize that single call and send it through the gateway. "
+            "Requires --stepwise-state-grounded-arg-hints."
+        ),
+    )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -192,6 +203,7 @@ def main() -> int:
         stepwise_max_steps=args.stepwise_max_steps,
         stepwise_empty_retries=args.stepwise_empty_retries,
         stepwise_state_grounded_arg_hints=args.stepwise_state_grounded_arg_hints,
+        stepwise_single_hint_fallback=args.stepwise_single_hint_fallback,
         dry_run=args.dry_run,
     )
     print(json.dumps(result["summary"], indent=2, sort_keys=True))
@@ -216,6 +228,7 @@ def run_experiment(
     stepwise_max_steps: int = 0,
     stepwise_empty_retries: int = 0,
     stepwise_state_grounded_arg_hints: bool = False,
+    stepwise_single_hint_fallback: bool = False,
     dry_run: bool = False,
     runner: Callable[[list[str], int], tuple[str, str, int, float]] | None = None,
 ) -> dict[str, Any]:
@@ -227,6 +240,10 @@ def run_experiment(
         raise ValueError("stepwise_max_steps must be non-negative")
     if stepwise_empty_retries < 0:
         raise ValueError("stepwise_empty_retries must be non-negative")
+    if stepwise_single_hint_fallback and not stepwise_state_grounded_arg_hints:
+        raise ValueError(
+            "stepwise_single_hint_fallback requires stepwise_state_grounded_arg_hints"
+        )
     if feedback_rounds > 0 and stepwise_max_steps > 0:
         raise ValueError("feedback_rounds and stepwise_max_steps are mutually exclusive")
     if tool_exposure not in TOOL_EXPOSURE_MODES:
@@ -295,6 +312,7 @@ def run_experiment(
                     stepwise_max_steps=stepwise_max_steps,
                     stepwise_empty_retries=stepwise_empty_retries,
                     stepwise_state_grounded_arg_hints=stepwise_state_grounded_arg_hints,
+                    stepwise_single_hint_fallback=stepwise_single_hint_fallback,
                     dry_run=dry_run,
                     runner=runner,
                 )
@@ -330,6 +348,7 @@ def run_experiment(
         stepwise_max_steps=stepwise_max_steps,
         stepwise_empty_retries=stepwise_empty_retries,
         stepwise_state_grounded_arg_hints=stepwise_state_grounded_arg_hints,
+        stepwise_single_hint_fallback=stepwise_single_hint_fallback,
         dry_run=dry_run,
     )
 
@@ -377,6 +396,7 @@ def _run_task(
     stepwise_max_steps: int,
     stepwise_empty_retries: int,
     stepwise_state_grounded_arg_hints: bool,
+    stepwise_single_hint_fallback: bool,
     dry_run: bool,
     runner: Callable[[list[str], int], tuple[str, str, int, float]],
 ) -> dict[str, Any]:
@@ -451,6 +471,7 @@ def _run_task(
             timeout_seconds=timeout_seconds,
             dry_run=dry_run,
             runner=runner,
+            single_hint_fallback=stepwise_single_hint_fallback,
             pending_reference_actions=pending,
             reference_by_event=reference_by_event,
             reference_event_ids=[action.event_id for action in reference_actions],
@@ -640,6 +661,9 @@ def _run_task(
         "stepwise_state_grounded_arg_hint_steps": sum(
             1 for step in stepwise_result["steps"] if step.get("state_grounded_arg_hints")
         ),
+        "stepwise_single_hint_fallbacks": sum(
+            1 for step in stepwise_result["steps"] if step.get("single_hint_fallback")
+        ),
         "stepwise_steps_attempted": len(stepwise_result["steps"]),
         "stepwise_model_calls": len(stepwise_model_calls),
         "step_prompt_paths": "|".join(
@@ -731,6 +755,7 @@ def run_stepwise_model_loop(
     timeout_seconds: int,
     dry_run: bool,
     runner: Callable[[list[str], int], tuple[str, str, int, float]],
+    single_hint_fallback: bool,
     pending_reference_actions: list[ReferenceAction],
     reference_by_event: dict[str, ReferenceAction],
     reference_event_ids: list[str],
@@ -802,6 +827,12 @@ def run_stepwise_model_loop(
         parsed = None if dry_run else parse_model_json(stdout)
         parse_ok = parse_ok or parsed is not None
         model_calls = normalize_model_calls(parsed)[:1]
+        single_hint_fallback_used = False
+        if not dry_run and not model_calls and single_hint_fallback:
+            fallback_call = build_single_hint_fallback_call(arg_hints)
+            if fallback_call is not None:
+                model_calls = [fallback_call]
+                single_hint_fallback_used = True
         all_calls.extend(model_calls)
         before_row_count = len(action_rows)
         blocked_calls = execute_model_calls(
@@ -833,6 +864,7 @@ def run_stepwise_model_loop(
                 "blocked_calls": blocked_calls,
                 "empty_retry": bool(empty_retry_count > 0),
                 "state_grounded_arg_hints": arg_hints,
+                "single_hint_fallback": single_hint_fallback_used,
                 "new_action_rows": action_rows[before_row_count:],
             }
         )
@@ -1083,7 +1115,12 @@ def build_state_grounded_arg_hints(
         }
         if not grounded_args:
             continue
-        dedupe_key = (action.name, json.dumps(grounded_args, sort_keys=True, default=_json_default))
+        complete_arguments = grounded_args == action.args
+        dedupe_key = (
+            action.name,
+            json.dumps(grounded_args, sort_keys=True, default=_json_default),
+            str(complete_arguments),
+        )
         if dedupe_key in seen:
             continue
         seen.add(dedupe_key)
@@ -1091,10 +1128,31 @@ def build_state_grounded_arg_hints(
             {
                 "tool": action.name,
                 "arguments": grounded_args,
+                "complete_arguments": complete_arguments,
                 "grounding": "active lease argument values also found in visible task text or executed tool results",
             }
         )
     return hints
+
+
+def build_single_hint_fallback_call(arg_hints: list[dict[str, Any]]) -> dict[str, Any] | None:
+    complete_hints = [
+        hint
+        for hint in arg_hints
+        if hint.get("complete_arguments") is True
+        and isinstance(hint.get("arguments"), dict)
+        and str(hint.get("tool", ""))
+    ]
+    if len(complete_hints) != 1:
+        return None
+    hint = complete_hints[0]
+    return {
+        "tool": str(hint["tool"]),
+        "arguments": {
+            **dict(hint["arguments"]),
+            "_intentcap_synthesized_from_hint": True,
+        },
+    }
 
 
 def _visible_state_text(raw_task: dict[str, Any], action_rows: list[dict[str, Any]]) -> str:
@@ -1267,7 +1325,12 @@ def bind_model_call(
     pending_reference_actions: list[ReferenceAction],
 ) -> tuple[dict[str, Any], ReferenceAction | None]:
     tool = str(model_call.get("tool", ""))
-    args = dict(model_call.get("arguments") or {})
+    raw_args = dict(model_call.get("arguments") or {})
+    args = {
+        key: value
+        for key, value in raw_args.items()
+        if not str(key).startswith("_intentcap_")
+    }
     bound = None
     for action in pending_reference_actions:
         if action.name == tool and action.args == args:
@@ -1396,6 +1459,7 @@ def summarize(
     stepwise_max_steps: int,
     stepwise_empty_retries: int,
     stepwise_state_grounded_arg_hints: bool = False,
+    stepwise_single_hint_fallback: bool = False,
     dry_run: bool = False,
 ) -> dict[str, Any]:
     unsupported_reasons = Counter(row["reason"].split(":", 1)[0] for row in unsupported_rows)
@@ -1430,6 +1494,10 @@ def summarize(
         notes.append(
             "Stepwise state-grounded argument hints expose active-lease argument values only when those values also appear in visible task text or executed tool results; this remains an oracle-lease pilot."
         )
+    if stepwise_single_hint_fallback:
+        notes.append(
+            "Stepwise single-hint fallback deterministically synthesizes at most one complete state-grounded active-lease call after an empty model action; synthesized calls still pass through the gateway."
+        )
     return {
         "run_id": run_id,
         "analysis": "fresh local Qwen tau2 task proposals through exact IntentCap task leases",
@@ -1442,6 +1510,7 @@ def summarize(
         "stepwise_max_steps": stepwise_max_steps,
         "stepwise_empty_retries": stepwise_empty_retries,
         "stepwise_state_grounded_arg_hints": stepwise_state_grounded_arg_hints,
+        "stepwise_single_hint_fallback": stepwise_single_hint_fallback,
         "tool_schema_count_min": min(tool_schema_counts) if tool_schema_counts else 0,
         "tool_schema_count_max": max(tool_schema_counts) if tool_schema_counts else 0,
         "tool_schema_count_avg": (
@@ -1465,6 +1534,9 @@ def summarize(
         ),
         "stepwise_state_grounded_arg_hint_steps": sum(
             int(row.get("stepwise_state_grounded_arg_hint_steps", 0)) for row in task_rows
+        ),
+        "stepwise_single_hint_fallbacks": sum(
+            int(row.get("stepwise_single_hint_fallbacks", 0)) for row in task_rows
         ),
         "tasks_with_model_calls": sum(1 for row in task_rows if int(row["model_calls"]) > 0),
         "reference_actions": sum(int(row["reference_actions"]) for row in task_rows),
