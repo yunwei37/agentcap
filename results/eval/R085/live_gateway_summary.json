@@ -1,0 +1,59 @@
+{
+  "action_counts": {
+    "block": 6,
+    "execute": 1
+  },
+  "attempted_event_type_counts": {
+    "budgeted_first_issue": 1,
+    "budgeted_second_issue": 1,
+    "cross_extension_holder_mismatch": 1,
+    "delegation_over_attenuation": 1,
+    "issue_before_review": 1,
+    "missing_intent_proof": 1,
+    "same_trusted_source_wrong_decision_class": 1
+  },
+  "attempted_events": 7,
+  "blocked_event_type_counts": {
+    "budgeted_second_issue": 1,
+    "cross_extension_holder_mismatch": 1,
+    "delegation_over_attenuation": 1,
+    "issue_before_review": 1,
+    "missing_intent_proof": 1,
+    "same_trusted_source_wrong_decision_class": 1
+  },
+  "blocked_events": 6,
+  "blocked_mode_counts": {
+    "delegate": 1,
+    "sink_select": 4,
+    "tool_select": 1
+  },
+  "blocked_object_counts": {
+    "/skills/pdf/extract.py": 1,
+    "github.create_issue": 4,
+    "summarizer": 1
+  },
+  "callable_invocation_event_type_counts": {
+    "budgeted_first_issue": 1
+  },
+  "callable_invocations": 1,
+  "executed_event_type_counts": {
+    "budgeted_first_issue": 1
+  },
+  "executed_events": 1,
+  "executed_mode_counts": {
+    "sink_select": 1
+  },
+  "executed_object_counts": {
+    "github.create_issue": 1
+  },
+  "exposed_objects": 3,
+  "input_trace_sha256": "2bf921dacea0824e9d1973f5a4cd7323f82baa7ffbc22e164b6e3754e0169edc",
+  "missing_tool_events": 0,
+  "registered_blocked_events": 6,
+  "registered_executed_events": 1,
+  "registered_tools": 3,
+  "run_id": "R085",
+  "script_sha256": "050d9fc19a0d9f16f77710ecda801fa91aaf9cbb47d9032a51e96b4cf6a83ebc",
+  "tool_errors": 0,
+  "trace_path": "examples/residual_closest_baseline_suite.json"
+}

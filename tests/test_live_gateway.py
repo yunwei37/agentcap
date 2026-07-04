@@ -112,3 +112,61 @@ def test_live_gateway_executes_allowed_tool_and_blocks_injected_sink():
     assert summary["blocked_events"] == 1
     assert summary["executed_object_counts"] == {"product.lookup": 1}
     assert summary["blocked_object_counts"] == {"email.send": 1}
+
+
+def test_live_gateway_run_events_preserves_trace_level_budget_state():
+    calls = []
+
+    def create_issue(repo: str):
+        calls.append(repo)
+        return {"repo": repo}
+
+    trace = {
+        "labels": {
+            "trusted_user": {
+                "allowed": {
+                    "sink_select": ["github.repo"],
+                }
+            }
+        },
+        "leases": [
+            {
+                "id": "one_issue",
+                "op": "mcp.call",
+                "object": "github.create_issue",
+                "args": {"repo": {"equals": "org/repo"}},
+                "control_may_depend_on": ["trusted_user"],
+                "data_may_depend_on": ["trusted_user"],
+                "budget": {"invocations": 1},
+            }
+        ],
+        "events": [
+            {
+                "id": "first",
+                "op": "mcp.call",
+                "object": "github.create_issue",
+                "args": {"repo": "org/repo"},
+                "decision": "github.repo",
+                "mode": "sink_select",
+                "control_provenance": ["trusted_user"],
+                "data_provenance": ["trusted_user"],
+            },
+            {
+                "id": "second",
+                "op": "mcp.call",
+                "object": "github.create_issue",
+                "args": {"repo": "org/repo"},
+                "decision": "github.repo",
+                "mode": "sink_select",
+                "control_provenance": ["trusted_user"],
+                "data_provenance": ["trusted_user"],
+            },
+        ],
+    }
+    gateway = LiveToolGateway(trace, {"github.create_issue": create_issue})
+
+    records = gateway.run_events()
+
+    assert [record["executed"] for record in records] == [True, False]
+    assert "invocation budget exhausted" in records[1]["decision"]["reason"]
+    assert calls == ["org/repo"]

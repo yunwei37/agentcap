@@ -29,8 +29,13 @@ class LiveToolGateway:
     def exposed_objects(self) -> list[dict[str, str]]:
         return self.trace_gateway.exposed_objects()
 
-    def call(self, event: dict[str, Any]) -> dict[str, Any]:
-        decision = self.trace_gateway.authorize(event).to_dict()
+    def call(
+        self,
+        event: dict[str, Any],
+        decision: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        if decision is None:
+            decision = self.trace_gateway.authorize(event).to_dict()
         if not decision["allowed"]:
             record = _record(decision, executed=False)
             self.records.append(record)
@@ -68,7 +73,14 @@ class LiveToolGateway:
     def run_events(self, events: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
         if events is None:
             events = self.trace_gateway.events
-        return [self.call(event) for event in events]
+            decisions = self.trace_gateway.replay()
+        else:
+            trace = {**self.trace_gateway.trace, "events": events}
+            decisions = TraceGateway(trace).replay()
+        return [
+            self.call(event, decision=decision)
+            for event, decision in zip(events, decisions)
+        ]
 
     def summary(self, records: list[dict[str, Any]] | None = None) -> dict[str, Any]:
         if records is None:

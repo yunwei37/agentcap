@@ -88,3 +88,67 @@ def test_live_trace_runner_executes_only_allowed_registered_callables():
     assert summary["executed_event_type_counts"] == {"benign_user_tool": 1}
     assert summary["blocked_event_type_counts"] == {"injected_attacker_tool": 1}
     assert summary["missing_tool_events"] == 0
+
+
+def test_live_trace_runner_registers_non_tool_call_objects():
+    runner = _load_runner()
+    trace = {
+        "labels": {
+            "trusted_user": {
+                "allowed": {
+                    "sink_select": ["github.repo"],
+                }
+            }
+        },
+        "leases": [
+            {
+                "id": "issue",
+                "op": "mcp.call",
+                "object": "github.create_issue",
+                "args": {"repo": {"equals": "org/repo"}},
+                "control_may_depend_on": ["trusted_user"],
+                "data_may_depend_on": ["trusted_user"],
+            }
+        ],
+        "events": [
+            {
+                "id": "issue",
+                "op": "mcp.call",
+                "object": "github.create_issue",
+                "args": {"repo": "org/repo"},
+                "decision": "github.repo",
+                "mode": "sink_select",
+                "control_provenance": ["trusted_user"],
+                "data_provenance": ["trusted_user"],
+            },
+            {
+                "id": "script",
+                "op": "exec.run",
+                "object": "/skills/pdf/extract.py",
+                "args": {},
+                "decision": "pdf.extract.tool_choice",
+                "mode": "tool_select",
+                "control_provenance": ["trusted_user"],
+                "data_provenance": ["trusted_user"],
+            },
+            {
+                "id": "delegate",
+                "op": "subagent.spawn",
+                "object": "summarizer",
+                "args": {},
+                "decision": "summary_subagent.capabilities",
+                "mode": "delegate",
+                "control_provenance": ["trusted_user"],
+                "data_provenance": ["trusted_user"],
+            },
+        ],
+    }
+    callable_invocations = []
+
+    tools = runner._tool_registry(trace, callable_invocations)
+
+    assert sorted(tools) == [
+        "/skills/pdf/extract.py",
+        "github.create_issue",
+        "summarizer",
+    ]

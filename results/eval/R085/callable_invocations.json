@@ -1,0 +1,8 @@
+[
+  {
+    "args": {
+      "repo": "org/repo-y"
+    },
+    "tool": "github.create_issue"
+  }
+]

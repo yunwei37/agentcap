@@ -10,6 +10,7 @@ not need external APIs or credentials.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -25,9 +26,11 @@ def main() -> int:
     parser.add_argument("--trace", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--max-events", type=int, default=None)
+    parser.add_argument("--run-id", default=None)
     args = parser.parse_args()
 
-    trace = json.loads(args.trace.read_text())
+    trace_bytes = args.trace.read_bytes()
+    trace = json.loads(trace_bytes)
     if args.max_events is not None:
         trace = {**trace, "events": trace.get("events", [])[: args.max_events]}
 
@@ -36,7 +39,13 @@ def main() -> int:
     tools = _tool_registry(trace, callable_invocations)
     gateway = LiveToolGateway(trace, tools)
     records = gateway.run_events()
-    summary = _summary(trace, records, callable_invocations, gateway.summary(records), tools)
+    summary = {
+        **_summary(trace, records, callable_invocations, gateway.summary(records), tools),
+        "run_id": args.run_id,
+        "trace_path": str(args.trace),
+        "input_trace_sha256": hashlib.sha256(trace_bytes).hexdigest(),
+        "script_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+    }
 
     (args.output_dir / "live_gateway_records.json").write_text(json.dumps(records, indent=2, sort_keys=True))
     (args.output_dir / "live_gateway_summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True))
@@ -54,7 +63,7 @@ def _tool_registry(trace: dict[str, Any], callable_invocations: list[dict[str, A
     objects = {
         str(event.get("object", ""))
         for event in trace.get("events", [])
-        if event.get("op") == "tool.call"
+        if event.get("object")
     }
     return {
         obj: _make_recording_tool(obj, callable_invocations)
@@ -99,7 +108,7 @@ def _summary(
         decision = record.get("decision", {})
         event_id = str(decision.get("event_id", ""))
         event = event_by_id.get(event_id, {})
-        event_type = str(event.get("intentcap_event_type", "unknown"))
+        event_type = str(event.get("intentcap_event_type") or event.get("id") or "unknown")
         mode = str(event.get("mode", "unknown"))
         obj = str(decision.get("object", ""))
         attempted_event_types[event_type] += 1
