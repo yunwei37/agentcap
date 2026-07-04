@@ -36,7 +36,7 @@ Completeness: partial
 | `scripts/score_oracle_lease_distance.py` | scores saved authority-minimization baselines against current IntentCap oracle profiles across InjecAgent, MCPTox, and tau2/tau3 | created |
 | `scripts/run_local_llm_lease_corpus.py` | runs a local llama.cpp/Qwen model as an untrusted lease-compiler frontend and validates generated leases with the deterministic checker | created |
 | `scripts/run_local_llm_gateway_recovery.py` | runs a local llama.cpp/Qwen model through `LiveToolGateway` action proposals plus one checker-feedback recovery round | created |
-| `scripts/run_tau2_local_llm_task_gateway.py` | prompts local Qwen on tau2 task text/tool schemas and gates proposed calls through exact IntentCap task leases in a tau2 environment; supports all-tool or leased-tool prompt exposure | created |
+| `scripts/run_tau2_local_llm_task_gateway.py` | prompts local Qwen on tau2 task text/tool schemas and gates proposed calls through exact IntentCap task leases in a tau2 environment; supports all-tool or leased-tool prompt exposure plus optional stepwise empty-action retries | created |
 | `scripts/analyze_tau2_task_gateway_mismatches.py` | classifies saved local-Qwen tau2 task-gateway calls by exact execution, wrong/hallucinated tool, same-tool wrong arguments, and argument-key mismatch causes | created |
 | `scripts/rank_eval_dataset_candidates.py` | ranks web-discovered eval dataset candidates from official metadata without cloning, syncing, downloading, or executing new datasets | created |
 | `scripts/probe_tau2_bench.py` | probes tau2/tau3 task, policy, tool, document, and reference-action artifacts without model/API execution | created |
@@ -197,6 +197,7 @@ Completeness: partial
 - R038 is a saved-result argument-key diagnosis over R036. It explains which parameters are wrong, but it is not a new model run, not a task-success measurement, and not proof that argument repair will work.
 - R039 is a fresh local-model pilot with Qwen3.6 27B GGUF, but it still uses exact reference-action leases as an oracle authorization profile and a small fixed tau2 subset. It should be reported as a larger-model mechanism pilot, not benchmark-scale utility or a full lease compiler evaluation.
 - R040 is a saved-result diagnosis over R039. It shows R039's remaining failure is no longer off-lease calls in this subset, but it does not explain all task-level reward failures or prove recovery.
+- The tau2 local LLM runner now supports `--stepwise-empty-retries`, which retries after an empty `actions` response and asks the model to re-check visible task state without revealing hidden reference actions. Default `0` preserves prior R031-R040 behavior.
 - Need reconcile InjecAgent README count of 62 attacker tools with the local base-case count of 63 unique attacker-tool names, where `GmailSendEmail` is the repeated exfiltration sink.
 - Need implement an online model/API benchmark wrapper so deterministic trace-level denials, local live execution, and cached model-output replay can be paired with fresh model/tool utility and attack-success metrics.
 - Need convert tau2/tau3 reference-action lease scopes into a small simulator-backed utility run.

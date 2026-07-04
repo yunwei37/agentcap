@@ -202,6 +202,7 @@ def test_summary_counts_feedback_rounds():
                 "feedback_attempted": True,
                 "stepwise_steps_attempted": 0,
                 "stepwise_model_calls": 0,
+                "stepwise_empty_retry_steps": 0,
                 "reference_actions": 1,
                 "bound_reference_calls": 1,
                 "off_lease_calls_blocked": 1,
@@ -240,6 +241,7 @@ def test_summary_counts_feedback_rounds():
         feedback_rounds=1,
         tool_exposure="leased",
         stepwise_max_steps=0,
+        stepwise_empty_retries=0,
         dry_run=False,
     )
 
@@ -268,6 +270,7 @@ def test_step_prompt_reports_tool_results_without_reference_actions():
         },
         tools=[{"name": "create_task", "parameters": {}}],
         step_index=2,
+        empty_retry_count=1,
         action_rows=[
             {
                 "round": "step_1",
@@ -282,5 +285,19 @@ def test_step_prompt_reports_tool_results_without_reference_actions():
     )
 
     assert "Visible tool result" in prompt
+    assert "previous_empty_action_retries" in prompt
     assert "Hidden reference" not in prompt
     assert "evaluation_criteria" not in prompt
+
+
+def test_step_prompt_default_omits_empty_retry_instruction():
+    prompt = runner.build_step_prompt(
+        domain="mock",
+        raw_task={"id": "t", "instruction": "Update the task."},
+        tools=[{"name": "create_task", "parameters": {}}],
+        step_index=1,
+        action_rows=[],
+    )
+
+    assert "previous_empty_action_retries" not in prompt
+    assert "previous step returned no tool call" not in prompt
