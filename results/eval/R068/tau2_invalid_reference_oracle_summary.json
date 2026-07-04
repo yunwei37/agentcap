@@ -1,0 +1,42 @@
+{
+  "adjusted_action_env_pass_rate": 0.8181818181818182,
+  "adjusted_action_env_pass_tasks": 9,
+  "adjusted_category_counts": {
+    "invalid_reference_only": 1,
+    "missing_db_feasible_reference_actions": 2,
+    "official_pass": 8
+  },
+  "analysis": "saved tau2 invalid-reference-aware oracle accounting",
+  "db_feasible_reference_actions": 58,
+  "db_feasible_reference_complete_rate": 0.8181818181818182,
+  "db_feasible_reference_complete_tasks": 9,
+  "executed_db_feasible_reference_actions": 55,
+  "feasibility_dir": "results/eval/R067",
+  "feasible_refs_complete_but_reward_failed_tasks": 0,
+  "git_status": "## main...origin/main\n M scripts/score_tau2_invalid_reference_oracle.py\n?? results/eval/R065/\n?? results/eval/R066/\n?? results/eval/R067/",
+  "inspects_hidden_references": false,
+  "invalid_reference_actions": 3,
+  "invalid_reference_only_tasks": 1,
+  "missing_db_feasible_reference_actions": 3,
+  "no_dataset_sync": true,
+  "no_model_execution": true,
+  "no_tool_execution": true,
+  "notes": [
+    "This pass combines saved residual-completion rows with reference-feasibility rows only.",
+    "It does not change the official tau2 tool-oracle score.",
+    "Adjusted action/env pass excludes references already classified as invalid by the provided reference-feasibility audit, then still requires env_reward == 1.0.",
+    "It is an oracle-quality/accounting audit, not a fresh model run or utility improvement."
+  ],
+  "official_reference_actions": 61,
+  "official_tool_oracle_pass_rate": 0.7272727272727273,
+  "official_tool_oracle_pass_tasks": 8,
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "92ba7b8290778dead4c00c5b4100296e1062e600",
+  "python": "3.12.3",
+  "residual_dir": "results/eval/R066",
+  "run_id": "R068",
+  "script_sha256": "f4a57305b240d62f2ef995cdb6d6858f94c2b4fe7048972b9c5e87ffb8b546b8",
+  "source_run": "R065",
+  "source_run_dir": "results/eval/R065",
+  "tasks": 11
+}

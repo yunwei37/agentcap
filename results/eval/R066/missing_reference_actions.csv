@@ -1,0 +1,7 @@
+source_run_id,domain,task_id,reference_index,event_id,tool,args_json,visibility,grounded_keys,hidden_keys
+R065,retail,2,1,retail:2:2_1,get_product_details,"{""product_id"": ""6086499569""}",hidden,,product_id
+R065,retail,3,1,retail:3:3_1,get_product_details,"{""product_id"": ""6086499569""}",hidden,,product_id
+R065,retail,3,9,retail:3:3_10,get_product_details,"{""product_id"": ""9523456873""}",complete_visible,product_id,
+R065,retail,3,10,retail:3:3_11,get_user_details,"{""user_id"": ""yusuf_rossi_9620""}",complete_visible,user_id,
+R065,retail,4,1,retail:4:4_1,get_product_details,"{""product_id"": ""6086499569""}",hidden,,product_id
+R065,retail,4,10,retail:4:4_11,get_user_details,"{""user_id"": ""yusuf_rossi_9620""}",complete_visible,user_id,

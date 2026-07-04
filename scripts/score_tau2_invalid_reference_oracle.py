@@ -246,7 +246,7 @@ def _summary(
         "notes": [
             "This pass combines saved residual-completion rows with reference-feasibility rows only.",
             "It does not change the official tau2 tool-oracle score.",
-            "Adjusted action/env pass excludes references already classified as invalid by R060, then still requires env_reward == 1.0.",
+            "Adjusted action/env pass excludes references already classified as invalid by the provided reference-feasibility audit, then still requires env_reward == 1.0.",
             "It is an oracle-quality/accounting audit, not a fresh model run or utility improvement.",
         ],
     }
