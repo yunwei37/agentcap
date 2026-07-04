@@ -81,6 +81,20 @@ RUN_FIELDS = [
     "tool_oracle_pass_rate",
     "dominant_off_lease_category",
 ]
+ARG_KEY_FIELDS = [
+    "run_id",
+    "domain",
+    "task_id",
+    "round",
+    "index",
+    "model_tool",
+    "issue",
+    "key",
+    "model_value_json",
+    "reference_value_json",
+    "category",
+    "closest_reference_event_id",
+]
 
 
 def main() -> int:
@@ -109,6 +123,11 @@ def main() -> int:
     _write_rows(args.output_dir / "model_call_mismatches.csv", result["call_rows"], CALL_FIELDS)
     _write_rows(args.output_dir / "task_mismatch_summary.csv", result["task_rows"], TASK_FIELDS)
     _write_rows(args.output_dir / "run_mismatch_summary.csv", result["run_rows"], RUN_FIELDS)
+    _write_rows(
+        args.output_dir / "argument_key_mismatches.csv",
+        result["argument_key_rows"],
+        ARG_KEY_FIELDS,
+    )
     (args.output_dir / "tau2_task_gateway_mismatch_summary.json").write_text(
         json.dumps(result["summary"], indent=2, sort_keys=True)
     )
@@ -144,11 +163,14 @@ def analyze_runs(run_dirs: tuple[Path, ...], *, run_id: str = "R035") -> dict[st
         run_rows.append(_run_row(source_run_id, saved_summary, run_call_rows, run_task_rows))
 
     summary = _summary(run_id, run_rows, call_rows, task_rows, input_summaries, run_dirs)
+    argument_key_rows = argument_key_mismatch_rows(call_rows)
+    summary["argument_key_mismatch_summary"] = _argument_key_summary(argument_key_rows)
     return {
         "summary": summary,
         "call_rows": call_rows,
         "task_rows": task_rows,
         "run_rows": run_rows,
+        "argument_key_rows": argument_key_rows,
     }
 
 
@@ -317,6 +339,77 @@ def _summary(
             "It does not run models, execute tools, clone benchmarks, sync datasets, or reveal hidden reference actions to a model.",
             "Mismatch categories compare model-proposed tool calls against the saved per-task reference-action lease oracle.",
         ],
+    }
+
+
+def argument_key_mismatch_rows(call_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for call_row in call_rows:
+        if call_row["category"] != "off_lease_same_tool_wrong_args":
+            continue
+        model_args = _json_dict(call_row["model_args_json"])
+        reference_args = _json_dict(call_row["closest_reference_args_json"])
+        model_keys = set(model_args)
+        reference_keys = set(reference_args)
+        for key in sorted(reference_keys - model_keys):
+            rows.append(_argument_key_row(call_row, "missing_from_model", key, None, reference_args[key]))
+        for key in sorted(model_keys - reference_keys):
+            rows.append(_argument_key_row(call_row, "extra_model_key", key, model_args[key], None))
+        for key in sorted(model_keys & reference_keys):
+            if model_args.get(key) != reference_args.get(key):
+                rows.append(
+                    _argument_key_row(
+                        call_row,
+                        "wrong_value",
+                        key,
+                        model_args.get(key),
+                        reference_args.get(key),
+                    )
+                )
+    return rows
+
+
+def _argument_key_row(
+    call_row: dict[str, Any],
+    issue: str,
+    key: str,
+    model_value: Any,
+    reference_value: Any,
+) -> dict[str, Any]:
+    return {
+        "run_id": call_row["run_id"],
+        "domain": call_row["domain"],
+        "task_id": call_row["task_id"],
+        "round": call_row["round"],
+        "index": call_row["index"],
+        "model_tool": call_row["model_tool"],
+        "issue": issue,
+        "key": key,
+        "model_value_json": "" if model_value is None else json.dumps(model_value, sort_keys=True),
+        "reference_value_json": (
+            "" if reference_value is None else json.dumps(reference_value, sort_keys=True)
+        ),
+        "category": call_row["category"],
+        "closest_reference_event_id": call_row["closest_reference_event_id"],
+    }
+
+
+def _argument_key_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    issue_counts = Counter(str(row["issue"]) for row in rows)
+    key_counts = Counter(str(row["key"]) for row in rows)
+    issue_key_counts = Counter(f"{row['issue']}:{row['key']}" for row in rows)
+    tool_counts = Counter(str(row["model_tool"]) for row in rows)
+    affected_calls = {
+        (row["run_id"], row["domain"], row["task_id"], row["round"], row["index"])
+        for row in rows
+    }
+    return {
+        "argument_key_issues": len(rows),
+        "affected_same_tool_wrong_arg_calls": len(affected_calls),
+        "issue_counts": dict(sorted(issue_counts.items())),
+        "key_counts": dict(sorted(key_counts.items())),
+        "issue_key_counts": dict(sorted(issue_key_counts.items())),
+        "tool_counts": dict(sorted(tool_counts.items())),
     }
 
 

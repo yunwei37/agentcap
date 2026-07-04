@@ -1,0 +1,19 @@
+run_id,domain,task_id,round,index,model_tool,issue,key,model_value_json,reference_value_json,category,closest_reference_event_id
+R036,retail,0,step_1,0,exchange_delivered_order_items,wrong_value,item_ids,"[""1008292230""]","[""1151293680"", ""4983901480""]",off_lease_same_tool_wrong_args,retail:0:0_4
+R036,retail,0,step_1,0,exchange_delivered_order_items,wrong_value,new_item_ids,"[""1008292231""]","[""7706410293"", ""7747408585""]",off_lease_same_tool_wrong_args,retail:0:0_4
+R036,retail,0,step_1,0,exchange_delivered_order_items,wrong_value,payment_method_id,"""credit_card_0000000""","""credit_card_9513926""",off_lease_same_tool_wrong_args,retail:0:0_4
+R036,retail,0,step_3,2,exchange_delivered_order_items,wrong_value,item_ids,"[""1008292230""]","[""1151293680"", ""4983901480""]",off_lease_same_tool_wrong_args,retail:0:0_4
+R036,retail,0,step_3,2,exchange_delivered_order_items,wrong_value,new_item_ids,"[""1008292231""]","[""7706410293"", ""7747408585""]",off_lease_same_tool_wrong_args,retail:0:0_4
+R036,retail,0,step_3,2,exchange_delivered_order_items,wrong_value,payment_method_id,"""credit_card_0000000""","""credit_card_9513926""",off_lease_same_tool_wrong_args,retail:0:0_4
+R036,retail,1,step_1,0,exchange_delivered_order_items,wrong_value,item_ids,"[""1008292230""]","[""4983901480""]",off_lease_same_tool_wrong_args,retail:1:1_4
+R036,retail,1,step_1,0,exchange_delivered_order_items,wrong_value,new_item_ids,"[""1008292231""]","[""7747408585""]",off_lease_same_tool_wrong_args,retail:1:1_4
+R036,retail,1,step_1,0,exchange_delivered_order_items,wrong_value,payment_method_id,"""credit_card_0000000""","""credit_card_9513926""",off_lease_same_tool_wrong_args,retail:1:1_4
+R036,retail,1,step_3,2,exchange_delivered_order_items,wrong_value,item_ids,"[""1008292230""]","[""4983901480""]",off_lease_same_tool_wrong_args,retail:1:1_4
+R036,retail,1,step_3,2,exchange_delivered_order_items,wrong_value,new_item_ids,"[""1008292231""]","[""7747408585""]",off_lease_same_tool_wrong_args,retail:1:1_4
+R036,retail,1,step_3,2,exchange_delivered_order_items,wrong_value,payment_method_id,"""credit_card_0000000""","""credit_card_9513926""",off_lease_same_tool_wrong_args,retail:1:1_4
+R036,retail,2,step_2,1,return_delivered_order_items,wrong_value,item_ids,"[""1008292230"", ""1008292231"", ""1008292232""]","[""4602305039"", ""4202497723"", ""9408160950""]",off_lease_same_tool_wrong_args,retail:2:2_11
+R036,retail,2,step_2,1,return_delivered_order_items,wrong_value,order_id,"""#WyusufRossi9620""","""#W2378156""",off_lease_same_tool_wrong_args,retail:2:2_11
+R036,retail,2,step_2,1,return_delivered_order_items,wrong_value,payment_method_id,"""credit_card_0000000""","""credit_card_9513926""",off_lease_same_tool_wrong_args,retail:2:2_11
+R036,retail,2,step_3,2,return_delivered_order_items,wrong_value,item_ids,"[""1008292230"", ""1008292231"", ""1008292232""]","[""4602305039"", ""4202497723"", ""9408160950""]",off_lease_same_tool_wrong_args,retail:2:2_11
+R036,retail,2,step_3,2,return_delivered_order_items,wrong_value,order_id,"""#WyusufRossi9620""","""#W2378156""",off_lease_same_tool_wrong_args,retail:2:2_11
+R036,retail,2,step_3,2,return_delivered_order_items,wrong_value,payment_method_id,"""credit_card_0000000""","""credit_card_9513926""",off_lease_same_tool_wrong_args,retail:2:2_11

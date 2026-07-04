@@ -141,3 +141,48 @@ def test_analyze_task_record_summarizes_categories():
     assert result["task_row"]["exact_executed_calls"] == 1
     assert result["task_row"]["off_lease_calls"] == 1
     assert result["task_row"]["wrong_or_hallucinated_tool_calls"] == 1
+
+
+def test_argument_key_mismatch_rows_summarize_wrong_missing_and_extra_keys():
+    call_rows = [
+        {
+            "run_id": "RTEST",
+            "domain": "mock",
+            "task_id": "t",
+            "round": "step_1",
+            "index": 0,
+            "model_tool": "create_task",
+            "model_args_json": '{"extra": "x", "title": "Wrong"}',
+            "category": "off_lease_same_tool_wrong_args",
+            "closest_reference_event_id": "mock:t:create_1",
+            "closest_reference_args_json": '{"title": "Expected", "user_id": "u1"}',
+        },
+        {
+            "run_id": "RTEST",
+            "domain": "mock",
+            "task_id": "t",
+            "round": "step_2",
+            "index": 1,
+            "model_tool": "delete_task",
+            "model_args_json": '{"title": "Expected"}',
+            "category": "off_lease_wrong_or_hallucinated_tool",
+            "closest_reference_event_id": "mock:t:create_1",
+            "closest_reference_args_json": '{"title": "Expected"}',
+        },
+    ]
+
+    rows = analyzer.argument_key_mismatch_rows(call_rows)
+    summary = analyzer._argument_key_summary(rows)
+
+    assert [(row["issue"], row["key"]) for row in rows] == [
+        ("missing_from_model", "user_id"),
+        ("extra_model_key", "extra"),
+        ("wrong_value", "title"),
+    ]
+    assert summary["argument_key_issues"] == 3
+    assert summary["affected_same_tool_wrong_arg_calls"] == 1
+    assert summary["issue_counts"] == {
+        "extra_model_key": 1,
+        "missing_from_model": 1,
+        "wrong_value": 1,
+    }
