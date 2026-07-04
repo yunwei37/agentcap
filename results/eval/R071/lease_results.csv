@@ -1,0 +1,5 @@
+run_id,domain,task_id,tool,valid_tool,tool_type,arguments,argument_policy_json,intent_evidence
+R071,airline,0,get_reservation_details,True,read,reservation_id,"{""reservation_id"": {""mode"": ""equals_any"", ""values"": [""EHGLP3""]}}","User wants to cancel reservation EHGLP3, agent needs to check details first."
+R071,airline,0,cancel_reservation,True,write,reservation_id,"{""reservation_id"": {""mode"": ""equals_any"", ""values"": [""EHGLP3""]}}",User explicitly requests cancellation of reservation EHGLP3.
+R071,airline,1,get_user_details,True,read,user_id,"{""user_id"": {""mode"": ""equals_any"", ""values"": [""raj_sanchez_7340""]}}","User provides user ID and wants to cancel a reservation, requiring lookup of reservation details."
+R071,airline,1,cancel_reservation,True,write,reservation_id,"{""reservation_id"": {""mode"": ""runtime_from_prior_tool"", ""values"": []}}",User explicitly requests cancellation of a reservation.

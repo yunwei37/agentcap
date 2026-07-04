@@ -1,0 +1,62 @@
+run_id,domain,task_id,action_id,index,tool,args_json,candidate_tool_selected,complete_non_eval_json_arguments,missing_candidate_argument_keys,coverage_class,reward_basis
+R072,airline,1,1_0,0,get_user_details,"{""user_id"": ""raj_sanchez_7340""}",True,True,,tool_and_non_eval_json_args,DB|COMMUNICATE
+R072,airline,1,1_1,1,get_reservation_details,"{""reservation_id"": ""Q69X3R""}",False,False,reservation_id,missing_tool,DB|COMMUNICATE
+R072,airline,2,2_0,0,get_user_details,"{""user_id"": ""noah_muller_9847""}",False,False,user_id,missing_tool,DB|COMMUNICATE
+R072,airline,2,2_1,1,get_reservation_details,"{""reservation_id"": ""SDZQKO""}",False,False,reservation_id,missing_tool,DB|COMMUNICATE
+R072,airline,2,2_2,2,get_reservation_details,"{""reservation_id"": ""4OG6T3""}",False,False,reservation_id,missing_tool,DB|COMMUNICATE
+R072,airline,3,3_0,0,get_reservation_details,"{""reservation_id"": ""JMO1MG""}",False,False,reservation_id,missing_tool,DB|COMMUNICATE
+R072,airline,3,3_1,1,get_user_details,"{""user_id"": ""anya_garcia_5901""}",False,False,user_id,missing_tool,DB|COMMUNICATE
+R072,airline,4,4_0,0,get_user_details,"{""user_id"": ""sophia_silva_7557""}",False,False,user_id,missing_tool,DB|COMMUNICATE
+R072,airline,4,4_1,1,get_reservation_details,"{""reservation_id"": ""NM1VX1""}",False,False,reservation_id,missing_tool,DB|COMMUNICATE
+R072,airline,4,4_2,2,get_reservation_details,"{""reservation_id"": ""KC18K6""}",False,False,reservation_id,missing_tool,DB|COMMUNICATE
+R072,airline,4,4_3,3,get_reservation_details,"{""reservation_id"": ""S61CZX""}",False,False,reservation_id,missing_tool,DB|COMMUNICATE
+R072,airline,4,4_4,4,get_reservation_details,"{""reservation_id"": ""H8Q05L""}",False,False,reservation_id,missing_tool,DB|COMMUNICATE
+R072,airline,4,4_5,5,get_reservation_details,"{""reservation_id"": ""WUNA5K""}",False,False,reservation_id,missing_tool,DB|COMMUNICATE
+R072,retail,0,0_0,0,find_user_id_by_name_zip,"{""first_name"": ""Yusuf"", ""last_name"": ""Rossi"", ""zip"": ""19122""}",False,False,first_name|last_name|zip,missing_tool,DB|NL_ASSERTION
+R072,retail,0,0_1,1,get_order_details,"{""order_id"": ""#W2378156""}",False,False,order_id,missing_tool,DB|NL_ASSERTION
+R072,retail,0,0_2,2,get_product_details,"{""product_id"": ""1656367028""}",False,False,product_id,missing_tool,DB|NL_ASSERTION
+R072,retail,0,0_3,3,get_product_details,"{""product_id"": ""4896585277""}",False,False,product_id,missing_tool,DB|NL_ASSERTION
+R072,retail,0,0_4,4,exchange_delivered_order_items,"{""item_ids"": [""1151293680"", ""4983901480""], ""new_item_ids"": [""7706410293"", ""7747408585""], ""order_id"": ""#W2378156"", ""payment_method_id"": ""credit_card_9513926""}",False,False,item_ids|new_item_ids|order_id|payment_method_id,missing_tool,DB|NL_ASSERTION
+R072,retail,1,1_0,0,find_user_id_by_name_zip,"{""first_name"": ""Yusuf"", ""last_name"": ""Rossi"", ""zip"": ""19122""}",True,True,,tool_and_non_eval_json_args,DB|NL_ASSERTION
+R072,retail,1,1_1,1,get_order_details,"{""order_id"": ""#W2378156""}",True,True,,tool_and_non_eval_json_args,DB|NL_ASSERTION
+R072,retail,1,1_2,2,get_product_details,"{""product_id"": ""1656367028""}",True,False,product_id,tool_only_runtime_or_broad_args_needed,DB|NL_ASSERTION
+R072,retail,1,1_3,3,get_product_details,"{""product_id"": ""4896585277""}",True,False,product_id,tool_only_runtime_or_broad_args_needed,DB|NL_ASSERTION
+R072,retail,1,1_4,4,exchange_delivered_order_items,"{""item_ids"": [""4983901480""], ""new_item_ids"": [""7747408585""], ""order_id"": ""#W2378156"", ""payment_method_id"": ""credit_card_9513926""}",True,False,item_ids|new_item_ids|payment_method_id,tool_only_runtime_or_broad_args_needed,DB|NL_ASSERTION
+R072,retail,2,2_0,0,find_user_id_by_name_zip,"{""first_name"": ""Yusuf"", ""last_name"": ""Rossi"", ""zip"": ""19122""}",True,True,,tool_and_non_eval_json_args,DB|NL_ASSERTION
+R072,retail,2,2_1,1,get_product_details,"{""product_id"": ""6086499569""}",True,False,product_id,tool_only_runtime_or_broad_args_needed,DB|NL_ASSERTION
+R072,retail,2,2_3,2,get_product_details,"{""product_id"": ""9523456873""}",True,False,product_id,tool_only_runtime_or_broad_args_needed,DB|NL_ASSERTION
+R072,retail,2,2_4,3,get_user_details,"{""user_id"": ""yusuf_rossi_9620""}",True,False,user_id,tool_only_runtime_or_broad_args_needed,DB|NL_ASSERTION
+R072,retail,2,2_5,4,get_order_details,"{""order_id"": ""#W6247578""}",True,False,order_id,tool_only_runtime_or_broad_args_needed,DB|NL_ASSERTION
+R072,retail,2,2_6,5,get_order_details,"{""order_id"": ""#W9711842""}",True,False,order_id,tool_only_runtime_or_broad_args_needed,DB|NL_ASSERTION
+R072,retail,2,2_7,6,get_order_details,"{""order_id"": ""#W4776164""}",True,False,order_id,tool_only_runtime_or_broad_args_needed,DB|NL_ASSERTION
+R072,retail,2,2_8,7,get_order_details,"{""order_id"": ""#W6679257""}",True,False,order_id,tool_only_runtime_or_broad_args_needed,DB|NL_ASSERTION
+R072,retail,2,2_9,8,get_order_details,"{""order_id"": ""#W2378156""}",True,False,order_id,tool_only_runtime_or_broad_args_needed,DB|NL_ASSERTION
+R072,retail,2,2_10,9,get_product_details,"{""product_id"": ""9523456873""}",True,False,product_id,tool_only_runtime_or_broad_args_needed,DB|NL_ASSERTION
+R072,retail,2,2_11,10,return_delivered_order_items,"{""item_ids"": [""4602305039"", ""4202497723"", ""9408160950""], ""order_id"": ""#W2378156"", ""payment_method_id"": ""credit_card_9513926""}",True,False,item_ids|order_id|payment_method_id,tool_only_runtime_or_broad_args_needed,DB|NL_ASSERTION
+R072,retail,3,3_0,0,find_user_id_by_name_zip,"{""first_name"": ""Yusuf"", ""last_name"": ""Rossi"", ""zip"": ""19122""}",False,False,first_name|last_name|zip,missing_tool,DB|NL_ASSERTION
+R072,retail,3,3_1,1,get_product_details,"{""product_id"": ""6086499569""}",False,False,product_id,missing_tool,DB|NL_ASSERTION
+R072,retail,3,3_3,2,get_product_details,"{""product_id"": ""9523456873""}",False,False,product_id,missing_tool,DB|NL_ASSERTION
+R072,retail,3,3_4,3,get_user_details,"{""user_id"": ""yusuf_rossi_9620""}",False,False,user_id,missing_tool,DB|NL_ASSERTION
+R072,retail,3,3_5,4,get_order_details,"{""order_id"": ""#W6247578""}",False,False,order_id,missing_tool,DB|NL_ASSERTION
+R072,retail,3,3_6,5,get_order_details,"{""order_id"": ""#W9711842""}",False,False,order_id,missing_tool,DB|NL_ASSERTION
+R072,retail,3,3_7,6,get_order_details,"{""order_id"": ""#W4776164""}",False,False,order_id,missing_tool,DB|NL_ASSERTION
+R072,retail,3,3_8,7,get_order_details,"{""order_id"": ""#W6679257""}",False,False,order_id,missing_tool,DB|NL_ASSERTION
+R072,retail,3,3_9,8,get_order_details,"{""order_id"": ""#W2378156""}",False,False,order_id,missing_tool,DB|NL_ASSERTION
+R072,retail,3,3_10,9,get_product_details,"{""product_id"": ""9523456873""}",False,False,product_id,missing_tool,DB|NL_ASSERTION
+R072,retail,3,3_11,10,get_user_details,"{""user_id"": ""yusuf_rossi_9620""}",False,False,user_id,missing_tool,DB|NL_ASSERTION
+R072,retail,3,3_12,11,modify_pending_order_items,"{""item_ids"": [""8349118980""], ""new_item_ids"": [""9647292434""], ""order_id"": ""#W4776164"", ""payment_method_id"": ""credit_card_9513926""}",False,False,item_ids|new_item_ids|order_id|payment_method_id,missing_tool,DB|NL_ASSERTION
+R072,retail,4,4_0,0,find_user_id_by_name_zip,"{""first_name"": ""Yusuf"", ""last_name"": ""Rossi"", ""zip"": ""19122""}",False,False,first_name|last_name|zip,missing_tool,DB|NL_ASSERTION
+R072,retail,4,4_1,1,get_product_details,"{""product_id"": ""6086499569""}",False,False,product_id,missing_tool,DB|NL_ASSERTION
+R072,retail,4,4_3,2,get_product_details,"{""product_id"": ""9523456873""}",False,False,product_id,missing_tool,DB|NL_ASSERTION
+R072,retail,4,4_4,3,get_user_details,"{""user_id"": ""yusuf_rossi_9620""}",False,False,user_id,missing_tool,DB|NL_ASSERTION
+R072,retail,4,4_5,4,get_order_details,"{""order_id"": ""#W6247578""}",False,False,order_id,missing_tool,DB|NL_ASSERTION
+R072,retail,4,4_6,5,get_order_details,"{""order_id"": ""#W9711842""}",False,False,order_id,missing_tool,DB|NL_ASSERTION
+R072,retail,4,4_7,6,get_order_details,"{""order_id"": ""#W4776164""}",False,False,order_id,missing_tool,DB|NL_ASSERTION
+R072,retail,4,4_8,7,get_order_details,"{""order_id"": ""#W6679257""}",False,False,order_id,missing_tool,DB|NL_ASSERTION
+R072,retail,4,4_9,8,get_order_details,"{""order_id"": ""#W2378156""}",False,False,order_id,missing_tool,DB|NL_ASSERTION
+R072,retail,4,4_10,9,get_product_details,"{""product_id"": ""9523456873""}",False,False,product_id,missing_tool,DB|NL_ASSERTION
+R072,retail,4,4_11,10,get_user_details,"{""user_id"": ""yusuf_rossi_9620""}",False,False,user_id,missing_tool,DB|NL_ASSERTION
+R072,retail,4,4_12,11,modify_pending_order_items,"{""item_ids"": [""3799046073""], ""new_item_ids"": [""9647292434""], ""order_id"": ""#W6247578"", ""payment_method_id"": ""credit_card_9513926""}",False,False,item_ids|new_item_ids|order_id|payment_method_id,missing_tool,DB|NL_ASSERTION
+R072,retail,4,4_13,12,modify_pending_order_items,"{""item_ids"": [""8349118980""], ""new_item_ids"": [""9647292434""], ""order_id"": ""#W4776164"", ""payment_method_id"": ""credit_card_9513926""}",False,False,item_ids|new_item_ids|order_id|payment_method_id,missing_tool,DB|NL_ASSERTION
+R072,telecom,[mobile_data_issue]user_abroad_roaming_disabled_on[PERSONA:Easy],enable_roaming_0,0,enable_roaming,"{""customer_id"": ""C1001"", ""line_id"": ""L1002""}",False,False,customer_id|line_id,missing_tool,ENV_ASSERTION
+R072,telecom,[mobile_data_issue]user_abroad_roaming_disabled_off[PERSONA:Hard],enable_roaming_0,0,enable_roaming,"{""customer_id"": ""C1001"", ""line_id"": ""L1002""}",False,False,customer_id|line_id,missing_tool,ENV_ASSERTION
