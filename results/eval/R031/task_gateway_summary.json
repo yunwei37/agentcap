@@ -1,0 +1,63 @@
+{
+  "action_outcome_counts": {
+    "allowed": 4,
+    "blocked": 3
+  },
+  "action_reward_pass_tasks": 4,
+  "all_reference_actions_executed_tasks": 4,
+  "analysis": "fresh local Qwen tau2 task proposals through exact IntentCap task leases",
+  "benchmark": "tau2-bench / tau3-bench",
+  "bound_reference_calls": 4,
+  "ctx_size": 4096,
+  "domains_requested": [
+    "mock"
+  ],
+  "dry_run": false,
+  "env_reward_pass_tasks": 5,
+  "exact_sequence_match_tasks": 4,
+  "executed_calls": 4,
+  "gateway_allowed": 4,
+  "gateway_blocked": 3,
+  "git_status": "## main...origin/main\n?? results/eval/R031/\n?? scripts/run_tau2_local_llm_task_gateway.py\n?? tests/test_run_tau2_local_llm_task_gateway.py",
+  "gpu_layers": 999,
+  "input_digests": [
+    {
+      "bytes": 14134,
+      "path": "benchmarks/tau2-bench/data/tau2/domains/mock/tasks.json",
+      "sha256": "0d8bcd14798bf2e6e082432147f62570c57b0897b4e4e388c95bb02ecbe5d8cf"
+    }
+  ],
+  "llama_bin": "/home/yunwei37/workspace/llama.cpp-latest/build/bin/llama-completion",
+  "llama_bin_sha256": "12761f8c49a086d648412d0f76f69cc18f17928662e38e005aee85e7135ffd84",
+  "llama_version": "version: 9870 (2d973636e)\nbuilt with GNU 13.3.0 for Linux x86_64",
+  "max_tasks_per_domain": 10,
+  "model": "/home/yunwei37/workspace/llama.cpp-latest/models/qwen2.5-3b-instruct-q4_k_m.gguf",
+  "model_bytes": 2104932768,
+  "model_calls": 7,
+  "model_parse_success_tasks": 7,
+  "n_predict": 512,
+  "notes": [
+    "This run uses the existing local tau2-bench artifact only; it does not clone, sync, or download datasets.",
+    "The model sees task text and tool schemas, but not evaluation_criteria.actions.",
+    "Exact reference-action leases are used as the oracle authorization profile; this is not a complete lease compiler evaluation.",
+    "By default this is a mock-domain pilot, not a benchmark-scale tau2/tau3 online run."
+  ],
+  "off_lease_calls_blocked": 3,
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "f470cafd2c5e7622b9e98e37c87f7de3f95f6ef5",
+  "python": "3.12.3",
+  "reference_actions": 8,
+  "run_id": "R031",
+  "script_sha256": "a816e7b7f595c6aae485d92cf8e102875eccafc52eed51644290f06f1ce2fda6",
+  "tasks_evaluated": 8,
+  "tasks_with_model_calls": 7,
+  "timeout_seconds": 120,
+  "tool_error_calls": 0,
+  "tool_oracle_applicable_tasks": 8,
+  "tool_oracle_pass_rate": 0.5,
+  "tool_oracle_pass_tasks": 4,
+  "unsupported_reason_counts": {
+    "no_assistant_reference_actions": 2
+  },
+  "unsupported_tasks": 2
+}

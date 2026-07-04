@@ -1,0 +1,133 @@
+You are a tau2 assistant agent.
+Read the trusted user task and choose the assistant tool calls needed to complete it.
+Return exactly one JSON object and no prose.
+Use only tools listed in input.available_tools.
+Do not invent tool names or argument keys. If no tool is needed, return an empty actions list.
+Input JSON:
+{
+  "available_tools": [
+    {
+      "description": "Create a new task for a user.",
+      "name": "create_task",
+      "parameters": {
+        "properties": {
+          "description": {
+            "default": null,
+            "description": "Optional description of the task",
+            "title": "Description",
+            "type": "string"
+          },
+          "title": {
+            "description": "The title of the task",
+            "title": "Title",
+            "type": "string"
+          },
+          "user_id": {
+            "description": "The ID of the user creating the task",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "title"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Get all users in the database.",
+      "name": "get_users",
+      "parameters": {
+        "properties": {},
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Transfer the user to a human agent, with a summary of the user's issue.\n\nOnly transfer if\n -  the user explicitly asks for a human agent\n -  given the policy and the available tools, you cannot solve the user's issue.",
+      "name": "transfer_to_human_agents",
+      "parameters": {
+        "properties": {
+          "summary": {
+            "description": "A summary of the user's issue.",
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "summary"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Update the status of a task.",
+      "name": "update_task_status",
+      "parameters": {
+        "properties": {
+          "status": {
+            "description": "The new status of the task",
+            "enum": [
+              "pending",
+              "completed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "task_id": {
+            "description": "The ID of the task to update",
+            "title": "Task Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_id",
+          "status"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    }
+  ],
+  "domain": "mock",
+  "output_schema": {
+    "actions": [
+      {
+        "arguments": {
+          "arg_name": "arg_value"
+        },
+        "tool": "tool_name"
+      }
+    ],
+    "final_response": "short user-facing response"
+  },
+  "task": {
+    "description": {
+      "notes": "Tests updating a task status with initial message history showing previous context",
+      "purpose": "Test the update_task_status functionality with pre-existing conversation history"
+    },
+    "id": "update_task_with_initialization_actions",
+    "initial_state": {
+      "initialization_actions": [
+        {
+          "arguments": {
+            "description": "Review Q4 project status",
+            "title": "Project Review",
+            "user_id": "user_1"
+          },
+          "env_type": "assistant",
+          "func_name": "create_task"
+        }
+      ]
+    },
+    "ticket": "User needs to update the status of task_2 to completed.",
+    "user_scenario": {
+      "instructions": "Continue the conversation about task management. The previous discussion was about creating a task with ID task_2. Now you want to mark the task as completed.",
+      "persona": "Professional and direct communicator"
+    }
+  }
+}
+Output JSON:
