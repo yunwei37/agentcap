@@ -204,6 +204,116 @@ class MockTools:
     assert row["missing_candidate_argument_keys"] == "user_id"
 
 
+def test_repair_visible_arguments_fills_selected_tool_only(tmp_path):
+    runner = _load_runner()
+    benchmark_dir = tmp_path / "tau2-bench"
+    domain_dir = benchmark_dir / "data" / "tau2" / "domains" / "mock"
+    src_dir = benchmark_dir / "src" / "tau2" / "domains" / "mock"
+    domain_dir.mkdir(parents=True)
+    src_dir.mkdir(parents=True)
+
+    (domain_dir / "tasks.json").write_text(
+        json.dumps(
+            [
+                {
+                    "id": "task_0",
+                    "user_scenario": {
+                        "instructions": {
+                            "reason_for_call": (
+                                "Please update order #W7654321 for user "
+                                "bob_lee_4321."
+                            )
+                        }
+                    },
+                    "evaluation_criteria": {
+                        "reward_basis": ["ACTION"],
+                        "actions": [
+                            {
+                                "action_id": "a0",
+                                "requestor": "assistant",
+                                "name": "get_user_details",
+                                "arguments": {"user_id": "bob_lee_4321"},
+                            },
+                            {
+                                "action_id": "a1",
+                                "requestor": "assistant",
+                                "name": "update_order_item",
+                                "arguments": {"order_id": "#W7654321"},
+                            },
+                        ],
+                    },
+                }
+            ]
+        )
+    )
+    (src_dir / "tools.py").write_text(
+        """
+from tau2.environment.toolkit import ToolType, is_tool
+
+
+class MockTools:
+    @is_tool(ToolType.READ)
+    def get_user_details(self, user_id):
+        \"\"\"Get user details.\"\"\"
+        pass
+
+    @is_tool(ToolType.WRITE)
+    def update_order_item(self, order_id):
+        \"\"\"Update order item.\"\"\"
+        pass
+"""
+    )
+
+    def fake_runner(command, timeout_seconds):
+        return (
+            json.dumps(
+                {
+                    "leases": [
+                        {
+                            "tool": "update_order_item",
+                            "intent_evidence": "visible update order request",
+                            "argument_policy": {
+                                "order_id": {
+                                    "mode": "runtime_from_prior_tool",
+                                    "values": [],
+                                }
+                            },
+                        }
+                    ]
+                }
+            ),
+            "",
+            0,
+            0.1,
+        )
+
+    result = runner.run_experiment(
+        benchmark_dir=benchmark_dir,
+        output_dir=tmp_path / "out",
+        run_id="TEST",
+        domains=("mock",),
+        max_tasks_per_domain=None,
+        llama_bin=Path("/tmp/llama"),
+        model=Path("/tmp/model.gguf"),
+        repair_visible_arguments=True,
+        runner=fake_runner,
+    )
+
+    summary = result["summary"]
+    assert summary["repair_visible_arguments"] is True
+    assert summary["visible_arg_repairs_total"] == 1
+    assert summary["coverage_class_counts"] == {
+        "missing_tool": 1,
+        "tool_and_non_eval_json_args": 1,
+    }
+    assert result["task_rows"][0]["visible_arg_repairs"] == 1
+    record = result["records"][0]
+    original_policy = record["parsed_model_json"]["leases"][0]["argument_policy"]["order_id"]
+    repaired_policy = record["repaired_model_json"]["leases"][0]["argument_policy"]["order_id"]
+    assert original_policy["mode"] == "runtime_from_prior_tool"
+    assert repaired_policy == {"mode": "equals_any", "values": ["#W7654321"]}
+
+
 def test_json_schema_constrained_mode_writes_schema_and_passes_flag(tmp_path):
     runner = _load_runner()
     benchmark_dir = tmp_path / "tau2-bench"

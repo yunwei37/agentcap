@@ -1,0 +1,833 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "leases": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "argument_policy": {
+            "additionalProperties": false,
+            "properties": {
+              "address1": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "address2": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "city": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "country": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "email": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "expression": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "first_name": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "item_id": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "item_ids": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "last_name": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "new_item_ids": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "order_id": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "payment_method_id": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "product_id": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "reason": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "state": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "summary": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "user_id": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "zip": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "intent_evidence": {
+            "type": "string"
+          },
+          "tool": {
+            "enum": [
+              "calculate",
+              "cancel_pending_order",
+              "exchange_delivered_order_items",
+              "find_user_id_by_email",
+              "find_user_id_by_name_zip",
+              "get_item_details",
+              "get_order_details",
+              "get_product_details",
+              "get_user_details",
+              "list_all_product_types",
+              "modify_pending_order_address",
+              "modify_pending_order_items",
+              "modify_pending_order_payment",
+              "modify_user_address",
+              "return_delivered_order_items",
+              "transfer_to_human_agents"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "tool",
+          "intent_evidence",
+          "argument_policy"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "leases"
+  ],
+  "type": "object"
+}

@@ -10,6 +10,7 @@ use APIs, or sync datasets.
 from __future__ import annotations
 
 import argparse
+import copy
 import csv
 import hashlib
 import json
@@ -52,6 +53,7 @@ TASK_FIELDS = [
     "parse_ok",
     "returncode",
     "latency_seconds",
+    "visible_arg_repairs",
     "model_lease_count",
     "valid_lease_count",
     "invalid_tool_count",
@@ -118,6 +120,15 @@ def main() -> int:
             "names, policy modes, and legal argument keys."
         ),
     )
+    parser.add_argument(
+        "--repair-visible-arguments",
+        action="store_true",
+        help=(
+            "After model parsing, repair missing or broad argument policies for "
+            "already-selected tools using literal values found in the "
+            "non-evaluation task JSON. This does not add tools."
+        ),
+    )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -134,6 +145,7 @@ def main() -> int:
         gpu_layers=args.gpu_layers,
         timeout_seconds=args.timeout_seconds,
         json_schema_constrained=args.json_schema_constrained,
+        repair_visible_arguments=args.repair_visible_arguments,
         dry_run=args.dry_run,
     )
     print(json.dumps(result["summary"], indent=2, sort_keys=True))
@@ -154,6 +166,7 @@ def run_experiment(
     gpu_layers: int = 999,
     timeout_seconds: int = 180,
     json_schema_constrained: bool = False,
+    repair_visible_arguments: bool = False,
     dry_run: bool = False,
     runner: Callable[[list[str], int], tuple[str, str, int, float]] | None = None,
 ) -> dict[str, Any]:
@@ -227,13 +240,18 @@ def run_experiment(
             raw_payload = _raw_payload(stdout, stderr, returncode)
             raw_path.write_text(raw_payload)
             parsed = None if dry_run else parse_model_json(stdout)
+            repaired, visible_arg_repairs = repair_visible_argument_policies(
+                parsed=parsed,
+                raw_task=raw_task,
+                tools=tools_by_domain[domain],
+            ) if repair_visible_arguments else (parsed, 0)
             evaluated = evaluate_task(
                 run_id=run_id,
                 domain=domain,
                 task_id=task_id,
                 raw_task=raw_task,
                 tools=tools_by_domain[domain],
-                parsed=parsed,
+                parsed=repaired,
             )
             task_row = {
                 **evaluated["task_row"],
@@ -243,6 +261,7 @@ def run_experiment(
                 "parse_ok": parsed is not None,
                 "returncode": returncode,
                 "latency_seconds": round(latency, 6),
+                "visible_arg_repairs": visible_arg_repairs,
                 "prompt_sha256": _sha256(prompt.encode()),
                 "raw_output_sha256": _sha256(raw_payload.encode()),
             }
@@ -258,6 +277,8 @@ def run_experiment(
                     "raw_output_path": str(raw_path),
                     "schema_path": str(schema_path) if schema_path is not None else "",
                     "parsed_model_json": parsed,
+                    "repaired_model_json": repaired if repair_visible_arguments else None,
+                    "visible_arg_repairs": visible_arg_repairs,
                     "task_row": task_row,
                 }
             )
@@ -281,6 +302,7 @@ def run_experiment(
         gpu_layers=gpu_layers,
         timeout_seconds=timeout_seconds,
         json_schema_constrained=json_schema_constrained,
+        repair_visible_arguments=repair_visible_arguments,
         dry_run=dry_run,
     )
 
@@ -416,6 +438,84 @@ def build_output_json_schema(tools: list[Any]) -> dict[str, Any]:
             },
         },
     }
+
+
+def repair_visible_argument_policies(
+    *,
+    parsed: dict[str, Any] | None,
+    raw_task: dict[str, Any],
+    tools: list[Any],
+) -> tuple[dict[str, Any] | None, int]:
+    if parsed is None:
+        return None, 0
+    repaired = copy.deepcopy(parsed)
+    leases = repaired.get("leases")
+    if not isinstance(leases, list):
+        return repaired, 0
+    tools_by_name = {tool.name: tool for tool in tools}
+    visible_values = _visible_values_by_arg(_public_task_text(raw_task))
+    repairs = 0
+    for lease in leases:
+        if not isinstance(lease, dict):
+            continue
+        tool = tools_by_name.get(str(lease.get("tool", "")))
+        if tool is None:
+            continue
+        policy = lease.get("argument_policy")
+        if not isinstance(policy, dict):
+            policy = {}
+            lease["argument_policy"] = policy
+        for arg in tool.arguments:
+            values = visible_values.get(arg)
+            if not values or _has_nonempty_equals_any_policy(policy.get(arg)):
+                continue
+            policy[arg] = {
+                "mode": "equals_any",
+                "values": list(values),
+            }
+            repairs += 1
+    return repaired, repairs
+
+
+def _has_nonempty_equals_any_policy(policy: Any) -> bool:
+    if not isinstance(policy, dict):
+        return False
+    if str(policy.get("mode", "")) != "equals_any":
+        return False
+    values = policy.get("values")
+    return isinstance(values, list) and bool(values)
+
+
+def _visible_values_by_arg(text: str) -> dict[str, tuple[str, ...]]:
+    extractors = {
+        "customer_id": [r"\bC\d{3,}\b"],
+        "line_id": [r"\bL\d{3,}\b"],
+        "order_id": [r"#[A-Z]\d{5,}\b"],
+        "reservation_id": [r"\b[A-Z0-9]{6}\b"],
+        "user_id": [r"\b[a-z]+_[a-z]+_\d{3,}\b"],
+        "product_id": [r"\b\d{7,12}\b"],
+        "item_id": [r"\b\d{7,12}\b"],
+        "new_item_id": [r"\b\d{7,12}\b"],
+        "variant_id": [r"\b\d{7,12}\b"],
+        "payment_method_id": [r"\b(?:gift_card|credit_card|certificate)_\d{3,}\b"],
+        "payment_id": [r"\b(?:gift_card|credit_card|certificate)_\d{3,}\b"],
+        "phone_number": [r"\+?\d[\d .()-]{7,}\d"],
+        "dob": [r"\b\d{4}-\d{2}-\d{2}\b"],
+        "date": [r"\b\d{4}-\d{2}-\d{2}\b"],
+        "zip": [r"\b\d{5}(?:-\d{4})?\b"],
+        "email": [r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"],
+        "first_name": [r"\b[A-Z][a-z]{2,}\b"],
+        "last_name": [r"\b[A-Z][a-z]{2,}\b"],
+        "full_name": [r"\b[A-Z][a-z]{2,}\s+[A-Z][a-z]{2,}\b"],
+    }
+    values: dict[str, tuple[str, ...]] = {}
+    for arg, patterns in extractors.items():
+        found: set[str] = set()
+        for pattern in patterns:
+            found.update(match.group(0) for match in re.finditer(pattern, text))
+        if found:
+            values[arg] = tuple(sorted(found))
+    return values
 
 
 def parse_model_json(text: str) -> dict[str, Any] | None:
@@ -606,6 +706,7 @@ def summarize(
     gpu_layers: int,
     timeout_seconds: int,
     json_schema_constrained: bool,
+    repair_visible_arguments: bool,
     dry_run: bool,
 ) -> dict[str, Any]:
     reference_actions = sum(int(row["reference_actions"]) for row in task_rows)
@@ -652,6 +753,8 @@ def summarize(
         "gpu_layers": gpu_layers,
         "timeout_seconds": timeout_seconds,
         "json_schema_constrained": json_schema_constrained,
+        "repair_visible_arguments": repair_visible_arguments,
+        "visible_arg_repairs_total": sum(int(row["visible_arg_repairs"]) for row in task_rows),
         "dry_run": dry_run,
         "machine": platform.platform(),
         "project_head": _git_output(["git", "rev-parse", "HEAD"]),
@@ -662,6 +765,7 @@ def summarize(
             "tool_only_runtime_or_broad_args_needed indicates that a selected tool still needs runtime state, user response, or a broader argument placeholder.",
             "This corpus is a lease-compiler frontend probe, not an end-to-end tau2 utility or reward run.",
             "json_schema_constrained uses llama.cpp --json-schema-file to constrain output shape/tool names/argument keys, but deterministic post-hoc scoring still decides coverage.",
+            "repair_visible_arguments only fills missing or broad policies for tools already selected by the model, using literal values from the non-evaluation task JSON; it does not add tools or use reference actions.",
         ],
     }
 
