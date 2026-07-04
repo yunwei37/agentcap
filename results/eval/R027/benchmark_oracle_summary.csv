@@ -1,0 +1,4 @@
+benchmark,oracle_baseline,baselines,closest_non_oracle_baseline,closest_non_oracle_distance,largest_distance_baseline,largest_distance,unsafe_events_total,non_oracle_unsafe_events_admitted,max_extra_authority_slots_vs_oracle
+InjecAgent,intentcap_one_shot,6,task_tool_allowlist,1350,catalog_all_tools,1945116,1598,3291,346766.0
+MCPTox,intentcap_provenance,6,authentic_server_allowlist,2077267,global_authentic_tools,2814546,2148,10560,756096.0
+tau2-bench / tau3-bench,intentcap_reference_events,6,task_reference_tools,1141,global_all_tools,385149,0,0,384699.0
