@@ -1,0 +1,790 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "leases": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "argument_policy": {
+            "additionalProperties": false,
+            "properties": {
+              "amount": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "cabin": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "date": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "destination": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "expression": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "flight_number": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "flight_type": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "flights": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "insurance": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "nonfree_baggages": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "origin": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "passengers": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "payment_id": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "payment_methods": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "reservation_id": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "summary": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "total_baggages": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              },
+              "user_id": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "equals_any",
+                      "runtime_from_prior_tool",
+                      "ask_user",
+                      "unconstrained"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "values"
+                ],
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "intent_evidence": {
+            "type": "string"
+          },
+          "tool": {
+            "enum": [
+              "book_reservation",
+              "calculate",
+              "cancel_reservation",
+              "get_flight_status",
+              "get_reservation_details",
+              "get_user_details",
+              "list_all_airports",
+              "search_direct_flight",
+              "search_onestop_flight",
+              "send_certificate",
+              "transfer_to_human_agents",
+              "update_reservation_baggages",
+              "update_reservation_flights",
+              "update_reservation_passengers"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "tool",
+          "intent_evidence",
+          "argument_policy"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "leases"
+  ],
+  "type": "object"
+}

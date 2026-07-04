@@ -54,6 +54,7 @@ TASK_FIELDS = [
     "returncode",
     "latency_seconds",
     "visible_arg_repairs",
+    "runtime_arg_repairs",
     "model_lease_count",
     "valid_lease_count",
     "invalid_tool_count",
@@ -75,6 +76,12 @@ LEASE_FIELDS = [
     "tool_type",
     "arguments",
     "argument_policy_json",
+    "equals_any_policy_args",
+    "runtime_policy_args",
+    "ask_user_policy_args",
+    "unconstrained_policy_args",
+    "missing_policy_args",
+    "extra_policy_args",
     "intent_evidence",
 ]
 COVERAGE_FIELDS = [
@@ -129,6 +136,16 @@ def main() -> int:
             "non-evaluation task JSON. This does not add tools."
         ),
     )
+    parser.add_argument(
+        "--repair-runtime-argument-placeholders",
+        action="store_true",
+        help=(
+            "After visible argument repair, fill missing or unconstrained "
+            "argument policies for already-selected tools with explicit "
+            "runtime_from_prior_tool placeholders. This does not add tools or "
+            "make runtime placeholders executable under strict lowering."
+        ),
+    )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -146,6 +163,7 @@ def main() -> int:
         timeout_seconds=args.timeout_seconds,
         json_schema_constrained=args.json_schema_constrained,
         repair_visible_arguments=args.repair_visible_arguments,
+        repair_runtime_argument_placeholders=args.repair_runtime_argument_placeholders,
         dry_run=args.dry_run,
     )
     print(json.dumps(result["summary"], indent=2, sort_keys=True))
@@ -167,6 +185,7 @@ def run_experiment(
     timeout_seconds: int = 180,
     json_schema_constrained: bool = False,
     repair_visible_arguments: bool = False,
+    repair_runtime_argument_placeholders: bool = False,
     dry_run: bool = False,
     runner: Callable[[list[str], int], tuple[str, str, int, float]] | None = None,
 ) -> dict[str, Any]:
@@ -245,6 +264,10 @@ def run_experiment(
                 raw_task=raw_task,
                 tools=tools_by_domain[domain],
             ) if repair_visible_arguments else (parsed, 0)
+            repaired, runtime_arg_repairs = repair_runtime_argument_placeholders_for_selected_tools(
+                parsed=repaired,
+                tools=tools_by_domain[domain],
+            ) if repair_runtime_argument_placeholders else (repaired, 0)
             evaluated = evaluate_task(
                 run_id=run_id,
                 domain=domain,
@@ -262,6 +285,7 @@ def run_experiment(
                 "returncode": returncode,
                 "latency_seconds": round(latency, 6),
                 "visible_arg_repairs": visible_arg_repairs,
+                "runtime_arg_repairs": runtime_arg_repairs,
                 "prompt_sha256": _sha256(prompt.encode()),
                 "raw_output_sha256": _sha256(raw_payload.encode()),
             }
@@ -277,8 +301,13 @@ def run_experiment(
                     "raw_output_path": str(raw_path),
                     "schema_path": str(schema_path) if schema_path is not None else "",
                     "parsed_model_json": parsed,
-                    "repaired_model_json": repaired if repair_visible_arguments else None,
+                    "repaired_model_json": (
+                        repaired
+                        if repair_visible_arguments or repair_runtime_argument_placeholders
+                        else None
+                    ),
                     "visible_arg_repairs": visible_arg_repairs,
+                    "runtime_arg_repairs": runtime_arg_repairs,
                     "task_row": task_row,
                 }
             )
@@ -303,6 +332,7 @@ def run_experiment(
         timeout_seconds=timeout_seconds,
         json_schema_constrained=json_schema_constrained,
         repair_visible_arguments=repair_visible_arguments,
+        repair_runtime_argument_placeholders=repair_runtime_argument_placeholders,
         dry_run=dry_run,
     )
 
@@ -366,7 +396,8 @@ def build_prompt(*, domain: str, raw_task: dict[str, Any], tools: list[Any]) -> 
         "needed for the tau2 task JSON. Use only input.available_tools. "
         "Do not invent tool names or argument keys. Prefer exact task-JSON values "
         "when they appear in the non-evaluation task JSON. If an argument must "
-        "come from a prior tool result, mark it runtime_from_prior_tool. If no assistant tool is needed, "
+        "come from a prior tool result, mark it runtime_from_prior_tool. For every selected tool, "
+        "include a policy entry for each argument in that tool's schema. If no assistant tool is needed, "
         "return {\"leases\":[]}.\n"
         "Input JSON:\n"
         f"{json.dumps(payload, indent=2, sort_keys=True, default=str)}\n"
@@ -477,6 +508,40 @@ def repair_visible_argument_policies(
     return repaired, repairs
 
 
+def repair_runtime_argument_placeholders_for_selected_tools(
+    *,
+    parsed: dict[str, Any] | None,
+    tools: list[Any],
+) -> tuple[dict[str, Any] | None, int]:
+    if parsed is None:
+        return None, 0
+    repaired = copy.deepcopy(parsed)
+    leases = repaired.get("leases")
+    if not isinstance(leases, list):
+        return repaired, 0
+    tools_by_name = {tool.name: tool for tool in tools}
+    repairs = 0
+    for lease in leases:
+        if not isinstance(lease, dict):
+            continue
+        tool = tools_by_name.get(str(lease.get("tool", "")))
+        if tool is None:
+            continue
+        policy = lease.get("argument_policy")
+        if not isinstance(policy, dict):
+            policy = {}
+            lease["argument_policy"] = policy
+        for arg in tool.arguments:
+            if _has_nonempty_equals_any_policy(policy.get(arg)) or _has_explicit_runtime_policy(policy.get(arg)):
+                continue
+            policy[arg] = {
+                "mode": "runtime_from_prior_tool",
+                "values": [],
+            }
+            repairs += 1
+    return repaired, repairs
+
+
 def _has_nonempty_equals_any_policy(policy: Any) -> bool:
     if not isinstance(policy, dict):
         return False
@@ -484,6 +549,15 @@ def _has_nonempty_equals_any_policy(policy: Any) -> bool:
         return False
     values = policy.get("values")
     return isinstance(values, list) and bool(values)
+
+
+def _has_explicit_runtime_policy(policy: Any) -> bool:
+    if not isinstance(policy, dict):
+        return False
+    if str(policy.get("mode", "")) not in {"runtime_from_prior_tool", "ask_user"}:
+        return False
+    values = policy.get("values")
+    return isinstance(values, list)
 
 
 def _visible_values_by_arg(text: str) -> dict[str, tuple[str, ...]]:
@@ -562,6 +636,10 @@ def evaluate_task(
         else:
             invalid_tool_count += 1
         argument_policy = lease.get("argument_policy")
+        policy_stats = _argument_policy_stats(
+            argument_policy if isinstance(argument_policy, dict) else {},
+            tuple(tool.arguments) if tool else (),
+        )
         lease_rows.append(
             {
                 "run_id": run_id,
@@ -572,6 +650,12 @@ def evaluate_task(
                 "tool_type": tool.tool_type if tool else "",
                 "arguments": "|".join(tool.arguments) if tool else "",
                 "argument_policy_json": json.dumps(argument_policy if isinstance(argument_policy, dict) else {}, sort_keys=True),
+                "equals_any_policy_args": "|".join(policy_stats["equals_any"]),
+                "runtime_policy_args": "|".join(policy_stats["runtime"]),
+                "ask_user_policy_args": "|".join(policy_stats["ask_user"]),
+                "unconstrained_policy_args": "|".join(policy_stats["unconstrained"]),
+                "missing_policy_args": "|".join(policy_stats["missing"]),
+                "extra_policy_args": "|".join(policy_stats["extra"]),
                 "intent_evidence": str(lease.get("intent_evidence", "")),
             }
         )
@@ -690,6 +774,40 @@ def _policy_values_cover(values: list[Any], reference_value: Any) -> bool:
     return False
 
 
+def _argument_policy_stats(
+    argument_policy: dict[str, Any],
+    tool_arguments: tuple[str, ...],
+) -> dict[str, list[str]]:
+    stats = {
+        "equals_any": [],
+        "runtime": [],
+        "ask_user": [],
+        "unconstrained": [],
+        "missing": [],
+        "extra": [],
+    }
+    tool_arg_set = set(tool_arguments)
+    for arg in tool_arguments:
+        policy = argument_policy.get(arg)
+        if not isinstance(policy, dict):
+            stats["missing"].append(arg)
+            continue
+        mode = str(policy.get("mode", ""))
+        values = policy.get("values")
+        if mode == "equals_any" and isinstance(values, list) and values:
+            stats["equals_any"].append(arg)
+        elif mode == "runtime_from_prior_tool" and isinstance(values, list):
+            stats["runtime"].append(arg)
+        elif mode == "ask_user" and isinstance(values, list):
+            stats["ask_user"].append(arg)
+        elif mode == "unconstrained":
+            stats["unconstrained"].append(arg)
+        else:
+            stats["missing"].append(arg)
+    stats["extra"] = sorted(str(arg) for arg in argument_policy if str(arg) not in tool_arg_set)
+    return {key: sorted(values) for key, values in stats.items()}
+
+
 def summarize(
     *,
     run_id: str,
@@ -707,6 +825,7 @@ def summarize(
     timeout_seconds: int,
     json_schema_constrained: bool,
     repair_visible_arguments: bool,
+    repair_runtime_argument_placeholders: bool,
     dry_run: bool,
 ) -> dict[str, Any]:
     reference_actions = sum(int(row["reference_actions"]) for row in task_rows)
@@ -754,7 +873,9 @@ def summarize(
         "timeout_seconds": timeout_seconds,
         "json_schema_constrained": json_schema_constrained,
         "repair_visible_arguments": repair_visible_arguments,
+        "repair_runtime_argument_placeholders": repair_runtime_argument_placeholders,
         "visible_arg_repairs_total": sum(int(row["visible_arg_repairs"]) for row in task_rows),
+        "runtime_arg_repairs_total": sum(int(row["runtime_arg_repairs"]) for row in task_rows),
         "dry_run": dry_run,
         "machine": platform.platform(),
         "project_head": _git_output(["git", "rev-parse", "HEAD"]),
@@ -766,6 +887,7 @@ def summarize(
             "This corpus is a lease-compiler frontend probe, not an end-to-end tau2 utility or reward run.",
             "json_schema_constrained uses llama.cpp --json-schema-file to constrain output shape/tool names/argument keys, but deterministic post-hoc scoring still decides coverage.",
             "repair_visible_arguments only fills missing or broad policies for tools already selected by the model, using literal values from the non-evaluation task JSON; it does not add tools or use reference actions.",
+            "repair_runtime_argument_placeholders fills missing or unconstrained schema arguments for already-selected tools with runtime_from_prior_tool placeholders; strict gateway lowering still treats those placeholders as non-executable until runtime binding is implemented.",
         ],
     }
 

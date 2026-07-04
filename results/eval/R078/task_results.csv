@@ -1,0 +1,12 @@
+run_id,domain,task_id,source_parse_ok,source_visible_arg_repairs,active_leases,reference_actions,gateway_allowed_reference_actions,gateway_blocked_reference_actions,allowed_with_all_reference_args_constrained,allowed_with_broad_or_runtime_args,blocked_broad_or_runtime_policy,blocked_missing_tool,blocked_constraint_mismatch,exposed_objects
+R078,airline,1,True,0,1,2,1,1,1,0,0,1,0,1
+R078,airline,2,True,0,1,3,1,2,1,0,2,0,0,1
+R078,airline,3,True,0,1,2,1,1,1,0,0,1,0,1
+R078,airline,4,True,0,0,6,0,6,0,0,0,6,0,0
+R078,retail,0,True,0,2,5,2,3,2,0,3,0,0,2
+R078,retail,1,True,0,2,5,2,3,2,0,3,0,0,2
+R078,retail,2,False,0,0,11,0,11,0,0,0,11,0,0
+R078,retail,3,True,0,1,12,1,11,1,0,6,5,0,1
+R078,retail,4,True,0,1,13,1,12,1,0,12,0,0,1
+R078,telecom,[mobile_data_issue]user_abroad_roaming_disabled_on[PERSONA:Easy],True,10,4,1,1,0,1,0,0,0,0,4
+R078,telecom,[mobile_data_issue]user_abroad_roaming_disabled_off[PERSONA:Hard],True,10,4,1,1,0,1,0,0,0,0,4
