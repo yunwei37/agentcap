@@ -1,6 +1,8 @@
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 import scripts.run_tau2_local_llm_task_gateway as runner
 from run_tau2_reference_actions_live_gateway import ReferenceAction
 from intentcap.live_gateway import LiveToolGateway
@@ -206,6 +208,187 @@ def test_select_tool_schemas_can_expose_only_leased_tools():
     assert runner.select_tool_schemas(schemas, actions, tool_exposure="leased") == [
         {"name": "create_task", "parameters": {}}
     ]
+    assert runner.select_tool_schemas(
+        schemas,
+        actions,
+        tool_exposure="leased",
+        active_tool_names={"delete_task"},
+    ) == [{"name": "delete_task", "parameters": {}}]
+
+
+def test_compiler_corpus_trace_uses_only_strict_saved_compiler_leases():
+    trace, active_tools, active_objects = runner.build_compiler_corpus_task_trace(
+        domain="mock",
+        task_id="t",
+        compiler_record={
+            "repaired_model_json": {
+                "leases": [
+                    {
+                        "tool": "create_task",
+                        "argument_policy": {
+                            "user_id": {"mode": "equals_any", "values": ["user_1"]},
+                            "title": {"mode": "equals_any", "values": ["Important"]},
+                        },
+                    },
+                    {
+                        "tool": "delete_task",
+                        "argument_policy": {
+                            "task_id": {"mode": "runtime_value", "values": []},
+                        },
+                    },
+                    {
+                        "tool": "unknown_tool",
+                        "argument_policy": {},
+                    },
+                ]
+            }
+        },
+        tools_by_name={
+            "create_task": SimpleNamespace(
+                name="create_task",
+                arguments=("user_id", "title"),
+            ),
+            "delete_task": SimpleNamespace(
+                name="delete_task",
+                arguments=("task_id",),
+            ),
+        },
+    )
+
+    assert active_tools == {"create_task"}
+    assert active_objects == {"tau2.mock.assistant.create_task"}
+    assert len(trace["leases"]) == 1
+    assert trace["labels"][runner.TRUSTED_TASK_INTENT]["allowed"]["tool_select"] == [
+        "mock.create_task.tool_choice"
+    ]
+    assert trace["metadata"]["selected_compiler_leases"] == 3
+    assert trace["metadata"]["active_compiler_leases"] == 1
+    assert trace["metadata"]["inactive_broad_or_runtime_arg_leases"] == 1
+    assert trace["metadata"]["invalid_tool_leases"] == 1
+
+    gateway = LiveToolGateway(
+        trace,
+        {
+            "tau2.mock.assistant.create_task": lambda **kwargs: {
+                "ok": True,
+                "kwargs": kwargs,
+            }
+        },
+    )
+    allowed = gateway.call(
+        {
+            "id": "model:mock:t:0",
+            "op": "tool.call",
+            "object": "tau2.mock.assistant.create_task",
+            "args": {"user_id": "user_1", "title": "Important"},
+            "decision": "mock.create_task.tool_choice",
+            "mode": "tool_select",
+            "control_provenance": [runner.TRUSTED_TASK_INTENT],
+            "data_provenance": [runner.TRUSTED_TASK_INTENT],
+        }
+    )
+    reference_action = ReferenceAction(
+        event_id="mock:t:create_1",
+        domain="mock",
+        task_id="t",
+        action_id="create_1",
+        index=0,
+        name="create_task",
+        requestor="assistant",
+        args={"user_id": "user_1", "title": "Important"},
+        reward_basis=(),
+        object_name="tau2.mock.assistant.create_task",
+    )
+    bound_event, bound_action = runner.bind_model_call(
+        domain="mock",
+        task_id="t",
+        index=3,
+        model_call={
+            "tool": "create_task",
+            "arguments": {"user_id": "user_1", "title": "Important"},
+        },
+        pending_reference_actions=[reference_action],
+        include_reference_event_ids=False,
+    )
+    bound_allowed = gateway.call(bound_event)
+    blocked = gateway.call(
+        {
+            "id": "model:mock:t:1",
+            "op": "tool.call",
+            "object": "tau2.mock.assistant.create_task",
+            "args": {"user_id": "user_1", "title": "Wrong"},
+            "decision": "mock.create_task.tool_choice",
+            "mode": "tool_select",
+            "control_provenance": [runner.TRUSTED_TASK_INTENT],
+            "data_provenance": [runner.TRUSTED_TASK_INTENT],
+        }
+    )
+    extra_arg_blocked = gateway.call(
+        {
+            "id": "model:mock:t:2",
+            "op": "tool.call",
+            "object": "tau2.mock.assistant.create_task",
+            "args": {
+                "user_id": "user_1",
+                "title": "Important",
+                "extra_scope": "admin",
+            },
+            "decision": "mock.create_task.tool_choice",
+            "mode": "tool_select",
+            "control_provenance": [runner.TRUSTED_TASK_INTENT],
+            "data_provenance": [runner.TRUSTED_TASK_INTENT],
+        }
+    )
+
+    assert allowed["executed"] is True
+    assert bound_action == reference_action
+    assert "intentcap_event_id" not in bound_event["args"]
+    assert bound_allowed["executed"] is True
+    assert blocked["executed"] is False
+    assert blocked["decision"]["reason"] == "no matching lease"
+    assert extra_arg_blocked["executed"] is False
+    assert extra_arg_blocked["decision"]["reason"] == "no matching lease"
+
+
+def test_tool_registry_executes_unbound_compiler_event_with_synthetic_id(monkeypatch):
+    calls = []
+
+    class FakeToolCall:
+        def __init__(self, **kwargs):
+            self.__dict__.update(kwargs)
+
+    class FakeEnv:
+        def get_response(self, tool_call):
+            calls.append(tool_call)
+            return {"ok": True, "tool": tool_call.name, "id": tool_call.id}
+
+    monkeypatch.setattr(
+        runner,
+        "_import_attr",
+        lambda module_name, attr_name: FakeToolCall,
+    )
+    invocations = []
+
+    tools = runner.build_tool_registry(
+        [],
+        FakeEnv(),
+        invocations,
+        object_names={"tau2.mock.assistant.create_task"},
+    )
+    result = tools["tau2.mock.assistant.create_task"](title="Important")
+
+    assert result == {"ok": True, "tool": "create_task", "id": "model:0"}
+    assert calls[0].id == "model:0"
+    assert calls[0].name == "create_task"
+    assert calls[0].arguments == {"title": "Important"}
+    assert invocations == [
+        {
+            "event_id": "model:0",
+            "tool": "create_task",
+            "object": "tau2.mock.assistant.create_task",
+            "args": {"title": "Important"},
+        }
+    ]
 
 
 def test_reference_action_parser_keeps_user_actions_separate_from_assistant_leases():
@@ -374,6 +557,8 @@ def test_summary_counts_feedback_rounds():
         timeout_seconds=1,
         max_tasks_per_domain=1,
         feedback_rounds=1,
+        lease_source="exact-reference",
+        compiler_run_dir=None,
         tool_exposure="leased",
         stepwise_max_steps=0,
         stepwise_empty_retries=0,
@@ -381,11 +566,33 @@ def test_summary_counts_feedback_rounds():
     )
 
     assert summary["feedback_rounds"] == 1
+    assert summary["lease_source"] == "exact-reference"
     assert summary["tool_exposure"] == "leased"
     assert summary["tool_schema_count_avg"] == 2
+    assert summary["active_leases_total"] == 0
     assert summary["feedback_attempted_tasks"] == 1
     assert summary["initial_gateway_blocked"] == 1
     assert summary["feedback_gateway_allowed"] == 1
+
+
+def test_compiler_corpus_mode_requires_source_and_disables_reference_hints():
+    with pytest.raises(ValueError, match="compiler_run_dir is required"):
+        runner.run_experiment(
+            benchmark_dir=Path("benchmarks/tau2-bench"),
+            output_dir=Path("/tmp/intentcap-test-unused"),
+            lease_source="compiler-corpus",
+            dry_run=True,
+        )
+
+    with pytest.raises(ValueError, match="disabled for compiler-corpus"):
+        runner.run_experiment(
+            benchmark_dir=Path("benchmarks/tau2-bench"),
+            output_dir=Path("/tmp/intentcap-test-unused"),
+            lease_source="compiler-corpus",
+            compiler_run_dir=Path("results/eval/R074"),
+            stepwise_state_grounded_arg_hints=True,
+            dry_run=True,
+        )
 
 
 def test_step_prompt_reports_tool_results_without_reference_actions():

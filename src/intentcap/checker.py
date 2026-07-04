@@ -80,6 +80,14 @@ def _lease_matches_event(lease: dict[str, Any], event: dict[str, Any]) -> bool:
 
     arg_constraints = lease.get("args", {})
     event_args = event.get("args", {})
+    if not isinstance(arg_constraints, dict) or not isinstance(event_args, dict):
+        return False
+    allowed_arg_keys = lease.get("allowed_arg_keys")
+    if allowed_arg_keys is not None:
+        if not isinstance(allowed_arg_keys, list):
+            return False
+        if set(event_args) != {str(name) for name in allowed_arg_keys}:
+            return False
     for name, constraint in arg_constraints.items():
         if not _value_matches(event_args.get(name), constraint):
             return False

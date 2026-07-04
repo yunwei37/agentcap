@@ -1,9 +1,23 @@
 # Design
 
-Last updated: 2026-07-03
-Stage at update: stage 3 adapter-informed design
-Source/command: AgentDojo, MCPTox, InjecAgent export/checker probes plus gateway replay, R014 AgentDojo inferred-event audit, R015 MCPTox reconciliation audit, R016 benchmark-derived live gateway execution, R017 official cached prompted-output gateway replay, R018 cached-output aggregate, R019 InjecAgent authority-minimization analysis, R020 MCPTox authority-minimization analysis, R021 tau2/tau3 artifact probe, R022 tau2/tau3 reference-action authority minimization, R023 tau2/tau3 reference-action live gateway execution, R024 tau2/tau3 evaluator-backed reference-action replay, R025 checker-ablation analysis, web-only eval-dataset survey without new dataset sync, and R026 web-only candidate ranking
+Last updated: 2026-07-04
+Stage at update: stage 4 compiler-corpus task-loop design audit
+Source/command: AgentDojo, MCPTox, InjecAgent export/checker probes plus gateway replay, R014-R025 adapter/live/evaluator/checker evidence, R026 web-only eval-dataset ranking, R027-R078 authority/compiler/gateway diagnostics, R079 strict compiler-corpus local Qwen3.6 task-loop run, R080 R079 mismatch analysis, and 2026-07-04 closest-work PDF collection
 Completeness: partial
+
+## Top-Conference Artifact Boundary
+IntentCap should be designed and described as an authorization compiler/checker for agent decisions, not as an extension interface model or an OS monitor. The protected object is an authority-bearing decision: tool choice, sink selection, approval scope, delegation, policy update, local execution target, or high-impact argument binding. Resources and syscalls are enforcement targets, but not the conceptual center.
+
+The defensible novelty is narrower than "agent permissions." IntentCap's artifact boundary is:
+
+1. Structured user intent certificates as the root of run-time authority.
+2. Context labels that specify which decision classes a context source may influence.
+3. Effect IR that separates data provenance from control provenance.
+4. Proof-carrying leases that bind operations, arguments, provenance, flow, temporal state, budget, and delegation.
+5. A deterministic checker that accepts or rejects LLM-proposed leases/events.
+6. Enforcement adapters that lower accepted leases to context/tool/MCP/process/network/delegation boundaries.
+
+EIM/bpftime remains related work for extension-resource models, and ActPlane remains a possible enforcement backend. The main comparison should be against CaMeL, Progent, SkillGuard, Task Shield/DRIFT, static tool/server allowlists, and LLM-only policy generation.
 
 ## System-Under-Test Model
 IntentCap is evaluated as a run-time authorization layer for LLM agent extensions. The first prototype should support two modes:
@@ -66,6 +80,9 @@ The offline checker is the cheapest path to validate the core idea against exist
 | OS monitor only | enforces effects after policy exists; does not know policy provenance | optional backend |
 | Prompt-only defense | model remains the component being attacked | out-of-TCB comparison |
 | CaMeL-style control/data split | strong but oriented around trusted-query program flow | closest conceptual comparison |
+| Progent-style privilege DSL | deterministic tool-call policy is close, but does not by itself model context influence modes | mandatory baseline |
+| SkillGuard-style Skill policy | closest Skill-specific permission framework | baseline and same-claim risk for Skill workflows |
+| ActPlane-style OS enforcement | catches indirect OS effects after policy exists | optional backend and OS-only baseline |
 
 ## Design Risks And Validation Hooks
 | Risk | Validation hook |
@@ -102,11 +119,12 @@ The offline checker is the cheapest path to validate the core idea against exist
 - R024 validates that the same lease/event shape can feed official tau2 action and environment evaluator classes, not only direct toolkit execution. The runner reconstructs message trajectories from reference actions, applies exact event leases to assistant actions, treats user reference actions as simulator-side events outside assistant authority, and evaluates `ACTION`, `DB`, and `ENV_ASSERTION` reward components. The design implication is that IntentCap can sit between benchmark trajectories and oracle logic without broadening assistant authority. The remaining design gap is fresh model/user-simulator integration: `COMMUNICATE` and `NL_ASSERTION` basis remain outside this replay, two mock environment assertions fail under direct reference reconstruction, and `banking_knowledge` currently uses a no-retrieval fallback rather than the full retrieval-backed environment constructor.
 - R025 validates the checker/LLM split as an ablation over saved traces. On 8,680 events from local, AgentDojo, MCPTox, InjecAgent, and tau2 traces, object-only and full-event-args/no-provenance acceptance would each admit all 3,811 checker-denied events, while saved-lease-constraints/no-provenance acceptance would admit 3,810 of them. The design implication is that even complete-looking operation/object/argument constraints are not enough if they bypass context labels and control/data provenance; influence modes must stay in the deterministic TCB. The remaining design gap is to replace these synthetic ablated policies with a real LLM-proposed lease corpus and proof-completeness check.
 - R026 adds a design rule for expanding evidence without uncontrolled benchmark sprawl: candidate workloads should be ranked from official metadata before any local import. Its top web-only candidates are Skill-Inject and MCPSecBench for Skill/MCP security, followed by MCP-Bench/ToolSandbox/WorkBench-style utility and recovery substrates. HarmfulSkillBench/AgentHarm-style data must be gated by a safety protocol before any download.
+- R079/R080 close the first integration gap between saved compiler-corpus leases and the live local task loop. R079 uses R074 saved compiler output as the only lease source, activates only strict non-empty `equals_any` argument policies, disables state-grounded reference hints, and executes 9 local Qwen3.6 calls with 0 gateway errors. R080 shows 7 calls exactly bind references and 2 are wrong/hallucinated tools. The design implication is that strict compiler leases can safely drive runtime, but current compiler coverage and task completion are too weak for utility; the next mechanism needs exact argument synthesis, safe runtime binding, and repair before execution.
 - Benchmark adapters should preserve raw benchmark identifiers in each event so denial explanations can be traced back to a task, server, tool, attack template, or risk category.
 - New benchmark candidates should be chosen through web metadata first. Do not sync new eval datasets into local state unless the experiment, source, and download boundary are explicitly approved.
 
 ## Next Design Action
-Implement the next online model/API wrapper, tau2/tau3 fresh model/user-simulator utility wrapper, expert-oracle lease scorer, real LLM-proposed lease corpus, or explicitly approved R026 top-candidate adapter that can classify a small set of actions as:
+Implement the next compiler/task-loop improvement, expert-oracle lease scorer, strong baseline comparison, or explicitly approved R026 top-candidate adapter that can classify a small set of actions as:
 
 - allowed data use,
 - denied wrong-sink influence,

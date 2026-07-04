@@ -54,14 +54,18 @@ from run_tau2_reference_actions_live_gateway import (  # noqa: E402
     ReferenceAction,
     _install_tau2_import_shims,
 )
+from analyze_tau2_visible_lease_compiler import _parse_assistant_tools  # noqa: E402
 
 
 TRUSTED_TASK_INTENT = "trusted_tau2_task_intent"
 ROW_FIELDS = [
     "domain",
     "task_id",
+    "lease_source",
     "tool_exposure",
     "tool_schema_count",
+    "active_leases",
+    "compiler_source_parse_ok",
     "prompt_path",
     "raw_output_path",
     "parse_ok",
@@ -133,6 +137,7 @@ USER_SIMULATOR_ROW_FIELDS = [
 ]
 UNSUPPORTED_ROW_FIELDS = ["domain", "task_id", "reason"]
 TOOL_EXPOSURE_MODES = ("all", "leased")
+LEASE_SOURCE_MODES = ("exact-reference", "compiler-corpus")
 
 
 def main() -> int:
@@ -151,6 +156,23 @@ def main() -> int:
     parser.add_argument("--gpu-layers", type=int, default=999)
     parser.add_argument("--timeout-seconds", type=int, default=120)
     parser.add_argument("--feedback-rounds", type=int, default=0)
+    parser.add_argument(
+        "--lease-source",
+        choices=LEASE_SOURCE_MODES,
+        default="exact-reference",
+        help=(
+            "Authorization profile. exact-reference uses oracle reference-action "
+            "leases. compiler-corpus loads strict equals_any leases from a saved "
+            "non-evaluation-task-JSON compiler run and uses reference actions "
+            "only for post-hoc scoring."
+        ),
+    )
+    parser.add_argument(
+        "--compiler-run-dir",
+        type=Path,
+        default=None,
+        help="Saved compiler run directory containing samples.jsonl for compiler-corpus mode.",
+    )
     parser.add_argument(
         "--tool-exposure",
         choices=TOOL_EXPOSURE_MODES,
@@ -245,6 +267,8 @@ def main() -> int:
         gpu_layers=args.gpu_layers,
         timeout_seconds=args.timeout_seconds,
         feedback_rounds=args.feedback_rounds,
+        lease_source=args.lease_source,
+        compiler_run_dir=args.compiler_run_dir,
         tool_exposure=args.tool_exposure,
         stepwise_max_steps=args.stepwise_max_steps,
         stepwise_empty_retries=args.stepwise_empty_retries,
@@ -273,6 +297,8 @@ def run_experiment(
     gpu_layers: int = 999,
     timeout_seconds: int = 120,
     feedback_rounds: int = 0,
+    lease_source: str = "exact-reference",
+    compiler_run_dir: Path | None = None,
     tool_exposure: str = "all",
     stepwise_max_steps: int = 0,
     stepwise_empty_retries: int = 0,
@@ -304,6 +330,15 @@ def run_experiment(
         raise ValueError("feedback_rounds and stepwise_max_steps are mutually exclusive")
     if tool_exposure not in TOOL_EXPOSURE_MODES:
         raise ValueError(f"tool_exposure must be one of {TOOL_EXPOSURE_MODES}")
+    if lease_source not in LEASE_SOURCE_MODES:
+        raise ValueError(f"lease_source must be one of {LEASE_SOURCE_MODES}")
+    if lease_source == "compiler-corpus" and compiler_run_dir is None:
+        raise ValueError("compiler_run_dir is required for compiler-corpus lease source")
+    if lease_source == "compiler-corpus" and stepwise_state_grounded_arg_hints:
+        raise ValueError(
+            "stepwise_state_grounded_arg_hints uses exact reference leases and "
+            "is disabled for compiler-corpus lease source"
+        )
 
     output_dir.mkdir(parents=True, exist_ok=True)
     prompt_dir = output_dir / "prompts"
@@ -326,6 +361,25 @@ def run_experiment(
     user_simulator_rows: list[dict[str, Any]] = []
     unsupported_rows: list[dict[str, Any]] = []
     records: list[dict[str, Any]] = []
+    compiler_records = (
+        load_compiler_records(compiler_run_dir / "samples.jsonl")
+        if lease_source == "compiler-corpus" and compiler_run_dir is not None
+        else {}
+    )
+    compiler_tools_by_domain = (
+        {
+            domain: {
+                tool.name: tool
+                for tool in _parse_assistant_tools(
+                    benchmark_dir / "src" / "tau2" / "domains" / domain / "tools.py",
+                    domain=domain,
+                )
+            }
+            for domain in domains
+        }
+        if lease_source == "compiler-corpus"
+        else {}
+    )
 
     for domain in domains:
         data_dir = benchmark_dir / "data" / "tau2" / "domains" / domain
@@ -365,6 +419,9 @@ def run_experiment(
                     gpu_layers=gpu_layers,
                     timeout_seconds=timeout_seconds,
                     feedback_rounds=feedback_rounds,
+                    lease_source=lease_source,
+                    compiler_record=compiler_records.get((domain, task_id), {}),
+                    compiler_tools_by_name=compiler_tools_by_domain.get(domain, {}),
                     tool_exposure=tool_exposure,
                     stepwise_max_steps=stepwise_max_steps,
                     stepwise_empty_retries=stepwise_empty_retries,
@@ -405,6 +462,8 @@ def run_experiment(
         timeout_seconds=timeout_seconds,
         max_tasks_per_domain=max_tasks_per_domain,
         feedback_rounds=feedback_rounds,
+        lease_source=lease_source,
+        compiler_run_dir=compiler_run_dir,
         tool_exposure=tool_exposure,
         stepwise_max_steps=stepwise_max_steps,
         stepwise_empty_retries=stepwise_empty_retries,
@@ -462,6 +521,9 @@ def _run_task(
     gpu_layers: int,
     timeout_seconds: int,
     feedback_rounds: int,
+    lease_source: str,
+    compiler_record: dict[str, Any],
+    compiler_tools_by_name: dict[str, Any],
     tool_exposure: str,
     stepwise_max_steps: int,
     stepwise_empty_retries: int,
@@ -503,12 +565,27 @@ def _run_task(
     )
     trajectory: list[Any] = list(message_history)
 
-    trace = build_task_trace(domain, task_id, reference_actions)
     all_tool_schemas = _tool_schemas(env)
+    if lease_source == "compiler-corpus":
+        trace, active_tool_names, active_object_names = build_compiler_corpus_task_trace(
+            domain=domain,
+            task_id=task_id,
+            compiler_record=compiler_record,
+            tools_by_name=compiler_tools_by_name,
+        )
+    else:
+        trace = build_task_trace(domain, task_id, reference_actions)
+        active_tool_names = {action.name for action in reference_actions}
+        active_object_names = {action.object_name for action in reference_actions}
     reference_by_event = {action.event_id: action for action in reference_actions}
     pending = list(reference_actions)
     callable_invocations: list[dict[str, Any]] = []
-    tools = build_tool_registry(reference_actions, env, callable_invocations)
+    tools = build_tool_registry(
+        reference_actions,
+        env,
+        callable_invocations,
+        object_names=active_object_names,
+    )
     gateway = LiveToolGateway(trace, tools)
 
     action_rows: list[dict[str, Any]] = []
@@ -555,6 +632,7 @@ def _run_task(
             raw_task=raw_task,
             tools=all_tool_schemas,
             tool_exposure=tool_exposure,
+            active_tool_names=active_tool_names,
             max_steps=stepwise_max_steps,
             empty_retries=stepwise_empty_retries,
             state_grounded_arg_hints=stepwise_state_grounded_arg_hints,
@@ -581,6 +659,7 @@ def _run_task(
             action_rows=action_rows,
             executed_reference_ids=executed_reference_ids,
             bound_reference_ids=bound_reference_ids,
+            include_reference_event_ids=lease_source == "exact-reference",
         )
         steps = stepwise_result["steps"]
         if steps:
@@ -595,6 +674,7 @@ def _run_task(
             all_tool_schemas,
             pending,
             tool_exposure=tool_exposure,
+            active_tool_names=active_tool_names,
         )
         prompt = build_prompt(domain, raw_task, prompt_tool_schemas)
         prompt_path = prompt_dir / f"{_safe_id(domain, task_id)}.txt"
@@ -633,6 +713,7 @@ def _run_task(
             action_rows=action_rows,
             executed_reference_ids=executed_reference_ids,
             bound_reference_ids=bound_reference_ids,
+            include_reference_event_ids=lease_source == "exact-reference",
         )
 
         if (
@@ -648,6 +729,7 @@ def _run_task(
                     all_tool_schemas,
                     pending,
                     tool_exposure=tool_exposure,
+                    active_tool_names=active_tool_names,
                 ),
                 blocked_calls=initial_blocked,
                 action_rows=action_rows,
@@ -690,6 +772,7 @@ def _run_task(
                 action_rows=action_rows,
                 executed_reference_ids=executed_reference_ids,
                 bound_reference_ids=bound_reference_ids,
+                include_reference_event_ids=lease_source == "exact-reference",
             )
 
     if reference_user_simulator:
@@ -743,17 +826,26 @@ def _run_task(
     gateway_blocked = len(action_rows) - gateway_allowed
     executed = sum(1 for row in action_rows if row["executed"])
     tool_errors = sum(1 for row in action_rows if row["tool_error"])
+    compiler_source_parse_ok = (
+        bool((compiler_record.get("task_row") or {}).get("parse_ok", False))
+        if lease_source == "compiler-corpus"
+        else ""
+    )
     task_row = {
         "domain": domain,
         "task_id": task_id,
+        "lease_source": lease_source,
         "tool_exposure": tool_exposure,
         "tool_schema_count": len(
             select_tool_schemas(
                 all_tool_schemas,
                 reference_actions,
                 tool_exposure=tool_exposure,
+                active_tool_names=active_tool_names,
             )
         ),
+        "active_leases": len(trace.get("leases", [])),
+        "compiler_source_parse_ok": compiler_source_parse_ok,
         "prompt_path": str(prompt_path),
         "raw_output_path": str(raw_path),
         "parse_ok": parsed is not None or bool(stepwise_result["parse_ok"]),
@@ -820,7 +912,10 @@ def _run_task(
         "record": {
             "domain": domain,
             "task_id": task_id,
+            "lease_source": lease_source,
             "tool_exposure": tool_exposure,
+            "active_leases": len(trace.get("leases", [])),
+            "compiler_source_parse_ok": compiler_source_parse_ok,
             "prompt_path": str(prompt_path),
             "raw_output_path": str(raw_path),
             "raw_output_sha256": _sha256(raw_payload.encode()),
@@ -873,6 +968,7 @@ def run_stepwise_model_loop(
     raw_task: dict[str, Any],
     tools: list[dict[str, Any]],
     tool_exposure: str,
+    active_tool_names: set[str],
     max_steps: int,
     empty_retries: int,
     state_grounded_arg_hints: bool,
@@ -899,6 +995,7 @@ def run_stepwise_model_loop(
     action_rows: list[dict[str, Any]],
     executed_reference_ids: list[str],
     bound_reference_ids: list[str],
+    include_reference_event_ids: bool,
 ) -> dict[str, Any]:
     task_id = str(raw_task.get("id", ""))
     steps: list[dict[str, Any]] = []
@@ -915,6 +1012,7 @@ def run_stepwise_model_loop(
             tools,
             pending_reference_actions,
             tool_exposure=tool_exposure,
+            active_tool_names=active_tool_names,
         )
         arg_hints = (
             build_state_grounded_arg_hints(
@@ -1039,6 +1137,7 @@ def run_stepwise_model_loop(
             action_rows=action_rows,
             executed_reference_ids=executed_reference_ids,
             bound_reference_ids=bound_reference_ids,
+            include_reference_event_ids=include_reference_event_ids,
         )
         steps.append(
             {
@@ -1101,6 +1200,7 @@ def execute_model_calls(
     action_rows: list[dict[str, Any]],
     executed_reference_ids: list[str],
     bound_reference_ids: list[str],
+    include_reference_event_ids: bool,
 ) -> list[dict[str, Any]]:
     blocked_calls: list[dict[str, Any]] = []
     for offset, model_call in enumerate(model_calls):
@@ -1111,6 +1211,7 @@ def execute_model_calls(
             index=index,
             model_call=model_call,
             pending_reference_actions=pending_reference_actions,
+            include_reference_event_ids=include_reference_event_ids,
         )
         if bound_action is not None:
             pending_reference_actions.remove(bound_action)
@@ -1223,12 +1324,17 @@ def select_tool_schemas(
     reference_actions: list[ReferenceAction],
     *,
     tool_exposure: str,
+    active_tool_names: set[str] | None = None,
 ) -> list[dict[str, Any]]:
     if tool_exposure == "all":
         return list(tools)
     if tool_exposure != "leased":
         raise ValueError(f"tool_exposure must be one of {TOOL_EXPOSURE_MODES}")
-    leased_names = {action.name for action in reference_actions}
+    leased_names = (
+        set(active_tool_names)
+        if active_tool_names is not None
+        else {action.name for action in reference_actions}
+    )
     return [tool for tool in tools if str(tool.get("name", "")) in leased_names]
 
 
@@ -1667,6 +1773,138 @@ def build_task_trace(
     }
 
 
+def load_compiler_records(path: Path) -> dict[tuple[str, str], dict[str, Any]]:
+    records: dict[tuple[str, str], dict[str, Any]] = {}
+    if not path.exists():
+        return records
+    with path.open() as file:
+        for line in file:
+            if not line.strip():
+                continue
+            record = json.loads(line)
+            records[(str(record.get("domain", "")), str(record.get("task_id", "")))] = record
+    return records
+
+
+def selected_compiler_model_json(record: dict[str, Any]) -> dict[str, Any] | None:
+    repaired = record.get("repaired_model_json")
+    if isinstance(repaired, dict):
+        return repaired
+    parsed = record.get("parsed_model_json")
+    return parsed if isinstance(parsed, dict) else None
+
+
+def build_compiler_corpus_task_trace(
+    *,
+    domain: str,
+    task_id: str,
+    compiler_record: dict[str, Any],
+    tools_by_name: dict[str, Any],
+) -> tuple[dict[str, Any], set[str], set[str]]:
+    """Build active runtime leases from saved compiler output only.
+
+    Reference actions are intentionally absent from this function. The live task
+    loop may still use reference actions for post-hoc scoring, but the authority
+    made visible to the checker here comes only from the saved compiler corpus.
+    """
+    model_json = selected_compiler_model_json(compiler_record)
+    model_leases = model_json.get("leases", []) if isinstance(model_json, dict) else []
+    leases: list[dict[str, Any]] = []
+    active_tool_names: set[str] = set()
+    active_object_names: set[str] = set()
+    selected_count = 0
+    invalid_tool_count = 0
+    inactive_broad_count = 0
+
+    for index, lease in enumerate(model_leases):
+        if not isinstance(lease, dict):
+            continue
+        selected_count += 1
+        tool_name = str(lease.get("tool", ""))
+        tool = tools_by_name.get(tool_name)
+        if tool is None:
+            invalid_tool_count += 1
+            continue
+        argument_policy = lease.get("argument_policy")
+        if not isinstance(argument_policy, dict):
+            argument_policy = {}
+        arg_constraints, _, broad_args = lower_strict_compiler_argument_policy(
+            argument_policy,
+            tuple(getattr(tool, "arguments", ()) or ()),
+        )
+        if broad_args:
+            inactive_broad_count += 1
+            continue
+        object_name = f"tau2.{domain}.assistant.{tool_name}"
+        active_tool_names.add(tool_name)
+        active_object_names.add(object_name)
+        leases.append(
+            {
+                "id": f"compiler-live:{domain}:{task_id}:{index}:{tool_name}",
+                "op": "tool.call",
+                "object": object_name,
+                "args": arg_constraints,
+                "allowed_arg_keys": sorted(arg_constraints),
+                "control_may_depend_on": [TRUSTED_TASK_INTENT],
+                "data_may_depend_on": [TRUSTED_TASK_INTENT],
+            }
+        )
+
+    decisions = sorted(f"{domain}.{tool_name}.tool_choice" for tool_name in active_tool_names)
+    return (
+        {
+            "labels": {
+                TRUSTED_TASK_INTENT: {
+                    "allowed": {
+                        "tool_select": decisions,
+                    }
+                }
+            },
+            "leases": leases,
+            "events": [],
+            "metadata": {
+                "source": "saved tau2 visible lease compiler corpus",
+                "domain": domain,
+                "task_id": task_id,
+                "selected_compiler_leases": selected_count,
+                "active_compiler_leases": len(leases),
+                "invalid_tool_leases": invalid_tool_count,
+                "inactive_broad_or_runtime_arg_leases": inactive_broad_count,
+                "note": (
+                    "Active leases are strict lowerings of saved compiler output. "
+                    "A compiler lease is active only when it names a valid tool "
+                    "and every declared tool argument has a non-empty equals_any "
+                    "policy. Reference actions are not used to mint leases."
+                ),
+            },
+        },
+        active_tool_names,
+        active_object_names,
+    )
+
+
+def lower_strict_compiler_argument_policy(
+    argument_policy: dict[str, Any],
+    tool_arguments: tuple[str, ...],
+) -> tuple[dict[str, Any], list[str], list[str]]:
+    constraints: dict[str, Any] = {}
+    constrained_args: list[str] = []
+    broad_args: list[str] = []
+    for arg in tool_arguments:
+        policy = argument_policy.get(arg)
+        if not isinstance(policy, dict):
+            broad_args.append(arg)
+            continue
+        mode = str(policy.get("mode", ""))
+        values = policy.get("values")
+        if mode == "equals_any" and isinstance(values, list) and values:
+            constraints[arg] = {"one_of": values}
+            constrained_args.append(arg)
+        else:
+            broad_args.append(arg)
+    return constraints, sorted(constrained_args), sorted(broad_args)
+
+
 def bind_model_call(
     *,
     domain: str,
@@ -1674,6 +1912,7 @@ def bind_model_call(
     index: int,
     model_call: dict[str, Any],
     pending_reference_actions: list[ReferenceAction],
+    include_reference_event_ids: bool = True,
 ) -> tuple[dict[str, Any], ReferenceAction | None]:
     tool = str(model_call.get("tool", ""))
     raw_args = dict(model_call.get("arguments") or {})
@@ -1692,7 +1931,7 @@ def bind_model_call(
         bound.object_name if bound else f"tau2.{domain}.assistant.{tool}"
     )
     event_args = dict(args)
-    if bound is not None:
+    if bound is not None and include_reference_event_ids:
         event_args["_intentcap_event_id"] = bound.event_id
         event_args["intentcap_event_id"] = bound.event_id
     return (
@@ -1718,15 +1957,21 @@ def build_tool_registry(
     reference_actions: list[ReferenceAction],
     env: Any,
     callable_invocations: list[dict[str, Any]],
+    *,
+    object_names: set[str] | None = None,
 ) -> dict[str, Callable[..., Any]]:
     by_event = {action.event_id: action for action in reference_actions}
-    object_names = sorted({action.object_name for action in reference_actions})
+    registered_object_names = sorted(
+        object_names if object_names is not None else {action.object_name for action in reference_actions}
+    )
     tool_call_cls = _import_attr("tau2.data_model.message", "ToolCall")
 
     def make_tool(object_name: str) -> Callable[..., Any]:
         def tool(**kwargs: Any) -> Any:
             event_id = str(kwargs.pop("intentcap_event_id", ""))
-            action = by_event[event_id]
+            action = by_event.get(event_id)
+            logical_tool = action.name if action is not None else object_name.rsplit(".", 1)[-1]
+            request_id = event_id or f"model:{len(callable_invocations)}"
             tool_args = {
                 key: value
                 for key, value in kwargs.items()
@@ -1734,15 +1979,15 @@ def build_tool_registry(
             }
             callable_invocations.append(
                 {
-                    "event_id": event_id,
-                    "tool": action.name,
+                    "event_id": request_id,
+                    "tool": logical_tool,
                     "object": object_name,
                     "args": tool_args,
                 }
             )
             tool_call = tool_call_cls(
-                id=event_id,
-                name=action.name,
+                id=request_id,
+                name=logical_tool,
                 arguments=tool_args,
                 requestor="assistant",
             )
@@ -1750,7 +1995,7 @@ def build_tool_registry(
 
         return tool
 
-    return {object_name: make_tool(object_name) for object_name in object_names}
+    return {object_name: make_tool(object_name) for object_name in registered_object_names}
 
 
 def parse_model_json(text: str) -> dict[str, Any] | None:
@@ -1806,6 +2051,8 @@ def summarize(
     timeout_seconds: int,
     max_tasks_per_domain: int | None,
     feedback_rounds: int,
+    lease_source: str,
+    compiler_run_dir: Path | None,
     tool_exposure: str,
     stepwise_max_steps: int,
     stepwise_empty_retries: int,
@@ -1825,17 +2072,33 @@ def summarize(
     notes = [
         "This run uses the existing local tau2-bench artifact only; it does not clone, sync, or download datasets.",
         "The model sees task text and tool schemas, but not evaluation_criteria.actions.",
-        "Exact reference-action leases are used as the oracle authorization profile; this is not a complete lease compiler evaluation.",
         _scope_note(domains),
     ]
+    if lease_source == "exact-reference":
+        notes.append(
+            "Exact reference-action leases are used as the oracle authorization profile; this is not a complete lease compiler evaluation."
+        )
+    elif lease_source == "compiler-corpus":
+        notes.append(
+            "Active leases are loaded from saved compiler output and strict-lowered only when every declared tool argument has a non-empty equals_any policy."
+        )
+        notes.append(
+            "Reference actions are used for post-hoc task scoring and exact-match accounting only; they are not used to mint runtime leases."
+        )
+        notes.append(
+            "State-grounded argument hints are disabled in compiler-corpus mode because they depend on exact reference-action leases."
+        )
     if feedback_rounds > 0:
         notes.append(
             "Feedback prompts include blocked calls and gateway reasons but still do not reveal evaluation_criteria.actions."
         )
     if tool_exposure == "leased":
-        notes.append(
-            "Tool prompts expose only schemas covered by active exact task leases; this uses the oracle lease profile to isolate tool-selection grounding."
+        source_label = (
+            "active exact task leases"
+            if lease_source == "exact-reference"
+            else "active compiler-corpus leases"
         )
+        notes.append(f"Tool prompts expose only schemas covered by {source_label}.")
     if stepwise_max_steps > 0:
         notes.append(
             "Stepwise prompts include prior gateway decisions and executed tool-result previews but still do not reveal evaluation_criteria.actions."
@@ -1866,12 +2129,18 @@ def summarize(
         )
     return {
         "run_id": run_id,
-        "analysis": "fresh local Qwen tau2 task proposals through exact IntentCap task leases",
+        "analysis": (
+            "fresh local Qwen tau2 task proposals through exact IntentCap task leases"
+            if lease_source == "exact-reference"
+            else "fresh local Qwen tau2 task proposals through saved compiler-corpus IntentCap leases"
+        ),
         "benchmark": "tau2-bench / tau3-bench",
         "dry_run": dry_run,
         "domains_requested": list(domains),
         "max_tasks_per_domain": max_tasks_per_domain,
         "feedback_rounds": feedback_rounds,
+        "lease_source": lease_source,
+        "compiler_run_dir": str(compiler_run_dir or ""),
         "tool_exposure": tool_exposure,
         "stepwise_max_steps": stepwise_max_steps,
         "stepwise_empty_retries": stepwise_empty_retries,
@@ -1884,6 +2153,10 @@ def summarize(
         "tool_schema_count_max": max(tool_schema_counts) if tool_schema_counts else 0,
         "tool_schema_count_avg": (
             sum(tool_schema_counts) / len(tool_schema_counts) if tool_schema_counts else 0.0
+        ),
+        "active_leases_total": sum(int(row.get("active_leases", 0)) for row in task_rows),
+        "compiler_source_parse_ok_tasks": sum(
+            1 for row in task_rows if row.get("compiler_source_parse_ok") is True
         ),
         "tasks_evaluated": len(task_rows),
         "unsupported_tasks": len(unsupported_rows),
