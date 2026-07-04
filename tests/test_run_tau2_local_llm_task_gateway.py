@@ -163,12 +163,39 @@ def test_feedback_prompt_reports_blocks_without_reference_actions():
     assert "evaluation_criteria" not in prompt
 
 
+def test_select_tool_schemas_can_expose_only_leased_tools():
+    actions = [
+        ReferenceAction(
+            event_id="mock:t:create_1",
+            domain="mock",
+            task_id="t",
+            action_id="create_1",
+            index=0,
+            name="create_task",
+            requestor="assistant",
+            args={"title": "Important Meeting"},
+            reward_basis=(),
+            object_name="tau2.mock.assistant.create_task",
+        )
+    ]
+    schemas = [
+        {"name": "create_task", "parameters": {}},
+        {"name": "delete_task", "parameters": {}},
+    ]
+
+    assert runner.select_tool_schemas(schemas, actions, tool_exposure="all") == schemas
+    assert runner.select_tool_schemas(schemas, actions, tool_exposure="leased") == [
+        {"name": "create_task", "parameters": {}}
+    ]
+
+
 def test_summary_counts_feedback_rounds():
     summary = runner.summarize(
         run_id="RTEST",
         task_rows=[
             {
                 "parse_ok": True,
+                "tool_schema_count": 2,
                 "model_calls": 2,
                 "initial_model_calls": 1,
                 "feedback_model_calls": 1,
@@ -211,11 +238,14 @@ def test_summary_counts_feedback_rounds():
         timeout_seconds=1,
         max_tasks_per_domain=1,
         feedback_rounds=1,
+        tool_exposure="leased",
         stepwise_max_steps=0,
         dry_run=False,
     )
 
     assert summary["feedback_rounds"] == 1
+    assert summary["tool_exposure"] == "leased"
+    assert summary["tool_schema_count_avg"] == 2
     assert summary["feedback_attempted_tasks"] == 1
     assert summary["initial_gateway_blocked"] == 1
     assert summary["feedback_gateway_allowed"] == 1

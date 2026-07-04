@@ -1,6 +1,6 @@
 """Analyze local-Qwen tau2 task-gateway mismatch patterns.
 
-R035 is a saved-result analysis over R031-R034. It does not run models, sync
+R035 was the first saved-result analysis over R031-R034. This script does not run models, sync
 datasets, or execute tau2 tools. It reads task-gateway samples and classifies
 each model-proposed call by how it differs from the per-task reference-action
 lease oracle.
@@ -87,6 +87,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Analyze tau2 task-gateway mismatches")
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument(
+        "--run-id",
+        default=None,
+        help="Analysis run id to record in the summary; defaults to the output directory name.",
+    )
+    parser.add_argument(
         "--run-dir",
         dest="run_dirs",
         action="append",
@@ -97,7 +102,8 @@ def main() -> int:
     args = parser.parse_args()
 
     run_dirs = tuple(args.run_dirs) if args.run_dirs else DEFAULT_RUN_DIRS
-    result = analyze_runs(run_dirs)
+    run_id = args.run_id or args.output_dir.name
+    result = analyze_runs(run_dirs, run_id=run_id)
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     _write_rows(args.output_dir / "model_call_mismatches.csv", result["call_rows"], CALL_FIELDS)
@@ -113,14 +119,14 @@ def main() -> int:
     return 0
 
 
-def analyze_runs(run_dirs: tuple[Path, ...]) -> dict[str, Any]:
+def analyze_runs(run_dirs: tuple[Path, ...], *, run_id: str = "R035") -> dict[str, Any]:
     call_rows: list[dict[str, Any]] = []
     task_rows: list[dict[str, Any]] = []
     run_rows: list[dict[str, Any]] = []
     input_summaries: list[dict[str, Any]] = []
 
     for run_dir in run_dirs:
-        run_id = run_dir.name
+        source_run_id = run_dir.name
         summary_path = run_dir / "task_gateway_summary.json"
         saved_summary = json.loads(summary_path.read_text()) if summary_path.exists() else {}
         input_summaries.append(saved_summary)
@@ -129,15 +135,15 @@ def analyze_runs(run_dirs: tuple[Path, ...]) -> dict[str, Any]:
         run_task_rows: list[dict[str, Any]] = []
 
         for record in records:
-            task_result = analyze_task_record(run_id, record)
+            task_result = analyze_task_record(source_run_id, record)
             run_call_rows.extend(task_result["call_rows"])
             run_task_rows.append(task_result["task_row"])
 
         call_rows.extend(run_call_rows)
         task_rows.extend(run_task_rows)
-        run_rows.append(_run_row(run_id, saved_summary, run_call_rows, run_task_rows))
+        run_rows.append(_run_row(source_run_id, saved_summary, run_call_rows, run_task_rows))
 
-    summary = _summary(run_rows, call_rows, task_rows, input_summaries, run_dirs)
+    summary = _summary(run_id, run_rows, call_rows, task_rows, input_summaries, run_dirs)
     return {
         "summary": summary,
         "call_rows": call_rows,
@@ -266,6 +272,7 @@ def _run_row(
 
 
 def _summary(
+    run_id: str,
     run_rows: list[dict[str, Any]],
     call_rows: list[dict[str, Any]],
     task_rows: list[dict[str, Any]],
@@ -276,10 +283,11 @@ def _summary(
     round_categories: dict[str, Counter[str]] = defaultdict(Counter)
     for row in call_rows:
         round_categories[str(row["round"])][str(row["category"])] += 1
+    source_runs = [path.name for path in run_dirs]
     return {
-        "run_id": "R035",
+        "run_id": run_id,
         "analysis": "saved local-Qwen tau2 task-gateway mismatch classification",
-        "source_runs": [path.name for path in run_dirs],
+        "source_runs": source_runs,
         "no_dataset_sync": True,
         "tasks": len(task_rows),
         "model_calls": len(call_rows),
@@ -305,7 +313,7 @@ def _summary(
         "project_head": _git_output(["git", "rev-parse", "HEAD"]),
         "git_status": _git_output(["git", "status", "--short", "--branch"]),
         "notes": [
-            "This analysis reads existing R031-R034 local tau2 task-gateway artifacts only.",
+            f"This analysis reads existing {', '.join(source_runs)} local tau2 task-gateway artifacts only.",
             "It does not run models, execute tools, clone benchmarks, sync datasets, or reveal hidden reference actions to a model.",
             "Mismatch categories compare model-proposed tool calls against the saved per-task reference-action lease oracle.",
         ],

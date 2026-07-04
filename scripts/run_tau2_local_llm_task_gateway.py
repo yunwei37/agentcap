@@ -1,8 +1,8 @@
 """Run local Qwen on tau2 tasks behind an IntentCap gateway.
 
 R031/R032 are the first fresh local-model task-environment probes. They prompt a local
-llama.cpp/Qwen model with tau2 task text and tool schemas, ask for assistant
-tool calls, binds exact tool+argument matches to pre-minted per-task leases,
+llama.cpp/Qwen model with tau2 task text and selected tool schemas, ask for assistant
+tool calls, bind exact tool+argument matches to pre-minted per-task leases,
 and executes allowed calls through LiveToolGateway against the tau2 environment.
 
 This is intentionally a small pilot. By default it runs the mock domain only,
@@ -60,6 +60,8 @@ TRUSTED_TASK_INTENT = "trusted_tau2_task_intent"
 ROW_FIELDS = [
     "domain",
     "task_id",
+    "tool_exposure",
+    "tool_schema_count",
     "prompt_path",
     "raw_output_path",
     "parse_ok",
@@ -107,6 +109,7 @@ ACTION_ROW_FIELDS = [
     "tool_result_preview",
 ]
 UNSUPPORTED_ROW_FIELDS = ["domain", "task_id", "reason"]
+TOOL_EXPOSURE_MODES = ("all", "leased")
 
 
 def main() -> int:
@@ -125,6 +128,16 @@ def main() -> int:
     parser.add_argument("--gpu-layers", type=int, default=999)
     parser.add_argument("--timeout-seconds", type=int, default=120)
     parser.add_argument("--feedback-rounds", type=int, default=0)
+    parser.add_argument(
+        "--tool-exposure",
+        choices=TOOL_EXPOSURE_MODES,
+        default="all",
+        help=(
+            "Tool schemas shown to the model: 'all' preserves the original "
+            "environment-wide prompt, while 'leased' shows only schemas covered "
+            "by active exact task leases."
+        ),
+    )
     parser.add_argument(
         "--stepwise-max-steps",
         type=int,
@@ -151,6 +164,7 @@ def main() -> int:
         gpu_layers=args.gpu_layers,
         timeout_seconds=args.timeout_seconds,
         feedback_rounds=args.feedback_rounds,
+        tool_exposure=args.tool_exposure,
         stepwise_max_steps=args.stepwise_max_steps,
         dry_run=args.dry_run,
     )
@@ -172,6 +186,7 @@ def run_experiment(
     gpu_layers: int = 999,
     timeout_seconds: int = 120,
     feedback_rounds: int = 0,
+    tool_exposure: str = "all",
     stepwise_max_steps: int = 0,
     dry_run: bool = False,
     runner: Callable[[list[str], int], tuple[str, str, int, float]] | None = None,
@@ -184,6 +199,8 @@ def run_experiment(
         raise ValueError("stepwise_max_steps must be non-negative")
     if feedback_rounds > 0 and stepwise_max_steps > 0:
         raise ValueError("feedback_rounds and stepwise_max_steps are mutually exclusive")
+    if tool_exposure not in TOOL_EXPOSURE_MODES:
+        raise ValueError(f"tool_exposure must be one of {TOOL_EXPOSURE_MODES}")
 
     output_dir.mkdir(parents=True, exist_ok=True)
     prompt_dir = output_dir / "prompts"
@@ -244,6 +261,7 @@ def run_experiment(
                     gpu_layers=gpu_layers,
                     timeout_seconds=timeout_seconds,
                     feedback_rounds=feedback_rounds,
+                    tool_exposure=tool_exposure,
                     stepwise_max_steps=stepwise_max_steps,
                     dry_run=dry_run,
                     runner=runner,
@@ -276,6 +294,7 @@ def run_experiment(
         timeout_seconds=timeout_seconds,
         max_tasks_per_domain=max_tasks_per_domain,
         feedback_rounds=feedback_rounds,
+        tool_exposure=tool_exposure,
         stepwise_max_steps=stepwise_max_steps,
         dry_run=dry_run,
     )
@@ -320,6 +339,7 @@ def _run_task(
     gpu_layers: int,
     timeout_seconds: int,
     feedback_rounds: int,
+    tool_exposure: str,
     stepwise_max_steps: int,
     dry_run: bool,
     runner: Callable[[list[str], int], tuple[str, str, int, float]],
@@ -344,7 +364,7 @@ def _run_task(
     trajectory: list[Any] = list(message_history)
 
     trace = build_task_trace(domain, task_id, reference_actions)
-    tool_schemas = _tool_schemas(env)
+    all_tool_schemas = _tool_schemas(env)
     reference_by_event = {action.event_id: action for action in reference_actions}
     pending = list(reference_actions)
     callable_invocations: list[dict[str, Any]] = []
@@ -380,7 +400,8 @@ def _run_task(
         stepwise_result = run_stepwise_model_loop(
             domain=domain,
             raw_task=raw_task,
-            tools=tool_schemas,
+            tools=all_tool_schemas,
+            tool_exposure=tool_exposure,
             max_steps=stepwise_max_steps,
             step_prompt_dir=step_prompt_dir,
             step_raw_dir=step_raw_dir,
@@ -412,7 +433,12 @@ def _run_task(
         returncode = int(stepwise_result["returncode"])
         parsed = next((step["parsed"] for step in steps if step["parsed"] is not None), None)
     else:
-        prompt = build_prompt(domain, raw_task, tool_schemas)
+        prompt_tool_schemas = select_tool_schemas(
+            all_tool_schemas,
+            pending,
+            tool_exposure=tool_exposure,
+        )
+        prompt = build_prompt(domain, raw_task, prompt_tool_schemas)
         prompt_path = prompt_dir / f"{_safe_id(domain, task_id)}.txt"
         raw_path = raw_dir / f"{_safe_id(domain, task_id)}.txt"
         prompt_path.write_text(prompt)
@@ -460,7 +486,11 @@ def _run_task(
             feedback_prompt = build_feedback_prompt(
                 domain=domain,
                 raw_task=raw_task,
-                tools=tool_schemas,
+                tools=select_tool_schemas(
+                    all_tool_schemas,
+                    pending,
+                    tool_exposure=tool_exposure,
+                ),
                 blocked_calls=initial_blocked,
                 action_rows=action_rows,
             )
@@ -546,6 +576,14 @@ def _run_task(
     task_row = {
         "domain": domain,
         "task_id": task_id,
+        "tool_exposure": tool_exposure,
+        "tool_schema_count": len(
+            select_tool_schemas(
+                all_tool_schemas,
+                reference_actions,
+                tool_exposure=tool_exposure,
+            )
+        ),
         "prompt_path": str(prompt_path),
         "raw_output_path": str(raw_path),
         "parse_ok": parsed is not None or bool(stepwise_result["parse_ok"]),
@@ -591,6 +629,7 @@ def _run_task(
         "record": {
             "domain": domain,
             "task_id": task_id,
+            "tool_exposure": tool_exposure,
             "prompt_path": str(prompt_path),
             "raw_output_path": str(raw_path),
             "raw_output_sha256": _sha256(raw_payload.encode()),
@@ -632,6 +671,7 @@ def run_stepwise_model_loop(
     domain: str,
     raw_task: dict[str, Any],
     tools: list[dict[str, Any]],
+    tool_exposure: str,
     max_steps: int,
     step_prompt_dir: Path,
     step_raw_dir: Path,
@@ -667,7 +707,11 @@ def run_stepwise_model_loop(
         prompt = build_step_prompt(
             domain=domain,
             raw_task=raw_task,
-            tools=tools,
+            tools=select_tool_schemas(
+                tools,
+                pending_reference_actions,
+                tool_exposure=tool_exposure,
+            ),
             step_index=step_index,
             action_rows=action_rows,
         )
@@ -874,6 +918,20 @@ def build_prompt(domain: str, raw_task: dict[str, Any], tools: list[dict[str, An
         f"{json.dumps(payload, indent=2, sort_keys=True, default=_json_default)}\n"
         "Output JSON:\n"
     )
+
+
+def select_tool_schemas(
+    tools: list[dict[str, Any]],
+    reference_actions: list[ReferenceAction],
+    *,
+    tool_exposure: str,
+) -> list[dict[str, Any]]:
+    if tool_exposure == "all":
+        return list(tools)
+    if tool_exposure != "leased":
+        raise ValueError(f"tool_exposure must be one of {TOOL_EXPOSURE_MODES}")
+    leased_names = {action.name for action in reference_actions}
+    return [tool for tool in tools if str(tool.get("name", "")) in leased_names]
 
 
 def build_feedback_prompt(
@@ -1172,11 +1230,13 @@ def summarize(
     timeout_seconds: int,
     max_tasks_per_domain: int | None,
     feedback_rounds: int,
+    tool_exposure: str,
     stepwise_max_steps: int,
     dry_run: bool,
 ) -> dict[str, Any]:
     unsupported_reasons = Counter(row["reason"].split(":", 1)[0] for row in unsupported_rows)
     tool_oracle_rows = [row for row in task_rows if row["tool_oracle_applicable"]]
+    tool_schema_counts = [int(row.get("tool_schema_count", 0)) for row in task_rows]
     initial_rows = [row for row in action_rows if row.get("round") == "initial"]
     feedback_rows = [row for row in action_rows if str(row.get("round", "")).startswith("feedback")]
     stepwise_rows = [row for row in action_rows if str(row.get("round", "")).startswith("step_")]
@@ -1190,6 +1250,10 @@ def summarize(
         notes.append(
             "Feedback prompts include blocked calls and gateway reasons but still do not reveal evaluation_criteria.actions."
         )
+    if tool_exposure == "leased":
+        notes.append(
+            "Tool prompts expose only schemas covered by active exact task leases; this uses the oracle lease profile to isolate tool-selection grounding."
+        )
     if stepwise_max_steps > 0:
         notes.append(
             "Stepwise prompts include prior gateway decisions and executed tool-result previews but still do not reveal evaluation_criteria.actions."
@@ -1202,7 +1266,13 @@ def summarize(
         "domains_requested": list(domains),
         "max_tasks_per_domain": max_tasks_per_domain,
         "feedback_rounds": feedback_rounds,
+        "tool_exposure": tool_exposure,
         "stepwise_max_steps": stepwise_max_steps,
+        "tool_schema_count_min": min(tool_schema_counts) if tool_schema_counts else 0,
+        "tool_schema_count_max": max(tool_schema_counts) if tool_schema_counts else 0,
+        "tool_schema_count_avg": (
+            sum(tool_schema_counts) / len(tool_schema_counts) if tool_schema_counts else 0.0
+        ),
         "tasks_evaluated": len(task_rows),
         "unsupported_tasks": len(unsupported_rows),
         "unsupported_reason_counts": dict(sorted(unsupported_reasons.items())),
