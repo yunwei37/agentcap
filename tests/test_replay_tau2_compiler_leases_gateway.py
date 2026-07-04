@@ -65,6 +65,15 @@ def test_compiler_lease_gateway_replay_classifies_exact_broad_and_missing(tmp_pa
                                 "name": "cancel_order",
                                 "arguments": {"order_id": "#W7654321"},
                             },
+                            {
+                                "action_id": "a3",
+                                "requestor": "assistant",
+                                "name": "update_order_item",
+                                "arguments": {
+                                    "order_id": "#W0000000",
+                                    "product_id": "9999999999",
+                                },
+                            },
                         ],
                     },
                 }
@@ -129,6 +138,20 @@ class MockTools:
                         },
                         {
                             "tool": "update_order_item",
+                            "intent_evidence": "incorrect exact update candidate",
+                            "argument_policy": {
+                                "order_id": {
+                                    "mode": "equals_any",
+                                    "values": ["#W0000001"],
+                                },
+                                "product_id": {
+                                    "mode": "equals_any",
+                                    "values": ["8888888888"],
+                                },
+                            },
+                        },
+                        {
+                            "tool": "update_order_item",
                             "intent_evidence": "visible order update",
                             "argument_policy": {
                                 "order_id": {
@@ -159,13 +182,14 @@ class MockTools:
     )
 
     summary = result["summary"]
-    assert summary["assistant_reference_actions"] == 3
+    assert summary["assistant_reference_actions"] == 4
     assert summary["gateway_allowed_reference_actions"] == 2
     assert summary["allowed_all_reference_args_constrained"] == 1
     assert summary["allowed_broad_or_runtime_args"] == 1
+    assert summary["blocked_broad_or_runtime_policy"] == 0
     assert summary["blocked_missing_tool"] == 1
-    assert summary["blocked_constraint_mismatch"] == 0
-    assert summary["active_leases_total"] == 2
+    assert summary["blocked_constraint_mismatch"] == 1
+    assert summary["active_leases_total"] == 3
     assert summary["source_run_id"] == "R074"
 
     classes = [row["coverage_class"] for row in result["action_rows"]]
@@ -173,4 +197,35 @@ class MockTools:
         "allowed_all_reference_args_constrained",
         "allowed_broad_or_runtime_args",
         "blocked_missing_tool",
+        "blocked_constraint_mismatch",
+    ]
+
+    strict_result = runner.replay(
+        benchmark_dir=benchmark_dir,
+        source_run_dir=source_dir,
+        output_dir=tmp_path / "strict_out",
+        run_id="TEST_STRICT",
+        domains=("mock",),
+        max_tasks_per_domain=None,
+        require_all_tool_args_constrained=True,
+    )
+
+    strict_summary = strict_result["summary"]
+    assert strict_summary["assistant_reference_actions"] == 4
+    assert strict_summary["gateway_allowed_reference_actions"] == 1
+    assert strict_summary["allowed_all_reference_args_constrained"] == 1
+    assert strict_summary["allowed_broad_or_runtime_args"] == 0
+    assert strict_summary["blocked_broad_or_runtime_policy"] == 1
+    assert strict_summary["blocked_missing_tool"] == 1
+    assert strict_summary["blocked_constraint_mismatch"] == 1
+    assert strict_summary["active_leases_total"] == 2
+    assert strict_summary["inactive_valid_broad_lease_rows_total"] == 1
+    assert strict_summary["require_all_tool_args_constrained"] is True
+
+    strict_classes = [row["coverage_class"] for row in strict_result["action_rows"]]
+    assert strict_classes == [
+        "allowed_all_reference_args_constrained",
+        "blocked_broad_or_runtime_policy",
+        "blocked_missing_tool",
+        "blocked_constraint_mismatch",
     ]

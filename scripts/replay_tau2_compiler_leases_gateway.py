@@ -51,6 +51,7 @@ TASK_FIELDS = [
     "gateway_blocked_reference_actions",
     "allowed_with_all_reference_args_constrained",
     "allowed_with_broad_or_runtime_args",
+    "blocked_broad_or_runtime_policy",
     "blocked_missing_tool",
     "blocked_constraint_mismatch",
     "exposed_objects",
@@ -62,6 +63,8 @@ LEASE_FIELDS = [
     "lease_id",
     "tool",
     "valid_tool",
+    "active",
+    "inactive_reason",
     "object",
     "constrained_args",
     "broad_or_runtime_args",
@@ -95,6 +98,14 @@ def main() -> int:
     parser.add_argument("--run-id", default="R075")
     parser.add_argument("--domains", nargs="*", default=list(DEFAULT_DOMAINS))
     parser.add_argument("--max-tasks-per-domain", type=int, default=5)
+    parser.add_argument(
+        "--require-all-tool-args-constrained",
+        action="store_true",
+        help=(
+            "Only activate compiler leases whose every declared tool argument has "
+            "an exact equals_any policy. Broad/runtime policies become inactive."
+        ),
+    )
     args = parser.parse_args()
 
     result = replay(
@@ -104,6 +115,7 @@ def main() -> int:
         run_id=args.run_id,
         domains=tuple(args.domains),
         max_tasks_per_domain=args.max_tasks_per_domain,
+        require_all_tool_args_constrained=args.require_all_tool_args_constrained,
     )
     print(json.dumps(result["summary"], indent=2, sort_keys=True))
     return 0
@@ -117,6 +129,7 @@ def replay(
     run_id: str,
     domains: tuple[str, ...] = DEFAULT_DOMAINS,
     max_tasks_per_domain: int | None = 5,
+    require_all_tool_args_constrained: bool = False,
 ) -> dict[str, Any]:
     data_root = benchmark_dir / "data" / "tau2" / "domains"
     src_root = benchmark_dir / "src" / "tau2" / "domains"
@@ -166,6 +179,7 @@ def replay(
                 reference_actions=reference_actions,
                 model_json=model_json,
                 tools_by_name=tools_by_domain.get(domain, {}),
+                require_all_tool_args_constrained=require_all_tool_args_constrained,
             )
             gateway = TraceGateway(trace)
             events = [
@@ -182,6 +196,14 @@ def replay(
                     decision=decision,
                     lease_meta=lease_meta,
                     has_tool_lease=_has_tool_lease(lease_meta, action.name),
+                    has_inactive_broad_tool_lease=_has_tool_lease(
+                        lease_meta,
+                        action.name,
+                        active=False,
+                        inactive_reason="broad_or_runtime_args",
+                        event_args=event["args"],
+                        require_constrained_args_match=True,
+                    ),
                 )
                 action_rows.append(row)
                 coverage_class = str(row["coverage_class"])
@@ -203,15 +225,17 @@ def replay(
                         task_counts["allowed_all_reference_args_constrained"]
                         + task_counts["allowed_broad_or_runtime_args"]
                     ),
-                    "gateway_blocked_reference_actions": (
-                        task_counts["blocked_missing_tool"]
-                        + task_counts["blocked_constraint_mismatch"]
-                    ),
+                    "gateway_blocked_reference_actions": len(reference_actions)
+                    - task_counts["allowed_all_reference_args_constrained"]
+                    - task_counts["allowed_broad_or_runtime_args"],
                     "allowed_with_all_reference_args_constrained": task_counts[
                         "allowed_all_reference_args_constrained"
                     ],
                     "allowed_with_broad_or_runtime_args": task_counts[
                         "allowed_broad_or_runtime_args"
+                    ],
+                    "blocked_broad_or_runtime_policy": task_counts[
+                        "blocked_broad_or_runtime_policy"
                     ],
                     "blocked_missing_tool": task_counts["blocked_missing_tool"],
                     "blocked_constraint_mismatch": task_counts[
@@ -228,6 +252,7 @@ def replay(
         source_summary=source_summary,
         domains=domain_names,
         max_tasks_per_domain=max_tasks_per_domain,
+        require_all_tool_args_constrained=require_all_tool_args_constrained,
         task_rows=task_rows,
         lease_rows=lease_rows,
         action_rows=action_rows,
@@ -258,6 +283,7 @@ def build_compiler_trace(
     reference_actions: list[Any],
     model_json: dict[str, Any] | None,
     tools_by_name: dict[str, Any],
+    require_all_tool_args_constrained: bool = False,
 ) -> tuple[dict[str, Any], list[dict[str, Any]], dict[str, dict[str, Any]]]:
     decisions = sorted({f"{domain}.{action.name}.tool_choice" for action in reference_actions})
     leases: list[dict[str, Any]] = []
@@ -279,7 +305,15 @@ def build_compiler_trace(
             argument_policy,
             tuple(tool.arguments) if tool else (),
         )
-        if valid_tool:
+        active = bool(valid_tool)
+        inactive_reason = ""
+        if not valid_tool:
+            active = False
+            inactive_reason = "invalid_tool"
+        elif require_all_tool_args_constrained and broad_args:
+            active = False
+            inactive_reason = "broad_or_runtime_args"
+        if active:
             leases.append(
                 {
                     "id": lease_id,
@@ -293,8 +327,21 @@ def build_compiler_trace(
             lease_meta[lease_id] = {
                 "tool": tool_name,
                 "object": object_name,
+                "arg_constraints": arg_constraints,
                 "constrained_args": set(constrained_args),
                 "broad_or_runtime_args": set(broad_args),
+                "active": active,
+                "inactive_reason": inactive_reason,
+            }
+        elif valid_tool:
+            lease_meta[lease_id] = {
+                "tool": tool_name,
+                "object": object_name,
+                "arg_constraints": arg_constraints,
+                "constrained_args": set(constrained_args),
+                "broad_or_runtime_args": set(broad_args),
+                "active": active,
+                "inactive_reason": inactive_reason,
             }
         lease_rows.append(
             {
@@ -304,6 +351,8 @@ def build_compiler_trace(
                 "lease_id": lease_id,
                 "tool": tool_name,
                 "valid_tool": valid_tool,
+                "active": active,
+                "inactive_reason": inactive_reason,
                 "object": object_name if valid_tool else "",
                 "constrained_args": "|".join(constrained_args),
                 "broad_or_runtime_args": "|".join(broad_args),
@@ -384,6 +433,7 @@ def _action_row(
     decision: dict[str, Any],
     lease_meta: dict[str, dict[str, Any]],
     has_tool_lease: bool,
+    has_inactive_broad_tool_lease: bool,
 ) -> dict[str, Any]:
     allowed = bool(decision.get("allowed"))
     lease_id = str(decision.get("lease_id") or "")
@@ -397,6 +447,8 @@ def _action_row(
             if not missing_constraints
             else "allowed_broad_or_runtime_args"
         )
+    elif has_inactive_broad_tool_lease:
+        coverage_class = "blocked_broad_or_runtime_policy"
     elif has_tool_lease:
         coverage_class = "blocked_constraint_mismatch"
     else:
@@ -418,8 +470,45 @@ def _action_row(
     }
 
 
-def _has_tool_lease(lease_meta: dict[str, dict[str, Any]], tool: str) -> bool:
-    return any(str(meta.get("tool", "")) == tool for meta in lease_meta.values())
+def _has_tool_lease(
+    lease_meta: dict[str, dict[str, Any]],
+    tool: str,
+    *,
+    active: bool | None = None,
+    inactive_reason: str | None = None,
+    event_args: dict[str, Any] | None = None,
+    require_constrained_args_match: bool = False,
+) -> bool:
+    for meta in lease_meta.values():
+        if str(meta.get("tool", "")) != tool:
+            continue
+        if active is not None and bool(meta.get("active")) != active:
+            continue
+        if inactive_reason is not None and str(meta.get("inactive_reason", "")) != inactive_reason:
+            continue
+        if require_constrained_args_match and not _constrained_args_match_event(
+            meta,
+            event_args or {},
+        ):
+            continue
+        return True
+    return False
+
+
+def _constrained_args_match_event(
+    lease_meta: dict[str, Any],
+    event_args: dict[str, Any],
+) -> bool:
+    constraints = lease_meta.get("arg_constraints", {})
+    if not isinstance(constraints, dict):
+        return False
+    for arg, predicate in constraints.items():
+        if not isinstance(predicate, dict):
+            return False
+        values = predicate.get("one_of")
+        if not isinstance(values, list) or event_args.get(arg) not in values:
+            return False
+    return True
 
 
 def _selected_model_json(record: dict[str, Any]) -> dict[str, Any] | None:
@@ -438,6 +527,7 @@ def summarize(
     source_summary: dict[str, Any],
     domains: list[str],
     max_tasks_per_domain: int | None,
+    require_all_tool_args_constrained: bool,
     task_rows: list[dict[str, Any]],
     lease_rows: list[dict[str, Any]],
     action_rows: list[dict[str, Any]],
@@ -457,11 +547,17 @@ def summarize(
         "source_run_id": source_summary.get("run_id", ""),
         "domains": domains,
         "max_tasks_per_domain": max_tasks_per_domain,
+        "require_all_tool_args_constrained": require_all_tool_args_constrained,
         "tasks_evaluated": len(task_rows),
         "assistant_reference_actions": reference_actions,
         "active_leases_total": sum(int(row["active_leases"]) for row in task_rows),
         "valid_lease_rows_total": sum(1 for row in lease_rows if row["valid_tool"]),
         "invalid_lease_rows_total": sum(1 for row in lease_rows if not row["valid_tool"]),
+        "inactive_valid_broad_lease_rows_total": sum(
+            1
+            for row in lease_rows
+            if row["valid_tool"] and not row["active"] and row["inactive_reason"] == "broad_or_runtime_args"
+        ),
         "gateway_allowed_reference_actions": allowed,
         "gateway_blocked_reference_actions": reference_actions - allowed,
         "gateway_allowed_rate": allowed / reference_actions if reference_actions else 1.0,
@@ -470,6 +566,9 @@ def summarize(
         ],
         "allowed_broad_or_runtime_args": coverage_counter[
             "allowed_broad_or_runtime_args"
+        ],
+        "blocked_broad_or_runtime_policy": coverage_counter[
+            "blocked_broad_or_runtime_policy"
         ],
         "blocked_missing_tool": coverage_counter["blocked_missing_tool"],
         "blocked_constraint_mismatch": coverage_counter["blocked_constraint_mismatch"],
@@ -490,6 +589,7 @@ def summarize(
             "This run does not execute tau2 tools, run a simulator/reward loop, call a model/API, or sync datasets.",
             "allowed_all_reference_args_constrained means the matching compiler lease constrained every reference argument.",
             "allowed_broad_or_runtime_args means the checker allowed the reference event through a selected tool lease that left at least one reference argument unconstrained.",
+            "blocked_broad_or_runtime_policy means an inactive compiler lease selected the reference tool and matched its constrained arguments, but strict lowering made it inactive because other tool arguments were broad/runtime.",
             "blocked_missing_tool means no compiler lease selected the reference tool.",
             "blocked_constraint_mismatch means a compiler lease selected the tool but constrained at least one argument to non-matching values.",
         ],

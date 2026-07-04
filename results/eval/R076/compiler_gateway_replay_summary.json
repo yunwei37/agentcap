@@ -1,0 +1,64 @@
+{
+  "active_leases_total": 14,
+  "allowed_all_reference_args_constrained": 11,
+  "allowed_broad_or_runtime_args": 0,
+  "assistant_reference_actions": 61,
+  "benchmark": "tau2-bench",
+  "benchmark_dir": "benchmarks/tau2-bench",
+  "blocked_broad_or_runtime_policy": 34,
+  "blocked_constraint_mismatch": 0,
+  "blocked_missing_tool": 16,
+  "coverage_class_counts": {
+    "allowed_all_reference_args_constrained": 11,
+    "blocked_broad_or_runtime_policy": 34,
+    "blocked_missing_tool": 16
+  },
+  "domain_counts": {
+    "airline": {
+      "allowed_all_reference_args_constrained": 2,
+      "blocked_missing_tool": 11,
+      "reference_actions": 13
+    },
+    "retail": {
+      "allowed_all_reference_args_constrained": 7,
+      "blocked_broad_or_runtime_policy": 34,
+      "blocked_missing_tool": 5,
+      "reference_actions": 46
+    },
+    "telecom": {
+      "allowed_all_reference_args_constrained": 2,
+      "reference_actions": 2
+    }
+  },
+  "domains": [
+    "airline",
+    "retail",
+    "telecom"
+  ],
+  "gateway_allowed_rate": 0.18032786885245902,
+  "gateway_allowed_reference_actions": 11,
+  "gateway_blocked_reference_actions": 50,
+  "inactive_valid_broad_lease_rows_total": 27,
+  "invalid_lease_rows_total": 0,
+  "machine": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "max_tasks_per_domain": 5,
+  "notes": [
+    "Compiler leases are loaded from saved non-evaluation-task-JSON model output; repaired_model_json is preferred when present.",
+    "Reference actions are used only as post-hoc replay events and are not used to synthesize leases.",
+    "This run does not execute tau2 tools, run a simulator/reward loop, call a model/API, or sync datasets.",
+    "allowed_all_reference_args_constrained means the matching compiler lease constrained every reference argument.",
+    "allowed_broad_or_runtime_args means the checker allowed the reference event through a selected tool lease that left at least one reference argument unconstrained.",
+    "blocked_broad_or_runtime_policy means an inactive compiler lease selected the reference tool and matched its constrained arguments, but strict lowering made it inactive because other tool arguments were broad/runtime.",
+    "blocked_missing_tool means no compiler lease selected the reference tool.",
+    "blocked_constraint_mismatch means a compiler lease selected the tool but constrained at least one argument to non-matching values."
+  ],
+  "project_head": "c9fe2bf42d812b1dea96b98d5f0ce7acafb70f2f",
+  "require_all_tool_args_constrained": true,
+  "run_id": "R076",
+  "source_run_dir": "results/eval/R074",
+  "source_run_id": "R074",
+  "source_samples_sha256": "929954e0633522b5580739b4c0a21503eefaf3079c0d41fe06fc9eae29047d87",
+  "source_summary_sha256": "f6b46c566d92291833d8a7da174e9f7fee1f937ce6096bb1ca6c01f3b7bc86a5",
+  "tasks_evaluated": 11,
+  "valid_lease_rows_total": 41
+}
