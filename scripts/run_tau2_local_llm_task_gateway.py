@@ -84,12 +84,16 @@ ROW_FIELDS = [
     "step_prompt_paths",
     "step_raw_output_paths",
     "reference_actions",
+    "reference_user_actions",
     "bound_reference_calls",
     "gateway_allowed",
     "gateway_blocked",
     "executed_calls",
     "tool_error_calls",
     "off_lease_calls_blocked",
+    "reference_user_simulator",
+    "user_simulator_executed_actions",
+    "user_simulator_tool_error_actions",
     "exact_sequence_match",
     "all_reference_actions_executed",
     "action_reward",
@@ -111,6 +115,18 @@ ACTION_ROW_FIELDS = [
     "gateway_allowed",
     "gateway_action",
     "gateway_reason",
+    "executed",
+    "tool_error",
+    "tool_result_preview",
+]
+USER_SIMULATOR_ROW_FIELDS = [
+    "domain",
+    "task_id",
+    "index",
+    "action_id",
+    "event_id",
+    "tool",
+    "args_json",
     "executed",
     "tool_error",
     "tool_result_preview",
@@ -204,6 +220,15 @@ def main() -> int:
             "the gateway. Requires --stepwise-state-grounded-arg-hints."
         ),
     )
+    parser.add_argument(
+        "--reference-user-simulator",
+        action="store_true",
+        help=(
+            "Replay benchmark reference user-side actions when preceding "
+            "assistant reference actions have executed. User actions are "
+            "recorded separately and are not granted to the assistant."
+        ),
+    )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -227,6 +252,7 @@ def main() -> int:
         stepwise_compact_json_prompts=args.stepwise_compact_json_prompts,
         stepwise_single_hint_fallback=args.stepwise_single_hint_fallback,
         stepwise_hint_choice_fallback=args.stepwise_hint_choice_fallback,
+        reference_user_simulator=args.reference_user_simulator,
         dry_run=args.dry_run,
     )
     print(json.dumps(result["summary"], indent=2, sort_keys=True))
@@ -254,6 +280,7 @@ def run_experiment(
     stepwise_compact_json_prompts: bool = False,
     stepwise_single_hint_fallback: bool = False,
     stepwise_hint_choice_fallback: bool = False,
+    reference_user_simulator: bool = False,
     dry_run: bool = False,
     runner: Callable[[list[str], int], tuple[str, str, int, float]] | None = None,
 ) -> dict[str, Any]:
@@ -296,6 +323,7 @@ def run_experiment(
 
     task_rows: list[dict[str, Any]] = []
     action_rows: list[dict[str, Any]] = []
+    user_simulator_rows: list[dict[str, Any]] = []
     unsupported_rows: list[dict[str, Any]] = []
     records: list[dict[str, Any]] = []
 
@@ -344,6 +372,7 @@ def run_experiment(
                     stepwise_compact_json_prompts=stepwise_compact_json_prompts,
                     stepwise_single_hint_fallback=stepwise_single_hint_fallback,
                     stepwise_hint_choice_fallback=stepwise_hint_choice_fallback,
+                    reference_user_simulator=reference_user_simulator,
                     dry_run=dry_run,
                     runner=runner,
                 )
@@ -358,6 +387,7 @@ def run_experiment(
                 continue
             task_rows.append(task_record["task_row"])
             action_rows.extend(task_record["action_rows"])
+            user_simulator_rows.extend(task_record["user_simulator_rows"])
             records.append(task_record["record"])
 
     summary = summarize(
@@ -382,6 +412,7 @@ def run_experiment(
         stepwise_compact_json_prompts=stepwise_compact_json_prompts,
         stepwise_single_hint_fallback=stepwise_single_hint_fallback,
         stepwise_hint_choice_fallback=stepwise_hint_choice_fallback,
+        reference_user_simulator=reference_user_simulator,
         dry_run=dry_run,
     )
 
@@ -390,6 +421,11 @@ def run_experiment(
     )
     _write_rows(output_dir / "task_results.csv", task_rows, ROW_FIELDS)
     _write_rows(output_dir / "action_results.csv", action_rows, ACTION_ROW_FIELDS)
+    _write_rows(
+        output_dir / "user_simulator_results.csv",
+        user_simulator_rows,
+        USER_SIMULATOR_ROW_FIELDS,
+    )
     _write_rows(output_dir / "unsupported_tasks.csv", unsupported_rows, UNSUPPORTED_ROW_FIELDS)
     with (output_dir / "samples.jsonl").open("w") as file:
         for record in records:
@@ -400,6 +436,7 @@ def run_experiment(
         "summary": summary,
         "task_rows": task_rows,
         "action_rows": action_rows,
+        "user_simulator_rows": user_simulator_rows,
         "unsupported_rows": unsupported_rows,
         "records": records,
     }
@@ -432,6 +469,7 @@ def _run_task(
     stepwise_compact_json_prompts: bool,
     stepwise_single_hint_fallback: bool,
     stepwise_hint_choice_fallback: bool,
+    reference_user_simulator: bool,
     dry_run: bool,
     runner: Callable[[list[str], int], tuple[str, str, int, float]],
 ) -> dict[str, Any]:
@@ -441,7 +479,18 @@ def _run_task(
     env_evaluator = _import_attr("tau2.evaluator.evaluator_env", "EnvironmentEvaluator")
     message_mod = _import_module("tau2.data_model.message")
     assistant_message_cls = getattr(message_mod, "AssistantMessage")
+    user_message_cls = getattr(message_mod, "UserMessage")
     tool_call_cls = getattr(message_mod, "ToolCall")
+    criteria = raw_task.get("evaluation_criteria") or {}
+    reference_sequence = _reference_actions_by_requestor(
+        domain,
+        task_id,
+        criteria,
+        requestor=None,
+    )
+    reference_user_actions = [
+        action for action in reference_sequence if action.requestor == "user"
+    ]
 
     task = task_cls.model_validate(raw_task)
     env_constructor = _environment_constructor(domain, task)
@@ -463,8 +512,10 @@ def _run_task(
     gateway = LiveToolGateway(trace, tools)
 
     action_rows: list[dict[str, Any]] = []
+    user_simulator_rows: list[dict[str, Any]] = []
     executed_reference_ids: list[str] = []
     bound_reference_ids: list[str] = []
+    executed_user_reference_ids: list[str] = []
 
     prompt_path = Path("")
     raw_path = Path("")
@@ -486,6 +537,17 @@ def _run_task(
         "latency_seconds": 0.0,
         "raw_payload": "",
     }
+    if reference_user_simulator:
+        execute_unlocked_reference_user_actions(
+            reference_sequence=reference_sequence,
+            executed_assistant_reference_ids=executed_reference_ids,
+            executed_user_reference_ids=executed_user_reference_ids,
+            env=env,
+            trajectory=trajectory,
+            tool_call_cls=tool_call_cls,
+            user_message_cls=user_message_cls,
+            user_simulator_rows=user_simulator_rows,
+        )
 
     if stepwise_max_steps > 0:
         stepwise_result = run_stepwise_model_loop(
@@ -630,6 +692,18 @@ def _run_task(
                 bound_reference_ids=bound_reference_ids,
             )
 
+    if reference_user_simulator:
+        execute_unlocked_reference_user_actions(
+            reference_sequence=reference_sequence,
+            executed_assistant_reference_ids=executed_reference_ids,
+            executed_user_reference_ids=executed_user_reference_ids,
+            env=env,
+            trajectory=trajectory,
+            tool_call_cls=tool_call_cls,
+            user_message_cls=user_message_cls,
+            user_simulator_rows=user_simulator_rows,
+        )
+
     stepwise_model_calls = list(stepwise_result["model_calls"])
     all_model_calls = model_calls + feedback_model_calls + stepwise_model_calls
 
@@ -714,6 +788,7 @@ def _run_task(
             str(step["raw_output_path"]) for step in stepwise_result["steps"]
         ),
         "reference_actions": len(reference_actions),
+        "reference_user_actions": len(reference_user_actions),
         "bound_reference_calls": len(bound_reference_ids),
         "gateway_allowed": gateway_allowed,
         "gateway_blocked": gateway_blocked,
@@ -723,6 +798,11 @@ def _run_task(
             1
             for row in action_rows
             if not row["bound_reference_event_id"] and not row["gateway_allowed"]
+        ),
+        "reference_user_simulator": reference_user_simulator,
+        "user_simulator_executed_actions": len(user_simulator_rows),
+        "user_simulator_tool_error_actions": sum(
+            1 for row in user_simulator_rows if row["tool_error"]
         ),
         "exact_sequence_match": exact_sequence,
         "all_reference_actions_executed": (
@@ -768,12 +848,22 @@ def _run_task(
                 }
                 for action in reference_actions
             ],
+            "reference_user_actions": [
+                {
+                    "event_id": action.event_id,
+                    "tool": action.name,
+                    "arguments": action.args,
+                }
+                for action in reference_user_actions
+            ],
             "task_row": task_row,
             "action_rows": action_rows,
+            "user_simulator_rows": user_simulator_rows,
             "callable_invocations": callable_invocations,
             "env_error": env_error,
             "env_reward_info": env_reward_info,
         },
+        "user_simulator_rows": user_simulator_rows,
     }
 
 
@@ -1723,6 +1813,7 @@ def summarize(
     stepwise_compact_json_prompts: bool = False,
     stepwise_single_hint_fallback: bool = False,
     stepwise_hint_choice_fallback: bool = False,
+    reference_user_simulator: bool = False,
     dry_run: bool = False,
 ) -> dict[str, Any]:
     unsupported_reasons = Counter(row["reason"].split(":", 1)[0] for row in unsupported_rows)
@@ -1769,6 +1860,10 @@ def summarize(
         notes.append(
             "Stepwise hint-choice fallback asks the model to select one complete visible active-lease hint after an empty model action; the selected synthesized call still passes through the gateway."
         )
+    if reference_user_simulator:
+        notes.append(
+            "Reference user-simulator replay executes benchmark user-side actions only after preceding assistant reference actions have executed; these actions are counted separately and do not expand assistant authority."
+        )
     return {
         "run_id": run_id,
         "analysis": "fresh local Qwen tau2 task proposals through exact IntentCap task leases",
@@ -1784,6 +1879,7 @@ def summarize(
         "stepwise_compact_json_prompts": stepwise_compact_json_prompts,
         "stepwise_single_hint_fallback": stepwise_single_hint_fallback,
         "stepwise_hint_choice_fallback": stepwise_hint_choice_fallback,
+        "reference_user_simulator": reference_user_simulator,
         "tool_schema_count_min": min(tool_schema_counts) if tool_schema_counts else 0,
         "tool_schema_count_max": max(tool_schema_counts) if tool_schema_counts else 0,
         "tool_schema_count_avg": (
@@ -1816,7 +1912,16 @@ def summarize(
         ),
         "tasks_with_model_calls": sum(1 for row in task_rows if int(row["model_calls"]) > 0),
         "reference_actions": sum(int(row["reference_actions"]) for row in task_rows),
+        "reference_user_actions": sum(
+            int(row.get("reference_user_actions", 0)) for row in task_rows
+        ),
         "bound_reference_calls": sum(int(row["bound_reference_calls"]) for row in task_rows),
+        "user_simulator_executed_actions": sum(
+            int(row.get("user_simulator_executed_actions", 0)) for row in task_rows
+        ),
+        "user_simulator_tool_error_actions": sum(
+            int(row.get("user_simulator_tool_error_actions", 0)) for row in task_rows
+        ),
         "gateway_allowed": sum(1 for row in action_rows if row["gateway_allowed"]),
         "gateway_blocked": sum(1 for row in action_rows if not row["gateway_allowed"]),
         "initial_gateway_allowed": sum(1 for row in initial_rows if row["gateway_allowed"]),
@@ -1867,12 +1972,81 @@ def summarize(
     }
 
 
+def execute_unlocked_reference_user_actions(
+    *,
+    reference_sequence: list[ReferenceAction],
+    executed_assistant_reference_ids: list[str],
+    executed_user_reference_ids: list[str],
+    env: Any,
+    trajectory: list[Any],
+    tool_call_cls: Any,
+    user_message_cls: Any,
+    user_simulator_rows: list[dict[str, Any]],
+) -> None:
+    """Replay user-side reference actions unlocked by executed assistant actions.
+
+    This is an oracle user-simulator mode for utility diagnosis. It deliberately
+    does not route user actions through the assistant gateway or assistant leases.
+    """
+    executed_assistant = set(executed_assistant_reference_ids)
+    executed_user = set(executed_user_reference_ids)
+    for action in reference_sequence:
+        if action.requestor == "assistant" and action.event_id not in executed_assistant:
+            break
+        if action.requestor != "user" or action.event_id in executed_user:
+            continue
+        tool_call = tool_call_cls(
+            id=action.event_id,
+            name=action.name,
+            arguments=action.args,
+            requestor="user",
+        )
+        tool_message = env.get_response(tool_call)
+        trajectory.extend(
+            [
+                user_message_cls(role="user", tool_calls=[tool_call]),
+                tool_message,
+            ]
+        )
+        executed_user_reference_ids.append(action.event_id)
+        user_simulator_rows.append(
+            {
+                "domain": action.domain,
+                "task_id": action.task_id,
+                "index": action.index,
+                "action_id": action.action_id,
+                "event_id": action.event_id,
+                "tool": action.name,
+                "args_json": json.dumps(action.args, sort_keys=True),
+                "executed": True,
+                "tool_error": bool(getattr(tool_message, "error", False)),
+                "tool_result_preview": _preview_json(tool_message, limit=1600),
+            }
+        )
+
+
 def _reference_actions(domain: str, task_id: str, criteria: dict[str, Any]) -> list[ReferenceAction]:
+    return _reference_actions_by_requestor(
+        domain,
+        task_id,
+        criteria,
+        requestor="assistant",
+    )
+
+
+def _reference_actions_by_requestor(
+    domain: str,
+    task_id: str,
+    criteria: dict[str, Any],
+    *,
+    requestor: str | None,
+) -> list[ReferenceAction]:
     actions: list[ReferenceAction] = []
     for index, action in enumerate(criteria.get("actions") or []):
         if not isinstance(action, dict):
             continue
-        if str(action.get("requestor", "assistant")) != "assistant":
+        action_requestor = str(action.get("requestor", "assistant"))
+        if requestor is not None and action_requestor != requestor:
             continue
         name = str(action.get("name", ""))
         action_id = str(action.get("action_id", index))
@@ -1884,10 +2058,10 @@ def _reference_actions(domain: str, task_id: str, criteria: dict[str, Any]) -> l
                 action_id=action_id,
                 index=index,
                 name=name,
-                requestor="assistant",
+                requestor=action_requestor,
                 args=dict(action.get("arguments") or {}),
                 reward_basis=tuple(str(item) for item in (criteria.get("reward_basis") or [])),
-                object_name=f"tau2.{domain}.assistant.{name}",
+                object_name=f"tau2.{domain}.{action_requestor}.{name}",
             )
         )
     return actions

@@ -1,4 +1,5 @@
 from pathlib import Path
+from types import SimpleNamespace
 
 import scripts.run_tau2_local_llm_task_gateway as runner
 from run_tau2_reference_actions_live_gateway import ReferenceAction
@@ -205,6 +206,122 @@ def test_select_tool_schemas_can_expose_only_leased_tools():
     assert runner.select_tool_schemas(schemas, actions, tool_exposure="leased") == [
         {"name": "create_task", "parameters": {}}
     ]
+
+
+def test_reference_action_parser_keeps_user_actions_separate_from_assistant_leases():
+    criteria = {
+        "reward_basis": ["ENV_ASSERTION"],
+        "actions": [
+            {
+                "action_id": "enable_roaming_0",
+                "requestor": "assistant",
+                "name": "enable_roaming",
+                "arguments": {"customer_id": "C1001", "line_id": "L1002"},
+            },
+            {
+                "action_id": "toggle_roaming_1",
+                "requestor": "user",
+                "name": "toggle_roaming",
+                "arguments": {},
+            },
+        ],
+    }
+
+    assistant_actions = runner._reference_actions("telecom", "t", criteria)
+    all_actions = runner._reference_actions_by_requestor(
+        "telecom",
+        "t",
+        criteria,
+        requestor=None,
+    )
+
+    assert [action.name for action in assistant_actions] == ["enable_roaming"]
+    assert [action.requestor for action in all_actions] == ["assistant", "user"]
+    assert all_actions[1].object_name == "tau2.telecom.user.toggle_roaming"
+
+
+def test_reference_user_simulator_waits_for_preceding_assistant_action():
+    assistant_action = ReferenceAction(
+        event_id="telecom:t:enable_roaming_0",
+        domain="telecom",
+        task_id="t",
+        action_id="enable_roaming_0",
+        index=0,
+        name="enable_roaming",
+        requestor="assistant",
+        args={"customer_id": "C1001", "line_id": "L1002"},
+        reward_basis=(),
+        object_name="tau2.telecom.assistant.enable_roaming",
+    )
+    user_action = ReferenceAction(
+        event_id="telecom:t:toggle_roaming_1",
+        domain="telecom",
+        task_id="t",
+        action_id="toggle_roaming_1",
+        index=1,
+        name="toggle_roaming",
+        requestor="user",
+        args={},
+        reward_basis=(),
+        object_name="tau2.telecom.user.toggle_roaming",
+    )
+    env_calls = []
+
+    class FakeToolCall:
+        def __init__(self, **kwargs):
+            self.__dict__.update(kwargs)
+
+    class FakeUserMessage:
+        def __init__(self, **kwargs):
+            self.__dict__.update(kwargs)
+
+    class FakeEnv:
+        def get_response(self, tool_call):
+            env_calls.append((tool_call.requestor, tool_call.name))
+            return SimpleNamespace(
+                content="ok",
+                error=False,
+                model_dump=lambda: {
+                    "content": "ok",
+                    "error": False,
+                    "id": tool_call.id,
+                    "requestor": tool_call.requestor,
+                },
+            )
+
+    rows = []
+    executed_users = []
+    trajectory = []
+
+    runner.execute_unlocked_reference_user_actions(
+        reference_sequence=[assistant_action, user_action],
+        executed_assistant_reference_ids=[],
+        executed_user_reference_ids=executed_users,
+        env=FakeEnv(),
+        trajectory=trajectory,
+        tool_call_cls=FakeToolCall,
+        user_message_cls=FakeUserMessage,
+        user_simulator_rows=rows,
+    )
+
+    assert rows == []
+    assert env_calls == []
+
+    runner.execute_unlocked_reference_user_actions(
+        reference_sequence=[assistant_action, user_action],
+        executed_assistant_reference_ids=[assistant_action.event_id],
+        executed_user_reference_ids=executed_users,
+        env=FakeEnv(),
+        trajectory=trajectory,
+        tool_call_cls=FakeToolCall,
+        user_message_cls=FakeUserMessage,
+        user_simulator_rows=rows,
+    )
+
+    assert env_calls == [("user", "toggle_roaming")]
+    assert executed_users == [user_action.event_id]
+    assert rows[0]["tool"] == "toggle_roaming"
+    assert len(trajectory) == 2
 
 
 def test_summary_counts_feedback_rounds():

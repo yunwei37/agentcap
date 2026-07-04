@@ -244,7 +244,7 @@ def _summary(
         "project_head": _git_output(["git", "rev-parse", "HEAD"]),
         "git_status": _git_output(["git", "status", "--short", "--branch"]),
         "notes": [
-            "This pass combines R059 residual rows with R060 feasibility rows only.",
+            "This pass combines saved residual-completion rows with reference-feasibility rows only.",
             "It does not change the official tau2 tool-oracle score.",
             "Adjusted action/env pass excludes references already classified as invalid by R060, then still requires env_reward == 1.0.",
             "It is an oracle-quality/accounting audit, not a fresh model run or utility improvement.",
