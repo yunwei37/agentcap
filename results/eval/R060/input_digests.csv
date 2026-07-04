@@ -1,0 +1,5 @@
+path,sha256,bytes
+results/eval/R057/samples.jsonl,93403a023cfc7721bec1cff8ac699af13307a614b3d1c451d9c05566f1d9822e,392236
+results/eval/R057/task_gateway_summary.json,1a0dbfcfbe651b22a13a67c7e4c882a51e44b6a91fe7a9dd3183295019be946c,5140
+benchmarks/tau2-bench/data/tau2/domains/retail/db.json,413a65160adbdb5fde0ffc0015c49b6d70250b10c18128de169b597af7766765,2811616
+benchmarks/tau2-bench/data/tau2/domains/retail/tasks.json,8e03ebce7901bd6218e7a7dc3105faa9324091a68058f7fe61c65262868812e8,345982
