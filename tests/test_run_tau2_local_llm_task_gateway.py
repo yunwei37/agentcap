@@ -389,6 +389,42 @@ def test_step_prompt_can_include_state_grounded_arg_hints_without_reference_acti
     assert "evaluation_criteria" not in prompt
 
 
+def test_compact_step_prompt_forbids_reasoning_without_reference_actions():
+    prompt = runner.build_step_prompt(
+        domain="airline",
+        raw_task={
+            "id": "t",
+            "evaluation_criteria": {
+                "actions": [
+                    {
+                        "name": "get_reservation_details",
+                        "arguments": {"reservation_id": "HIDDEN"},
+                    }
+                ]
+            },
+        },
+        tools=[{"name": "get_reservation_details", "parameters": {}}],
+        step_index=2,
+        action_rows=[],
+        state_grounded_arg_hints=[
+            {
+                "tool": "get_reservation_details",
+                "arguments": {"reservation_id": "Q69X3R"},
+                "complete_arguments": True,
+                "grounding": "visible",
+            }
+        ],
+        compact_json_prompt=True,
+    )
+
+    assert "JSON-only tau2 step. /no_think" in prompt
+    assert "Do not write <think>" in prompt
+    assert '{"actions":[]}' in prompt
+    assert "Q69X3R" in prompt
+    assert "HIDDEN" not in prompt
+    assert "evaluation_criteria" not in prompt
+
+
 def test_single_hint_fallback_requires_exactly_one_complete_hint():
     incomplete = {
         "tool": "create_task",
@@ -455,6 +491,42 @@ def test_hint_choice_prompt_omits_reference_actions():
 
     assert "complete_visible_authorized_hints" in prompt
     assert "hint_0" in prompt
+    assert "#W2378156" in prompt
+    assert "HIDDEN" not in prompt
+    assert "evaluation_criteria" not in prompt
+
+
+def test_compact_hint_choice_prompt_forbids_reasoning_without_reference_actions():
+    prompt = runner.build_hint_choice_prompt(
+        domain="retail",
+        raw_task={
+            "id": "t",
+            "instruction": "Handle the visible order.",
+            "evaluation_criteria": {
+                "actions": [
+                    {
+                        "name": "get_order_details",
+                        "arguments": {"order_id": "HIDDEN"},
+                    }
+                ]
+            },
+        },
+        step_index=3,
+        action_rows=[],
+        complete_hints=[
+            {
+                "tool": "get_order_details",
+                "arguments": {"order_id": "#W2378156"},
+                "complete_arguments": True,
+                "grounding": "visible",
+            }
+        ],
+        compact_json_prompt=True,
+    )
+
+    assert "JSON-only selector. /no_think" in prompt
+    assert "Do not write <think>" in prompt
+    assert "selected_hint_id" in prompt
     assert "#W2378156" in prompt
     assert "HIDDEN" not in prompt
     assert "evaluation_criteria" not in prompt

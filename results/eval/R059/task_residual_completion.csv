@@ -1,0 +1,8 @@
+source_run_id,domain,task_id,reference_actions,model_calls,executed_reference_actions,missing_reference_actions,executed_prefix_actions,missing_complete_visible_actions,missing_partial_visible_actions,missing_hidden_actions,residual_category,tool_oracle_pass,all_reference_actions_executed,exact_sequence_match,action_reward,env_reward,stepwise_single_hint_fallbacks,stepwise_hint_choice_fallbacks
+R057,airline,1,2,2,2,0,2,0,0,0,passed,True,True,True,1.0,1.0,1,0
+R057,airline,2,3,3,3,0,1,0,0,0,passed,True,True,False,1.0,1.0,0,0
+R057,retail,0,5,5,5,0,5,0,0,0,passed,True,True,True,1.0,1.0,0,2
+R057,retail,1,5,5,5,0,5,0,0,0,passed,True,True,True,1.0,1.0,0,1
+R057,retail,2,11,10,10,1,1,0,0,1,missing_hidden_actions,False,False,False,0.0,1.0,2,2
+R057,telecom,[mobile_data_issue]user_abroad_roaming_disabled_on[PERSONA:Easy],1,1,1,0,1,0,0,0,passed,True,True,True,1.0,1.0,0,0
+R057,telecom,[mobile_data_issue]user_abroad_roaming_disabled_off[PERSONA:Hard],1,1,1,0,1,0,0,0,all_references_executed_but_reward_failed,False,True,True,0.0,0.0,0,0

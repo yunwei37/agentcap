@@ -75,6 +75,7 @@ ROW_FIELDS = [
     "stepwise_empty_retries",
     "stepwise_empty_retry_steps",
     "stepwise_state_grounded_arg_hints",
+    "stepwise_compact_json_prompts",
     "stepwise_state_grounded_arg_hint_steps",
     "stepwise_single_hint_fallbacks",
     "stepwise_hint_choice_fallbacks",
@@ -175,6 +176,15 @@ def main() -> int:
         ),
     )
     parser.add_argument(
+        "--stepwise-compact-json-prompts",
+        action="store_true",
+        help=(
+            "In stepwise mode, use a stricter compact JSON-only prompt that "
+            "explicitly forbids reasoning text such as <think>. This changes "
+            "only model I/O formatting; leases and gateway checks are unchanged."
+        ),
+    )
+    parser.add_argument(
         "--stepwise-single-hint-fallback",
         action="store_true",
         help=(
@@ -214,6 +224,7 @@ def main() -> int:
         stepwise_max_steps=args.stepwise_max_steps,
         stepwise_empty_retries=args.stepwise_empty_retries,
         stepwise_state_grounded_arg_hints=args.stepwise_state_grounded_arg_hints,
+        stepwise_compact_json_prompts=args.stepwise_compact_json_prompts,
         stepwise_single_hint_fallback=args.stepwise_single_hint_fallback,
         stepwise_hint_choice_fallback=args.stepwise_hint_choice_fallback,
         dry_run=args.dry_run,
@@ -240,6 +251,7 @@ def run_experiment(
     stepwise_max_steps: int = 0,
     stepwise_empty_retries: int = 0,
     stepwise_state_grounded_arg_hints: bool = False,
+    stepwise_compact_json_prompts: bool = False,
     stepwise_single_hint_fallback: bool = False,
     stepwise_hint_choice_fallback: bool = False,
     dry_run: bool = False,
@@ -329,6 +341,7 @@ def run_experiment(
                     stepwise_max_steps=stepwise_max_steps,
                     stepwise_empty_retries=stepwise_empty_retries,
                     stepwise_state_grounded_arg_hints=stepwise_state_grounded_arg_hints,
+                    stepwise_compact_json_prompts=stepwise_compact_json_prompts,
                     stepwise_single_hint_fallback=stepwise_single_hint_fallback,
                     stepwise_hint_choice_fallback=stepwise_hint_choice_fallback,
                     dry_run=dry_run,
@@ -366,6 +379,7 @@ def run_experiment(
         stepwise_max_steps=stepwise_max_steps,
         stepwise_empty_retries=stepwise_empty_retries,
         stepwise_state_grounded_arg_hints=stepwise_state_grounded_arg_hints,
+        stepwise_compact_json_prompts=stepwise_compact_json_prompts,
         stepwise_single_hint_fallback=stepwise_single_hint_fallback,
         stepwise_hint_choice_fallback=stepwise_hint_choice_fallback,
         dry_run=dry_run,
@@ -415,6 +429,7 @@ def _run_task(
     stepwise_max_steps: int,
     stepwise_empty_retries: int,
     stepwise_state_grounded_arg_hints: bool,
+    stepwise_compact_json_prompts: bool,
     stepwise_single_hint_fallback: bool,
     stepwise_hint_choice_fallback: bool,
     dry_run: bool,
@@ -481,6 +496,7 @@ def _run_task(
             max_steps=stepwise_max_steps,
             empty_retries=stepwise_empty_retries,
             state_grounded_arg_hints=stepwise_state_grounded_arg_hints,
+            compact_json_prompts=stepwise_compact_json_prompts,
             step_prompt_dir=step_prompt_dir,
             step_raw_dir=step_raw_dir,
             llama_bin=llama_bin,
@@ -679,6 +695,7 @@ def _run_task(
             1 for step in stepwise_result["steps"] if step.get("empty_retry")
         ),
         "stepwise_state_grounded_arg_hints": stepwise_state_grounded_arg_hints,
+        "stepwise_compact_json_prompts": stepwise_compact_json_prompts,
         "stepwise_state_grounded_arg_hint_steps": sum(
             1 for step in stepwise_result["steps"] if step.get("state_grounded_arg_hints")
         ),
@@ -769,6 +786,7 @@ def run_stepwise_model_loop(
     max_steps: int,
     empty_retries: int,
     state_grounded_arg_hints: bool,
+    compact_json_prompts: bool,
     step_prompt_dir: Path,
     step_raw_dir: Path,
     llama_bin: Path,
@@ -826,6 +844,7 @@ def run_stepwise_model_loop(
             action_rows=action_rows,
             empty_retry_count=empty_retry_count,
             state_grounded_arg_hints=arg_hints,
+            compact_json_prompt=compact_json_prompts,
         )
         prompt_path = step_prompt_dir / f"{_safe_id(domain, task_id)}_step_{step_index}.txt"
         raw_path = step_raw_dir / f"{_safe_id(domain, task_id)}_step_{step_index}.txt"
@@ -872,6 +891,7 @@ def run_stepwise_model_loop(
                     step_index=step_index,
                     action_rows=action_rows,
                     complete_hints=complete_hints,
+                    compact_json_prompt=compact_json_prompts,
                 )
                 choice_prompt_path = (
                     step_prompt_dir
@@ -1248,6 +1268,7 @@ def build_hint_choice_prompt(
     step_index: int,
     action_rows: list[dict[str, Any]],
     complete_hints: list[dict[str, Any]],
+    compact_json_prompt: bool = False,
 ) -> str:
     public_task = {
         key: value
@@ -1263,7 +1284,7 @@ def build_hint_choice_prompt(
         }
         for index, hint in enumerate(complete_hints)
     ]
-    payload = {
+    payload: dict[str, Any] = {
         "domain": domain,
         "step_index": step_index,
         "task": public_task,
@@ -1280,10 +1301,23 @@ def build_hint_choice_prompt(
             for row in action_rows
         ],
         "complete_visible_authorized_hints": candidates,
-        "output_schema": {
-            "selected_hint_id": "hint_0 or null",
-            "reason": "short reason based only on visible task/tool state",
-        },
+    }
+    if compact_json_prompt:
+        payload["output_schema"] = {"selected_hint_id": "hint_N or null"}
+        return (
+            "JSON-only selector. /no_think\n"
+            "First output character must be { and the last must be }. "
+            "Do not write <think>, markdown, prose, or explanations.\n"
+            "Choose at most one complete_visible_authorized_hints[].hint_id. "
+            "Do not invent tools or arguments. Use null if none is useful.\n"
+            "Hidden reference actions are not provided.\n"
+            "Input JSON:\n"
+            f"{_json_payload(payload, compact=True)}\n"
+            "Output JSON only:\n"
+        )
+    payload["output_schema"] = {
+        "selected_hint_id": "hint_0 or null",
+        "reason": "short reason based only on visible task/tool state",
     }
     return (
         "You are choosing one authorized continuation after the previous model "
@@ -1295,7 +1329,7 @@ def build_hint_choice_prompt(
         "Return exactly one JSON object and no prose.\n"
         "The hidden reference actions are not provided.\n"
         "Input JSON:\n"
-        f"{json.dumps(payload, indent=2, sort_keys=True, default=_json_default)}\n"
+        f"{_json_payload(payload, compact=False)}\n"
         "Output JSON:\n"
     )
 
@@ -1387,13 +1421,14 @@ def build_step_prompt(
     action_rows: list[dict[str, Any]],
     empty_retry_count: int = 0,
     state_grounded_arg_hints: list[dict[str, Any]] | None = None,
+    compact_json_prompt: bool = False,
 ) -> str:
     public_task = {
         key: value
         for key, value in raw_task.items()
         if key not in {"evaluation_criteria", "annotations"}
     }
-    payload = {
+    payload: dict[str, Any] = {
         "domain": domain,
         "step_index": step_index,
         "task": public_task,
@@ -1410,7 +1445,13 @@ def build_step_prompt(
             }
             for row in action_rows
         ],
-        "output_schema": {
+    }
+    if compact_json_prompt:
+        payload["output_schema"] = {
+            "actions": [{"tool": "tool_name", "arguments": {"arg_name": "arg_value"}}],
+        }
+    else:
+        payload["output_schema"] = {
             "actions": [
                 {
                     "tool": "tool_name",
@@ -1418,8 +1459,7 @@ def build_step_prompt(
                 }
             ],
             "final_response": "short user-facing response",
-        },
-    }
+        }
     if empty_retry_count > 0:
         payload["previous_empty_action_retries"] = empty_retry_count
     if state_grounded_arg_hints:
@@ -1439,6 +1479,22 @@ def build_step_prompt(
             "by an active lease and also appears in visible task/tool state; "
             "prefer these values when filling tool arguments.\n"
         )
+    if compact_json_prompt:
+        return (
+            "JSON-only tau2 step. /no_think\n"
+            "First output character must be { and the last must be }. "
+            "Do not write <think>, markdown, prose, explanations, or final_response.\n"
+            "Return {\"actions\":[{\"tool\":\"...\",\"arguments\":{...}}]} for one "
+            "useful authorized call, or {\"actions\":[]} if none is useful.\n"
+            "Use only input.available_tools. Do not repeat a blocked call with "
+            "the same arguments.\n"
+            f"{retry_instruction}"
+            f"{hint_instruction}"
+            "Hidden reference actions are not provided.\n"
+            "Input JSON:\n"
+            f"{_json_payload(payload, compact=True)}\n"
+            "Output JSON only:\n"
+        )
     return (
         "You are a tau2 assistant agent operating one step at a time.\n"
         "The input includes trusted task text, available tool schemas, and prior "
@@ -1451,9 +1507,20 @@ def build_step_prompt(
         "Return exactly one JSON object and no prose.\n"
         "The hidden reference actions are not provided.\n"
         "Input JSON:\n"
-        f"{json.dumps(payload, indent=2, sort_keys=True, default=_json_default)}\n"
+        f"{_json_payload(payload, compact=False)}\n"
         "Output JSON:\n"
     )
+
+
+def _json_payload(payload: dict[str, Any], *, compact: bool) -> str:
+    if compact:
+        return json.dumps(
+            payload,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=_json_default,
+        )
+    return json.dumps(payload, indent=2, sort_keys=True, default=_json_default)
 
 
 def _should_attempt_feedback(
@@ -1653,6 +1720,7 @@ def summarize(
     stepwise_max_steps: int,
     stepwise_empty_retries: int,
     stepwise_state_grounded_arg_hints: bool = False,
+    stepwise_compact_json_prompts: bool = False,
     stepwise_single_hint_fallback: bool = False,
     stepwise_hint_choice_fallback: bool = False,
     dry_run: bool = False,
@@ -1689,6 +1757,10 @@ def summarize(
         notes.append(
             "Stepwise state-grounded argument hints expose active-lease argument values only when those values also appear in visible task text or executed tool results; this remains an oracle-lease pilot."
         )
+    if stepwise_compact_json_prompts:
+        notes.append(
+            "Stepwise compact JSON prompts constrain the local model output protocol only; they do not expose additional tools, arguments, leases, or hidden reference actions."
+        )
     if stepwise_single_hint_fallback:
         notes.append(
             "Stepwise single-hint fallback deterministically synthesizes at most one complete state-grounded active-lease call after an empty model action; synthesized calls still pass through the gateway."
@@ -1709,6 +1781,7 @@ def summarize(
         "stepwise_max_steps": stepwise_max_steps,
         "stepwise_empty_retries": stepwise_empty_retries,
         "stepwise_state_grounded_arg_hints": stepwise_state_grounded_arg_hints,
+        "stepwise_compact_json_prompts": stepwise_compact_json_prompts,
         "stepwise_single_hint_fallback": stepwise_single_hint_fallback,
         "stepwise_hint_choice_fallback": stepwise_hint_choice_fallback,
         "tool_schema_count_min": min(tool_schema_counts) if tool_schema_counts else 0,
