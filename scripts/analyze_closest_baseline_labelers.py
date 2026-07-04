@@ -22,7 +22,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from intentcap.checker import _lease_matches_event, check_event
+from intentcap.checker import _lease_matches_event, check_trace
 
 
 DEFAULT_TRACE_PATHS = (
@@ -185,10 +185,11 @@ def _analyze_trace(*, source: str, source_path: Path, trace: dict[str, Any]) -> 
     leases = trace.get("leases", [])
     labels = trace.get("labels", {})
     exposed_op_objects = {(lease.get("op"), lease.get("object")) for lease in leases}
+    verdicts = check_trace(trace)
     rows: list[dict[str, Any]] = []
 
-    for event in trace.get("events", []):
-        verdict = check_event(event, leases, labels)
+    for index, event in enumerate(trace.get("events", [])):
+        verdict = verdicts[index]
         checker_allowed = bool(verdict["allowed"])
         protected = _is_protected_decision(event)
         control_sources = [str(source) for source in event.get("control_provenance", [])]

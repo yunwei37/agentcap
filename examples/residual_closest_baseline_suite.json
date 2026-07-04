@@ -1,0 +1,300 @@
+{
+  "intent": {
+    "id": "residual_closest_baseline_suite",
+    "goal": "isolate IntentCap lease semantics beyond provenance-only baselines"
+  },
+  "labels": {
+    "signed_pdf_skill": {
+      "allowed": {
+        "tool_select": [
+          "pdf.extract.tool_choice"
+        ]
+      }
+    },
+    "trusted_issue_summary": {
+      "allowed": {
+        "parameterize": [
+          "github.issue_body"
+        ]
+      }
+    },
+    "trusted_repo_selection": {
+      "allowed": {
+        "sink_select": [
+          "github.repo"
+        ]
+      }
+    },
+    "trusted_subagent_policy": {
+      "allowed": {
+        "delegate": [
+          "summary_subagent.capabilities"
+        ]
+      }
+    },
+    "trusted_user_intent": {
+      "allowed": {
+        "sink_select": [
+          "github.repo"
+        ],
+        "tool_select": [
+          "pdf.extract.tool_choice"
+        ]
+      }
+    }
+  },
+  "leases": [
+    {
+      "id": "temporal_issue_after_review",
+      "op": "mcp.call",
+      "object": "github.create_issue",
+      "args": {
+        "repo": {
+          "equals": "org/repo-temporal"
+        }
+      },
+      "control_may_depend_on": [
+        "trusted_user_intent"
+      ],
+      "data_may_depend_on": [
+        "trusted_issue_summary"
+      ],
+      "temporal": {
+        "after": [
+          "review_complete"
+        ]
+      }
+    },
+    {
+      "id": "single_issue_budget",
+      "op": "mcp.call",
+      "object": "github.create_issue",
+      "args": {
+        "repo": {
+          "equals": "org/repo-y"
+        }
+      },
+      "control_may_depend_on": [
+        "trusted_user_intent"
+      ],
+      "data_may_depend_on": [
+        "trusted_issue_summary"
+      ],
+      "budget": {
+        "invocations": 1
+      }
+    },
+    {
+      "id": "delegate_summary_only",
+      "op": "subagent.spawn",
+      "object": "summarizer",
+      "args": {
+        "role": {
+          "equals": "summary"
+        }
+      },
+      "control_may_depend_on": [
+        "trusted_subagent_policy"
+      ],
+      "data_may_depend_on": [
+        "trusted_issue_summary"
+      ],
+      "delegation": {
+        "capabilities": [
+          {
+            "op": "ctx.use",
+            "object": "extracted_tables",
+            "mode": "summarize"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pdf_skill_extract_only",
+      "holder": "pdf_skill",
+      "op": "exec.run",
+      "object": "/skills/pdf/extract.py",
+      "args": {
+        "input": {
+          "equals": "/workspace/a.pdf"
+        },
+        "output": {
+          "equals": "/workspace/out/a.xlsx"
+        }
+      },
+      "control_may_depend_on": [
+        "trusted_user_intent",
+        "signed_pdf_skill"
+      ],
+      "data_may_depend_on": [
+        "trusted_issue_summary"
+      ]
+    },
+    {
+      "id": "repo_selection_only",
+      "op": "mcp.call",
+      "object": "github.create_issue",
+      "args": {
+        "repo": {
+          "equals": "org/repo-class"
+        }
+      },
+      "control_may_depend_on": [
+        "trusted_repo_selection"
+      ],
+      "data_may_depend_on": [
+        "trusted_issue_summary"
+      ]
+    },
+    {
+      "id": "proof_bound_issue",
+      "op": "mcp.call",
+      "object": "github.create_issue",
+      "args": {
+        "repo": {
+          "equals": "org/repo-proof"
+        }
+      },
+      "control_may_depend_on": [
+        "trusted_user_intent"
+      ],
+      "data_may_depend_on": [
+        "trusted_issue_summary"
+      ],
+      "intent": {
+        "must_derive_from": "trusted_repo_selection",
+        "requires_approval": "fresh_issue_approval"
+      }
+    }
+  ],
+  "events": [
+    {
+      "id": "issue_before_review",
+      "op": "mcp.call",
+      "object": "github.create_issue",
+      "args": {
+        "repo": "org/repo-temporal"
+      },
+      "decision": "github.repo",
+      "mode": "sink_select",
+      "control_provenance": [
+        "trusted_user_intent"
+      ],
+      "data_provenance": [
+        "trusted_issue_summary"
+      ]
+    },
+    {
+      "id": "budgeted_first_issue",
+      "op": "mcp.call",
+      "object": "github.create_issue",
+      "args": {
+        "repo": "org/repo-y"
+      },
+      "decision": "github.repo",
+      "mode": "sink_select",
+      "control_provenance": [
+        "trusted_user_intent"
+      ],
+      "data_provenance": [
+        "trusted_issue_summary"
+      ]
+    },
+    {
+      "id": "budgeted_second_issue",
+      "op": "mcp.call",
+      "object": "github.create_issue",
+      "args": {
+        "repo": "org/repo-y"
+      },
+      "decision": "github.repo",
+      "mode": "sink_select",
+      "control_provenance": [
+        "trusted_user_intent"
+      ],
+      "data_provenance": [
+        "trusted_issue_summary"
+      ]
+    },
+    {
+      "id": "delegation_over_attenuation",
+      "op": "subagent.spawn",
+      "object": "summarizer",
+      "args": {
+        "role": "summary",
+        "capabilities": [
+          {
+            "op": "mcp.call",
+            "object": "github.create_issue",
+            "mode": "sink_select"
+          }
+        ]
+      },
+      "decision": "summary_subagent.capabilities",
+      "mode": "delegate",
+      "control_provenance": [
+        "trusted_subagent_policy"
+      ],
+      "data_provenance": [
+        "trusted_issue_summary"
+      ]
+    },
+    {
+      "id": "cross_extension_holder_mismatch",
+      "holder": "github_mcp",
+      "op": "exec.run",
+      "object": "/skills/pdf/extract.py",
+      "args": {
+        "input": "/workspace/a.pdf",
+        "output": "/workspace/out/a.xlsx"
+      },
+      "decision": "pdf.extract.tool_choice",
+      "mode": "tool_select",
+      "control_provenance": [
+        "trusted_user_intent",
+        "signed_pdf_skill"
+      ],
+      "data_provenance": [
+        "trusted_issue_summary"
+      ]
+    },
+    {
+      "id": "same_trusted_source_wrong_decision_class",
+      "op": "mcp.call",
+      "object": "github.create_issue",
+      "args": {
+        "repo": "org/repo-class"
+      },
+      "decision": "email.recipient",
+      "mode": "sink_select",
+      "control_provenance": [
+        "trusted_repo_selection"
+      ],
+      "data_provenance": [
+        "trusted_issue_summary"
+      ]
+    },
+    {
+      "id": "missing_intent_proof",
+      "op": "mcp.call",
+      "object": "github.create_issue",
+      "args": {
+        "repo": "org/repo-proof"
+      },
+      "decision": "github.repo",
+      "mode": "sink_select",
+      "control_provenance": [
+        "trusted_user_intent"
+      ],
+      "data_provenance": [
+        "trusted_issue_summary"
+      ],
+      "proof": {
+        "intent_sources": [
+          "trusted_user_intent"
+        ],
+        "approvals": []
+      }
+    }
+  ]
+}

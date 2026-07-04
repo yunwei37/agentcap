@@ -171,3 +171,31 @@ def test_closest_baseline_labelers_loads_list_wrapped_trace_units(tmp_path):
 
     assert result["summary"]["sources"] == 1
     assert result["source_rows"][0]["source"].endswith(":mock:t0")
+
+
+def test_residual_suite_exercises_lease_semantics_beyond_closest_labelers():
+    trace_path = (
+        Path(__file__).parents[1]
+        / "examples"
+        / "residual_closest_baseline_suite.json"
+    )
+
+    result = analyzer.analyze(run_id="test", trace_paths=(trace_path,))
+    summary = result["summary"]
+
+    assert summary["events"] == 7
+    assert summary["checker_allowed"] == 1
+    assert summary["checker_denied"] == 6
+    assert summary["denied_residual_after_closest_baselines"] == 6
+    assert summary["residual_after_closest_baselines_by_mode"] == {
+        "delegate": 1,
+        "sink_select": 4,
+        "tool_select": 1,
+    }
+    for row in result["event_rows"]:
+        if row["checker_allowed"]:
+            continue
+        assert row["residual_after_closest_baselines"] is True
+        assert row["authgraph_pact_airguard_accept"] is True
+        assert row["ifc_taint_accept"] is True
+        assert row["policy_dsl_accept"] is True

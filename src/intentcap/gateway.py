@@ -11,7 +11,7 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import Any
 
-from intentcap.checker import check_event
+from intentcap.checker import check_event, check_trace
 
 
 @dataclass(frozen=True)
@@ -66,6 +66,13 @@ class TraceGateway:
 
     def authorize(self, event: dict[str, Any]) -> GatewayDecision:
         verdict = check_event(event, self.leases, self.labels)
+        return self._decision_from_verdict(event, verdict)
+
+    def _decision_from_verdict(
+        self,
+        event: dict[str, Any],
+        verdict: dict[str, Any],
+    ) -> GatewayDecision:
         allowed = bool(verdict["allowed"])
         return GatewayDecision(
             event_id=str(event.get("id", "<unknown>")),
@@ -80,10 +87,11 @@ class TraceGateway:
         )
 
     def replay(self) -> list[dict[str, Any]]:
-        decisions: list[dict[str, Any]] = []
-        for event in self.events:
-            decisions.append(self.authorize(event).to_dict())
-        return decisions
+        verdicts = check_trace(self.trace)
+        return [
+            self._decision_from_verdict(event, verdict).to_dict()
+            for event, verdict in zip(self.events, verdicts)
+        ]
 
     def summary(self, decisions: list[dict[str, Any]] | None = None) -> dict[str, Any]:
         if decisions is None:

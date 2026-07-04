@@ -35,10 +35,13 @@ def check_trace(trace: dict[str, Any]) -> list[dict[str, Any]]:
 
     labels = trace.get("labels", {})
     leases = trace.get("leases", [])
-    verdicts = [
-        check_event(event, leases, labels)
-        for event in trace.get("events", [])
-    ]
+    state = _initial_state()
+    verdicts = []
+    for event in trace.get("events", []):
+        verdict = _check_event(event, leases, labels, state).to_dict()
+        verdicts.append(verdict)
+        if verdict["allowed"]:
+            _record_allowed_event(event, verdict, state)
     return verdicts
 
 
@@ -56,20 +59,44 @@ def _check_event(
     event: dict[str, Any],
     leases: list[dict[str, Any]],
     labels: dict[str, Any],
+    state: dict[str, Any] | None = None,
 ) -> Verdict:
     event_id = str(event.get("id", "<unknown>"))
+    if state is None:
+        state = _initial_state()
     candidates = [lease for lease in leases if _lease_matches_event(lease, event)]
     if not candidates:
         return Verdict(event_id, False, "no matching lease")
 
     denial_reasons: list[str] = []
     for lease in candidates:
-        reason = _check_provenance(event, lease, labels)
+        reason = _check_lease_conditions(event, lease, state)
+        if reason is None:
+            reason = _check_provenance(event, lease, labels)
         if reason is None:
             return Verdict(event_id, True, "allowed", str(lease.get("id", "<lease>")))
         denial_reasons.append(f"{lease.get('id', '<lease>')}: {reason}")
 
     return Verdict(event_id, False, "; ".join(denial_reasons))
+
+
+def _initial_state() -> dict[str, Any]:
+    return {
+        "completed_events": set(),
+        "lease_invocations": {},
+    }
+
+
+def _record_allowed_event(
+    event: dict[str, Any],
+    verdict: dict[str, Any],
+    state: dict[str, Any],
+) -> None:
+    state["completed_events"].add(str(event.get("id", "<unknown>")))
+    lease_id = verdict.get("lease_id")
+    if lease_id:
+        counts = state["lease_invocations"]
+        counts[lease_id] = counts.get(lease_id, 0) + 1
 
 
 def _lease_matches_event(lease: dict[str, Any], event: dict[str, Any]) -> bool:
@@ -106,6 +133,171 @@ def _value_matches(value: Any, constraint: Any) -> bool:
     if "suffix" in constraint:
         return isinstance(value, str) and value.endswith(str(constraint["suffix"]))
     return False
+
+
+def _check_lease_conditions(
+    event: dict[str, Any],
+    lease: dict[str, Any],
+    state: dict[str, Any],
+) -> str | None:
+    for check in (
+        _check_holder,
+        _check_temporal,
+        _check_budget,
+        _check_intent_derivation,
+        _check_delegation,
+    ):
+        reason = check(event, lease, state)
+        if reason is not None:
+            return reason
+    return None
+
+
+def _check_holder(
+    event: dict[str, Any],
+    lease: dict[str, Any],
+    state: dict[str, Any],
+) -> str | None:
+    del state
+    holder = lease.get("holder")
+    if holder is None:
+        return None
+    event_holder = event.get("holder")
+    if event_holder != holder:
+        return f"holder {event_holder!r} does not match lease holder {holder!r}"
+    return None
+
+
+def _check_temporal(
+    event: dict[str, Any],
+    lease: dict[str, Any],
+    state: dict[str, Any],
+) -> str | None:
+    del event
+    temporal = lease.get("temporal", {})
+    required = []
+    if isinstance(temporal, dict):
+        required.extend(_as_list(temporal.get("after", [])))
+    required.extend(_as_list(lease.get("after", [])))
+    completed = state["completed_events"]
+    missing = [str(event_id) for event_id in required if str(event_id) not in completed]
+    if missing:
+        return f"temporal prerequisites not satisfied: {missing}"
+    return None
+
+
+def _check_budget(
+    event: dict[str, Any],
+    lease: dict[str, Any],
+    state: dict[str, Any],
+) -> str | None:
+    del event
+    budget = lease.get("budget", {})
+    if not isinstance(budget, dict) or "invocations" not in budget:
+        return None
+    try:
+        max_invocations = int(budget["invocations"])
+    except (TypeError, ValueError):
+        return "invalid invocation budget"
+
+    lease_id = str(lease.get("id", "<lease>"))
+    used = state["lease_invocations"].get(lease_id, 0)
+    if used >= max_invocations:
+        return f"invocation budget exhausted: {used}/{max_invocations}"
+    return None
+
+
+def _check_intent_derivation(
+    event: dict[str, Any],
+    lease: dict[str, Any],
+    state: dict[str, Any],
+) -> str | None:
+    del state
+    intent = lease.get("intent", {})
+    if not isinstance(intent, dict):
+        return None
+
+    required_sources = _as_list(intent.get("must_derive_from", []))
+    proof = event.get("proof", {})
+    proof_sources = _as_list(event.get("intent_provenance", []))
+    if isinstance(proof, dict):
+        proof_sources.extend(_as_list(proof.get("intent_sources", [])))
+    missing_sources = [
+        str(source)
+        for source in required_sources
+        if str(source) not in {str(proof_source) for proof_source in proof_sources}
+    ]
+    if missing_sources:
+        return f"missing intent derivation proof: {missing_sources}"
+
+    required_approvals = _as_list(intent.get("requires_approval", []))
+    approvals = _as_list(event.get("approvals", []))
+    if isinstance(proof, dict):
+        approvals.extend(_as_list(proof.get("approvals", [])))
+    missing_approvals = [
+        str(approval)
+        for approval in required_approvals
+        if str(approval) not in {str(present) for present in approvals}
+    ]
+    if missing_approvals:
+        return f"missing required approval proof: {missing_approvals}"
+    return None
+
+
+def _check_delegation(
+    event: dict[str, Any],
+    lease: dict[str, Any],
+    state: dict[str, Any],
+) -> str | None:
+    del state
+    if event.get("op") != "subagent.spawn":
+        return None
+    delegation = lease.get("delegation")
+    if delegation is None:
+        return None
+    if delegation == "none":
+        return "delegation forbidden by lease"
+    if not isinstance(delegation, dict):
+        return "invalid delegation constraint"
+    if delegation.get("allowed") is False:
+        return "delegation forbidden by lease"
+
+    requested = event.get("args", {}).get("capabilities", [])
+    allowed = delegation.get("capabilities", [])
+    if not isinstance(requested, list) or not isinstance(allowed, list):
+        return "invalid delegated capability list"
+    for capability in requested:
+        if not isinstance(capability, dict):
+            return "invalid delegated capability"
+        if not any(_capability_allows(allowed_capability, capability) for allowed_capability in allowed):
+            return f"delegated capability exceeds lease attenuation: {capability}"
+    return None
+
+
+def _capability_allows(allowed: Any, requested: dict[str, Any]) -> bool:
+    if not isinstance(allowed, dict):
+        return False
+    return (
+        _field_allows(requested.get("op"), allowed.get("op", "*"))
+        and _field_allows(requested.get("object"), allowed.get("object", "*"))
+        and _field_allows(requested.get("mode"), allowed.get("mode", "*"))
+    )
+
+
+def _field_allows(value: Any, allowed: Any) -> bool:
+    if allowed == "*":
+        return True
+    if isinstance(allowed, list):
+        return value in allowed or "*" in allowed
+    return value == allowed
+
+
+def _as_list(value: Any) -> list[Any]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return value
+    return [value]
 
 
 def _check_provenance(
