@@ -290,6 +290,85 @@ def test_step_prompt_reports_tool_results_without_reference_actions():
     assert "evaluation_criteria" not in prompt
 
 
+def test_state_grounded_arg_hints_only_expose_visible_lease_values():
+    visible = ReferenceAction(
+        event_id="airline:t:visible",
+        domain="airline",
+        task_id="t",
+        action_id="visible",
+        index=0,
+        name="get_reservation_details",
+        requestor="assistant",
+        args={"reservation_id": "Q69X3R"},
+        reward_basis=(),
+        object_name="tau2.airline.assistant.get_reservation_details",
+    )
+    hidden = ReferenceAction(
+        event_id="airline:t:hidden",
+        domain="airline",
+        task_id="t",
+        action_id="hidden",
+        index=1,
+        name="get_reservation_details",
+        requestor="assistant",
+        args={"reservation_id": "HIDDEN1"},
+        reward_basis=(),
+        object_name="tau2.airline.assistant.get_reservation_details",
+    )
+
+    hints = runner.build_state_grounded_arg_hints(
+        pending_reference_actions=[visible, hidden],
+        raw_task={"id": "t", "evaluation_criteria": {"actions": [{"arguments": {"reservation_id": "HIDDEN1"}}]}},
+        action_rows=[
+            {
+                "executed": True,
+                "tool_result_preview": '{"reservations":["MZDDS4","Q69X3R"]}',
+            }
+        ],
+        tools=[{"name": "get_reservation_details", "parameters": {}}],
+    )
+
+    assert hints == [
+        {
+            "tool": "get_reservation_details",
+            "arguments": {"reservation_id": "Q69X3R"},
+            "grounding": "active lease argument values also found in visible task text or executed tool results",
+        }
+    ]
+
+
+def test_step_prompt_can_include_state_grounded_arg_hints_without_reference_actions():
+    prompt = runner.build_step_prompt(
+        domain="airline",
+        raw_task={
+            "id": "t",
+            "evaluation_criteria": {
+                "actions": [
+                    {
+                        "name": "get_reservation_details",
+                        "arguments": {"reservation_id": "Hidden reference"},
+                    }
+                ]
+            },
+        },
+        tools=[{"name": "get_reservation_details", "parameters": {}}],
+        step_index=2,
+        action_rows=[],
+        state_grounded_arg_hints=[
+            {
+                "tool": "get_reservation_details",
+                "arguments": {"reservation_id": "Q69X3R"},
+                "grounding": "active lease argument values also found in visible task text or executed tool results",
+            }
+        ],
+    )
+
+    assert "state_grounded_authorized_argument_hints" in prompt
+    assert "Q69X3R" in prompt
+    assert "Hidden reference" not in prompt
+    assert "evaluation_criteria" not in prompt
+
+
 def test_step_prompt_default_omits_empty_retry_instruction():
     prompt = runner.build_step_prompt(
         domain="mock",
