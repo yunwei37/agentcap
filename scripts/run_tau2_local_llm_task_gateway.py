@@ -746,7 +746,7 @@ def summarize(
             "This run uses the existing local tau2-bench artifact only; it does not clone, sync, or download datasets.",
             "The model sees task text and tool schemas, but not evaluation_criteria.actions.",
             "Exact reference-action leases are used as the oracle authorization profile; this is not a complete lease compiler evaluation.",
-            "By default this is a mock-domain pilot, not a benchmark-scale tau2/tau3 online run.",
+            _scope_note(domains),
         ],
     }
 
@@ -794,6 +794,15 @@ def _tool_schemas(env: Any) -> list[dict[str, Any]]:
             }
         )
     return schemas
+
+
+def _scope_note(domains: tuple[str, ...]) -> str:
+    if tuple(domains) == ("mock",):
+        return "This is a mock-domain pilot, not a benchmark-scale tau2/tau3 online run."
+    return (
+        "This is a small fixed-domain pilot over the requested tau2 domains, "
+        "not a benchmark-scale tau2/tau3 online run."
+    )
 
 
 def _import_module(module_name: str) -> Any:

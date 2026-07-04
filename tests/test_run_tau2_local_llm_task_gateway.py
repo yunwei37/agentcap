@@ -113,3 +113,8 @@ def test_exact_task_trace_allows_bound_call_and_blocks_off_lease_call():
 
 def test_safe_id_keeps_paths_simple():
     assert runner._safe_id("telecom", "[mobile]a/b") == "telecom_mobile_a_b"
+
+
+def test_scope_note_distinguishes_mock_from_cross_domain_pilots():
+    assert "mock-domain pilot" in runner._scope_note(("mock",))
+    assert "small fixed-domain pilot" in runner._scope_note(("airline", "retail"))
