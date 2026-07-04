@@ -204,6 +204,99 @@ class MockTools:
     assert row["missing_candidate_argument_keys"] == "user_id"
 
 
+def test_json_schema_constrained_mode_writes_schema_and_passes_flag(tmp_path):
+    runner = _load_runner()
+    benchmark_dir = tmp_path / "tau2-bench"
+    domain_dir = benchmark_dir / "data" / "tau2" / "domains" / "mock"
+    src_dir = benchmark_dir / "src" / "tau2" / "domains" / "mock"
+    domain_dir.mkdir(parents=True)
+    src_dir.mkdir(parents=True)
+    (domain_dir / "tasks.json").write_text(
+        json.dumps(
+            [
+                {
+                    "id": "task_0",
+                    "user_scenario": {
+                        "instructions": {
+                            "reason_for_call": "Please look up user bob_lee_4321."
+                        }
+                    },
+                    "evaluation_criteria": {
+                        "reward_basis": ["ACTION"],
+                        "actions": [
+                            {
+                                "action_id": "a0",
+                                "requestor": "assistant",
+                                "name": "get_user_details",
+                                "arguments": {"user_id": "bob_lee_4321"},
+                            }
+                        ],
+                    },
+                }
+            ]
+        )
+    )
+    (src_dir / "tools.py").write_text(
+        """
+from tau2.environment.toolkit import ToolType, is_tool
+
+
+class MockTools:
+    @is_tool(ToolType.READ)
+    def get_user_details(self, user_id):
+        \"\"\"Get user details.\"\"\"
+        pass
+"""
+    )
+    seen = {}
+
+    def fake_runner(command, timeout_seconds):
+        seen["command"] = command
+        schema_path = Path(command[command.index("--json-schema-file") + 1])
+        seen["schema"] = json.loads(schema_path.read_text())
+        return (
+            json.dumps(
+                {
+                    "leases": [
+                        {
+                            "tool": "get_user_details",
+                            "intent_evidence": "task asks for user lookup",
+                            "argument_policy": {
+                                "user_id": {
+                                    "mode": "equals_any",
+                                    "values": ["bob_lee_4321"],
+                                }
+                            },
+                        }
+                    ]
+                }
+            ),
+            "",
+            0,
+            0.1,
+        )
+
+    result = runner.run_experiment(
+        benchmark_dir=benchmark_dir,
+        output_dir=tmp_path / "out",
+        run_id="TEST",
+        domains=("mock",),
+        max_tasks_per_domain=None,
+        llama_bin=Path("/tmp/llama"),
+        model=Path("/tmp/model.gguf"),
+        json_schema_constrained=True,
+        runner=fake_runner,
+    )
+
+    assert "--json-schema-file" in seen["command"]
+    schema = seen["schema"]
+    lease_schema = schema["properties"]["leases"]["items"]
+    assert lease_schema["properties"]["tool"]["enum"] == ["get_user_details"]
+    assert "user_id" in lease_schema["properties"]["argument_policy"]["properties"]
+    assert result["summary"]["json_schema_constrained"] is True
+    assert result["task_rows"][0]["schema_path"].endswith("schemas/mock_task_0.json")
+
+
 def test_parse_model_json_finds_first_leases_object():
     runner = _load_runner()
     parsed = runner.parse_model_json(

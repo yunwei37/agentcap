@@ -1,0 +1,178 @@
+JSON-only tau2 IntentCap lease compiler. /no_think
+First output character must be { and the last must be }. Do not write <think>, markdown, prose, explanations, plans, or comments.
+Synthesize the smallest set of assistant tool-call capability leases needed for the tau2 task JSON. Use only input.available_tools. Do not invent tool names or argument keys. Prefer exact task-JSON values when they appear in the non-evaluation task JSON. If an argument must come from a prior tool result, mark it runtime_from_prior_tool. If no assistant tool is needed, return {"leases":[]}.
+Input JSON:
+{
+  "available_tools": [
+    {
+      "arguments": [
+        "user_id",
+        "origin",
+        "destination",
+        "flight_type",
+        "cabin",
+        "flights",
+        "passengers",
+        "payment_methods",
+        "total_baggages",
+        "nonfree_baggages",
+        "insurance"
+      ],
+      "description": "Book a reservation.\n\nArgs:\n    user_id: The ID of the user to book the reservation such as 'sara_doe_496'`.\n    origin: The IATA code for the origin city such as 'SFO'.\n    destination: The IATA code for the destination city such as 'JFK'.\n    flight_type: The type of flight such as 'one_way' or 'round_trip'.\n    cabin: The cabin class such as 'basic_economy', 'economy', or 'business'.\n    flights: An array of objects containing details about each piece of flight.\n    passengers: An array of objects containing details about each passenger.\n    payment_methods: An array of objects containing details about each payment method.\n    total_baggages: The total number of baggage items to book the reservation.\n    nonfree_baggages: The number of non-free baggage items to book the reservation.\n    insurance: Whether the reservation has insurance.",
+      "name": "book_reservation",
+      "tool_type": "write"
+    },
+    {
+      "arguments": [
+        "expression"
+      ],
+      "description": "Calculate the result of a mathematical expression.\n\nArgs:\n    expression: The mathematical expression to calculate, such as '2 + 2'. The expression can contain numbers, operators (+, -, *, /), parentheses, and spaces.\n\nReturns:\n    The result of the mathematical expression.\n\nRaises:\n    ValueError: If the expression is invalid.",
+      "name": "calculate",
+      "tool_type": "generic"
+    },
+    {
+      "arguments": [
+        "reservation_id"
+      ],
+      "description": "Cancel the whole reservation.\n\nArgs:\n    reservation_id: The reservation ID, such as 'ZFA04Y'.\n\nReturns:\n    The updated reservation.\n\nRaises:\n    ValueError: If the reservation is not found.",
+      "name": "cancel_reservation",
+      "tool_type": "write"
+    },
+    {
+      "arguments": [
+        "flight_number",
+        "date"
+      ],
+      "description": "Get the status of a flight.\n\nArgs:\n    flight_number: The flight number.\n    date: The date of the flight.\n\nReturns:\n    The status of the flight.\n\nRaises:\n    ValueError: If the flight is not found.",
+      "name": "get_flight_status",
+      "tool_type": "read"
+    },
+    {
+      "arguments": [
+        "reservation_id"
+      ],
+      "description": "Get the details of a reservation.\n\nArgs:\n    reservation_id: The reservation ID, such as '8JX2WO'.\n\nReturns:\n    The reservation details.\n\nRaises:\n    ValueError: If the reservation is not found.",
+      "name": "get_reservation_details",
+      "tool_type": "read"
+    },
+    {
+      "arguments": [
+        "user_id"
+      ],
+      "description": "Get the details of a user, including their reservations.\n\nArgs:\n    user_id: The user ID, such as 'sara_doe_496'.\n\nReturns:\n    The user details.\n\nRaises:\n    ValueError: If the user is not found.",
+      "name": "get_user_details",
+      "tool_type": "read"
+    },
+    {
+      "arguments": [],
+      "description": "Returns a list of all available airports.\n\nReturns:\n    A dictionary mapping IATA codes to AirportInfo objects.",
+      "name": "list_all_airports",
+      "tool_type": "read"
+    },
+    {
+      "arguments": [
+        "origin",
+        "destination",
+        "date"
+      ],
+      "description": "Search for direct flights between two cities on a specific date.\n\nArgs:\n    origin: The origin city airport in three letters, such as 'JFK'.\n    destination: The destination city airport in three letters, such as 'LAX'.\n    date: The date of the flight in the format 'YYYY-MM-DD', such as '2024-01-01'.\n\nReturns:\n    The direct flights between the two cities on the specific date.",
+      "name": "search_direct_flight",
+      "tool_type": "read"
+    },
+    {
+      "arguments": [
+        "origin",
+        "destination",
+        "date"
+      ],
+      "description": "Search for one-stop flights between two cities on a specific date.\n\nArgs:\n    origin: The origin city airport in three letters, such as 'JFK'.\n    destination: The destination city airport in three letters, such as 'LAX'.\n    date: The date of the flight in the format 'YYYY-MM-DD', such as '2024-05-01'.\n\nReturns:\n    A list of pairs of DirectFlight objects.",
+      "name": "search_onestop_flight",
+      "tool_type": "read"
+    },
+    {
+      "arguments": [
+        "user_id",
+        "amount"
+      ],
+      "description": "Send a certificate to a user. Be careful!\n\nArgs:\n    user_id: The ID of the user to book the reservation, such as 'sara_doe_496'.\n    amount: The amount of the certificate to send.\n\nReturns:\n    A message indicating the certificate was sent.\n\nRaises:\n    ValueError: If the user is not found.",
+      "name": "send_certificate",
+      "tool_type": "write"
+    },
+    {
+      "arguments": [
+        "summary"
+      ],
+      "description": "Transfer the user to a human agent, with a summary of the user's issue.\nOnly transfer if\n -  the user explicitly asks for a human agent\n -  given the policy and the available tools, you cannot solve the user's issue.\n\nArgs:\n    summary: A summary of the user's issue.\n\nReturns:\n    A message indicating the user has been transferred to a human agent.",
+      "name": "transfer_to_human_agents",
+      "tool_type": "generic"
+    },
+    {
+      "arguments": [
+        "reservation_id",
+        "total_baggages",
+        "nonfree_baggages",
+        "payment_id"
+      ],
+      "description": "Update the baggage information of a reservation.\n\nArgs:\n    reservation_id: The reservation ID, such as 'ZFA04Y'\n    total_baggages: The updated total number of baggage items included in the reservation.\n    nonfree_baggages: The updated number of non-free baggage items included in the reservation.\n    payment_id: The payment id stored in user profile, such as 'credit_card_7815826', 'gift_card_7815826', 'certificate_7815826'.\n\nReturns:\n    The updated reservation.\n\nRaises:\n    ValueError: If the reservation is not found.\n    ValueError: If the user is not found.\n    ValueError: If the payment method is not found.\n    ValueError: If the certificate cannot be used to update reservation.\n    ValueError: If the gift card balance is not enough.",
+      "name": "update_reservation_baggages",
+      "tool_type": "write"
+    },
+    {
+      "arguments": [
+        "reservation_id",
+        "cabin",
+        "flights",
+        "payment_id"
+      ],
+      "description": "Update the flight information of a reservation.\n\n\nArgs:\n    reservation_id: The reservation ID, such as 'ZFA04Y'.\n    cabin: The cabin class of the reservation\n    flights: An array of objects containing details about each piece of flight in the ENTIRE new reservation. Even if the a flight segment is not changed, it should still be included in the array.\n    payment_id: The payment id stored in user profile, such as 'credit_card_7815826', 'gift_card_7815826', 'certificate_7815826'.\n\nReturns:\n    The updated reservation.\n\nRaises:\n    ValueError: If the reservation is not found.\n    ValueError: If the user is not found.\n    ValueError: If the payment method is not found.\n    ValueError: If the certificate cannot be used to update reservation.\n    ValueError: If the gift card balance is not enough.",
+      "name": "update_reservation_flights",
+      "tool_type": "write"
+    },
+    {
+      "arguments": [
+        "reservation_id",
+        "passengers"
+      ],
+      "description": "Update the passenger information of a reservation.\n\nArgs:\n    reservation_id: The reservation ID, such as 'ZFA04Y'.\n    passengers: An array of objects containing details about each passenger.\n\nReturns:\n    The updated reservation.\n\nRaises:\n    ValueError: If the reservation is not found.\n    ValueError: If the number of passengers does not match.",
+      "name": "update_reservation_passengers",
+      "tool_type": "write"
+    }
+  ],
+  "domain": "airline",
+  "output_schema": {
+    "leases": [
+      {
+        "argument_policy": {
+          "arg_name": {
+            "mode": "equals_any | runtime_from_prior_tool | ask_user | unconstrained",
+            "values": [
+              "literal values from the non-evaluation task JSON if mode is equals_any"
+            ]
+          }
+        },
+        "intent_evidence": "short reason from non-evaluation task JSON",
+        "tool": "tool_name"
+      }
+    ]
+  },
+  "task": {
+    "description": {
+      "notes": null,
+      "purpose": "Check that Agent verifies membership status. User thinks she is Gold, she is actually Silver.",
+      "relevant_policies": null
+    },
+    "id": "3",
+    "initial_state": null,
+    "user_scenario": {
+      "instructions": {
+        "domain": "airline",
+        "known_info": "You are Anya Garcia.\n\nYour user id is: anya_garcia_5901.\n\nYour confirmation number is JMO1MG.",
+        "reason_for_call": "You want to figure out the total number of suitcases the reservation allows you to take on your upcoming flight.\n\nYou have a lot of things you need to bring with you on this trip. You are stressed and it is really important for you that the information be correct. \n\nYou're pretty sure that you're a Gold member.",
+        "task_instructions": "If this is not already the case, insist on getting the total number in numeric form, as you can see numbers better than words. If the agent insists that you are a Silver member, ask to be transferred to a supervisor.",
+        "unknown_info": "You do not know the cabin for the upcoming flight."
+      },
+      "persona": null
+    }
+  }
+}
+Output JSON only:

@@ -48,6 +48,7 @@ TASK_FIELDS = [
     "task_id",
     "prompt_path",
     "raw_output_path",
+    "schema_path",
     "parse_ok",
     "returncode",
     "latency_seconds",
@@ -108,6 +109,15 @@ def main() -> int:
     parser.add_argument("--ctx-size", type=int, default=8192)
     parser.add_argument("--gpu-layers", type=int, default=999)
     parser.add_argument("--timeout-seconds", type=int, default=180)
+    parser.add_argument(
+        "--json-schema-constrained",
+        action="store_true",
+        help=(
+            "Write a per-task JSON schema and pass it to llama.cpp with "
+            "--json-schema-file. The schema constrains the output shape, tool "
+            "names, policy modes, and legal argument keys."
+        ),
+    )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -123,6 +133,7 @@ def main() -> int:
         ctx_size=args.ctx_size,
         gpu_layers=args.gpu_layers,
         timeout_seconds=args.timeout_seconds,
+        json_schema_constrained=args.json_schema_constrained,
         dry_run=args.dry_run,
     )
     print(json.dumps(result["summary"], indent=2, sort_keys=True))
@@ -142,6 +153,7 @@ def run_experiment(
     ctx_size: int = 8192,
     gpu_layers: int = 999,
     timeout_seconds: int = 180,
+    json_schema_constrained: bool = False,
     dry_run: bool = False,
     runner: Callable[[list[str], int], tuple[str, str, int, float]] | None = None,
 ) -> dict[str, Any]:
@@ -161,8 +173,11 @@ def run_experiment(
     output_dir.mkdir(parents=True, exist_ok=True)
     prompt_dir = output_dir / "prompts"
     raw_dir = output_dir / "raw_outputs"
+    schema_dir = output_dir / "schemas"
     prompt_dir.mkdir(exist_ok=True)
     raw_dir.mkdir(exist_ok=True)
+    if json_schema_constrained:
+        schema_dir.mkdir(exist_ok=True)
 
     task_rows: list[dict[str, Any]] = []
     lease_rows: list[dict[str, Any]] = []
@@ -185,7 +200,16 @@ def run_experiment(
             safe_task_id = _safe_id(domain, task_id)
             prompt_path = prompt_dir / f"{safe_task_id}.txt"
             raw_path = raw_dir / f"{safe_task_id}.txt"
+            schema_path = schema_dir / f"{safe_task_id}.json" if json_schema_constrained else None
             prompt_path.write_text(prompt)
+            if schema_path is not None:
+                schema_path.write_text(
+                    json.dumps(
+                        build_output_json_schema(tools_by_domain[domain]),
+                        indent=2,
+                        sort_keys=True,
+                    )
+                )
             if dry_run:
                 stdout, stderr, returncode, latency = "", "", 0, 0.0
             else:
@@ -197,6 +221,8 @@ def run_experiment(
                     ctx_size=ctx_size,
                     gpu_layers=gpu_layers,
                 )
+                if schema_path is not None:
+                    command.extend(["--json-schema-file", str(schema_path)])
                 stdout, stderr, returncode, latency = runner(command, timeout_seconds)
             raw_payload = _raw_payload(stdout, stderr, returncode)
             raw_path.write_text(raw_payload)
@@ -213,6 +239,7 @@ def run_experiment(
                 **evaluated["task_row"],
                 "prompt_path": str(prompt_path),
                 "raw_output_path": str(raw_path),
+                "schema_path": str(schema_path) if schema_path is not None else "",
                 "parse_ok": parsed is not None,
                 "returncode": returncode,
                 "latency_seconds": round(latency, 6),
@@ -229,6 +256,7 @@ def run_experiment(
                     "task_id": task_id,
                     "prompt_path": str(prompt_path),
                     "raw_output_path": str(raw_path),
+                    "schema_path": str(schema_path) if schema_path is not None else "",
                     "parsed_model_json": parsed,
                     "task_row": task_row,
                 }
@@ -252,6 +280,7 @@ def run_experiment(
         ctx_size=ctx_size,
         gpu_layers=gpu_layers,
         timeout_seconds=timeout_seconds,
+        json_schema_constrained=json_schema_constrained,
         dry_run=dry_run,
     )
 
@@ -321,6 +350,72 @@ def build_prompt(*, domain: str, raw_task: dict[str, Any], tools: list[Any]) -> 
         f"{json.dumps(payload, indent=2, sort_keys=True, default=str)}\n"
         "Output JSON only:\n"
     )
+
+
+def build_output_json_schema(tools: list[Any]) -> dict[str, Any]:
+    tool_names = sorted(tool.name for tool in tools)
+    argument_names = sorted({arg for tool in tools for arg in tool.arguments})
+    value_schema: dict[str, Any] = {
+        "anyOf": [
+            {"type": "string"},
+            {"type": "number"},
+            {"type": "integer"},
+            {"type": "boolean"},
+            {"type": "null"},
+        ]
+    }
+    policy_schema = {
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["mode", "values"],
+        "properties": {
+            "mode": {
+                "type": "string",
+                "enum": [
+                    "equals_any",
+                    "runtime_from_prior_tool",
+                    "ask_user",
+                    "unconstrained",
+                ],
+            },
+            "values": {
+                "type": "array",
+                "items": value_schema,
+            },
+        },
+    }
+    return {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["leases"],
+        "properties": {
+            "leases": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": ["tool", "intent_evidence", "argument_policy"],
+                    "properties": {
+                        "tool": {
+                            "type": "string",
+                            "enum": tool_names,
+                        },
+                        "intent_evidence": {
+                            "type": "string",
+                        },
+                        "argument_policy": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "properties": {
+                                arg: policy_schema for arg in argument_names
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    }
 
 
 def parse_model_json(text: str) -> dict[str, Any] | None:
@@ -510,6 +605,7 @@ def summarize(
     ctx_size: int,
     gpu_layers: int,
     timeout_seconds: int,
+    json_schema_constrained: bool,
     dry_run: bool,
 ) -> dict[str, Any]:
     reference_actions = sum(int(row["reference_actions"]) for row in task_rows)
@@ -555,6 +651,7 @@ def summarize(
         "ctx_size": ctx_size,
         "gpu_layers": gpu_layers,
         "timeout_seconds": timeout_seconds,
+        "json_schema_constrained": json_schema_constrained,
         "dry_run": dry_run,
         "machine": platform.platform(),
         "project_head": _git_output(["git", "rev-parse", "HEAD"]),
@@ -564,6 +661,7 @@ def summarize(
             "tool_and_non_eval_json_args requires the generated argument_policy to cover all reference arguments with equals_any values from the non-evaluation task JSON.",
             "tool_only_runtime_or_broad_args_needed indicates that a selected tool still needs runtime state, user response, or a broader argument placeholder.",
             "This corpus is a lease-compiler frontend probe, not an end-to-end tau2 utility or reward run.",
+            "json_schema_constrained uses llama.cpp --json-schema-file to constrain output shape/tool names/argument keys, but deterministic post-hoc scoring still decides coverage.",
         ],
     }
 
