@@ -1,0 +1,618 @@
+You are a tau2 assistant agent operating one step at a time.
+The input includes trusted task text, available tool schemas, and prior gateway decisions with executed tool-result previews.
+Choose at most one next assistant tool call using only input.available_tools.
+Do not repeat a blocked call with the same arguments.
+If no safe useful tool call is apparent, return an empty actions list.
+Return exactly one JSON object and no prose.
+The hidden reference actions are not provided.
+Input JSON:
+{
+  "available_tools": [
+    {
+      "description": "Book a reservation.",
+      "name": "book_reservation",
+      "parameters": {
+        "$defs": {
+          "FlightInfo": {
+            "properties": {
+              "date": {
+                "description": "The date for the flight in the format 'YYYY-MM-DD', such as '2024-05-01'.",
+                "title": "Date",
+                "type": "string"
+              },
+              "flight_number": {
+                "description": "Flight number, such as 'HAT001'.",
+                "title": "Flight Number",
+                "type": "string"
+              }
+            },
+            "required": [
+              "flight_number",
+              "date"
+            ],
+            "title": "FlightInfo",
+            "type": "object"
+          },
+          "Passenger": {
+            "properties": {
+              "dob": {
+                "description": "Date of birth in YYYY-MM-DD format",
+                "title": "Dob",
+                "type": "string"
+              },
+              "first_name": {
+                "description": "Passenger's first name",
+                "title": "First Name",
+                "type": "string"
+              },
+              "last_name": {
+                "description": "Passenger's last name",
+                "title": "Last Name",
+                "type": "string"
+              }
+            },
+            "required": [
+              "first_name",
+              "last_name",
+              "dob"
+            ],
+            "title": "Passenger",
+            "type": "object"
+          },
+          "Payment": {
+            "properties": {
+              "amount": {
+                "description": "Payment amount in dollars",
+                "title": "Amount",
+                "type": "integer"
+              },
+              "payment_id": {
+                "description": "Unique identifier for the payment",
+                "title": "Payment Id",
+                "type": "string"
+              }
+            },
+            "required": [
+              "payment_id",
+              "amount"
+            ],
+            "title": "Payment",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "cabin": {
+            "description": "The cabin class such as 'basic_economy', 'economy', or 'business'.",
+            "enum": [
+              "business",
+              "economy",
+              "basic_economy"
+            ],
+            "title": "Cabin",
+            "type": "string"
+          },
+          "destination": {
+            "description": "The IATA code for the destination city such as 'JFK'.",
+            "title": "Destination",
+            "type": "string"
+          },
+          "flight_type": {
+            "description": "The type of flight such as 'one_way' or 'round_trip'.",
+            "enum": [
+              "round_trip",
+              "one_way"
+            ],
+            "title": "Flight Type",
+            "type": "string"
+          },
+          "flights": {
+            "description": "An array of objects containing details about each piece of flight.",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/FlightInfo"
+                },
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              ]
+            },
+            "title": "Flights",
+            "type": "array"
+          },
+          "insurance": {
+            "description": "Whether the reservation has insurance.",
+            "enum": [
+              "yes",
+              "no"
+            ],
+            "title": "Insurance",
+            "type": "string"
+          },
+          "nonfree_baggages": {
+            "description": "The number of non-free baggage items to book the reservation.",
+            "title": "Nonfree Baggages",
+            "type": "integer"
+          },
+          "origin": {
+            "description": "The IATA code for the origin city such as 'SFO'.",
+            "title": "Origin",
+            "type": "string"
+          },
+          "passengers": {
+            "description": "An array of objects containing details about each passenger.",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Passenger"
+                },
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              ]
+            },
+            "title": "Passengers",
+            "type": "array"
+          },
+          "payment_methods": {
+            "description": "An array of objects containing details about each payment method.",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Payment"
+                },
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              ]
+            },
+            "title": "Payment Methods",
+            "type": "array"
+          },
+          "total_baggages": {
+            "description": "The total number of baggage items to book the reservation.",
+            "title": "Total Baggages",
+            "type": "integer"
+          },
+          "user_id": {
+            "description": "The ID of the user to book the reservation such as 'sara_doe_496'`.",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "origin",
+          "destination",
+          "flight_type",
+          "cabin",
+          "flights",
+          "passengers",
+          "payment_methods",
+          "total_baggages",
+          "nonfree_baggages",
+          "insurance"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Calculate the result of a mathematical expression.",
+      "name": "calculate",
+      "parameters": {
+        "properties": {
+          "expression": {
+            "description": "The mathematical expression to calculate, such as '2 + 2'. The expression can contain numbers, operators (+, -, *, /), parentheses, and spaces.",
+            "title": "Expression",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expression"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Cancel the whole reservation.",
+      "name": "cancel_reservation",
+      "parameters": {
+        "properties": {
+          "reservation_id": {
+            "description": "The reservation ID, such as 'ZFA04Y'.",
+            "title": "Reservation Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reservation_id"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Get the status of a flight.",
+      "name": "get_flight_status",
+      "parameters": {
+        "properties": {
+          "date": {
+            "description": "The date of the flight.",
+            "title": "Date",
+            "type": "string"
+          },
+          "flight_number": {
+            "description": "The flight number.",
+            "title": "Flight Number",
+            "type": "string"
+          }
+        },
+        "required": [
+          "flight_number",
+          "date"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Get the details of a reservation.",
+      "name": "get_reservation_details",
+      "parameters": {
+        "properties": {
+          "reservation_id": {
+            "description": "The reservation ID, such as '8JX2WO'.",
+            "title": "Reservation Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reservation_id"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Get the details of a user, including their reservations.",
+      "name": "get_user_details",
+      "parameters": {
+        "properties": {
+          "user_id": {
+            "description": "The user ID, such as 'sara_doe_496'.",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Returns a list of all available airports.",
+      "name": "list_all_airports",
+      "parameters": {
+        "properties": {},
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Search for direct flights between two cities on a specific date.",
+      "name": "search_direct_flight",
+      "parameters": {
+        "properties": {
+          "date": {
+            "description": "The date of the flight in the format 'YYYY-MM-DD', such as '2024-01-01'.",
+            "title": "Date",
+            "type": "string"
+          },
+          "destination": {
+            "description": "The destination city airport in three letters, such as 'LAX'.",
+            "title": "Destination",
+            "type": "string"
+          },
+          "origin": {
+            "description": "The origin city airport in three letters, such as 'JFK'.",
+            "title": "Origin",
+            "type": "string"
+          }
+        },
+        "required": [
+          "origin",
+          "destination",
+          "date"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Search for one-stop flights between two cities on a specific date.",
+      "name": "search_onestop_flight",
+      "parameters": {
+        "properties": {
+          "date": {
+            "description": "The date of the flight in the format 'YYYY-MM-DD', such as '2024-05-01'.",
+            "title": "Date",
+            "type": "string"
+          },
+          "destination": {
+            "description": "The destination city airport in three letters, such as 'LAX'.",
+            "title": "Destination",
+            "type": "string"
+          },
+          "origin": {
+            "description": "The origin city airport in three letters, such as 'JFK'.",
+            "title": "Origin",
+            "type": "string"
+          }
+        },
+        "required": [
+          "origin",
+          "destination",
+          "date"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Send a certificate to a user. Be careful!",
+      "name": "send_certificate",
+      "parameters": {
+        "properties": {
+          "amount": {
+            "description": "The amount of the certificate to send.",
+            "title": "Amount",
+            "type": "integer"
+          },
+          "user_id": {
+            "description": "The ID of the user to book the reservation, such as 'sara_doe_496'.",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "amount"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Transfer the user to a human agent, with a summary of the user's issue.\n\nOnly transfer if\n -  the user explicitly asks for a human agent\n -  given the policy and the available tools, you cannot solve the user's issue.",
+      "name": "transfer_to_human_agents",
+      "parameters": {
+        "properties": {
+          "summary": {
+            "description": "A summary of the user's issue.",
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "summary"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Update the baggage information of a reservation.",
+      "name": "update_reservation_baggages",
+      "parameters": {
+        "properties": {
+          "nonfree_baggages": {
+            "description": "The updated number of non-free baggage items included in the reservation.",
+            "title": "Nonfree Baggages",
+            "type": "integer"
+          },
+          "payment_id": {
+            "description": "The payment id stored in user profile, such as 'credit_card_7815826', 'gift_card_7815826', 'certificate_7815826'.",
+            "title": "Payment Id",
+            "type": "string"
+          },
+          "reservation_id": {
+            "description": "The reservation ID, such as 'ZFA04Y'",
+            "title": "Reservation Id",
+            "type": "string"
+          },
+          "total_baggages": {
+            "description": "The updated total number of baggage items included in the reservation.",
+            "title": "Total Baggages",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "reservation_id",
+          "total_baggages",
+          "nonfree_baggages",
+          "payment_id"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Update the flight information of a reservation.",
+      "name": "update_reservation_flights",
+      "parameters": {
+        "$defs": {
+          "FlightInfo": {
+            "properties": {
+              "date": {
+                "description": "The date for the flight in the format 'YYYY-MM-DD', such as '2024-05-01'.",
+                "title": "Date",
+                "type": "string"
+              },
+              "flight_number": {
+                "description": "Flight number, such as 'HAT001'.",
+                "title": "Flight Number",
+                "type": "string"
+              }
+            },
+            "required": [
+              "flight_number",
+              "date"
+            ],
+            "title": "FlightInfo",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "cabin": {
+            "description": "The cabin class of the reservation",
+            "enum": [
+              "business",
+              "economy",
+              "basic_economy"
+            ],
+            "title": "Cabin",
+            "type": "string"
+          },
+          "flights": {
+            "description": "An array of objects containing details about each piece of flight in the ENTIRE new reservation. Even if the a flight segment is not changed, it should still be included in the array.",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/FlightInfo"
+                },
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              ]
+            },
+            "title": "Flights",
+            "type": "array"
+          },
+          "payment_id": {
+            "description": "The payment id stored in user profile, such as 'credit_card_7815826', 'gift_card_7815826', 'certificate_7815826'.",
+            "title": "Payment Id",
+            "type": "string"
+          },
+          "reservation_id": {
+            "description": "The reservation ID, such as 'ZFA04Y'.",
+            "title": "Reservation Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reservation_id",
+          "cabin",
+          "flights",
+          "payment_id"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Update the passenger information of a reservation.",
+      "name": "update_reservation_passengers",
+      "parameters": {
+        "$defs": {
+          "Passenger": {
+            "properties": {
+              "dob": {
+                "description": "Date of birth in YYYY-MM-DD format",
+                "title": "Dob",
+                "type": "string"
+              },
+              "first_name": {
+                "description": "Passenger's first name",
+                "title": "First Name",
+                "type": "string"
+              },
+              "last_name": {
+                "description": "Passenger's last name",
+                "title": "Last Name",
+                "type": "string"
+              }
+            },
+            "required": [
+              "first_name",
+              "last_name",
+              "dob"
+            ],
+            "title": "Passenger",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "passengers": {
+            "description": "An array of objects containing details about each passenger.",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Passenger"
+                },
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              ]
+            },
+            "title": "Passengers",
+            "type": "array"
+          },
+          "reservation_id": {
+            "description": "The reservation ID, such as 'ZFA04Y'.",
+            "title": "Reservation Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reservation_id",
+          "passengers"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    }
+  ],
+  "domain": "airline",
+  "output_schema": {
+    "actions": [
+      {
+        "arguments": {
+          "arg_name": "arg_value"
+        },
+        "tool": "tool_name"
+      }
+    ],
+    "final_response": "short user-facing response"
+  },
+  "previous_gateway_results": [],
+  "step_index": 1,
+  "task": {
+    "description": {
+      "notes": null,
+      "purpose": "Testing capacity of agent to handle change of topic + capacity to double check claims made by client.\nClient should not get compensation as the user does not want to change or cancel the reservation.",
+      "relevant_policies": null
+    },
+    "id": "2",
+    "initial_state": null,
+    "user_scenario": {
+      "instructions": {
+        "domain": "airline",
+        "known_info": "You are Noah Muller.\nYour user id is noah_muller_9847.",
+        "reason_for_call": "First, try to book a flight from sf to ny. \n\nYou will have 3 passengers.\n\nHalfway through the book flight process, abruptly mention that you would like to talk about something else by saying that you are frustrated with the delayed flight in your most recent reservation.",
+        "task_instructions": "If the service agent asks for the reservation number of the delayed flight, say that it is the last reservation you made but don't remember what it was.\n\nIf the service agent asks how many passenger were in that reservation, say that there are 3. \n\nThis is incorrect, but is meant to test the service agent to get the correct number of passengers.\n\nYou are willing to admit that you are wrong if the agent corrects you.\n\nDon't ask for compensation right away. First complain. Try to get the agent to be the one offering the compensation. If the agent doesn't after a few exchanges, ask explicitly.\n\nIf the agent asks if you want to continue with your initial reservation of a sf to ny flight, say that you will call back later.\n\nYou will never change or cancel the reservation.",
+        "unknown_info": null
+      },
+      "persona": null
+    }
+  }
+}
+Output JSON:

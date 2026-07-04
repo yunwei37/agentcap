@@ -173,6 +173,8 @@ def test_summary_counts_feedback_rounds():
                 "initial_model_calls": 1,
                 "feedback_model_calls": 1,
                 "feedback_attempted": True,
+                "stepwise_steps_attempted": 0,
+                "stepwise_model_calls": 0,
                 "reference_actions": 1,
                 "bound_reference_calls": 1,
                 "off_lease_calls_blocked": 1,
@@ -209,6 +211,7 @@ def test_summary_counts_feedback_rounds():
         timeout_seconds=1,
         max_tasks_per_domain=1,
         feedback_rounds=1,
+        stepwise_max_steps=0,
         dry_run=False,
     )
 
@@ -216,3 +219,38 @@ def test_summary_counts_feedback_rounds():
     assert summary["feedback_attempted_tasks"] == 1
     assert summary["initial_gateway_blocked"] == 1
     assert summary["feedback_gateway_allowed"] == 1
+
+
+def test_step_prompt_reports_tool_results_without_reference_actions():
+    prompt = runner.build_step_prompt(
+        domain="mock",
+        raw_task={
+            "id": "t",
+            "instruction": "Update the task.",
+            "evaluation_criteria": {
+                "actions": [
+                    {
+                        "name": "create_task",
+                        "arguments": {"title": "Hidden reference"},
+                    }
+                ]
+            },
+        },
+        tools=[{"name": "create_task", "parameters": {}}],
+        step_index=2,
+        action_rows=[
+            {
+                "round": "step_1",
+                "model_tool": "read_task",
+                "model_args_json": '{"task_id": "task_1"}',
+                "gateway_action": "execute",
+                "gateway_reason": "lease matched",
+                "executed": True,
+                "tool_result_preview": '{"title": "Visible tool result"}',
+            }
+        ],
+    )
+
+    assert "Visible tool result" in prompt
+    assert "Hidden reference" not in prompt
+    assert "evaluation_criteria" not in prompt
