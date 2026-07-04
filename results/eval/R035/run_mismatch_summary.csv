@@ -1,0 +1,5 @@
+run_id,tasks,unsupported_tasks,reference_actions,model_calls,exact_executed_calls,off_lease_calls,same_tool_wrong_args_calls,wrong_or_hallucinated_tool_calls,repeated_or_consumed_exact_args_calls,tool_oracle_pass_tasks,tool_oracle_pass_rate,dominant_off_lease_category
+R031,8,2,8,7,4,3,2,1,0,4,0.5,off_lease_same_tool_wrong_args
+R032,7,2,28,7,0,7,3,4,0,0,0.0,off_lease_wrong_or_hallucinated_tool
+R033,7,2,28,12,0,12,3,9,0,0,0.0,off_lease_wrong_or_hallucinated_tool
+R034,7,2,28,20,1,19,8,11,0,1,0.14285714285714285,off_lease_wrong_or_hallucinated_tool
