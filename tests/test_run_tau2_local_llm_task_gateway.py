@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -349,6 +350,58 @@ def test_compiler_corpus_trace_uses_only_strict_saved_compiler_leases():
     assert blocked["decision"]["reason"] == "no matching lease"
     assert extra_arg_blocked["executed"] is False
     assert extra_arg_blocked["decision"]["reason"] == "no matching lease"
+
+
+def test_load_compiler_records_from_dirs_unions_leases_by_task(tmp_path):
+    run_a = tmp_path / "R-A"
+    run_b = tmp_path / "R-B"
+    run_a.mkdir()
+    run_b.mkdir()
+    duplicate_create = {
+        "tool": "create_task",
+        "argument_policy": {
+            "user_id": {"mode": "equals_any", "values": ["user_1"]},
+            "title": {"mode": "equals_any", "values": ["Important"]},
+        },
+        "intent_evidence": "source A",
+    }
+    run_a_record = {
+        "run_id": "R-A",
+        "domain": "mock",
+        "task_id": "t",
+        "task_row": {"parse_ok": True},
+        "repaired_model_json": {"leases": [duplicate_create]},
+    }
+    run_b_record = {
+        "run_id": "R-B",
+        "domain": "mock",
+        "task_id": "t",
+        "repaired_model_json": {
+            "leases": [
+                {
+                    **duplicate_create,
+                    "intent_evidence": "source B",
+                },
+                {
+                    "tool": "delete_task",
+                    "argument_policy": {
+                        "task_id": {"mode": "runtime_value", "values": []}
+                    },
+                },
+            ]
+        },
+    }
+    (run_a / "samples.jsonl").write_text(json.dumps(run_a_record) + "\n")
+    (run_b / "samples.jsonl").write_text(json.dumps(run_b_record) + "\n")
+
+    records = runner.load_compiler_records_from_dirs((run_a, run_b))
+
+    merged = records[("mock", "t")]
+    leases = merged["repaired_model_json"]["leases"]
+    assert merged["compiler_source_dirs"] == [str(run_a), str(run_b)]
+    assert merged["compiler_source_parse_ok_count"] == 2
+    assert merged["task_row"]["parse_ok"] is True
+    assert [lease["tool"] for lease in leases] == ["create_task", "delete_task"]
 
 
 def test_compiler_runtime_binding_requires_prior_tool_result_evidence():

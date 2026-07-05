@@ -180,8 +180,12 @@ def main() -> int:
     parser.add_argument(
         "--compiler-run-dir",
         type=Path,
+        action="append",
         default=None,
-        help="Saved compiler run directory containing samples.jsonl for compiler-corpus mode.",
+        help=(
+            "Saved compiler run directory containing samples.jsonl for compiler-corpus "
+            "mode. May be repeated; repeated directories are unioned by task."
+        ),
     )
     parser.add_argument(
         "--tool-exposure",
@@ -318,7 +322,7 @@ def run_experiment(
     timeout_seconds: int = 120,
     feedback_rounds: int = 0,
     lease_source: str = "exact-reference",
-    compiler_run_dir: Path | None = None,
+    compiler_run_dir: Path | list[Path] | tuple[Path, ...] | None = None,
     tool_exposure: str = "all",
     stepwise_max_steps: int = 0,
     stepwise_empty_retries: int = 0,
@@ -353,7 +357,8 @@ def run_experiment(
         raise ValueError(f"tool_exposure must be one of {TOOL_EXPOSURE_MODES}")
     if lease_source not in LEASE_SOURCE_MODES:
         raise ValueError(f"lease_source must be one of {LEASE_SOURCE_MODES}")
-    if lease_source == "compiler-corpus" and compiler_run_dir is None:
+    compiler_run_dirs = _normalize_compiler_run_dirs(compiler_run_dir)
+    if lease_source == "compiler-corpus" and not compiler_run_dirs:
         raise ValueError("compiler_run_dir is required for compiler-corpus lease source")
     if lease_source == "compiler-corpus" and stepwise_state_grounded_arg_hints:
         raise ValueError(
@@ -385,8 +390,8 @@ def run_experiment(
     unsupported_rows: list[dict[str, Any]] = []
     records: list[dict[str, Any]] = []
     compiler_records = (
-        load_compiler_records(compiler_run_dir / "samples.jsonl")
-        if lease_source == "compiler-corpus" and compiler_run_dir is not None
+        load_compiler_records_from_dirs(compiler_run_dirs)
+        if lease_source == "compiler-corpus"
         else {}
     )
     compiler_tools_by_domain = (
@@ -487,7 +492,7 @@ def run_experiment(
         max_tasks_per_domain=max_tasks_per_domain,
         feedback_rounds=feedback_rounds,
         lease_source=lease_source,
-        compiler_run_dir=compiler_run_dir,
+        compiler_run_dir=compiler_run_dirs,
         tool_exposure=tool_exposure,
         stepwise_max_steps=stepwise_max_steps,
         stepwise_empty_retries=stepwise_empty_retries,
@@ -2052,6 +2057,91 @@ def load_compiler_records(path: Path) -> dict[tuple[str, str], dict[str, Any]]:
     return records
 
 
+def _normalize_compiler_run_dirs(
+    compiler_run_dir: Path | list[Path] | tuple[Path, ...] | None,
+) -> tuple[Path, ...]:
+    if compiler_run_dir is None:
+        return ()
+    if isinstance(compiler_run_dir, Path):
+        return (compiler_run_dir,)
+    return tuple(compiler_run_dir)
+
+
+def load_compiler_records_from_dirs(
+    run_dirs: tuple[Path, ...],
+) -> dict[tuple[str, str], dict[str, Any]]:
+    records_by_task: dict[tuple[str, str], list[tuple[Path, dict[str, Any]]]] = {}
+    for run_dir in run_dirs:
+        for key, record in load_compiler_records(run_dir / "samples.jsonl").items():
+            records_by_task.setdefault(key, []).append((run_dir, record))
+    return {
+        key: merge_compiler_records(records)
+        for key, records in records_by_task.items()
+    }
+
+
+def merge_compiler_records(
+    records: list[tuple[Path, dict[str, Any]]],
+) -> dict[str, Any]:
+    if len(records) == 1:
+        source_dir, record = records[0]
+        merged = dict(record)
+        merged["compiler_source_dirs"] = [str(source_dir)]
+        return merged
+
+    _, first_record = records[0]
+    merged_leases: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    source_dirs: list[str] = []
+    source_run_ids: list[str] = []
+    parse_ok_sources = 0
+    task_row_parse_ok = False
+    for source_dir, record in records:
+        source_dirs.append(str(source_dir))
+        run_id = str(record.get("run_id", ""))
+        if run_id:
+            source_run_ids.append(run_id)
+        task_row_parse_ok = task_row_parse_ok or bool(
+            (record.get("task_row") or {}).get("parse_ok", False)
+        )
+        model_json = selected_compiler_model_json(record)
+        if not isinstance(model_json, dict):
+            continue
+        parse_ok_sources += 1
+        leases = model_json.get("leases", [])
+        if not isinstance(leases, list):
+            continue
+        for lease in leases:
+            if not isinstance(lease, dict):
+                continue
+            lease_key = json.dumps(
+                {
+                    "tool": lease.get("tool"),
+                    "argument_policy": lease.get("argument_policy"),
+                },
+                sort_keys=True,
+                default=_json_default,
+            )
+            if lease_key in seen:
+                continue
+            seen.add(lease_key)
+            merged_leases.append(lease)
+
+    return {
+        "domain": str(first_record.get("domain", "")),
+        "task_id": str(first_record.get("task_id", "")),
+        "run_id": "+".join(source_run_ids),
+        "compiler_source_dirs": source_dirs,
+        "compiler_source_parse_ok_count": parse_ok_sources,
+        "compiler_source_record_count": len(records),
+        "task_row": {"parse_ok": task_row_parse_ok},
+        "parsed_model_json": {"leases": merged_leases},
+        "repaired_model_json": {"leases": merged_leases},
+        "prompt_path": str(first_record.get("prompt_path", "")),
+        "raw_output_path": str(first_record.get("raw_output_path", "")),
+    }
+
+
 def selected_compiler_model_json(record: dict[str, Any]) -> dict[str, Any] | None:
     repaired = record.get("repaired_model_json")
     if isinstance(repaired, dict):
@@ -2377,7 +2467,7 @@ def summarize(
     max_tasks_per_domain: int | None,
     feedback_rounds: int,
     lease_source: str,
-    compiler_run_dir: Path | None,
+    compiler_run_dir: Path | list[Path] | tuple[Path, ...] | None,
     tool_exposure: str,
     stepwise_max_steps: int,
     stepwise_empty_retries: int,
@@ -2389,6 +2479,7 @@ def summarize(
     compiler_runtime_binding: bool = False,
     dry_run: bool = False,
 ) -> dict[str, Any]:
+    compiler_run_dirs = _normalize_compiler_run_dirs(compiler_run_dir)
     unsupported_reasons = Counter(row["reason"].split(":", 1)[0] for row in unsupported_rows)
     tool_oracle_rows = [row for row in task_rows if row["tool_oracle_applicable"]]
     tool_schema_counts = [int(row.get("tool_schema_count", 0)) for row in task_rows]
@@ -2408,6 +2499,10 @@ def summarize(
         notes.append(
             "Active leases are loaded from saved compiler output and strict-lowered only when every declared tool argument has a non-empty equals_any policy."
         )
+        if len(compiler_run_dirs) > 1:
+            notes.append(
+                "Multiple saved compiler corpora are unioned by task before strict lowering; this broadens candidate lease recall without using hidden reference actions to mint leases."
+            )
         notes.append(
             "Reference actions are used for post-hoc task scoring and exact-match accounting only; they are not used to mint runtime leases."
         )
@@ -2470,7 +2565,8 @@ def summarize(
         "max_tasks_per_domain": max_tasks_per_domain,
         "feedback_rounds": feedback_rounds,
         "lease_source": lease_source,
-        "compiler_run_dir": str(compiler_run_dir or ""),
+        "compiler_run_dir": " | ".join(str(path) for path in compiler_run_dirs),
+        "compiler_run_dirs": [str(path) for path in compiler_run_dirs],
         "tool_exposure": tool_exposure,
         "stepwise_max_steps": stepwise_max_steps,
         "stepwise_empty_retries": stepwise_empty_retries,
