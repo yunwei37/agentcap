@@ -1419,6 +1419,86 @@ def test_runtime_evidence_fallback_uses_distinct_marker():
     }
 
 
+def test_ranked_runtime_evidence_fallback_selects_highest_scored_hint():
+    hints = [
+        {
+            "tool": "get_order_details",
+            "arguments": {"order_id": "#W2378156"},
+            "complete_arguments": True,
+            "rank_score": 52,
+        },
+        {
+            "tool": "get_product_details",
+            "arguments": {"product_id": "9523456873"},
+            "complete_arguments": True,
+            "rank_score": 62,
+        },
+    ]
+
+    call = runner.build_ranked_runtime_evidence_fallback_call(
+        hints,
+        min_score=50,
+        margin=10,
+    )
+
+    assert call == {
+        "tool": "get_product_details",
+        "arguments": {
+            "product_id": "9523456873",
+            "_intentcap_synthesized_from_ranked_runtime_evidence_hint": True,
+            "_intentcap_ranked_runtime_evidence_score": 62,
+            "_intentcap_ranked_runtime_evidence_margin": 10,
+        },
+    }
+
+
+def test_ranked_runtime_evidence_fallback_respects_score_and_margin():
+    low_score = {
+        "tool": "get_order_details",
+        "arguments": {"order_id": "#W2378156"},
+        "complete_arguments": True,
+        "rank_score": 37,
+    }
+    top = {
+        "tool": "get_product_details",
+        "arguments": {"product_id": "9523456873"},
+        "complete_arguments": True,
+        "rank_score": 62,
+    }
+    tied = {
+        "tool": "get_item_details",
+        "arguments": {"item_id": "3799046073"},
+        "complete_arguments": True,
+        "rank_score": 62,
+    }
+
+    assert (
+        runner.build_ranked_runtime_evidence_fallback_call(
+            [low_score],
+            min_score=50,
+            margin=1,
+        )
+        is None
+    )
+    assert (
+        runner.build_ranked_runtime_evidence_fallback_call(
+            [top, tied],
+            min_score=50,
+            margin=1,
+        )
+        is None
+    )
+
+    call = runner.build_ranked_runtime_evidence_fallback_call(
+        [top, tied],
+        min_score=50,
+        margin=0,
+    )
+
+    assert call is not None
+    assert call["arguments"]["_intentcap_ranked_runtime_evidence_margin"] == 0
+
+
 def test_compiler_lease_fallback_uses_complete_active_hint_marker():
     hint = {
         "tool": "create_task",

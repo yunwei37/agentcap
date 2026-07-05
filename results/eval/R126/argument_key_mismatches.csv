@@ -1,0 +1,5 @@
+run_id,domain,task_id,round,index,model_tool,issue,key,model_value_json,reference_value_json,category,closest_reference_event_id
+R125,airline,1,step_3,1,get_reservation_details,wrong_value,reservation_id,"""60RX9E""","""Q69X3R""",off_lease_same_tool_wrong_args,airline:1:1_1
+R125,airline,1,step_4,2,get_reservation_details,wrong_value,reservation_id,"""MZDDS4""","""Q69X3R""",off_lease_same_tool_wrong_args,airline:1:1_1
+R125,airline,1,step_5,3,get_reservation_details,wrong_value,reservation_id,"""OUEA45""","""Q69X3R""",off_lease_same_tool_wrong_args,airline:1:1_1
+R125,retail,3,step_12,11,get_product_details,wrong_value,product_id,"""4354588079""","""6086499569""",off_lease_same_tool_wrong_args,retail:3:3_1

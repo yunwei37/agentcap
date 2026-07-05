@@ -91,6 +91,7 @@ ROW_FIELDS = [
     "stepwise_hint_choice_fallbacks",
     "stepwise_compiler_lease_fallbacks",
     "stepwise_runtime_evidence_fallbacks",
+    "stepwise_runtime_evidence_ranked_fallbacks",
     "stepwise_runtime_evidence_hint_choice_fallbacks",
     "compiler_runtime_binding",
     "compiler_runtime_value_proof",
@@ -368,6 +369,31 @@ def main() -> int:
         ),
     )
     parser.add_argument(
+        "--stepwise-runtime-evidence-ranked-fallback",
+        action="store_true",
+        help=(
+            "In compiler-corpus stepwise mode, if the model returns no action, "
+            "deterministically synthesize the top ranked complete runtime-evidence "
+            "hint when it passes the configured score and margin. The call still "
+            "passes through the runtime binder and gateway."
+        ),
+    )
+    parser.add_argument(
+        "--stepwise-runtime-evidence-ranked-fallback-min-score",
+        type=int,
+        default=50,
+        help="Minimum rank_score needed for ranked runtime-evidence fallback.",
+    )
+    parser.add_argument(
+        "--stepwise-runtime-evidence-ranked-fallback-margin",
+        type=int,
+        default=1,
+        help=(
+            "Minimum score gap between the top and second ranked complete hint. "
+            "Use 0 to allow deterministic tie-breaking."
+        ),
+    )
+    parser.add_argument(
         "--stepwise-single-hint-fallback",
         action="store_true",
         help=(
@@ -452,6 +478,15 @@ def main() -> int:
         stepwise_hint_choice_fallback=args.stepwise_hint_choice_fallback,
         stepwise_compiler_lease_fallback=args.stepwise_compiler_lease_fallback,
         stepwise_runtime_evidence_fallback=args.stepwise_runtime_evidence_fallback,
+        stepwise_runtime_evidence_ranked_fallback=(
+            args.stepwise_runtime_evidence_ranked_fallback
+        ),
+        stepwise_runtime_evidence_ranked_fallback_min_score=(
+            args.stepwise_runtime_evidence_ranked_fallback_min_score
+        ),
+        stepwise_runtime_evidence_ranked_fallback_margin=(
+            args.stepwise_runtime_evidence_ranked_fallback_margin
+        ),
         stepwise_runtime_evidence_hint_choice_fallback=(
             args.stepwise_runtime_evidence_hint_choice_fallback
         ),
@@ -493,6 +528,9 @@ def run_experiment(
     stepwise_hint_choice_fallback: bool = False,
     stepwise_compiler_lease_fallback: bool = False,
     stepwise_runtime_evidence_fallback: bool = False,
+    stepwise_runtime_evidence_ranked_fallback: bool = False,
+    stepwise_runtime_evidence_ranked_fallback_min_score: int = 50,
+    stepwise_runtime_evidence_ranked_fallback_margin: int = 1,
     stepwise_runtime_evidence_hint_choice_fallback: bool = False,
     reference_user_simulator: bool = False,
     compiler_runtime_binding: bool = False,
@@ -536,6 +574,22 @@ def run_experiment(
         raise ValueError(
             "stepwise_runtime_evidence_hint_choice_fallback requires "
             "stepwise_runtime_evidence_lease_hints"
+        )
+    if (
+        stepwise_runtime_evidence_ranked_fallback
+        and not stepwise_runtime_evidence_rank_hints
+    ):
+        raise ValueError(
+            "stepwise_runtime_evidence_ranked_fallback requires "
+            "stepwise_runtime_evidence_rank_hints"
+        )
+    if stepwise_runtime_evidence_ranked_fallback_min_score < 0:
+        raise ValueError(
+            "stepwise_runtime_evidence_ranked_fallback_min_score must be non-negative"
+        )
+    if stepwise_runtime_evidence_ranked_fallback_margin < 0:
+        raise ValueError(
+            "stepwise_runtime_evidence_ranked_fallback_margin must be non-negative"
         )
     if stepwise_runtime_evidence_rank_hints and not stepwise_runtime_evidence_lease_hints:
         raise ValueError(
@@ -675,6 +729,15 @@ def run_experiment(
                     stepwise_runtime_evidence_fallback=(
                         stepwise_runtime_evidence_fallback
                     ),
+                    stepwise_runtime_evidence_ranked_fallback=(
+                        stepwise_runtime_evidence_ranked_fallback
+                    ),
+                    stepwise_runtime_evidence_ranked_fallback_min_score=(
+                        stepwise_runtime_evidence_ranked_fallback_min_score
+                    ),
+                    stepwise_runtime_evidence_ranked_fallback_margin=(
+                        stepwise_runtime_evidence_ranked_fallback_margin
+                    ),
                     stepwise_runtime_evidence_hint_choice_fallback=(
                         stepwise_runtime_evidence_hint_choice_fallback
                     ),
@@ -728,6 +791,15 @@ def run_experiment(
         stepwise_hint_choice_fallback=stepwise_hint_choice_fallback,
         stepwise_compiler_lease_fallback=stepwise_compiler_lease_fallback,
         stepwise_runtime_evidence_fallback=stepwise_runtime_evidence_fallback,
+        stepwise_runtime_evidence_ranked_fallback=(
+            stepwise_runtime_evidence_ranked_fallback
+        ),
+        stepwise_runtime_evidence_ranked_fallback_min_score=(
+            stepwise_runtime_evidence_ranked_fallback_min_score
+        ),
+        stepwise_runtime_evidence_ranked_fallback_margin=(
+            stepwise_runtime_evidence_ranked_fallback_margin
+        ),
         stepwise_runtime_evidence_hint_choice_fallback=(
             stepwise_runtime_evidence_hint_choice_fallback
         ),
@@ -799,6 +871,9 @@ def _run_task(
     stepwise_hint_choice_fallback: bool,
     stepwise_compiler_lease_fallback: bool,
     stepwise_runtime_evidence_fallback: bool,
+    stepwise_runtime_evidence_ranked_fallback: bool,
+    stepwise_runtime_evidence_ranked_fallback_min_score: int,
+    stepwise_runtime_evidence_ranked_fallback_margin: int,
     stepwise_runtime_evidence_hint_choice_fallback: bool,
     reference_user_simulator: bool,
     compiler_runtime_binding: bool,
@@ -928,6 +1003,15 @@ def _run_task(
             hint_choice_fallback=stepwise_hint_choice_fallback,
             compiler_lease_fallback=stepwise_compiler_lease_fallback,
             runtime_evidence_fallback=stepwise_runtime_evidence_fallback,
+            runtime_evidence_ranked_fallback=(
+                stepwise_runtime_evidence_ranked_fallback
+            ),
+            runtime_evidence_ranked_fallback_min_score=(
+                stepwise_runtime_evidence_ranked_fallback_min_score
+            ),
+            runtime_evidence_ranked_fallback_margin=(
+                stepwise_runtime_evidence_ranked_fallback_margin
+            ),
             runtime_evidence_hint_choice_fallback=(
                 stepwise_runtime_evidence_hint_choice_fallback
             ),
@@ -1178,6 +1262,11 @@ def _run_task(
             for step in stepwise_result["steps"]
             if step.get("runtime_evidence_fallback")
         ),
+        "stepwise_runtime_evidence_ranked_fallbacks": sum(
+            1
+            for step in stepwise_result["steps"]
+            if step.get("runtime_evidence_ranked_fallback")
+        ),
         "stepwise_runtime_evidence_hint_choice_fallbacks": sum(
             1
             for step in stepwise_result["steps"]
@@ -1326,6 +1415,9 @@ def run_stepwise_model_loop(
     hint_choice_fallback: bool,
     compiler_lease_fallback: bool,
     runtime_evidence_fallback: bool,
+    runtime_evidence_ranked_fallback: bool,
+    runtime_evidence_ranked_fallback_min_score: int,
+    runtime_evidence_ranked_fallback_margin: int,
     runtime_evidence_hint_choice_fallback: bool,
     pending_reference_actions: list[ReferenceAction],
     reference_by_event: dict[str, ReferenceAction],
@@ -1428,6 +1520,7 @@ def run_stepwise_model_loop(
         hint_choice_fallback_used = False
         compiler_lease_fallback_used = False
         runtime_evidence_fallback_used = False
+        runtime_evidence_ranked_fallback_used = False
         runtime_evidence_hint_choice_fallback_used = False
         hint_choice_prompt_path = ""
         hint_choice_raw_path = ""
@@ -1454,6 +1547,15 @@ def run_stepwise_model_loop(
             if fallback_call is not None:
                 model_calls = [fallback_call]
                 runtime_evidence_fallback_used = True
+        if not dry_run and not model_calls and runtime_evidence_ranked_fallback:
+            fallback_call = build_ranked_runtime_evidence_fallback_call(
+                runtime_hints,
+                min_score=runtime_evidence_ranked_fallback_min_score,
+                margin=runtime_evidence_ranked_fallback_margin,
+            )
+            if fallback_call is not None:
+                model_calls = [fallback_call]
+                runtime_evidence_ranked_fallback_used = True
         if not dry_run and not model_calls and runtime_evidence_hint_choice_fallback:
             complete_hints = complete_state_grounded_arg_hints(runtime_hints)
             if len(complete_hints) > 1:
@@ -1596,6 +1698,9 @@ def run_stepwise_model_loop(
                 "hint_choice_fallback": hint_choice_fallback_used,
                 "compiler_lease_fallback": compiler_lease_fallback_used,
                 "runtime_evidence_fallback": runtime_evidence_fallback_used,
+                "runtime_evidence_ranked_fallback": (
+                    runtime_evidence_ranked_fallback_used
+                ),
                 "runtime_evidence_hint_choice_fallback": (
                     runtime_evidence_hint_choice_fallback_used
                 ),
@@ -2526,6 +2631,45 @@ def build_single_hint_fallback_call_with_marker(
         return None
     hint = complete_hints[0]
     return _call_from_hint(hint, marker=marker)
+
+
+def build_ranked_runtime_evidence_fallback_call(
+    arg_hints: list[dict[str, Any]],
+    *,
+    min_score: int,
+    margin: int,
+) -> dict[str, Any] | None:
+    complete_hints = [
+        hint
+        for hint in complete_state_grounded_arg_hints(arg_hints)
+        if isinstance(hint.get("rank_score"), int)
+    ]
+    if not complete_hints:
+        return None
+    ranked = sorted(
+        complete_hints,
+        key=lambda hint: (
+            -int(hint["rank_score"]),
+            str(hint.get("tool", "")),
+            json.dumps(hint.get("arguments", {}), sort_keys=True, default=_json_default),
+        ),
+    )
+    top_score = int(ranked[0]["rank_score"])
+    if top_score < min_score:
+        return None
+    second_score = int(ranked[1]["rank_score"]) if len(ranked) > 1 else None
+    if second_score is not None and top_score - second_score < margin:
+        return None
+    return _call_from_hint(
+        ranked[0],
+        marker={
+            "_intentcap_synthesized_from_ranked_runtime_evidence_hint": True,
+            "_intentcap_ranked_runtime_evidence_score": top_score,
+            "_intentcap_ranked_runtime_evidence_margin": (
+                "" if second_score is None else top_score - second_score
+            ),
+        },
+    )
 
 
 def complete_state_grounded_arg_hints(arg_hints: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -3570,6 +3714,9 @@ def summarize(
     stepwise_hint_choice_fallback: bool = False,
     stepwise_compiler_lease_fallback: bool = False,
     stepwise_runtime_evidence_fallback: bool = False,
+    stepwise_runtime_evidence_ranked_fallback: bool = False,
+    stepwise_runtime_evidence_ranked_fallback_min_score: int = 50,
+    stepwise_runtime_evidence_ranked_fallback_margin: int = 1,
     stepwise_runtime_evidence_hint_choice_fallback: bool = False,
     reference_user_simulator: bool = False,
     compiler_runtime_binding: bool = False,
@@ -3662,6 +3809,10 @@ def summarize(
         notes.append(
             "Stepwise runtime-evidence fallback deterministically synthesizes at most one complete runtime-evidence compiler hint after an empty model action; synthesized calls still pass through the runtime binder and gateway."
         )
+    if stepwise_runtime_evidence_ranked_fallback:
+        notes.append(
+            "Stepwise runtime-evidence ranked fallback deterministically synthesizes the top complete ranked runtime-evidence compiler hint after an empty model action only when it passes the configured score and margin; synthesized calls still pass through the runtime binder and gateway."
+        )
     if stepwise_runtime_evidence_hint_choice_fallback:
         notes.append(
             "Stepwise runtime-evidence hint-choice fallback asks the model to select one complete runtime-evidence compiler hint after an empty model action; selected calls still pass through the runtime binder and gateway."
@@ -3704,6 +3855,15 @@ def summarize(
         "stepwise_compiler_lease_hints": stepwise_compiler_lease_hints,
         "stepwise_runtime_evidence_lease_hints": stepwise_runtime_evidence_lease_hints,
         "stepwise_runtime_evidence_rank_hints": stepwise_runtime_evidence_rank_hints,
+        "stepwise_runtime_evidence_ranked_fallback": (
+            stepwise_runtime_evidence_ranked_fallback
+        ),
+        "stepwise_runtime_evidence_ranked_fallback_min_score": (
+            stepwise_runtime_evidence_ranked_fallback_min_score
+        ),
+        "stepwise_runtime_evidence_ranked_fallback_margin": (
+            stepwise_runtime_evidence_ranked_fallback_margin
+        ),
         "stepwise_compact_json_prompts": stepwise_compact_json_prompts,
         "stepwise_single_hint_fallback": stepwise_single_hint_fallback,
         "stepwise_hint_choice_fallback": stepwise_hint_choice_fallback,
@@ -3762,6 +3922,10 @@ def summarize(
         ),
         "stepwise_runtime_evidence_fallbacks": sum(
             int(row.get("stepwise_runtime_evidence_fallbacks", 0))
+            for row in task_rows
+        ),
+        "stepwise_runtime_evidence_ranked_fallbacks": sum(
+            int(row.get("stepwise_runtime_evidence_ranked_fallbacks", 0))
             for row in task_rows
         ),
         "stepwise_runtime_evidence_hint_choice_fallbacks": sum(

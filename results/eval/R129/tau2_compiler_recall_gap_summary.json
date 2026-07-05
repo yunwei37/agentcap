@@ -1,0 +1,41 @@
+{
+  "analysis": "saved local-Qwen tau2 compiler-lease recall gap classification",
+  "executed_reference_actions": 20,
+  "git_status": "## main...origin/main\n M scripts/run_tau2_local_llm_task_gateway.py\n M tests/test_run_tau2_local_llm_task_gateway.py\n?? results/eval/R125/\n?? results/eval/R126/\n?? results/eval/R127/\n?? results/eval/R128/\n?? results/eval/R130/",
+  "missing_gap_class_counts": {
+    "complete_compiler_hint_not_called": 1,
+    "tool_not_visible_arg_evidence": 2,
+    "tool_not_visible_no_arg_evidence": 6,
+    "tool_visible_arg_evidence_not_called": 11,
+    "tool_visible_no_arg_evidence": 21
+  },
+  "missing_reference_actions": 41,
+  "missing_with_all_arg_evidence": 14,
+  "missing_with_any_arg_evidence": 16,
+  "missing_with_complete_compiler_hint": 1,
+  "missing_with_tool_visible": 33,
+  "no_dataset_sync": true,
+  "notes": [
+    "This analysis reads existing R125 local tau2 task-gateway artifacts only.",
+    "It does not run models, execute tools, clone benchmarks, sync datasets, or inspect hidden benchmark task files.",
+    "Argument evidence means the exact reference argument leaf values appeared in saved prompt task text or prior gateway-result previews.",
+    "Tool visibility means the saved step prompt exposed the tool under the current active compiler leases.",
+    "A complete compiler hint means an active compiler lease yielded the exact tool and arguments as a prompt hint."
+  ],
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "49d5d6dabc28da0408ca6d5b4c0282c92218d699",
+  "python": "3.12.3",
+  "reference_actions": 61,
+  "run_dir": "results/eval/R125",
+  "run_id": "R129",
+  "script_sha256": "629159b9313e261c6fd720c1033b11c35ee8b33f0b4132359285e78deedfe3fc",
+  "source_run": "R125",
+  "task_gap_category_counts": {
+    "complete_compiler_hint_not_called": 1,
+    "no_missing_references": 2,
+    "tool_not_visible_arg_evidence": 2,
+    "tool_visible_arg_evidence_not_called": 6
+  },
+  "tasks": 11,
+  "tool_oracle_pass_tasks": 0
+}
