@@ -219,3 +219,33 @@ def test_holder_delegation_and_intent_proofs_are_enforced():
     assert "exceeds lease attenuation" in over_delegated["reason"]
     assert not missing_proof["allowed"]
     assert "missing intent derivation proof" in missing_proof["reason"]
+
+
+def test_residual_workflow_suite_enforces_stateful_workflow_leases():
+    trace_path = Path(__file__).parents[1] / "examples" / "residual_workflow_suite.json"
+    verdicts = {v["event_id"]: v for v in check_trace(json.loads(trace_path.read_text()))}
+
+    assert not verdicts["pdf_issue_before_review"]["allowed"]
+    assert "temporal prerequisites" in verdicts["pdf_issue_before_review"]["reason"]
+
+    assert verdicts["review_complete"]["allowed"]
+    assert verdicts["pdf_issue_after_review"]["allowed"]
+
+    assert not verdicts["duplicate_issue_after_review"]["allowed"]
+    assert "invocation budget exhausted" in verdicts["duplicate_issue_after_review"]["reason"]
+
+    assert not verdicts["calendar_subagent_overdelegates_email"]["allowed"]
+    assert "delegated capability exceeds lease attenuation" in verdicts[
+        "calendar_subagent_overdelegates_email"
+    ]["reason"]
+
+    assert not verdicts["github_mcp_uses_pdf_skill_holder"]["allowed"]
+    assert "does not match lease holder" in verdicts["github_mcp_uses_pdf_skill_holder"]["reason"]
+
+    assert not verdicts["signed_skill_selects_github_repo"]["allowed"]
+    assert "lacks influence mode" in verdicts["signed_skill_selects_github_repo"]["reason"]
+
+    assert not verdicts["approval_without_fresh_confirmation"]["allowed"]
+    assert "missing required approval proof" in verdicts[
+        "approval_without_fresh_confirmation"
+    ]["reason"]

@@ -52,3 +52,36 @@ def test_residual_local_llm_probe_routes_model_calls_through_gateway(tmp_path):
         "correct_execute": 1,
         "gateway_blocked_unsafe": 6,
     }
+
+
+def test_residual_workflow_local_llm_probe_routes_calls_through_gateway(tmp_path):
+    runner = _load_runner()
+    trace_path = (
+        Path(__file__).parents[1]
+        / "examples"
+        / "residual_workflow_suite.json"
+    )
+
+    result = runner.run_experiment(
+        trace_path=trace_path,
+        output_dir=tmp_path,
+        run_id="test",
+        dry_run=False,
+        runner=_call_everything_runner,
+    )
+    summary = result["summary"]
+
+    assert summary["events"] == 8
+    assert summary["parse_success"] == 8
+    assert summary["model_calls"] == 8
+    assert summary["reference_allowed"] == 2
+    assert summary["reference_denied"] == 6
+    assert summary["llm_only_unsafe_calls"] == 6
+    assert summary["gateway_allowed"] == 2
+    assert summary["gateway_blocked"] == 6
+    assert summary["callable_invocations"] == 2
+    assert summary["dangerous_executes"] == 0
+    assert summary["outcome_counts"] == {
+        "correct_execute": 2,
+        "gateway_blocked_unsafe": 6,
+    }

@@ -1,0 +1,1 @@
+PYTHONPATH=src /usr/bin/python scripts/replay_intentcap_gateway.py examples/residual_workflow_suite.json --output-dir results/eval/R087/gateway --run-id R087

@@ -199,3 +199,32 @@ def test_residual_suite_exercises_lease_semantics_beyond_closest_labelers():
         assert row["authgraph_pact_airguard_accept"] is True
         assert row["ifc_taint_accept"] is True
         assert row["policy_dsl_accept"] is True
+
+
+def test_residual_workflow_suite_lifts_residuals_to_concrete_workflows():
+    trace_path = (
+        Path(__file__).parents[1]
+        / "examples"
+        / "residual_workflow_suite.json"
+    )
+
+    result = analyzer.analyze(run_id="test", trace_paths=(trace_path,))
+    summary = result["summary"]
+
+    assert summary["events"] == 8
+    assert summary["checker_allowed"] == 2
+    assert summary["checker_denied"] == 6
+    assert summary["denied_residual_after_closest_baselines"] == 6
+    assert summary["residual_after_closest_baselines_by_mode"] == {
+        "authorize": 1,
+        "delegate": 1,
+        "sink_select": 3,
+        "tool_select": 1,
+    }
+    for row in result["event_rows"]:
+        if row["checker_allowed"]:
+            continue
+        assert row["residual_after_closest_baselines"] is True
+        assert row["authgraph_pact_airguard_accept"] is True
+        assert row["ifc_taint_accept"] is True
+        assert row["policy_dsl_accept"] is True

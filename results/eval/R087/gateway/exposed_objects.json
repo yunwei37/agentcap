@@ -1,0 +1,22 @@
+[
+  {
+    "object": "github.issue_scope_approval",
+    "op": "approve.request"
+  },
+  {
+    "object": "pdf.review.summary",
+    "op": "ctx.use"
+  },
+  {
+    "object": "/skills/pdf/extract_tables.py",
+    "op": "exec.run"
+  },
+  {
+    "object": "github.create_issue",
+    "op": "mcp.call"
+  },
+  {
+    "object": "calendar_summary_subagent",
+    "op": "subagent.spawn"
+  }
+]

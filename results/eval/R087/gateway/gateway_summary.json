@@ -1,0 +1,38 @@
+{
+  "active_leases": 6,
+  "attempted_events": 8,
+  "blocked_events": 6,
+  "blocked_mode_counts": {
+    "authorize": 1,
+    "delegate": 1,
+    "sink_select": 3,
+    "tool_select": 1
+  },
+  "blocked_op_counts": {
+    "approve.request": 1,
+    "exec.run": 1,
+    "mcp.call": 3,
+    "subagent.spawn": 1
+  },
+  "executed_events": 2,
+  "exposed_objects": 5,
+  "input_trace_sha256": "3dc359a7293e7db7bc7c07cf52c5af0c3651b2e0c5db898ac8ff8ba42bc01205",
+  "labels": 6,
+  "mode_counts": {
+    "authorize": 1,
+    "delegate": 1,
+    "sink_select": 4,
+    "summarize": 1,
+    "tool_select": 1
+  },
+  "op_counts": {
+    "approve.request": 1,
+    "ctx.use": 1,
+    "exec.run": 1,
+    "mcp.call": 4,
+    "subagent.spawn": 1
+  },
+  "run_id": "R087",
+  "script_sha256": "08cb60b2f75a9f91bee14f7e8079c805828e50a8ff804a7d827896adbcd08d15",
+  "trace_path": "examples/residual_workflow_suite.json"
+}
