@@ -1,0 +1,41 @@
+{
+  "analysis": "saved local-Qwen tau2 compiler-lease recall gap classification",
+  "executed_reference_actions": 16,
+  "git_status": "## main...origin/main\n M docs/autopaper/intentcap-autopaper.md\n M docs/background-related-work.md\n M docs/design.md\n M docs/evaluation.md\n M docs/idea-story.md\n M docs/implementation.md\n?? results/eval/R103/\n?? scripts/analyze_tau2_compiler_recall_gap.py\n?? tests/test_analyze_tau2_compiler_recall_gap.py",
+  "missing_gap_class_counts": {
+    "complete_compiler_hint_not_called": 1,
+    "tool_not_visible_arg_evidence": 8,
+    "tool_not_visible_no_arg_evidence": 6,
+    "tool_visible_arg_evidence_not_called": 13,
+    "tool_visible_no_arg_evidence": 17
+  },
+  "missing_reference_actions": 45,
+  "missing_with_all_arg_evidence": 22,
+  "missing_with_any_arg_evidence": 27,
+  "missing_with_complete_compiler_hint": 1,
+  "missing_with_tool_visible": 31,
+  "no_dataset_sync": true,
+  "notes": [
+    "This analysis reads existing R099 local tau2 task-gateway artifacts only.",
+    "It does not run models, execute tools, clone benchmarks, sync datasets, or inspect hidden benchmark task files.",
+    "Argument evidence means the exact reference argument leaf values appeared in saved prompt task text or prior gateway-result previews.",
+    "Tool visibility means the saved step prompt exposed the tool under the current active compiler leases.",
+    "A complete compiler hint means an active compiler lease yielded the exact tool and arguments as a prompt hint."
+  ],
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "40b3b2f4cad5bfc08f9b0cc5fa1e07ede9a7a1b1",
+  "python": "3.12.3",
+  "reference_actions": 61,
+  "run_dir": "results/eval/R099",
+  "run_id": "R103",
+  "script_sha256": "629159b9313e261c6fd720c1033b11c35ee8b33f0b4132359285e78deedfe3fc",
+  "source_run": "R099",
+  "task_gap_category_counts": {
+    "complete_compiler_hint_not_called": 1,
+    "no_missing_references": 1,
+    "tool_not_visible_arg_evidence": 4,
+    "tool_visible_arg_evidence_not_called": 5
+  },
+  "tasks": 11,
+  "tool_oracle_pass_tasks": 0
+}
