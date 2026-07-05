@@ -83,6 +83,10 @@ ROW_FIELDS = [
     "stepwise_state_grounded_arg_hint_steps",
     "stepwise_single_hint_fallbacks",
     "stepwise_hint_choice_fallbacks",
+    "compiler_runtime_binding",
+    "compiler_runtime_binding_attempts",
+    "compiler_runtime_binding_successes",
+    "compiler_runtime_binding_missing_evidence",
     "stepwise_steps_attempted",
     "stepwise_model_calls",
     "step_prompt_paths",
@@ -119,6 +123,11 @@ ACTION_ROW_FIELDS = [
     "gateway_allowed",
     "gateway_action",
     "gateway_reason",
+    "runtime_binding_attempted",
+    "runtime_binding_allowed",
+    "runtime_binding_lease_id",
+    "runtime_binding_reason",
+    "runtime_binding_args_json",
     "executed",
     "tool_error",
     "tool_result_preview",
@@ -138,6 +147,7 @@ USER_SIMULATOR_ROW_FIELDS = [
 UNSUPPORTED_ROW_FIELDS = ["domain", "task_id", "reason"]
 TOOL_EXPOSURE_MODES = ("all", "leased")
 LEASE_SOURCE_MODES = ("exact-reference", "compiler-corpus")
+RUNTIME_BINDING_MODES = {"runtime_from_prior_tool", "runtime_value"}
 
 
 def main() -> int:
@@ -251,6 +261,15 @@ def main() -> int:
             "recorded separately and are not granted to the assistant."
         ),
     )
+    parser.add_argument(
+        "--compiler-runtime-binding",
+        action="store_true",
+        help=(
+            "In compiler-corpus mode, make runtime-placeholder leases executable "
+            "only by minting one-shot exact leases when the proposed runtime "
+            "argument value appears in already executed tool-result evidence."
+        ),
+    )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -277,6 +296,7 @@ def main() -> int:
         stepwise_single_hint_fallback=args.stepwise_single_hint_fallback,
         stepwise_hint_choice_fallback=args.stepwise_hint_choice_fallback,
         reference_user_simulator=args.reference_user_simulator,
+        compiler_runtime_binding=args.compiler_runtime_binding,
         dry_run=args.dry_run,
     )
     print(json.dumps(result["summary"], indent=2, sort_keys=True))
@@ -307,6 +327,7 @@ def run_experiment(
     stepwise_single_hint_fallback: bool = False,
     stepwise_hint_choice_fallback: bool = False,
     reference_user_simulator: bool = False,
+    compiler_runtime_binding: bool = False,
     dry_run: bool = False,
     runner: Callable[[list[str], int], tuple[str, str, int, float]] | None = None,
 ) -> dict[str, Any]:
@@ -339,6 +360,8 @@ def run_experiment(
             "stepwise_state_grounded_arg_hints uses exact reference leases and "
             "is disabled for compiler-corpus lease source"
         )
+    if compiler_runtime_binding and lease_source != "compiler-corpus":
+        raise ValueError("compiler_runtime_binding requires compiler-corpus lease source")
 
     output_dir.mkdir(parents=True, exist_ok=True)
     prompt_dir = output_dir / "prompts"
@@ -430,6 +453,7 @@ def run_experiment(
                     stepwise_single_hint_fallback=stepwise_single_hint_fallback,
                     stepwise_hint_choice_fallback=stepwise_hint_choice_fallback,
                     reference_user_simulator=reference_user_simulator,
+                    compiler_runtime_binding=compiler_runtime_binding,
                     dry_run=dry_run,
                     runner=runner,
                 )
@@ -472,6 +496,7 @@ def run_experiment(
         stepwise_single_hint_fallback=stepwise_single_hint_fallback,
         stepwise_hint_choice_fallback=stepwise_hint_choice_fallback,
         reference_user_simulator=reference_user_simulator,
+        compiler_runtime_binding=compiler_runtime_binding,
         dry_run=dry_run,
     )
 
@@ -532,6 +557,7 @@ def _run_task(
     stepwise_single_hint_fallback: bool,
     stepwise_hint_choice_fallback: bool,
     reference_user_simulator: bool,
+    compiler_runtime_binding: bool,
     dry_run: bool,
     runner: Callable[[list[str], int], tuple[str, str, int, float]],
 ) -> dict[str, Any]:
@@ -572,6 +598,7 @@ def _run_task(
             task_id=task_id,
             compiler_record=compiler_record,
             tools_by_name=compiler_tools_by_name,
+            expose_runtime_bindable=compiler_runtime_binding,
         )
     else:
         trace = build_task_trace(domain, task_id, reference_actions)
@@ -660,6 +687,7 @@ def _run_task(
             executed_reference_ids=executed_reference_ids,
             bound_reference_ids=bound_reference_ids,
             include_reference_event_ids=lease_source == "exact-reference",
+            compiler_runtime_binding=compiler_runtime_binding,
         )
         steps = stepwise_result["steps"]
         if steps:
@@ -714,6 +742,7 @@ def _run_task(
             executed_reference_ids=executed_reference_ids,
             bound_reference_ids=bound_reference_ids,
             include_reference_event_ids=lease_source == "exact-reference",
+            compiler_runtime_binding=compiler_runtime_binding,
         )
 
         if (
@@ -773,6 +802,7 @@ def _run_task(
                 executed_reference_ids=executed_reference_ids,
                 bound_reference_ids=bound_reference_ids,
                 include_reference_event_ids=lease_source == "exact-reference",
+                compiler_runtime_binding=compiler_runtime_binding,
             )
 
     if reference_user_simulator:
@@ -871,6 +901,18 @@ def _run_task(
         "stepwise_hint_choice_fallbacks": sum(
             1 for step in stepwise_result["steps"] if step.get("hint_choice_fallback")
         ),
+        "compiler_runtime_binding": compiler_runtime_binding,
+        "compiler_runtime_binding_attempts": sum(
+            1 for row in action_rows if row.get("runtime_binding_attempted")
+        ),
+        "compiler_runtime_binding_successes": sum(
+            1 for row in action_rows if row.get("runtime_binding_allowed")
+        ),
+        "compiler_runtime_binding_missing_evidence": sum(
+            1
+            for row in action_rows
+            if str(row.get("runtime_binding_reason", "")).startswith("missing runtime evidence")
+        ),
         "stepwise_steps_attempted": len(stepwise_result["steps"]),
         "stepwise_model_calls": len(stepwise_model_calls),
         "step_prompt_paths": "|".join(
@@ -916,6 +958,7 @@ def _run_task(
             "tool_exposure": tool_exposure,
             "active_leases": len(trace.get("leases", [])),
             "compiler_source_parse_ok": compiler_source_parse_ok,
+            "compiler_runtime_binding": compiler_runtime_binding,
             "prompt_path": str(prompt_path),
             "raw_output_path": str(raw_path),
             "raw_output_sha256": _sha256(raw_payload.encode()),
@@ -996,6 +1039,7 @@ def run_stepwise_model_loop(
     executed_reference_ids: list[str],
     bound_reference_ids: list[str],
     include_reference_event_ids: bool,
+    compiler_runtime_binding: bool,
 ) -> dict[str, Any]:
     task_id = str(raw_task.get("id", ""))
     steps: list[dict[str, Any]] = []
@@ -1138,6 +1182,7 @@ def run_stepwise_model_loop(
             executed_reference_ids=executed_reference_ids,
             bound_reference_ids=bound_reference_ids,
             include_reference_event_ids=include_reference_event_ids,
+            compiler_runtime_binding=compiler_runtime_binding,
         )
         steps.append(
             {
@@ -1201,6 +1246,7 @@ def execute_model_calls(
     executed_reference_ids: list[str],
     bound_reference_ids: list[str],
     include_reference_event_ids: bool,
+    compiler_runtime_binding: bool = False,
 ) -> list[dict[str, Any]]:
     blocked_calls: list[dict[str, Any]] = []
     for offset, model_call in enumerate(model_calls):
@@ -1216,7 +1262,15 @@ def execute_model_calls(
         if bound_action is not None:
             pending_reference_actions.remove(bound_action)
             bound_reference_ids.append(bound_action.event_id)
-        record = gateway.call(event)
+        record, runtime_binding = call_gateway_with_optional_runtime_binding(
+            gateway=gateway,
+            event=event,
+            domain=domain,
+            task_id=task_id,
+            index=index,
+            action_rows=action_rows,
+            enabled=compiler_runtime_binding,
+        )
         decision = record.get("decision", {})
         model_args = {
             key: value
@@ -1268,6 +1322,15 @@ def execute_model_calls(
                 "gateway_allowed": bool(decision.get("allowed")),
                 "gateway_action": str(decision.get("action", "")),
                 "gateway_reason": str(decision.get("reason", "")),
+                "runtime_binding_attempted": runtime_binding["attempted"],
+                "runtime_binding_allowed": runtime_binding["allowed"],
+                "runtime_binding_lease_id": runtime_binding["lease_id"],
+                "runtime_binding_reason": runtime_binding["reason"],
+                "runtime_binding_args_json": json.dumps(
+                    runtime_binding["args"],
+                    sort_keys=True,
+                    default=_json_default,
+                ),
                 "executed": bool(record.get("executed")),
                 "tool_error": bool(record.get("error")),
                 "tool_result_preview": result_preview,
@@ -1285,6 +1348,209 @@ def execute_model_calls(
                 }
             )
     return blocked_calls
+
+
+def call_gateway_with_optional_runtime_binding(
+    *,
+    gateway: LiveToolGateway,
+    event: dict[str, Any],
+    domain: str,
+    task_id: str,
+    index: int,
+    action_rows: list[dict[str, Any]],
+    enabled: bool,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    default_binding = {
+        "attempted": False,
+        "allowed": False,
+        "lease_id": "",
+        "reason": "",
+        "args": {},
+    }
+    decision = gateway.trace_gateway.authorize(event).to_dict()
+    if decision.get("allowed") or not enabled:
+        return gateway.call(event, decision=decision), default_binding
+
+    binding = build_runtime_bound_compiler_lease(
+        trace=gateway.trace_gateway.trace,
+        event=event,
+        domain=domain,
+        task_id=task_id,
+        index=index,
+        action_rows=action_rows,
+    )
+    if not binding["attempted"] or binding.get("lease") is None:
+        return gateway.call(event, decision=decision), {
+            "attempted": binding["attempted"],
+            "allowed": False,
+            "lease_id": "",
+            "reason": binding["reason"],
+            "args": binding["args"],
+        }
+
+    lease = binding["lease"]
+    gateway.trace_gateway.leases.append(lease)
+    record = gateway.call(event)
+    runtime_decision = record.get("decision", {})
+    return record, {
+        "attempted": True,
+        "allowed": bool(runtime_decision.get("allowed")),
+        "lease_id": str(lease.get("id", "")),
+        "reason": "runtime evidence bound" if runtime_decision.get("allowed") else str(
+            runtime_decision.get("reason", "")
+        ),
+        "args": binding["args"],
+    }
+
+
+def build_runtime_bound_compiler_lease(
+    *,
+    trace: dict[str, Any],
+    event: dict[str, Any],
+    domain: str,
+    task_id: str,
+    index: int,
+    action_rows: list[dict[str, Any]],
+) -> dict[str, Any]:
+    templates = (
+        (trace.get("metadata") or {}).get("runtime_bindable_compiler_leases")
+        if isinstance(trace.get("metadata"), dict)
+        else []
+    )
+    if not isinstance(templates, list):
+        templates = []
+    event_args = {
+        key: value
+        for key, value in dict(event.get("args") or {}).items()
+        if not str(key).startswith("_intentcap_")
+    }
+    candidates = [
+        template
+        for template in templates
+        if isinstance(template, dict) and str(template.get("object", "")) == str(event.get("object", ""))
+    ]
+    if not candidates:
+        return {
+            "attempted": False,
+            "reason": "",
+            "args": {},
+            "lease": None,
+        }
+
+    reasons: list[str] = []
+    for template in candidates:
+        allowed_arg_keys = {str(name) for name in template.get("allowed_arg_keys", [])}
+        if set(event_args) != allowed_arg_keys:
+            reasons.append(
+                f"argument key set mismatch for {template.get('id')}: "
+                f"expected {sorted(allowed_arg_keys)}, got {sorted(event_args)}"
+            )
+            continue
+        static_args = template.get("static_args", {})
+        if not isinstance(static_args, dict):
+            static_args = {}
+        static_mismatches = [
+            name
+            for name, constraint in static_args.items()
+            if not _compiler_constraint_matches(event_args.get(name), constraint)
+        ]
+        if static_mismatches:
+            reasons.append(
+                f"static argument mismatch for {template.get('id')}: "
+                f"{sorted(static_mismatches)}"
+            )
+            continue
+        runtime_args = [str(name) for name in template.get("runtime_args", [])]
+        missing_values = [
+            name
+            for name in runtime_args
+            if name not in event_args or not _runtime_value_is_present(event_args.get(name))
+        ]
+        if missing_values:
+            reasons.append(
+                f"missing runtime argument value for {template.get('id')}: "
+                f"{sorted(missing_values)}"
+            )
+            continue
+        missing_evidence = [
+            name
+            for name in runtime_args
+            if not _value_is_grounded_in_executed_tool_results(
+                event_args.get(name),
+                action_rows,
+            )
+        ]
+        if missing_evidence:
+            reasons.append(
+                f"missing runtime evidence for {template.get('id')}: "
+                f"{sorted(missing_evidence)}"
+            )
+            continue
+
+        runtime_values = {name: event_args.get(name) for name in runtime_args}
+        lease_id = (
+            f"compiler-runtime-live:{domain}:{task_id}:{index}:"
+            f"{str(template.get('tool', 'tool'))}"
+        )
+        return {
+            "attempted": True,
+            "reason": "runtime evidence bound",
+            "args": runtime_values,
+            "lease": {
+                "id": lease_id,
+                "op": "tool.call",
+                "object": str(template.get("object", "")),
+                "args": {
+                    name: {"equals": event_args[name]}
+                    for name in sorted(allowed_arg_keys)
+                },
+                "allowed_arg_keys": sorted(allowed_arg_keys),
+                "control_may_depend_on": [TRUSTED_TASK_INTENT],
+                "data_may_depend_on": [TRUSTED_TASK_INTENT],
+                "budget": {"invocations": 1},
+                "runtime_binding_template_id": str(template.get("id", "")),
+            },
+        }
+
+    return {
+        "attempted": True,
+        "reason": "; ".join(reasons) if reasons else "no runtime binding candidate accepted",
+        "args": {},
+        "lease": None,
+    }
+
+
+def _compiler_constraint_matches(value: Any, constraint: Any) -> bool:
+    if not isinstance(constraint, dict):
+        return value == constraint
+    if "one_of" in constraint:
+        values = constraint.get("one_of")
+        return isinstance(values, list) and value in values
+    if "equals" in constraint:
+        return value == constraint["equals"]
+    return False
+
+
+def _runtime_value_is_present(value: Any) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, str):
+        return bool(value)
+    if isinstance(value, (list, dict)):
+        return bool(value)
+    return True
+
+
+def _value_is_grounded_in_executed_tool_results(
+    value: Any,
+    action_rows: list[dict[str, Any]],
+) -> bool:
+    evidence = "\n".join(
+        str(row.get("tool_result_preview", ""))
+        for row in action_rows
+        if row.get("executed") and row.get("tool_result_preview")
+    )
+    return _value_is_grounded(value, evidence)
 
 
 def build_prompt(domain: str, raw_task: dict[str, Any], tools: list[dict[str, Any]]) -> str:
@@ -1800,6 +2066,7 @@ def build_compiler_corpus_task_trace(
     task_id: str,
     compiler_record: dict[str, Any],
     tools_by_name: dict[str, Any],
+    expose_runtime_bindable: bool = False,
 ) -> tuple[dict[str, Any], set[str], set[str]]:
     """Build active runtime leases from saved compiler output only.
 
@@ -1815,6 +2082,7 @@ def build_compiler_corpus_task_trace(
     selected_count = 0
     invalid_tool_count = 0
     inactive_broad_count = 0
+    runtime_bindable_templates: list[dict[str, Any]] = []
 
     for index, lease in enumerate(model_leases):
         if not isinstance(lease, dict):
@@ -1833,6 +2101,33 @@ def build_compiler_corpus_task_trace(
             tuple(getattr(tool, "arguments", ()) or ()),
         )
         if broad_args:
+            (
+                runtime_static_constraints,
+                _,
+                runtime_args,
+                runtime_unsupported_args,
+            ) = lower_runtime_bindable_compiler_argument_policy(
+                argument_policy,
+                tuple(getattr(tool, "arguments", ()) or ()),
+            )
+            object_name = f"tau2.{domain}.assistant.{tool_name}"
+            if runtime_args and not runtime_unsupported_args:
+                template = {
+                    "id": f"compiler-runtime-template:{domain}:{task_id}:{index}:{tool_name}",
+                    "tool": tool_name,
+                    "object": object_name,
+                    "static_args": runtime_static_constraints,
+                    "runtime_args": runtime_args,
+                    "allowed_arg_keys": sorted(
+                        set(runtime_static_constraints) | set(runtime_args)
+                    ),
+                    "argument_policy": argument_policy,
+                    "intent_evidence": str(lease.get("intent_evidence", "")),
+                }
+                runtime_bindable_templates.append(template)
+                if expose_runtime_bindable:
+                    active_tool_names.add(tool_name)
+                    active_object_names.add(object_name)
             inactive_broad_count += 1
             continue
         object_name = f"tau2.{domain}.assistant.{tool_name}"
@@ -1870,11 +2165,16 @@ def build_compiler_corpus_task_trace(
                 "active_compiler_leases": len(leases),
                 "invalid_tool_leases": invalid_tool_count,
                 "inactive_broad_or_runtime_arg_leases": inactive_broad_count,
+                "runtime_bindable_compiler_leases": runtime_bindable_templates,
+                "runtime_bindable_compiler_lease_count": len(runtime_bindable_templates),
+                "runtime_bindable_tools_exposed": expose_runtime_bindable,
                 "note": (
                     "Active leases are strict lowerings of saved compiler output. "
                     "A compiler lease is active only when it names a valid tool "
                     "and every declared tool argument has a non-empty equals_any "
-                    "policy. Reference actions are not used to mint leases."
+                    "policy. Runtime-bindable compiler templates are executable "
+                    "only through an optional event-level evidence binder. "
+                    "Reference actions are not used to mint leases."
                 ),
             },
         },
@@ -1903,6 +2203,31 @@ def lower_strict_compiler_argument_policy(
         else:
             broad_args.append(arg)
     return constraints, sorted(constrained_args), sorted(broad_args)
+
+
+def lower_runtime_bindable_compiler_argument_policy(
+    argument_policy: dict[str, Any],
+    tool_arguments: tuple[str, ...],
+) -> tuple[dict[str, Any], list[str], list[str], list[str]]:
+    constraints: dict[str, Any] = {}
+    constrained_args: list[str] = []
+    runtime_args: list[str] = []
+    unsupported_args: list[str] = []
+    for arg in tool_arguments:
+        policy = argument_policy.get(arg)
+        if not isinstance(policy, dict):
+            unsupported_args.append(arg)
+            continue
+        mode = str(policy.get("mode", ""))
+        values = policy.get("values")
+        if mode == "equals_any" and isinstance(values, list) and values:
+            constraints[arg] = {"one_of": values}
+            constrained_args.append(arg)
+        elif mode in RUNTIME_BINDING_MODES:
+            runtime_args.append(arg)
+        else:
+            unsupported_args.append(arg)
+    return constraints, sorted(constrained_args), sorted(runtime_args), sorted(unsupported_args)
 
 
 def bind_model_call(
@@ -2061,6 +2386,7 @@ def summarize(
     stepwise_single_hint_fallback: bool = False,
     stepwise_hint_choice_fallback: bool = False,
     reference_user_simulator: bool = False,
+    compiler_runtime_binding: bool = False,
     dry_run: bool = False,
 ) -> dict[str, Any]:
     unsupported_reasons = Counter(row["reason"].split(":", 1)[0] for row in unsupported_rows)
@@ -2127,6 +2453,10 @@ def summarize(
         notes.append(
             "Reference user-simulator replay executes benchmark user-side actions only after preceding assistant reference actions have executed; these actions are counted separately and do not expand assistant authority."
         )
+    if compiler_runtime_binding:
+        notes.append(
+            "Compiler runtime binding exposes runtime-placeholder compiler tools but mints only one-shot exact leases when proposed runtime argument values are found in already executed tool-result evidence."
+        )
     return {
         "run_id": run_id,
         "analysis": (
@@ -2149,6 +2479,7 @@ def summarize(
         "stepwise_single_hint_fallback": stepwise_single_hint_fallback,
         "stepwise_hint_choice_fallback": stepwise_hint_choice_fallback,
         "reference_user_simulator": reference_user_simulator,
+        "compiler_runtime_binding": compiler_runtime_binding,
         "tool_schema_count_min": min(tool_schema_counts) if tool_schema_counts else 0,
         "tool_schema_count_max": max(tool_schema_counts) if tool_schema_counts else 0,
         "tool_schema_count_avg": (
@@ -2182,6 +2513,17 @@ def summarize(
         ),
         "stepwise_hint_choice_fallbacks": sum(
             int(row.get("stepwise_hint_choice_fallbacks", 0)) for row in task_rows
+        ),
+        "compiler_runtime_binding_attempts": sum(
+            1 for row in action_rows if row.get("runtime_binding_attempted")
+        ),
+        "compiler_runtime_binding_successes": sum(
+            1 for row in action_rows if row.get("runtime_binding_allowed")
+        ),
+        "compiler_runtime_binding_missing_evidence": sum(
+            1
+            for row in action_rows
+            if str(row.get("runtime_binding_reason", "")).startswith("missing runtime evidence")
         ),
         "tasks_with_model_calls": sum(1 for row in task_rows if int(row["model_calls"]) > 0),
         "reference_actions": sum(int(row["reference_actions"]) for row in task_rows),

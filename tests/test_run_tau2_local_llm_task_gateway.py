@@ -265,6 +265,7 @@ def test_compiler_corpus_trace_uses_only_strict_saved_compiler_leases():
     assert trace["metadata"]["active_compiler_leases"] == 1
     assert trace["metadata"]["inactive_broad_or_runtime_arg_leases"] == 1
     assert trace["metadata"]["invalid_tool_leases"] == 1
+    assert trace["metadata"]["runtime_bindable_compiler_lease_count"] == 1
 
     gateway = LiveToolGateway(
         trace,
@@ -348,6 +349,210 @@ def test_compiler_corpus_trace_uses_only_strict_saved_compiler_leases():
     assert blocked["decision"]["reason"] == "no matching lease"
     assert extra_arg_blocked["executed"] is False
     assert extra_arg_blocked["decision"]["reason"] == "no matching lease"
+
+
+def test_compiler_runtime_binding_requires_prior_tool_result_evidence():
+    trace, active_tools, active_objects = runner.build_compiler_corpus_task_trace(
+        domain="mock",
+        task_id="t",
+        compiler_record={
+            "repaired_model_json": {
+                "leases": [
+                    {
+                        "tool": "get_user_details",
+                        "argument_policy": {
+                            "user_id": {"mode": "equals_any", "values": ["user_1"]},
+                        },
+                    },
+                    {
+                        "tool": "cancel_reservation",
+                        "argument_policy": {
+                            "reservation_id": {
+                                "mode": "runtime_from_prior_tool",
+                                "values": [],
+                            },
+                        },
+                    },
+                ]
+            }
+        },
+        tools_by_name={
+            "get_user_details": SimpleNamespace(
+                name="get_user_details",
+                arguments=("user_id",),
+            ),
+            "cancel_reservation": SimpleNamespace(
+                name="cancel_reservation",
+                arguments=("reservation_id",),
+            ),
+        },
+        expose_runtime_bindable=True,
+    )
+
+    assert active_tools == {"get_user_details", "cancel_reservation"}
+    assert active_objects == {
+        "tau2.mock.assistant.get_user_details",
+        "tau2.mock.assistant.cancel_reservation",
+    }
+    assert trace["metadata"]["runtime_bindable_tools_exposed"] is True
+
+    event = {
+        "id": "model:mock:t:1",
+        "op": "tool.call",
+        "object": "tau2.mock.assistant.cancel_reservation",
+        "args": {"reservation_id": "Q69X3R"},
+        "decision": "mock.cancel_reservation.tool_choice",
+        "mode": "tool_select",
+        "control_provenance": [runner.TRUSTED_TASK_INTENT],
+        "data_provenance": [runner.TRUSTED_TASK_INTENT],
+    }
+    gateway_without_evidence = LiveToolGateway(
+        trace,
+        {
+            "tau2.mock.assistant.cancel_reservation": lambda **kwargs: {
+                "ok": True,
+                "kwargs": kwargs,
+            }
+        },
+    )
+
+    blocked, blocked_binding = runner.call_gateway_with_optional_runtime_binding(
+        gateway=gateway_without_evidence,
+        event=event,
+        domain="mock",
+        task_id="t",
+        index=1,
+        action_rows=[],
+        enabled=True,
+    )
+
+    assert blocked["executed"] is False
+    assert blocked_binding["attempted"] is True
+    assert blocked_binding["allowed"] is False
+    assert blocked_binding["reason"].startswith("missing runtime evidence")
+
+    trace_with_evidence, _, _ = runner.build_compiler_corpus_task_trace(
+        domain="mock",
+        task_id="t",
+        compiler_record={
+            "repaired_model_json": {
+                "leases": [
+                    {
+                        "tool": "cancel_reservation",
+                        "argument_policy": {
+                            "reservation_id": {
+                                "mode": "runtime_from_prior_tool",
+                                "values": [],
+                            },
+                        },
+                    },
+                ]
+            }
+        },
+        tools_by_name={
+            "cancel_reservation": SimpleNamespace(
+                name="cancel_reservation",
+                arguments=("reservation_id",),
+            ),
+        },
+        expose_runtime_bindable=True,
+    )
+    gateway_with_evidence = LiveToolGateway(
+        trace_with_evidence,
+        {
+            "tau2.mock.assistant.cancel_reservation": lambda **kwargs: {
+                "ok": True,
+                "kwargs": kwargs,
+            }
+        },
+    )
+    allowed, allowed_binding = runner.call_gateway_with_optional_runtime_binding(
+        gateway=gateway_with_evidence,
+        event=event,
+        domain="mock",
+        task_id="t",
+        index=1,
+        action_rows=[
+            {
+                "executed": True,
+                "tool_result_preview": '{"reservations":[{"reservation_id":"Q69X3R"}]}',
+            }
+        ],
+        enabled=True,
+    )
+
+    assert allowed["executed"] is True
+    assert allowed_binding["attempted"] is True
+    assert allowed_binding["allowed"] is True
+    assert allowed_binding["args"] == {"reservation_id": "Q69X3R"}
+    assert allowed_binding["lease_id"].startswith("compiler-runtime-live:mock:t:1")
+    assert len(trace_with_evidence["leases"]) == 1
+
+
+def test_compiler_runtime_binding_rejects_extra_arguments():
+    trace, _, _ = runner.build_compiler_corpus_task_trace(
+        domain="mock",
+        task_id="t",
+        compiler_record={
+            "repaired_model_json": {
+                "leases": [
+                    {
+                        "tool": "cancel_reservation",
+                        "argument_policy": {
+                            "reservation_id": {
+                                "mode": "runtime_from_prior_tool",
+                                "values": [],
+                            },
+                        },
+                    },
+                ]
+            }
+        },
+        tools_by_name={
+            "cancel_reservation": SimpleNamespace(
+                name="cancel_reservation",
+                arguments=("reservation_id",),
+            ),
+        },
+        expose_runtime_bindable=True,
+    )
+    gateway = LiveToolGateway(
+        trace,
+        {
+            "tau2.mock.assistant.cancel_reservation": lambda **kwargs: {
+                "ok": True,
+                "kwargs": kwargs,
+            }
+        },
+    )
+
+    blocked, binding = runner.call_gateway_with_optional_runtime_binding(
+        gateway=gateway,
+        event={
+            "id": "model:mock:t:1",
+            "op": "tool.call",
+            "object": "tau2.mock.assistant.cancel_reservation",
+            "args": {"reservation_id": "Q69X3R", "extra_scope": "admin"},
+            "decision": "mock.cancel_reservation.tool_choice",
+            "mode": "tool_select",
+            "control_provenance": [runner.TRUSTED_TASK_INTENT],
+            "data_provenance": [runner.TRUSTED_TASK_INTENT],
+        },
+        domain="mock",
+        task_id="t",
+        index=1,
+        action_rows=[
+            {
+                "executed": True,
+                "tool_result_preview": '{"reservation_id":"Q69X3R","extra_scope":"admin"}',
+            }
+        ],
+        enabled=True,
+    )
+
+    assert blocked["executed"] is False
+    assert binding["attempted"] is True
+    assert "argument key set mismatch" in binding["reason"]
 
 
 def test_tool_registry_executes_unbound_compiler_event_with_synthetic_id(monkeypatch):
