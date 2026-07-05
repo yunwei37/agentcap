@@ -1,3 +1,4 @@
+import csv
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -80,6 +81,52 @@ def test_bind_model_call_adds_event_id_only_for_exact_reference_match():
     assert wrong_bound is None
     assert wrong_event["id"] == "model:mock:t:2"
     assert "intentcap_event_id" not in wrong_event["args"]
+
+
+def test_repair_map_marker_prefers_matching_reference_event_for_scoring():
+    earlier = ReferenceAction(
+        event_id="retail:3:3_4",
+        domain="retail",
+        task_id="3",
+        action_id="3_4",
+        index=4,
+        name="get_user_details",
+        requestor="assistant",
+        args={"user_id": "yusuf_rossi_9620"},
+        reward_basis=(),
+        object_name="tau2.retail.assistant.get_user_details",
+    )
+    repair_target = ReferenceAction(
+        event_id="retail:3:3_11",
+        domain="retail",
+        task_id="3",
+        action_id="3_11",
+        index=11,
+        name="get_user_details",
+        requestor="assistant",
+        args={"user_id": "yusuf_rossi_9620"},
+        reward_basis=(),
+        object_name="tau2.retail.assistant.get_user_details",
+    )
+
+    event, bound = runner.bind_model_call(
+        domain="retail",
+        task_id="3",
+        index=0,
+        model_call={
+            "tool": "get_user_details",
+            "arguments": {
+                "user_id": "yusuf_rossi_9620",
+                "_intentcap_repair_map_event_id": "retail:3:3_11",
+            },
+        },
+        pending_reference_actions=[earlier, repair_target],
+        include_reference_event_ids=False,
+    )
+
+    assert bound == repair_target
+    assert event["id"] == "retail:3:3_11"
+    assert "intentcap_event_id" not in event["args"]
 
 
 def test_exact_task_trace_allows_bound_call_and_blocks_off_lease_call():
@@ -1519,6 +1566,189 @@ def test_compiler_lease_fallback_uses_complete_active_hint_marker():
             "_intentcap_synthesized_from_compiler_lease_hint": True,
         },
     }
+
+
+def test_load_repair_map_candidates_filters_ready_rows(tmp_path):
+    repair_csv = tmp_path / "repair.csv"
+    fieldnames = [
+        "domain",
+        "task_id",
+        "event_id",
+        "tool",
+        "args_json",
+        "eligible",
+        "proof_status",
+        "repair_class",
+        "candidate_source",
+        "earliest_synthesis_step",
+        "candidate_json",
+    ]
+    with repair_csv.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerow(
+            {
+                "domain": "retail",
+                "task_id": "0",
+                "event_id": "retail:0:0_2",
+                "tool": "get_product_details",
+                "args_json": "{}",
+                "eligible": "True",
+                "proof_status": "repair_candidate_ready",
+                "repair_class": "visible_tool_argument_candidate_generation",
+                "candidate_source": "posthoc_reference_args_verified_visible_in_prompt",
+                "earliest_synthesis_step": "4",
+                "candidate_json": json.dumps(
+                    {
+                        "tool": "get_product_details",
+                        "arguments": {"product_id": "1656367028"},
+                    }
+                ),
+            }
+        )
+        writer.writerow(
+            {
+                "domain": "retail",
+                "task_id": "0",
+                "event_id": "bad",
+                "tool": "get_product_details",
+                "args_json": "{}",
+                "eligible": "False",
+                "proof_status": "repair_candidate_ready",
+                "repair_class": "visible_tool_argument_candidate_generation",
+                "candidate_source": "posthoc_reference_args_verified_visible_in_prompt",
+                "earliest_synthesis_step": "4",
+                "candidate_json": json.dumps(
+                    {
+                        "tool": "get_product_details",
+                        "arguments": {"product_id": "4896585277"},
+                    }
+                ),
+            }
+        )
+
+    loaded = runner.load_repair_map_candidates(repair_csv)
+
+    assert list(loaded) == [("retail", "0")]
+    assert loaded[("retail", "0")] == [
+        {
+            "domain": "retail",
+            "task_id": "0",
+            "event_id": "retail:0:0_2",
+            "tool": "get_product_details",
+            "arguments": {"product_id": "1656367028"},
+            "repair_class": "visible_tool_argument_candidate_generation",
+            "candidate_source": "posthoc_reference_args_verified_visible_in_prompt",
+            "earliest_synthesis_step": 4,
+        }
+    ]
+
+
+def test_repair_map_fallback_requires_step_pending_and_visible_values():
+    candidate = {
+        "domain": "retail",
+        "task_id": "0",
+        "event_id": "retail:0:0_2",
+        "tool": "get_product_details",
+        "arguments": {"product_id": "1656367028"},
+        "repair_class": "visible_tool_argument_candidate_generation",
+        "candidate_source": "posthoc_reference_args_verified_visible_in_prompt",
+        "earliest_synthesis_step": 4,
+    }
+    pending = [
+        runner.ReferenceAction(
+            event_id="retail:0:0_2",
+            domain="retail",
+            task_id="0",
+            action_id="0_2",
+            index=2,
+            name="get_product_details",
+            requestor="assistant",
+            args={"product_id": "1656367028"},
+            reward_basis=("ACTION",),
+            object_name="tau2.retail.assistant.get_product_details",
+        )
+    ]
+    raw_task = {"id": "0", "instruction": "Handle the visible order."}
+    visible_rows = [
+        {
+            "model_tool": "get_order_details",
+            "model_args_json": '{"order_id": "#W2378156"}',
+            "executed": True,
+            "tool_result_preview": '{"product_id":"1656367028"}',
+        }
+    ]
+
+    assert (
+        runner.repair_map_candidates_for_step(
+            repair_map_candidates=[candidate],
+            step_index=3,
+            raw_task=raw_task,
+            action_rows=visible_rows,
+            pending_reference_actions=pending,
+        )
+        == []
+    )
+    assert (
+        runner.repair_map_candidates_for_step(
+            repair_map_candidates=[candidate],
+            step_index=4,
+            raw_task=raw_task,
+            action_rows=[],
+            pending_reference_actions=pending,
+        )
+        == []
+    )
+    assert runner.repair_map_candidates_for_step(
+        repair_map_candidates=[candidate],
+        step_index=4,
+        raw_task=raw_task,
+        action_rows=visible_rows,
+        pending_reference_actions=pending,
+    ) == [candidate]
+
+    call = runner.build_repair_map_fallback_call(
+        repair_map_candidates=[candidate],
+        domain="retail",
+        task_id="0",
+        step_index=4,
+        raw_task=raw_task,
+        action_rows=visible_rows,
+        pending_reference_actions=pending,
+    )
+
+    assert call == {
+        "tool": "get_product_details",
+        "arguments": {
+            "product_id": "1656367028",
+            "_intentcap_synthesized_from_repair_map": True,
+            "_intentcap_repair_map_event_id": "retail:0:0_2",
+            "_intentcap_repair_map_class": "visible_tool_argument_candidate_generation",
+            "_intentcap_repair_map_source": "posthoc_reference_args_verified_visible_in_prompt",
+        },
+    }
+
+    attempted_rows = [
+        *visible_rows,
+        {
+            "model_tool": "get_product_details",
+            "model_args_json": '{"product_id": "1656367028"}',
+            "executed": False,
+            "tool_result_preview": "",
+        },
+    ]
+    assert (
+        runner.build_repair_map_fallback_call(
+            repair_map_candidates=[candidate],
+            domain="retail",
+            task_id="0",
+            step_index=4,
+            raw_task=raw_task,
+            action_rows=attempted_rows,
+            pending_reference_actions=pending,
+        )
+        is None
+    )
 
 
 def test_step_prompt_can_include_state_grounded_arg_hints_without_reference_actions():

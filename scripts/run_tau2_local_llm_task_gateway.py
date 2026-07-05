@@ -93,6 +93,8 @@ ROW_FIELDS = [
     "stepwise_runtime_evidence_fallbacks",
     "stepwise_runtime_evidence_ranked_fallbacks",
     "stepwise_runtime_evidence_hint_choice_fallbacks",
+    "stepwise_repair_map_fallback",
+    "stepwise_repair_map_fallback_steps",
     "compiler_runtime_binding",
     "compiler_runtime_value_proof",
     "compiler_runtime_proof_probes",
@@ -130,6 +132,7 @@ ACTION_ROW_FIELDS = [
     "index",
     "model_tool",
     "model_args_json",
+    "intentcap_markers_json",
     "bound_reference_event_id",
     "event_id",
     "object",
@@ -394,6 +397,27 @@ def main() -> int:
         ),
     )
     parser.add_argument(
+        "--stepwise-repair-map-csv",
+        type=Path,
+        default=None,
+        help=(
+            "Optional saved repair-map CSV, such as results/eval/R135/"
+            "candidate_generation_repair_map.csv, for post-hoc bounded "
+            "stepwise fallback experiments."
+        ),
+    )
+    parser.add_argument(
+        "--stepwise-repair-map-fallback",
+        action="store_true",
+        help=(
+            "In stepwise mode, if the model and non-oracle fallbacks return no "
+            "action, synthesize at most one eligible repair-map candidate whose "
+            "argument values are visible in the current task/tool-result state. "
+            "The synthesized call still passes through the normal gateway. This "
+            "is a post-hoc upper-bound diagnostic, not a compiler success result."
+        ),
+    )
+    parser.add_argument(
         "--stepwise-single-hint-fallback",
         action="store_true",
         help=(
@@ -490,6 +514,8 @@ def main() -> int:
         stepwise_runtime_evidence_hint_choice_fallback=(
             args.stepwise_runtime_evidence_hint_choice_fallback
         ),
+        stepwise_repair_map_csv=args.stepwise_repair_map_csv,
+        stepwise_repair_map_fallback=args.stepwise_repair_map_fallback,
         reference_user_simulator=args.reference_user_simulator,
         compiler_runtime_binding=args.compiler_runtime_binding,
         compiler_runtime_value_proof=args.compiler_runtime_value_proof,
@@ -532,6 +558,8 @@ def run_experiment(
     stepwise_runtime_evidence_ranked_fallback_min_score: int = 50,
     stepwise_runtime_evidence_ranked_fallback_margin: int = 1,
     stepwise_runtime_evidence_hint_choice_fallback: bool = False,
+    stepwise_repair_map_csv: Path | None = None,
+    stepwise_repair_map_fallback: bool = False,
     reference_user_simulator: bool = False,
     compiler_runtime_binding: bool = False,
     compiler_runtime_value_proof: bool = False,
@@ -596,6 +624,10 @@ def run_experiment(
             "stepwise_runtime_evidence_rank_hints requires "
             "stepwise_runtime_evidence_lease_hints"
         )
+    if stepwise_repair_map_fallback and stepwise_repair_map_csv is None:
+        raise ValueError("stepwise_repair_map_fallback requires stepwise_repair_map_csv")
+    if stepwise_repair_map_csv is not None and not stepwise_repair_map_csv.exists():
+        raise ValueError(f"stepwise_repair_map_csv does not exist: {stepwise_repair_map_csv}")
     if feedback_rounds > 0 and stepwise_max_steps > 0:
         raise ValueError("feedback_rounds and stepwise_max_steps are mutually exclusive")
     if tool_exposure not in TOOL_EXPOSURE_MODES:
@@ -667,6 +699,11 @@ def run_experiment(
             for domain in domains
         }
         if lease_source == "compiler-corpus"
+        else {}
+    )
+    repair_map_by_task = (
+        load_repair_map_candidates(stepwise_repair_map_csv)
+        if stepwise_repair_map_csv is not None
         else {}
     )
 
@@ -741,6 +778,8 @@ def run_experiment(
                     stepwise_runtime_evidence_hint_choice_fallback=(
                         stepwise_runtime_evidence_hint_choice_fallback
                     ),
+                    repair_map_candidates=repair_map_by_task.get((domain, task_id), []),
+                    stepwise_repair_map_fallback=stepwise_repair_map_fallback,
                     reference_user_simulator=reference_user_simulator,
                     compiler_runtime_binding=compiler_runtime_binding,
                     compiler_runtime_value_proof=compiler_runtime_value_proof,
@@ -803,6 +842,9 @@ def run_experiment(
         stepwise_runtime_evidence_hint_choice_fallback=(
             stepwise_runtime_evidence_hint_choice_fallback
         ),
+        stepwise_repair_map_csv=stepwise_repair_map_csv,
+        stepwise_repair_map_fallback=stepwise_repair_map_fallback,
+        repair_map_by_task=repair_map_by_task,
         reference_user_simulator=reference_user_simulator,
         compiler_runtime_binding=compiler_runtime_binding,
         compiler_runtime_value_proof=compiler_runtime_value_proof,
@@ -875,6 +917,8 @@ def _run_task(
     stepwise_runtime_evidence_ranked_fallback_min_score: int,
     stepwise_runtime_evidence_ranked_fallback_margin: int,
     stepwise_runtime_evidence_hint_choice_fallback: bool,
+    repair_map_candidates: list[dict[str, Any]],
+    stepwise_repair_map_fallback: bool,
     reference_user_simulator: bool,
     compiler_runtime_binding: bool,
     compiler_runtime_value_proof: bool,
@@ -1015,6 +1059,8 @@ def _run_task(
             runtime_evidence_hint_choice_fallback=(
                 stepwise_runtime_evidence_hint_choice_fallback
             ),
+            repair_map_candidates=repair_map_candidates,
+            repair_map_fallback=stepwise_repair_map_fallback,
             pending_reference_actions=pending,
             reference_by_event=reference_by_event,
             reference_event_ids=[action.event_id for action in reference_actions],
@@ -1272,6 +1318,10 @@ def _run_task(
             for step in stepwise_result["steps"]
             if step.get("runtime_evidence_hint_choice_fallback")
         ),
+        "stepwise_repair_map_fallback": stepwise_repair_map_fallback,
+        "stepwise_repair_map_fallback_steps": sum(
+            1 for step in stepwise_result["steps"] if step.get("repair_map_fallback")
+        ),
         "compiler_runtime_binding": compiler_runtime_binding,
         "compiler_runtime_value_proof": compiler_runtime_value_proof,
         "compiler_runtime_proof_probes": compiler_runtime_proof_probes,
@@ -1419,6 +1469,8 @@ def run_stepwise_model_loop(
     runtime_evidence_ranked_fallback_min_score: int,
     runtime_evidence_ranked_fallback_margin: int,
     runtime_evidence_hint_choice_fallback: bool,
+    repair_map_candidates: list[dict[str, Any]],
+    repair_map_fallback: bool,
     pending_reference_actions: list[ReferenceAction],
     reference_by_event: dict[str, ReferenceAction],
     reference_event_ids: list[str],
@@ -1522,6 +1574,7 @@ def run_stepwise_model_loop(
         runtime_evidence_fallback_used = False
         runtime_evidence_ranked_fallback_used = False
         runtime_evidence_hint_choice_fallback_used = False
+        repair_map_fallback_used = False
         hint_choice_prompt_path = ""
         hint_choice_raw_path = ""
         hint_choice_parsed = None
@@ -1658,6 +1711,26 @@ def run_stepwise_model_loop(
                     hint_choice_fallback_used = True
                 hint_choice_prompt_path = str(choice_prompt_path)
                 hint_choice_raw_path = str(choice_raw_path)
+        if not dry_run and not model_calls and repair_map_fallback:
+            fallback_call = build_repair_map_fallback_call(
+                repair_map_candidates=repair_map_candidates,
+                domain=domain,
+                task_id=task_id,
+                step_index=step_index,
+                raw_task=raw_task,
+                action_rows=action_rows,
+                pending_reference_actions=pending_reference_actions,
+            )
+            if fallback_call is not None:
+                model_calls = [fallback_call]
+                repair_map_fallback_used = True
+        repair_candidates_this_step = repair_map_candidates_for_step(
+            repair_map_candidates=repair_map_candidates,
+            step_index=step_index,
+            raw_task=raw_task,
+            action_rows=action_rows,
+            pending_reference_actions=pending_reference_actions,
+        )
         all_calls.extend(model_calls)
         before_row_count = len(action_rows)
         blocked_calls = execute_model_calls(
@@ -1704,6 +1777,8 @@ def run_stepwise_model_loop(
                 "runtime_evidence_hint_choice_fallback": (
                     runtime_evidence_hint_choice_fallback_used
                 ),
+                "repair_map_candidates": repair_candidates_this_step,
+                "repair_map_fallback": repair_map_fallback_used,
                 "hint_choice_prompt_path": hint_choice_prompt_path,
                 "hint_choice_raw_output_path": hint_choice_raw_path,
                 "hint_choice_raw_output_sha256": (
@@ -1779,10 +1854,16 @@ def execute_model_calls(
             require_value_proof=compiler_runtime_value_proof,
         )
         decision = record.get("decision", {})
+        raw_model_args = dict(model_call.get("arguments") or {})
         model_args = {
             key: value
-            for key, value in dict(model_call.get("arguments") or {}).items()
+            for key, value in raw_model_args.items()
             if not str(key).startswith("_intentcap_")
+        }
+        intentcap_markers = {
+            key: value
+            for key, value in raw_model_args.items()
+            if str(key).startswith("_intentcap_")
         }
         if record.get("executed"):
             event_id = str(decision.get("event_id", ""))
@@ -1823,6 +1904,11 @@ def execute_model_calls(
                 "index": index,
                 "model_tool": str(model_call.get("tool", "")),
                 "model_args_json": json.dumps(model_args, sort_keys=True),
+                "intentcap_markers_json": json.dumps(
+                    intentcap_markers,
+                    sort_keys=True,
+                    default=_json_default,
+                ),
                 "bound_reference_event_id": bound_action.event_id if bound_action else "",
                 "event_id": str(event.get("id", "")),
                 "object": str(event.get("object", "")),
@@ -2670,6 +2756,150 @@ def build_ranked_runtime_evidence_fallback_call(
             ),
         },
     )
+
+
+def load_repair_map_candidates(csv_path: Path | None) -> dict[tuple[str, str], list[dict[str, Any]]]:
+    """Load post-hoc repair-map candidates for bounded fallback experiments."""
+    if csv_path is None or not csv_path.exists():
+        return {}
+    by_task: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    with csv_path.open(newline="", encoding="utf-8") as handle:
+        for row in csv.DictReader(handle):
+            if not _truthy(row.get("eligible", "")):
+                continue
+            if str(row.get("proof_status", "")) != "repair_candidate_ready":
+                continue
+            candidate = _parse_json_dict(row.get("candidate_json", ""))
+            tool = str(candidate.get("tool") or row.get("tool", ""))
+            args = candidate.get("arguments", _parse_json_dict(row.get("args_json", "")))
+            if not tool or not isinstance(args, dict):
+                continue
+            repair = {
+                "domain": str(row.get("domain", "")),
+                "task_id": str(row.get("task_id", "")),
+                "event_id": str(row.get("event_id", "")),
+                "tool": tool,
+                "arguments": args,
+                "repair_class": str(row.get("repair_class", "")),
+                "candidate_source": str(row.get("candidate_source", "")),
+                "earliest_synthesis_step": _int_or_zero(row.get("earliest_synthesis_step", "")),
+            }
+            by_task.setdefault((repair["domain"], repair["task_id"]), []).append(repair)
+    for rows in by_task.values():
+        rows.sort(
+            key=lambda row: (
+                int(row.get("earliest_synthesis_step", 0)),
+                str(row.get("event_id", "")),
+                str(row.get("tool", "")),
+                json.dumps(row.get("arguments", {}), sort_keys=True, default=_json_default),
+            )
+        )
+    return by_task
+
+
+def build_repair_map_fallback_call(
+    *,
+    repair_map_candidates: list[dict[str, Any]],
+    domain: str,
+    task_id: str,
+    step_index: int,
+    raw_task: dict[str, Any],
+    action_rows: list[dict[str, Any]],
+    pending_reference_actions: list[ReferenceAction],
+) -> dict[str, Any] | None:
+    candidates = repair_map_candidates_for_step(
+        repair_map_candidates=repair_map_candidates,
+        step_index=step_index,
+        raw_task=raw_task,
+        action_rows=action_rows,
+        pending_reference_actions=pending_reference_actions,
+    )
+    if not candidates:
+        return None
+    selected = candidates[0]
+    return {
+        "tool": str(selected["tool"]),
+        "arguments": {
+            **dict(selected["arguments"]),
+            "_intentcap_synthesized_from_repair_map": True,
+            "_intentcap_repair_map_event_id": str(selected.get("event_id", "")),
+            "_intentcap_repair_map_class": str(selected.get("repair_class", "")),
+            "_intentcap_repair_map_source": str(selected.get("candidate_source", "")),
+        },
+    }
+
+
+def repair_map_candidates_for_step(
+    *,
+    repair_map_candidates: list[dict[str, Any]],
+    step_index: int,
+    raw_task: dict[str, Any],
+    action_rows: list[dict[str, Any]],
+    pending_reference_actions: list[ReferenceAction],
+) -> list[dict[str, Any]]:
+    visible_state = _visible_state_text(raw_task, action_rows)
+    attempted = {
+        (
+            str(row.get("model_tool", "")),
+            json.dumps(
+                _parse_json_dict(row.get("model_args_json", "")),
+                sort_keys=True,
+                default=_json_default,
+            ),
+        )
+        for row in action_rows
+        if row.get("model_tool")
+    }
+    pending_event_ids = {action.event_id for action in pending_reference_actions}
+    available: list[dict[str, Any]] = []
+    for candidate in repair_map_candidates:
+        if int(candidate.get("earliest_synthesis_step", 0)) > step_index:
+            continue
+        event_id = str(candidate.get("event_id", ""))
+        if event_id and event_id not in pending_event_ids:
+            continue
+        tool = str(candidate.get("tool", ""))
+        args = dict(candidate.get("arguments") or {})
+        args_key = json.dumps(args, sort_keys=True, default=_json_default)
+        if (tool, args_key) in attempted:
+            continue
+        if not all(_value_is_grounded(value, visible_state) for value in _leaf_values(args)):
+            continue
+        available.append(candidate)
+    return available
+
+
+def _leaf_values(value: Any) -> list[Any]:
+    if isinstance(value, dict):
+        values: list[Any] = []
+        for child in value.values():
+            values.extend(_leaf_values(child))
+        return values
+    if isinstance(value, list):
+        values = []
+        for child in value:
+            values.extend(_leaf_values(child))
+        return values
+    return [] if isinstance(value, bool) or value is None else [value]
+
+
+def _parse_json_dict(raw: Any) -> dict[str, Any]:
+    try:
+        parsed = json.loads(str(raw or "{}"))
+    except json.JSONDecodeError:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _int_or_zero(raw: Any) -> int:
+    try:
+        return int(str(raw or "0"))
+    except ValueError:
+        return 0
+
+
+def _truthy(raw: Any) -> bool:
+    return str(raw).strip().lower() in {"1", "true", "yes"}
 
 
 def complete_state_grounded_arg_hints(arg_hints: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -3571,7 +3801,19 @@ def bind_model_call(
         if not str(key).startswith("_intentcap_")
     }
     bound = None
+    preferred_event_id = str(raw_args.get("_intentcap_repair_map_event_id", ""))
+    if preferred_event_id:
+        for action in pending_reference_actions:
+            if (
+                action.event_id == preferred_event_id
+                and action.name == tool
+                and action.args == args
+            ):
+                bound = action
+                break
     for action in pending_reference_actions:
+        if bound is not None:
+            break
         if action.name == tool and action.args == args:
             bound = action
             break
@@ -3718,6 +3960,9 @@ def summarize(
     stepwise_runtime_evidence_ranked_fallback_min_score: int = 50,
     stepwise_runtime_evidence_ranked_fallback_margin: int = 1,
     stepwise_runtime_evidence_hint_choice_fallback: bool = False,
+    stepwise_repair_map_csv: Path | None = None,
+    stepwise_repair_map_fallback: bool = False,
+    repair_map_by_task: dict[tuple[str, str], list[dict[str, Any]]] | None = None,
     reference_user_simulator: bool = False,
     compiler_runtime_binding: bool = False,
     compiler_runtime_value_proof: bool = False,
@@ -3817,6 +4062,10 @@ def summarize(
         notes.append(
             "Stepwise runtime-evidence hint-choice fallback asks the model to select one complete runtime-evidence compiler hint after an empty model action; selected calls still pass through the runtime binder and gateway."
         )
+    if stepwise_repair_map_fallback:
+        notes.append(
+            "Stepwise repair-map fallback is a post-hoc upper-bound diagnostic: it reads saved exact-candidate repair rows, rechecks that candidate argument values are visible in current task/tool-result state, and sends synthesized calls through the normal gateway. It is not counted as non-oracle compiler success."
+        )
     if reference_user_simulator:
         notes.append(
             "Reference user-simulator replay executes benchmark user-side actions only after preceding assistant reference actions have executed; these actions are counted separately and do not expand assistant authority."
@@ -3871,6 +4120,17 @@ def summarize(
         "stepwise_runtime_evidence_fallback": stepwise_runtime_evidence_fallback,
         "stepwise_runtime_evidence_hint_choice_fallback": (
             stepwise_runtime_evidence_hint_choice_fallback
+        ),
+        "stepwise_repair_map_csv": str(stepwise_repair_map_csv or ""),
+        "stepwise_repair_map_digest": (
+            _file_digest(stepwise_repair_map_csv)
+            if stepwise_repair_map_csv is not None and stepwise_repair_map_csv.exists()
+            else None
+        ),
+        "stepwise_repair_map_fallback": stepwise_repair_map_fallback,
+        "stepwise_repair_map_candidate_tasks": len(repair_map_by_task or {}),
+        "stepwise_repair_map_candidate_rows": sum(
+            len(rows) for rows in (repair_map_by_task or {}).values()
         ),
         "reference_user_simulator": reference_user_simulator,
         "compiler_runtime_binding": compiler_runtime_binding,
@@ -3931,6 +4191,9 @@ def summarize(
         "stepwise_runtime_evidence_hint_choice_fallbacks": sum(
             int(row.get("stepwise_runtime_evidence_hint_choice_fallbacks", 0))
             for row in task_rows
+        ),
+        "stepwise_repair_map_fallbacks": sum(
+            int(row.get("stepwise_repair_map_fallback_steps", 0)) for row in task_rows
         ),
         "compiler_runtime_binding_attempts": sum(
             1 for row in action_rows if row.get("runtime_binding_attempted")
