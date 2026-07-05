@@ -1,0 +1,38 @@
+{
+  "analysis": "saved tau2 cumulative repair-map merge",
+  "duplicate_rows_dropped": 5,
+  "eligible_repair_ready_rows": 27,
+  "git_status": "## main...origin/main\n?? results/eval/R168/",
+  "input_counts": [
+    {
+      "eligible_repair_ready_rows": 25,
+      "path": "results/eval/R144/cumulative_repair_map.csv",
+      "rows": 25
+    },
+    {
+      "eligible_repair_ready_rows": 7,
+      "path": "results/eval/R166/candidate_generation_repair_map.csv",
+      "rows": 9
+    }
+  ],
+  "input_rows": 34,
+  "no_dataset_sync": true,
+  "no_model_execution": true,
+  "no_tool_execution": true,
+  "notes": [
+    "This is a deterministic saved-CSV merge for a bounded repair-map fallback experiment.",
+    "Rows are deduplicated by domain, task, event id, tool, and args_json.",
+    "The runner will still recheck visible values and route synthesized calls through the normal binder/gateway."
+  ],
+  "output_csv": "results/eval/R168/cumulative_repair_map.csv",
+  "output_rows": 29,
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "c1bb7a60b6ab7eac10b6a86cc7ae3d1d10731a8a",
+  "python": "3.12.3",
+  "repair_maps": [
+    "results/eval/R144/cumulative_repair_map.csv",
+    "results/eval/R166/candidate_generation_repair_map.csv"
+  ],
+  "run_id": "R168",
+  "script_sha256": "092076e76c8eb1f45451b0c4b234a4f1c827e8e19a62be8932e321dc3ff6f7b5"
+}
