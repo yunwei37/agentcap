@@ -1,14 +1,14 @@
-"""Build an R137-directed residual recovery candidate plan.
+"""Build a residual recovery candidate plan.
 
-R137 showed that the first repair-map execution closed part of the tau2
-compiler gap but left 25 DB-feasible missing actions. This script prepares the
-next bounded recovery input without running a model, executing tools, syncing
-datasets, or minting authority. It combines two recoverable buckets:
+Repair-map executions can close part of the tau2 compiler gap while leaving
+DB-feasible missing actions. This script prepares the next bounded recovery
+input without running a model, executing tools, syncing datasets, or minting
+authority. It combines two recoverable buckets:
 
 * runtime-candidate-generation gaps whose tool and argument values are visible
-  in the saved R136 prompt/tool-result state; and
+  in the saved prompt/tool-result state; and
 * candidate-selection/planning gaps where an exact-next runtime candidate was
-  already labeled in the saved R131 pool but was not executed in R136.
+  already labeled in the saved candidate pool but was not executed.
 
 The emitted candidate map keeps the R135 repair-map columns so it can be fed to
 the existing task-loop repair-map fallback in a later execution experiment.
@@ -64,7 +64,7 @@ TASK_FIELDS = [
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Build R137 residual recovery candidate plan")
+    parser = argparse.ArgumentParser(description="Build residual recovery candidate plan")
     parser.add_argument("--run-id", default="R138")
     parser.add_argument(
         "--actionability-csv",
@@ -99,6 +99,7 @@ def main() -> int:
         task_residual_csv=args.task_residual_csv,
         candidate_csv=args.candidate_csv,
         run_dir=args.run_dir,
+        output_dir=args.output_dir,
     )
     args.output_dir.mkdir(parents=True, exist_ok=True)
     write_csv(
@@ -146,6 +147,7 @@ def analyze_residual_recovery_plan(
     task_residual_csv: Path,
     candidate_csv: Path,
     run_dir: Path,
+    output_dir: Path,
 ) -> dict[str, Any]:
     actionability_rows = read_csv(actionability_csv)
     task_residual_rows = read_csv(task_residual_csv)
@@ -183,6 +185,7 @@ def analyze_residual_recovery_plan(
         task_residual_csv=task_residual_csv,
         candidate_csv=candidate_csv,
         run_dir=run_dir,
+        output_dir=output_dir,
         actionability_rows=actionability_rows,
         candidate_rows=candidate_rows,
         generated_rows=generated_rows,
@@ -411,6 +414,7 @@ def build_summary(
     task_residual_csv: Path,
     candidate_csv: Path,
     run_dir: Path,
+    output_dir: Path,
     actionability_rows: list[dict[str, str]],
     candidate_rows: list[dict[str, Any]],
     generated_rows: list[dict[str, Any]],
@@ -429,7 +433,7 @@ def build_summary(
     ]
     return {
         "run_id": run_id,
-        "analysis": "R137-directed saved residual recovery candidate plan",
+        "analysis": "saved residual recovery candidate plan",
         "actionability_csv": str(actionability_csv),
         "task_residual_csv": str(task_residual_csv),
         "candidate_csv": str(candidate_csv),
@@ -462,14 +466,14 @@ def build_summary(
         "task_primary_recovery_kind_counts": dict(
             sorted(Counter(str(row.get("primary_recovery_kind", "")) for row in task_rows).items())
         ),
-        "next_execution_input": "results/eval/R138/candidate_generation_repair_map.csv",
+        "next_execution_input": str(output_dir / "candidate_generation_repair_map.csv"),
         "python": sys.version.split()[0],
         "platform": platform.platform(),
         "script_sha256": sha256(Path(__file__).read_bytes()),
         "project_head": git_output(["git", "rev-parse", "HEAD"]),
         "git_status": git_output(["git", "status", "--short", "--branch"]),
         "notes": [
-            "This is an offline R137 residual recovery-plan analysis.",
+            "This is an offline saved residual recovery-plan analysis.",
             "Reference arguments and exact-next labels are used only as post-hoc exactness targets.",
             "The emitted candidate map is compatible with the existing repair-map task-loop fallback.",
             "The result supports a next-execution-input claim, not non-oracle utility success.",

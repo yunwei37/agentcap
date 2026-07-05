@@ -139,6 +139,7 @@ def test_summary_counts_recovery_candidates_and_remaining_blockers():
         task_residual_csv=Path("t.csv"),
         candidate_csv=Path("c.csv"),
         run_dir=Path("run"),
+        output_dir=Path("out"),
         actionability_rows=[actionability_row(), generated, blocker],
         candidate_rows=[generated, planner],
         generated_rows=[generated],

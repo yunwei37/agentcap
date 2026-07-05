@@ -1,0 +1,38 @@
+{
+  "analysis": "saved tau2 cumulative repair-map merge",
+  "duplicate_rows_dropped": 4,
+  "eligible_repair_ready_rows": 23,
+  "git_status": "## main...origin/main\n M scripts/analyze_tau2_repair_map_residuals.py\n?? results/eval/R139/\n?? results/eval/R140/\n?? results/eval/R141/\n?? scripts/merge_tau2_repair_maps.py\n?? tests/test_merge_tau2_repair_maps.py",
+  "input_counts": [
+    {
+      "eligible_repair_ready_rows": 12,
+      "path": "results/eval/R135/candidate_generation_repair_map.csv",
+      "rows": 12
+    },
+    {
+      "eligible_repair_ready_rows": 15,
+      "path": "results/eval/R138/candidate_generation_repair_map.csv",
+      "rows": 15
+    }
+  ],
+  "input_rows": 27,
+  "no_dataset_sync": true,
+  "no_model_execution": true,
+  "no_tool_execution": true,
+  "notes": [
+    "This is a deterministic saved-CSV merge for a bounded repair-map fallback experiment.",
+    "Rows are deduplicated by domain, task, event id, tool, and args_json.",
+    "The runner will still recheck visible values and route synthesized calls through the normal binder/gateway."
+  ],
+  "output_csv": "results/eval/R141/cumulative_repair_map.csv",
+  "output_rows": 23,
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "cea7d30d0d68bd2d6788510690d94958a5eda3d0",
+  "python": "3.12.3",
+  "repair_maps": [
+    "results/eval/R135/candidate_generation_repair_map.csv",
+    "results/eval/R138/candidate_generation_repair_map.csv"
+  ],
+  "run_id": "R141",
+  "script_sha256": "092076e76c8eb1f45451b0c4b234a4f1c827e8e19a62be8932e321dc3ff6f7b5"
+}

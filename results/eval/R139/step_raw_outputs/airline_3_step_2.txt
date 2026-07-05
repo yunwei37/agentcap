@@ -1,0 +1,5 @@
+{
+  "returncode": 1,
+  "stderr": "0.00.062.136 I llama_completion: llama backend init\n0.00.062.144 I llama_completion: load the model and apply lora adapter, if any\n0.02.631.957 E ggml_backend_cuda_buffer_type_alloc_buffer: allocating 512.00 MiB on device 0: cudaMalloc failed: out of memory\n0.02.631.962 E alloc_tensor_range: failed to allocate CUDA0 buffer of size 536870912\n0.02.632.202 E llama_init_from_model: failed to initialize the context: failed to allocate buffer for kv cache\n0.02.632.209 E cmn  common_init_: failed to create context with model '/home/yunwei37/.cache/huggingface/hub/models--DevQuasar--Qwen.Qwen3.6-27B-GGUF/snapshots/b19fa7e8538a1a5f66452eb3b3167e026177be1d/Qwen.Qwen3.6-27B.f16.gguf.Q4_K_M.gguf'\n0.02.632.212 E cmn  common_init_: failed to create context with model '/home/yunwei37/.cache/huggingface/hub/models--DevQuasar--Qwen.Qwen3.6-27B-GGUF/snapshots/b19fa7e8538a1a5f66452eb3b3167e026177be1d/Qwen.Qwen3.6-27B.f16.gguf.Q4_K_M.gguf'\n0.02.632.215 E llama_completion: error: unable to create context\n",
+  "stdout": ""
+}

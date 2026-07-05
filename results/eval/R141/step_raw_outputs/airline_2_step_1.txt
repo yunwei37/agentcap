@@ -1,0 +1,5 @@
+{
+  "returncode": 1,
+  "stderr": "0.00.016.296 I llama_completion: llama backend init\n0.00.016.325 I llama_completion: load the model and apply lora adapter, if any\n0.00.412.913 W common_fit_params: failed to fit params to free device memory: n_gpu_layers already set by user to 999, abort\n0.00.877.960 E ggml_backend_cuda_buffer_type_alloc_buffer: allocating 15088.32 MiB on device 0: cudaMalloc failed: out of memory\n0.00.877.965 E alloc_tensor_range: failed to allocate CUDA0 buffer of size 15821250560\n0.01.029.194 E llama_model_load: error loading model: unable to allocate CUDA0 buffer\n0.01.029.201 E llama_model_load_from_file_impl: failed to load model\n0.01.029.244 E cmn  common_init_: failed to load model '/home/yunwei37/.cache/huggingface/hub/models--DevQuasar--Qwen.Qwen3.6-27B-GGUF/snapshots/b19fa7e8538a1a5f66452eb3b3167e026177be1d/Qwen.Qwen3.6-27B.f16.gguf.Q4_K_M.gguf'\n0.01.029.248 E llama_completion: error: unable to create context\n",
+  "stdout": ""
+}

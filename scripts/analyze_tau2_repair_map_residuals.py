@@ -1,9 +1,10 @@
-"""Audit R136 repair-map execution residuals.
+"""Audit repair-map execution residuals.
 
 This is a saved-artifact analysis over the local tau2 compiler task loop. It
 does not run a model, execute tools, clone benchmarks, sync datasets, or mint
-authority. Its purpose is to explain why feeding the R135 repair map into R136
-raised safe exact executions but still left official tau2 utility at 0/11.
+authority. Its purpose is to explain whether feeding a saved repair map into a
+source task-loop run raised safe exact executions, and what residual failure
+buckets remain afterward.
 """
 
 from __future__ import annotations
@@ -63,7 +64,7 @@ TASK_RESIDUAL_FIELDS = [
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Audit R136 repair-map residuals")
+    parser = argparse.ArgumentParser(description="Audit repair-map residuals")
     parser.add_argument("--run-id", default="R137")
     parser.add_argument("--source-run-dir", type=Path, default=Path("results/eval/R136"))
     parser.add_argument(
@@ -212,6 +213,8 @@ def analyze_repair_map_residuals(
         actionability_analyzer.MISSING_FIELDS,
     )
     write_csv(output_dir / "task_repair_residuals.csv", task_rows, TASK_RESIDUAL_FIELDS)
+    write_json(output_dir / "repair_map_residual_summary.json", summary)
+    # Backward-compatible filename for the original R137/R136 audit path.
     write_json(output_dir / "r136_repair_map_residual_summary.json", summary)
     write_csv(
         output_dir / "input_digests.csv",
@@ -363,7 +366,7 @@ def build_summary(
     repair_still_missing = sum(1 for row in repair_rows if row["still_missing_after_source_run"])
     return {
         "run_id": run_id,
-        "analysis": "saved R136 repair-map execution residual audit",
+        "analysis": "saved repair-map execution residual audit",
         "source_run": source_run_dir.name,
         "source_run_dir": str(source_run_dir),
         "repair_map_csv": str(repair_map_csv),
@@ -452,7 +455,7 @@ def build_summary(
         "project_head": git_output(["git", "rev-parse", "HEAD"]),
         "git_status": git_output(["git", "status", "--short", "--branch"]),
         "notes": [
-            "This is an offline saved-artifact audit over R136 and earlier diagnostic CSVs.",
+            "This is an offline saved-artifact audit over a completed task-loop run and earlier diagnostic CSVs.",
             "It does not run models, execute tools, clone benchmarks, sync datasets, or reveal hidden references to a model.",
             "Reference labels are used only to measure post-hoc exactness and residual actionability.",
             "The result supports a residual-diagnosis claim, not non-oracle utility success.",
