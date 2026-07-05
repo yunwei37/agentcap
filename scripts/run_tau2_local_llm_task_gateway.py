@@ -93,6 +93,8 @@ ROW_FIELDS = [
     "stepwise_runtime_evidence_fallbacks",
     "stepwise_runtime_evidence_ranked_fallbacks",
     "stepwise_runtime_evidence_hint_choice_fallbacks",
+    "stepwise_repair_map_priority",
+    "stepwise_repair_map_priority_steps",
     "stepwise_repair_map_fallback",
     "stepwise_repair_map_fallback_steps",
     "compiler_runtime_binding",
@@ -418,6 +420,17 @@ def main() -> int:
         ),
     )
     parser.add_argument(
+        "--stepwise-repair-map-priority",
+        action="store_true",
+        help=(
+            "In stepwise mode, if an eligible repair-map candidate is visible and "
+            "pending at the start of a step, synthesize it before asking the model. "
+            "The synthesized call still passes through the normal gateway. This is "
+            "a post-hoc repair-map scheduling upper-bound diagnostic, not a "
+            "compiler success result."
+        ),
+    )
+    parser.add_argument(
         "--stepwise-single-hint-fallback",
         action="store_true",
         help=(
@@ -516,6 +529,7 @@ def main() -> int:
         ),
         stepwise_repair_map_csv=args.stepwise_repair_map_csv,
         stepwise_repair_map_fallback=args.stepwise_repair_map_fallback,
+        stepwise_repair_map_priority=args.stepwise_repair_map_priority,
         reference_user_simulator=args.reference_user_simulator,
         compiler_runtime_binding=args.compiler_runtime_binding,
         compiler_runtime_value_proof=args.compiler_runtime_value_proof,
@@ -560,6 +574,7 @@ def run_experiment(
     stepwise_runtime_evidence_hint_choice_fallback: bool = False,
     stepwise_repair_map_csv: Path | None = None,
     stepwise_repair_map_fallback: bool = False,
+    stepwise_repair_map_priority: bool = False,
     reference_user_simulator: bool = False,
     compiler_runtime_binding: bool = False,
     compiler_runtime_value_proof: bool = False,
@@ -626,6 +641,8 @@ def run_experiment(
         )
     if stepwise_repair_map_fallback and stepwise_repair_map_csv is None:
         raise ValueError("stepwise_repair_map_fallback requires stepwise_repair_map_csv")
+    if stepwise_repair_map_priority and stepwise_repair_map_csv is None:
+        raise ValueError("stepwise_repair_map_priority requires stepwise_repair_map_csv")
     if stepwise_repair_map_csv is not None and not stepwise_repair_map_csv.exists():
         raise ValueError(f"stepwise_repair_map_csv does not exist: {stepwise_repair_map_csv}")
     if feedback_rounds > 0 and stepwise_max_steps > 0:
@@ -780,6 +797,7 @@ def run_experiment(
                     ),
                     repair_map_candidates=repair_map_by_task.get((domain, task_id), []),
                     stepwise_repair_map_fallback=stepwise_repair_map_fallback,
+                    stepwise_repair_map_priority=stepwise_repair_map_priority,
                     reference_user_simulator=reference_user_simulator,
                     compiler_runtime_binding=compiler_runtime_binding,
                     compiler_runtime_value_proof=compiler_runtime_value_proof,
@@ -844,6 +862,7 @@ def run_experiment(
         ),
         stepwise_repair_map_csv=stepwise_repair_map_csv,
         stepwise_repair_map_fallback=stepwise_repair_map_fallback,
+        stepwise_repair_map_priority=stepwise_repair_map_priority,
         repair_map_by_task=repair_map_by_task,
         reference_user_simulator=reference_user_simulator,
         compiler_runtime_binding=compiler_runtime_binding,
@@ -919,6 +938,7 @@ def _run_task(
     stepwise_runtime_evidence_hint_choice_fallback: bool,
     repair_map_candidates: list[dict[str, Any]],
     stepwise_repair_map_fallback: bool,
+    stepwise_repair_map_priority: bool,
     reference_user_simulator: bool,
     compiler_runtime_binding: bool,
     compiler_runtime_value_proof: bool,
@@ -1061,6 +1081,7 @@ def _run_task(
             ),
             repair_map_candidates=repair_map_candidates,
             repair_map_fallback=stepwise_repair_map_fallback,
+            repair_map_priority=stepwise_repair_map_priority,
             pending_reference_actions=pending,
             reference_by_event=reference_by_event,
             reference_event_ids=[action.event_id for action in reference_actions],
@@ -1319,6 +1340,10 @@ def _run_task(
             if step.get("runtime_evidence_hint_choice_fallback")
         ),
         "stepwise_repair_map_fallback": stepwise_repair_map_fallback,
+        "stepwise_repair_map_priority": stepwise_repair_map_priority,
+        "stepwise_repair_map_priority_steps": sum(
+            1 for step in stepwise_result["steps"] if step.get("repair_map_priority")
+        ),
         "stepwise_repair_map_fallback_steps": sum(
             1 for step in stepwise_result["steps"] if step.get("repair_map_fallback")
         ),
@@ -1471,6 +1496,7 @@ def run_stepwise_model_loop(
     runtime_evidence_hint_choice_fallback: bool,
     repair_map_candidates: list[dict[str, Any]],
     repair_map_fallback: bool,
+    repair_map_priority: bool,
     pending_reference_actions: list[ReferenceAction],
     reference_by_event: dict[str, ReferenceAction],
     reference_event_ids: list[str],
@@ -1547,7 +1573,21 @@ def run_stepwise_model_loop(
         raw_path = step_raw_dir / f"{_safe_id(domain, task_id)}_step_{step_index}.txt"
         prompt_path.write_text(prompt)
 
-        if dry_run:
+        priority_repair_call = None
+        if not dry_run and repair_map_priority:
+            priority_repair_call = build_repair_map_fallback_call(
+                repair_map_candidates=repair_map_candidates,
+                domain=domain,
+                task_id=task_id,
+                step_index=step_index,
+                raw_task=raw_task,
+                action_rows=action_rows,
+                pending_reference_actions=pending_reference_actions,
+            )
+
+        if priority_repair_call is not None:
+            stdout, stderr, returncode, latency = "", "", 0, 0.0
+        elif dry_run:
             stdout, stderr, returncode, latency = "", "", 0, 0.0
         else:
             command = _llama_command(
@@ -1567,7 +1607,7 @@ def run_stepwise_model_loop(
 
         parsed = None if dry_run else parse_model_json(stdout)
         parse_ok = parse_ok or parsed is not None
-        model_calls = normalize_model_calls(parsed)[:1]
+        model_calls = [priority_repair_call] if priority_repair_call is not None else normalize_model_calls(parsed)[:1]
         single_hint_fallback_used = False
         hint_choice_fallback_used = False
         compiler_lease_fallback_used = False
@@ -1575,6 +1615,7 @@ def run_stepwise_model_loop(
         runtime_evidence_ranked_fallback_used = False
         runtime_evidence_hint_choice_fallback_used = False
         repair_map_fallback_used = False
+        repair_map_priority_used = priority_repair_call is not None
         hint_choice_prompt_path = ""
         hint_choice_raw_path = ""
         hint_choice_parsed = None
@@ -1779,6 +1820,7 @@ def run_stepwise_model_loop(
                 ),
                 "repair_map_candidates": repair_candidates_this_step,
                 "repair_map_fallback": repair_map_fallback_used,
+                "repair_map_priority": repair_map_priority_used,
                 "hint_choice_prompt_path": hint_choice_prompt_path,
                 "hint_choice_raw_output_path": hint_choice_raw_path,
                 "hint_choice_raw_output_sha256": (
@@ -3962,6 +4004,7 @@ def summarize(
     stepwise_runtime_evidence_hint_choice_fallback: bool = False,
     stepwise_repair_map_csv: Path | None = None,
     stepwise_repair_map_fallback: bool = False,
+    stepwise_repair_map_priority: bool = False,
     repair_map_by_task: dict[tuple[str, str], list[dict[str, Any]]] | None = None,
     reference_user_simulator: bool = False,
     compiler_runtime_binding: bool = False,
@@ -4066,6 +4109,10 @@ def summarize(
         notes.append(
             "Stepwise repair-map fallback is a post-hoc upper-bound diagnostic: it reads saved exact-candidate repair rows, rechecks that candidate argument values are visible in current task/tool-result state, and sends synthesized calls through the normal gateway. It is not counted as non-oracle compiler success."
         )
+    if stepwise_repair_map_priority:
+        notes.append(
+            "Stepwise repair-map priority is a post-hoc scheduling upper-bound diagnostic: it executes visible pending repair-map candidates before asking the model, and each synthesized call still passes through the normal gateway. It is not counted as non-oracle compiler success."
+        )
     if reference_user_simulator:
         notes.append(
             "Reference user-simulator replay executes benchmark user-side actions only after preceding assistant reference actions have executed; these actions are counted separately and do not expand assistant authority."
@@ -4128,6 +4175,7 @@ def summarize(
             else None
         ),
         "stepwise_repair_map_fallback": stepwise_repair_map_fallback,
+        "stepwise_repair_map_priority": stepwise_repair_map_priority,
         "stepwise_repair_map_candidate_tasks": len(repair_map_by_task or {}),
         "stepwise_repair_map_candidate_rows": sum(
             len(rows) for rows in (repair_map_by_task or {}).values()
@@ -4194,6 +4242,9 @@ def summarize(
         ),
         "stepwise_repair_map_fallbacks": sum(
             int(row.get("stepwise_repair_map_fallback_steps", 0)) for row in task_rows
+        ),
+        "stepwise_repair_map_priority_steps": sum(
+            int(row.get("stepwise_repair_map_priority_steps", 0)) for row in task_rows
         ),
         "compiler_runtime_binding_attempts": sum(
             1 for row in action_rows if row.get("runtime_binding_attempted")

@@ -1751,6 +1751,104 @@ def test_repair_map_fallback_requires_step_pending_and_visible_values():
     )
 
 
+def test_repair_map_priority_executes_visible_candidate_without_model(tmp_path: Path):
+    candidate = {
+        "domain": "mock",
+        "task_id": "t",
+        "event_id": "mock:t:create_1",
+        "tool": "create_task",
+        "arguments": {"user_id": "user_1", "title": "Important Meeting"},
+        "repair_class": "visible_tool_argument_candidate_generation",
+        "candidate_source": "posthoc_reference_args_verified_visible_in_prompt",
+        "earliest_synthesis_step": 1,
+    }
+    action = ReferenceAction(
+        event_id="mock:t:create_1",
+        domain="mock",
+        task_id="t",
+        action_id="create_1",
+        index=0,
+        name="create_task",
+        requestor="assistant",
+        args={"user_id": "user_1", "title": "Important Meeting"},
+        reward_basis=("ACTION",),
+        object_name="tau2.mock.assistant.create_task",
+    )
+    trace = runner.build_task_trace("mock", "t", [action])
+    gateway = LiveToolGateway(
+        trace,
+        {
+            "tau2.mock.assistant.create_task": lambda **kwargs: {
+                "ok": True,
+                "kwargs": kwargs,
+            }
+        },
+    )
+    model_runner_called = False
+
+    def fake_runner(command, timeout):
+        nonlocal model_runner_called
+        model_runner_called = True
+        return '{"actions":[]}', "", 0, 0.0
+
+    (tmp_path / "prompts").mkdir()
+    (tmp_path / "raw").mkdir()
+    result = runner.run_stepwise_model_loop(
+        domain="mock",
+        raw_task={"id": "t", "instruction": "user_1 needs Important Meeting"},
+        tools=[{"name": "create_task", "parameters": {}}],
+        tool_exposure="leased",
+        active_tool_names={"create_task"},
+        max_steps=1,
+        empty_retries=0,
+        state_grounded_arg_hints=False,
+        compiler_lease_hints=False,
+        runtime_evidence_lease_hints=False,
+        runtime_evidence_rank_hints=False,
+        compact_json_prompts=False,
+        step_prompt_dir=tmp_path / "prompts",
+        step_raw_dir=tmp_path / "raw",
+        llama_bin=Path("llama"),
+        model=Path("model.gguf"),
+        n_predict=16,
+        ctx_size=128,
+        gpu_layers=0,
+        timeout_seconds=1,
+        dry_run=False,
+        runner=fake_runner,
+        single_hint_fallback=False,
+        hint_choice_fallback=False,
+        compiler_lease_fallback=False,
+        runtime_evidence_fallback=False,
+        runtime_evidence_ranked_fallback=False,
+        runtime_evidence_ranked_fallback_min_score=50,
+        runtime_evidence_ranked_fallback_margin=0,
+        runtime_evidence_hint_choice_fallback=False,
+        repair_map_candidates=[candidate],
+        repair_map_fallback=False,
+        repair_map_priority=True,
+        pending_reference_actions=[action],
+        reference_by_event={action.event_id: action},
+        reference_event_ids=[action.event_id],
+        gateway=gateway,
+        trajectory=[],
+        tool_call_cls=SimpleNamespace,
+        assistant_message_cls=SimpleNamespace,
+        action_rows=[],
+        executed_reference_ids=[],
+        bound_reference_ids=[],
+        include_reference_event_ids=True,
+        compiler_runtime_binding=False,
+    )
+
+    assert model_runner_called is False
+    assert len(result["steps"]) == 1
+    assert result["steps"][0]["repair_map_priority"] is True
+    assert result["steps"][0]["repair_map_fallback"] is False
+    assert result["steps"][0]["new_action_rows"][0]["executed"] is True
+    assert result["steps"][0]["new_action_rows"][0]["bound_reference_event_id"] == "mock:t:create_1"
+
+
 def test_step_prompt_can_include_state_grounded_arg_hints_without_reference_actions():
     prompt = runner.build_step_prompt(
         domain="airline",
