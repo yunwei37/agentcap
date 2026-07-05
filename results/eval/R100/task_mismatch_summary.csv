@@ -1,0 +1,12 @@
+run_id,domain,task_id,reference_actions,model_calls,exact_executed_calls,off_lease_calls,same_tool_wrong_args_calls,wrong_or_hallucinated_tool_calls,repeated_or_consumed_exact_args_calls,all_reference_actions_executed,tool_oracle_pass,first_off_lease_category
+R099,airline,1,2,1,1,0,0,0,0,False,False,
+R099,airline,2,3,2,2,0,0,0,0,False,False,
+R099,airline,3,2,1,1,0,0,0,0,False,False,
+R099,airline,4,6,0,0,0,0,0,0,False,False,
+R099,retail,0,5,3,3,0,0,0,0,False,False,
+R099,retail,1,5,2,2,0,0,0,0,False,False,
+R099,retail,2,11,2,2,0,0,0,0,False,False,
+R099,retail,3,12,1,1,0,0,0,0,False,False,
+R099,retail,4,13,3,3,0,0,0,0,False,False,
+R099,telecom,[mobile_data_issue]user_abroad_roaming_disabled_on[PERSONA:Easy],1,2,1,1,0,1,0,True,False,off_lease_wrong_or_hallucinated_tool
+R099,telecom,[mobile_data_issue]user_abroad_roaming_disabled_off[PERSONA:Hard],1,0,0,0,0,0,0,False,False,

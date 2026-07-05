@@ -79,10 +79,13 @@ ROW_FIELDS = [
     "stepwise_empty_retries",
     "stepwise_empty_retry_steps",
     "stepwise_state_grounded_arg_hints",
+    "stepwise_compiler_lease_hints",
     "stepwise_compact_json_prompts",
     "stepwise_state_grounded_arg_hint_steps",
+    "stepwise_compiler_lease_hint_steps",
     "stepwise_single_hint_fallbacks",
     "stepwise_hint_choice_fallbacks",
+    "stepwise_compiler_lease_fallbacks",
     "compiler_runtime_binding",
     "compiler_runtime_binding_attempts",
     "compiler_runtime_binding_successes",
@@ -237,6 +240,23 @@ def main() -> int:
         ),
     )
     parser.add_argument(
+        "--stepwise-compiler-lease-hints",
+        action="store_true",
+        help=(
+            "In compiler-corpus stepwise mode, include deterministic candidate "
+            "argument hints derived only from active compiler leases."
+        ),
+    )
+    parser.add_argument(
+        "--stepwise-compiler-lease-fallback",
+        action="store_true",
+        help=(
+            "In compiler-corpus stepwise mode, if the model returns no action "
+            "and exactly one complete active compiler-lease hint is visible, "
+            "synthesize that call and send it through the gateway."
+        ),
+    )
+    parser.add_argument(
         "--stepwise-single-hint-fallback",
         action="store_true",
         help=(
@@ -296,9 +316,11 @@ def main() -> int:
         stepwise_max_steps=args.stepwise_max_steps,
         stepwise_empty_retries=args.stepwise_empty_retries,
         stepwise_state_grounded_arg_hints=args.stepwise_state_grounded_arg_hints,
+        stepwise_compiler_lease_hints=args.stepwise_compiler_lease_hints,
         stepwise_compact_json_prompts=args.stepwise_compact_json_prompts,
         stepwise_single_hint_fallback=args.stepwise_single_hint_fallback,
         stepwise_hint_choice_fallback=args.stepwise_hint_choice_fallback,
+        stepwise_compiler_lease_fallback=args.stepwise_compiler_lease_fallback,
         reference_user_simulator=args.reference_user_simulator,
         compiler_runtime_binding=args.compiler_runtime_binding,
         dry_run=args.dry_run,
@@ -327,9 +349,11 @@ def run_experiment(
     stepwise_max_steps: int = 0,
     stepwise_empty_retries: int = 0,
     stepwise_state_grounded_arg_hints: bool = False,
+    stepwise_compiler_lease_hints: bool = False,
     stepwise_compact_json_prompts: bool = False,
     stepwise_single_hint_fallback: bool = False,
     stepwise_hint_choice_fallback: bool = False,
+    stepwise_compiler_lease_fallback: bool = False,
     reference_user_simulator: bool = False,
     compiler_runtime_binding: bool = False,
     dry_run: bool = False,
@@ -351,6 +375,10 @@ def run_experiment(
         raise ValueError(
             "stepwise_hint_choice_fallback requires stepwise_state_grounded_arg_hints"
         )
+    if stepwise_compiler_lease_fallback and not stepwise_compiler_lease_hints:
+        raise ValueError(
+            "stepwise_compiler_lease_fallback requires stepwise_compiler_lease_hints"
+        )
     if feedback_rounds > 0 and stepwise_max_steps > 0:
         raise ValueError("feedback_rounds and stepwise_max_steps are mutually exclusive")
     if tool_exposure not in TOOL_EXPOSURE_MODES:
@@ -364,6 +392,10 @@ def run_experiment(
         raise ValueError(
             "stepwise_state_grounded_arg_hints uses exact reference leases and "
             "is disabled for compiler-corpus lease source"
+        )
+    if stepwise_compiler_lease_hints and lease_source != "compiler-corpus":
+        raise ValueError(
+            "stepwise_compiler_lease_hints requires compiler-corpus lease source"
         )
     if compiler_runtime_binding and lease_source != "compiler-corpus":
         raise ValueError("compiler_runtime_binding requires compiler-corpus lease source")
@@ -454,9 +486,11 @@ def run_experiment(
                     stepwise_max_steps=stepwise_max_steps,
                     stepwise_empty_retries=stepwise_empty_retries,
                     stepwise_state_grounded_arg_hints=stepwise_state_grounded_arg_hints,
+                    stepwise_compiler_lease_hints=stepwise_compiler_lease_hints,
                     stepwise_compact_json_prompts=stepwise_compact_json_prompts,
                     stepwise_single_hint_fallback=stepwise_single_hint_fallback,
                     stepwise_hint_choice_fallback=stepwise_hint_choice_fallback,
+                    stepwise_compiler_lease_fallback=stepwise_compiler_lease_fallback,
                     reference_user_simulator=reference_user_simulator,
                     compiler_runtime_binding=compiler_runtime_binding,
                     dry_run=dry_run,
@@ -497,9 +531,11 @@ def run_experiment(
         stepwise_max_steps=stepwise_max_steps,
         stepwise_empty_retries=stepwise_empty_retries,
         stepwise_state_grounded_arg_hints=stepwise_state_grounded_arg_hints,
+        stepwise_compiler_lease_hints=stepwise_compiler_lease_hints,
         stepwise_compact_json_prompts=stepwise_compact_json_prompts,
         stepwise_single_hint_fallback=stepwise_single_hint_fallback,
         stepwise_hint_choice_fallback=stepwise_hint_choice_fallback,
+        stepwise_compiler_lease_fallback=stepwise_compiler_lease_fallback,
         reference_user_simulator=reference_user_simulator,
         compiler_runtime_binding=compiler_runtime_binding,
         dry_run=dry_run,
@@ -558,9 +594,11 @@ def _run_task(
     stepwise_max_steps: int,
     stepwise_empty_retries: int,
     stepwise_state_grounded_arg_hints: bool,
+    stepwise_compiler_lease_hints: bool,
     stepwise_compact_json_prompts: bool,
     stepwise_single_hint_fallback: bool,
     stepwise_hint_choice_fallback: bool,
+    stepwise_compiler_lease_fallback: bool,
     reference_user_simulator: bool,
     compiler_runtime_binding: bool,
     dry_run: bool,
@@ -668,6 +706,7 @@ def _run_task(
             max_steps=stepwise_max_steps,
             empty_retries=stepwise_empty_retries,
             state_grounded_arg_hints=stepwise_state_grounded_arg_hints,
+            compiler_lease_hints=stepwise_compiler_lease_hints,
             compact_json_prompts=stepwise_compact_json_prompts,
             step_prompt_dir=step_prompt_dir,
             step_raw_dir=step_raw_dir,
@@ -681,6 +720,7 @@ def _run_task(
             runner=runner,
             single_hint_fallback=stepwise_single_hint_fallback,
             hint_choice_fallback=stepwise_hint_choice_fallback,
+            compiler_lease_fallback=stepwise_compiler_lease_fallback,
             pending_reference_actions=pending,
             reference_by_event=reference_by_event,
             reference_event_ids=[action.event_id for action in reference_actions],
@@ -896,15 +936,22 @@ def _run_task(
             1 for step in stepwise_result["steps"] if step.get("empty_retry")
         ),
         "stepwise_state_grounded_arg_hints": stepwise_state_grounded_arg_hints,
+        "stepwise_compiler_lease_hints": stepwise_compiler_lease_hints,
         "stepwise_compact_json_prompts": stepwise_compact_json_prompts,
         "stepwise_state_grounded_arg_hint_steps": sum(
             1 for step in stepwise_result["steps"] if step.get("state_grounded_arg_hints")
+        ),
+        "stepwise_compiler_lease_hint_steps": sum(
+            1 for step in stepwise_result["steps"] if step.get("compiler_lease_hints")
         ),
         "stepwise_single_hint_fallbacks": sum(
             1 for step in stepwise_result["steps"] if step.get("single_hint_fallback")
         ),
         "stepwise_hint_choice_fallbacks": sum(
             1 for step in stepwise_result["steps"] if step.get("hint_choice_fallback")
+        ),
+        "stepwise_compiler_lease_fallbacks": sum(
+            1 for step in stepwise_result["steps"] if step.get("compiler_lease_fallback")
         ),
         "compiler_runtime_binding": compiler_runtime_binding,
         "compiler_runtime_binding_attempts": sum(
@@ -1020,6 +1067,7 @@ def run_stepwise_model_loop(
     max_steps: int,
     empty_retries: int,
     state_grounded_arg_hints: bool,
+    compiler_lease_hints: bool,
     compact_json_prompts: bool,
     step_prompt_dir: Path,
     step_raw_dir: Path,
@@ -1033,6 +1081,7 @@ def run_stepwise_model_loop(
     runner: Callable[[list[str], int], tuple[str, str, int, float]],
     single_hint_fallback: bool,
     hint_choice_fallback: bool,
+    compiler_lease_fallback: bool,
     pending_reference_actions: list[ReferenceAction],
     reference_by_event: dict[str, ReferenceAction],
     reference_event_ids: list[str],
@@ -1073,6 +1122,14 @@ def run_stepwise_model_loop(
             if state_grounded_arg_hints
             else []
         )
+        compiler_hints = (
+            build_compiler_lease_arg_hints(
+                trace=gateway.trace_gateway.trace,
+                action_rows=action_rows,
+            )
+            if compiler_lease_hints
+            else []
+        )
         prompt = build_step_prompt(
             domain=domain,
             raw_task=raw_task,
@@ -1081,6 +1138,7 @@ def run_stepwise_model_loop(
             action_rows=action_rows,
             empty_retry_count=empty_retry_count,
             state_grounded_arg_hints=arg_hints,
+            compiler_lease_arg_hints=compiler_hints,
             compact_json_prompt=compact_json_prompts,
         )
         prompt_path = step_prompt_dir / f"{_safe_id(domain, task_id)}_step_{step_index}.txt"
@@ -1110,6 +1168,7 @@ def run_stepwise_model_loop(
         model_calls = normalize_model_calls(parsed)[:1]
         single_hint_fallback_used = False
         hint_choice_fallback_used = False
+        compiler_lease_fallback_used = False
         hint_choice_prompt_path = ""
         hint_choice_raw_path = ""
         hint_choice_parsed = None
@@ -1119,6 +1178,14 @@ def run_stepwise_model_loop(
             if fallback_call is not None:
                 model_calls = [fallback_call]
                 single_hint_fallback_used = True
+        if not dry_run and not model_calls and compiler_lease_fallback:
+            fallback_call = build_single_hint_fallback_call_with_marker(
+                compiler_hints,
+                marker={"_intentcap_synthesized_from_compiler_lease_hint": True},
+            )
+            if fallback_call is not None:
+                model_calls = [fallback_call]
+                compiler_lease_fallback_used = True
         if not dry_run and not model_calls and hint_choice_fallback:
             complete_hints = complete_state_grounded_arg_hints(arg_hints)
             if len(complete_hints) > 1:
@@ -1202,8 +1269,10 @@ def run_stepwise_model_loop(
                 "blocked_calls": blocked_calls,
                 "empty_retry": bool(empty_retry_count > 0),
                 "state_grounded_arg_hints": arg_hints,
+                "compiler_lease_hints": compiler_hints,
                 "single_hint_fallback": single_hint_fallback_used,
                 "hint_choice_fallback": hint_choice_fallback_used,
+                "compiler_lease_fallback": compiler_lease_fallback_used,
                 "hint_choice_prompt_path": hint_choice_prompt_path,
                 "hint_choice_raw_output_path": hint_choice_raw_path,
                 "hint_choice_raw_output_sha256": (
@@ -1710,12 +1779,105 @@ def build_state_grounded_arg_hints(
     return hints
 
 
+def build_compiler_lease_arg_hints(
+    *,
+    trace: dict[str, Any],
+    action_rows: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Expose complete active compiler-lease calls without using references."""
+    attempted = {
+        (
+            str(row.get("model_tool", "")),
+            json.dumps(
+                json.loads(str(row.get("model_args_json") or "{}")),
+                sort_keys=True,
+                default=_json_default,
+            ),
+        )
+        for row in action_rows
+        if row.get("model_tool")
+    }
+    hints: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+    for lease in trace.get("leases", []):
+        if not isinstance(lease, dict) or str(lease.get("op", "")) != "tool.call":
+            continue
+        object_name = str(lease.get("object", ""))
+        tool_name = object_name.rsplit(".", 1)[-1] if object_name else ""
+        if not tool_name:
+            continue
+        args, options, complete = _compiler_lease_hint_args(lease.get("args", {}))
+        args_key = json.dumps(args, sort_keys=True, default=_json_default)
+        dedupe_key = (tool_name, args_key)
+        if dedupe_key in seen or dedupe_key in attempted:
+            continue
+        seen.add(dedupe_key)
+        hint: dict[str, Any] = {
+            "tool": tool_name,
+            "arguments": args,
+            "complete_arguments": complete,
+            "grounding": (
+                "active compiler lease strict argument constraints; no reference "
+                "actions used"
+            ),
+            "lease_id": str(lease.get("id", "")),
+        }
+        if options:
+            hint["argument_options"] = options
+        hints.append(hint)
+    return hints
+
+
+def _compiler_lease_hint_args(
+    constraints: Any,
+) -> tuple[dict[str, Any], dict[str, list[Any]], bool]:
+    if not isinstance(constraints, dict):
+        return {}, {}, False
+    args: dict[str, Any] = {}
+    options: dict[str, list[Any]] = {}
+    complete = True
+    for name, constraint in sorted(constraints.items()):
+        if str(name).startswith("_intentcap_") or str(name) == "intentcap_event_id":
+            continue
+        values = _compiler_constraint_values(constraint)
+        if len(values) == 1:
+            args[str(name)] = values[0]
+        elif len(values) > 1:
+            options[str(name)] = values
+            complete = False
+        else:
+            complete = False
+    return args, options, complete and bool(args) and not options
+
+
+def _compiler_constraint_values(constraint: Any) -> list[Any]:
+    if not isinstance(constraint, dict):
+        return [constraint]
+    if "equals" in constraint:
+        return [constraint["equals"]]
+    values = constraint.get("one_of")
+    if isinstance(values, list):
+        return list(values)
+    return []
+
+
 def build_single_hint_fallback_call(arg_hints: list[dict[str, Any]]) -> dict[str, Any] | None:
+    return build_single_hint_fallback_call_with_marker(
+        arg_hints,
+        marker={"_intentcap_synthesized_from_hint": True},
+    )
+
+
+def build_single_hint_fallback_call_with_marker(
+    arg_hints: list[dict[str, Any]],
+    *,
+    marker: dict[str, Any],
+) -> dict[str, Any] | None:
     complete_hints = complete_state_grounded_arg_hints(arg_hints)
     if len(complete_hints) != 1:
         return None
     hint = complete_hints[0]
-    return _call_from_hint(hint, marker={"_intentcap_synthesized_from_hint": True})
+    return _call_from_hint(hint, marker=marker)
 
 
 def complete_state_grounded_arg_hints(arg_hints: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -1888,6 +2050,7 @@ def build_step_prompt(
     action_rows: list[dict[str, Any]],
     empty_retry_count: int = 0,
     state_grounded_arg_hints: list[dict[str, Any]] | None = None,
+    compiler_lease_arg_hints: list[dict[str, Any]] | None = None,
     compact_json_prompt: bool = False,
 ) -> str:
     public_task = {
@@ -1931,6 +2094,8 @@ def build_step_prompt(
         payload["previous_empty_action_retries"] = empty_retry_count
     if state_grounded_arg_hints:
         payload["state_grounded_authorized_argument_hints"] = state_grounded_arg_hints
+    if compiler_lease_arg_hints:
+        payload["active_compiler_lease_hints"] = compiler_lease_arg_hints
     retry_instruction = ""
     if empty_retry_count > 0:
         retry_instruction = (
@@ -1946,6 +2111,14 @@ def build_step_prompt(
             "by an active lease and also appears in visible task/tool state; "
             "prefer these values when filling tool arguments.\n"
         )
+    compiler_hint_instruction = ""
+    if compiler_lease_arg_hints:
+        compiler_hint_instruction = (
+            "The optional active_compiler_lease_hints are generated from active "
+            "compiler leases, not from hidden reference actions. Each complete "
+            "hint is already authorized by the checker; prefer a useful complete "
+            "hint when continuing the task.\n"
+        )
     if compact_json_prompt:
         return (
             "JSON-only tau2 step. /no_think\n"
@@ -1957,6 +2130,7 @@ def build_step_prompt(
             "the same arguments.\n"
             f"{retry_instruction}"
             f"{hint_instruction}"
+            f"{compiler_hint_instruction}"
             "Hidden reference actions are not provided.\n"
             "Input JSON:\n"
             f"{_json_payload(payload, compact=True)}\n"
@@ -1970,6 +2144,7 @@ def build_step_prompt(
         "Do not repeat a blocked call with the same arguments.\n"
         f"{retry_instruction}"
         f"{hint_instruction}"
+        f"{compiler_hint_instruction}"
         "If no safe useful tool call is apparent, return an empty actions list.\n"
         "Return exactly one JSON object and no prose.\n"
         "The hidden reference actions are not provided.\n"
@@ -2472,9 +2647,11 @@ def summarize(
     stepwise_max_steps: int,
     stepwise_empty_retries: int,
     stepwise_state_grounded_arg_hints: bool = False,
+    stepwise_compiler_lease_hints: bool = False,
     stepwise_compact_json_prompts: bool = False,
     stepwise_single_hint_fallback: bool = False,
     stepwise_hint_choice_fallback: bool = False,
+    stepwise_compiler_lease_fallback: bool = False,
     reference_user_simulator: bool = False,
     compiler_runtime_binding: bool = False,
     dry_run: bool = False,
@@ -2532,6 +2709,10 @@ def summarize(
         notes.append(
             "Stepwise state-grounded argument hints expose active-lease argument values only when those values also appear in visible task text or executed tool results; this remains an oracle-lease pilot."
         )
+    if stepwise_compiler_lease_hints:
+        notes.append(
+            "Stepwise compiler-lease hints expose candidate calls derived only from active compiler leases; hidden reference actions are not used to generate these hints."
+        )
     if stepwise_compact_json_prompts:
         notes.append(
             "Stepwise compact JSON prompts constrain the local model output protocol only; they do not expose additional tools, arguments, leases, or hidden reference actions."
@@ -2543,6 +2724,10 @@ def summarize(
     if stepwise_hint_choice_fallback:
         notes.append(
             "Stepwise hint-choice fallback asks the model to select one complete visible active-lease hint after an empty model action; the selected synthesized call still passes through the gateway."
+        )
+    if stepwise_compiler_lease_fallback:
+        notes.append(
+            "Stepwise compiler-lease fallback deterministically synthesizes at most one complete active compiler-lease hint after an empty model action; synthesized calls still pass through the gateway."
         )
     if reference_user_simulator:
         notes.append(
@@ -2571,9 +2756,11 @@ def summarize(
         "stepwise_max_steps": stepwise_max_steps,
         "stepwise_empty_retries": stepwise_empty_retries,
         "stepwise_state_grounded_arg_hints": stepwise_state_grounded_arg_hints,
+        "stepwise_compiler_lease_hints": stepwise_compiler_lease_hints,
         "stepwise_compact_json_prompts": stepwise_compact_json_prompts,
         "stepwise_single_hint_fallback": stepwise_single_hint_fallback,
         "stepwise_hint_choice_fallback": stepwise_hint_choice_fallback,
+        "stepwise_compiler_lease_fallback": stepwise_compiler_lease_fallback,
         "reference_user_simulator": reference_user_simulator,
         "compiler_runtime_binding": compiler_runtime_binding,
         "tool_schema_count_min": min(tool_schema_counts) if tool_schema_counts else 0,
@@ -2604,11 +2791,17 @@ def summarize(
         "stepwise_state_grounded_arg_hint_steps": sum(
             int(row.get("stepwise_state_grounded_arg_hint_steps", 0)) for row in task_rows
         ),
+        "stepwise_compiler_lease_hint_steps": sum(
+            int(row.get("stepwise_compiler_lease_hint_steps", 0)) for row in task_rows
+        ),
         "stepwise_single_hint_fallbacks": sum(
             int(row.get("stepwise_single_hint_fallbacks", 0)) for row in task_rows
         ),
         "stepwise_hint_choice_fallbacks": sum(
             int(row.get("stepwise_hint_choice_fallbacks", 0)) for row in task_rows
+        ),
+        "stepwise_compiler_lease_fallbacks": sum(
+            int(row.get("stepwise_compiler_lease_fallbacks", 0)) for row in task_rows
         ),
         "compiler_runtime_binding_attempts": sum(
             1 for row in action_rows if row.get("runtime_binding_attempted")

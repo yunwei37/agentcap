@@ -852,6 +852,25 @@ def test_compiler_corpus_mode_requires_source_and_disables_reference_hints():
             dry_run=True,
         )
 
+    with pytest.raises(ValueError, match="requires compiler-corpus"):
+        runner.run_experiment(
+            benchmark_dir=Path("benchmarks/tau2-bench"),
+            output_dir=Path("/tmp/intentcap-test-unused"),
+            lease_source="exact-reference",
+            stepwise_compiler_lease_hints=True,
+            dry_run=True,
+        )
+
+    with pytest.raises(ValueError, match="requires stepwise_compiler_lease_hints"):
+        runner.run_experiment(
+            benchmark_dir=Path("benchmarks/tau2-bench"),
+            output_dir=Path("/tmp/intentcap-test-unused"),
+            lease_source="compiler-corpus",
+            compiler_run_dir=Path("results/eval/R074"),
+            stepwise_compiler_lease_fallback=True,
+            dry_run=True,
+        )
+
 
 def test_step_prompt_reports_tool_results_without_reference_actions():
     prompt = runner.build_step_prompt(
@@ -938,6 +957,74 @@ def test_state_grounded_arg_hints_only_expose_visible_lease_values():
     ]
 
 
+def test_compiler_lease_arg_hints_come_only_from_active_leases():
+    trace = {
+        "leases": [
+            {
+                "id": "lease:create",
+                "op": "tool.call",
+                "object": "tau2.mock.assistant.create_task",
+                "args": {
+                    "user_id": {"one_of": ["user_1"]},
+                    "title": {"one_of": ["Important"]},
+                },
+            },
+            {
+                "id": "lease:update",
+                "op": "tool.call",
+                "object": "tau2.mock.assistant.update_task",
+                "args": {
+                    "task_id": {"one_of": ["task_1", "task_2"]},
+                    "title": {"equals": "Important"},
+                },
+            },
+        ]
+    }
+
+    hints = runner.build_compiler_lease_arg_hints(
+        trace=trace,
+        action_rows=[
+            {
+                "model_tool": "create_task",
+                "model_args_json": '{"title": "Important", "user_id": "user_1"}',
+            }
+        ],
+    )
+
+    assert hints == [
+        {
+            "tool": "update_task",
+            "arguments": {"title": "Important"},
+            "complete_arguments": False,
+            "grounding": "active compiler lease strict argument constraints; no reference actions used",
+            "lease_id": "lease:update",
+            "argument_options": {"task_id": ["task_1", "task_2"]},
+        }
+    ]
+
+
+def test_compiler_lease_fallback_uses_complete_active_hint_marker():
+    hint = {
+        "tool": "create_task",
+        "arguments": {"user_id": "user_1", "title": "Important"},
+        "complete_arguments": True,
+    }
+
+    call = runner.build_single_hint_fallback_call_with_marker(
+        [hint],
+        marker={"_intentcap_synthesized_from_compiler_lease_hint": True},
+    )
+
+    assert call == {
+        "tool": "create_task",
+        "arguments": {
+            "user_id": "user_1",
+            "title": "Important",
+            "_intentcap_synthesized_from_compiler_lease_hint": True,
+        },
+    }
+
+
 def test_step_prompt_can_include_state_grounded_arg_hints_without_reference_actions():
     prompt = runner.build_step_prompt(
         domain="airline",
@@ -967,6 +1054,40 @@ def test_step_prompt_can_include_state_grounded_arg_hints_without_reference_acti
 
     assert "state_grounded_authorized_argument_hints" in prompt
     assert "Q69X3R" in prompt
+    assert "Hidden reference" not in prompt
+    assert "evaluation_criteria" not in prompt
+
+
+def test_step_prompt_can_include_compiler_lease_hints_without_reference_actions():
+    prompt = runner.build_step_prompt(
+        domain="mock",
+        raw_task={
+            "id": "t",
+            "instruction": "Update the visible task.",
+            "evaluation_criteria": {
+                "actions": [
+                    {
+                        "name": "create_task",
+                        "arguments": {"title": "Hidden reference"},
+                    }
+                ]
+            },
+        },
+        tools=[{"name": "create_task", "parameters": {}}],
+        step_index=2,
+        action_rows=[],
+        compiler_lease_arg_hints=[
+            {
+                "tool": "create_task",
+                "arguments": {"title": "Visible compiler value"},
+                "complete_arguments": True,
+                "grounding": "active compiler lease strict argument constraints; no reference actions used",
+            }
+        ],
+    )
+
+    assert "active_compiler_lease_hints" in prompt
+    assert "Visible compiler value" in prompt
     assert "Hidden reference" not in prompt
     assert "evaluation_criteria" not in prompt
 
