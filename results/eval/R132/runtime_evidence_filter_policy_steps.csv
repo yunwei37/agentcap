@@ -1,0 +1,136 @@
+policy,uses_oracle_labels,source_run_id,domain,task_id,step,selected,abstain_reason,selected_tool,selected_args_json,candidate_correctness,rank_position,rank_score,rank_margin_to_next,proof_status,proof_probe,selected_by_ranked_fallback,exact_next_available,any_exact_reference_available,candidate_count
+rank_top_all,False,R125,airline,1,2,True,,get_reservation_details,"{""reservation_id"": ""60RX9E""}",same_tool_wrong_args,1,12,0,proof_probe_complete,True,False,True,True,5
+rank_top_all,False,R125,airline,1,3,True,,get_reservation_details,"{""reservation_id"": ""60RX9E""}",same_tool_wrong_args,1,12,0,proof_probe_complete,True,False,True,True,5
+rank_top_all,False,R125,airline,1,4,True,,get_reservation_details,"{""reservation_id"": ""MZDDS4""}",same_tool_wrong_args,1,12,0,proof_probe_complete,True,False,True,True,4
+rank_top_all,False,R125,airline,1,5,True,,get_reservation_details,"{""reservation_id"": ""OUEA45""}",same_tool_wrong_args,1,12,0,proof_probe_complete,True,False,True,True,3
+rank_top_all,False,R125,airline,1,6,True,,get_reservation_details,"{""reservation_id"": ""Q69X3R""}",exact_next_reference,1,12,0,proof_probe_complete,True,False,True,True,2
+rank_top_all,False,R125,retail,3,3,True,,get_order_details,"{""order_id"": ""#W2378156""}",exact_future_reference,1,52,0,proof_complete,False,True,False,True,5
+rank_top_all,False,R125,retail,3,4,True,,get_order_details,"{""order_id"": ""#W4776164""}",exact_future_reference,1,52,0,proof_complete,False,True,False,True,4
+rank_top_all,False,R125,retail,3,5,True,,get_item_details,"{""item_id"": ""6324294385""}",non_reference_tool,1,62,0,proof_complete,False,True,False,True,7
+rank_top_all,False,R125,retail,3,6,True,,get_item_details,"{""item_id"": ""8349118980""}",non_reference_tool,1,62,0,proof_complete,False,False,False,True,6
+rank_top_all,False,R125,retail,3,7,True,,get_item_details,"{""item_id"": ""8349118980""}",non_reference_tool,1,62,0,proof_complete,False,False,False,True,5
+rank_top_all,False,R125,retail,3,8,True,,get_item_details,"{""item_id"": ""3799046073""}",non_reference_tool,1,62,0,proof_complete,False,False,False,True,5
+rank_top_all,False,R125,retail,3,9,True,,get_item_details,"{""item_id"": ""3799046073""}",non_reference_tool,1,62,0,proof_complete,False,True,False,True,6
+rank_top_all,False,R125,retail,3,10,True,,get_item_details,"{""item_id"": ""8349118980""}",non_reference_tool,1,62,0,proof_complete,False,False,False,True,5
+rank_top_all,False,R125,retail,3,11,True,,get_item_details,"{""item_id"": ""8349118980""}",non_reference_tool,1,62,0,proof_complete,False,True,False,False,6
+rank_top_all,False,R125,retail,3,12,True,,get_product_details,"{""product_id"": ""4354588079""}",same_tool_wrong_args,1,62,10,proof_complete,False,True,False,False,5
+r125_ranked_fallback_replay,False,R125,airline,1,2,False,no_r125_ranked_fallback,,,,,,,,,,True,True,5
+r125_ranked_fallback_replay,False,R125,airline,1,3,False,no_r125_ranked_fallback,,,,,,,,,,True,True,5
+r125_ranked_fallback_replay,False,R125,airline,1,4,False,no_r125_ranked_fallback,,,,,,,,,,True,True,4
+r125_ranked_fallback_replay,False,R125,airline,1,5,False,no_r125_ranked_fallback,,,,,,,,,,True,True,3
+r125_ranked_fallback_replay,False,R125,airline,1,6,False,no_r125_ranked_fallback,,,,,,,,,,True,True,2
+r125_ranked_fallback_replay,False,R125,retail,3,3,True,,get_order_details,"{""order_id"": ""#W2378156""}",exact_future_reference,1,52,0,proof_complete,False,True,False,True,5
+r125_ranked_fallback_replay,False,R125,retail,3,4,True,,get_order_details,"{""order_id"": ""#W4776164""}",exact_future_reference,1,52,0,proof_complete,False,True,False,True,4
+r125_ranked_fallback_replay,False,R125,retail,3,5,True,,get_item_details,"{""item_id"": ""6324294385""}",non_reference_tool,1,62,0,proof_complete,False,True,False,True,7
+r125_ranked_fallback_replay,False,R125,retail,3,6,False,no_r125_ranked_fallback,,,,,,,,,,False,True,6
+r125_ranked_fallback_replay,False,R125,retail,3,7,False,no_r125_ranked_fallback,,,,,,,,,,False,True,5
+r125_ranked_fallback_replay,False,R125,retail,3,8,False,no_r125_ranked_fallback,,,,,,,,,,False,True,5
+r125_ranked_fallback_replay,False,R125,retail,3,9,True,,get_item_details,"{""item_id"": ""3799046073""}",non_reference_tool,1,62,0,proof_complete,False,True,False,True,6
+r125_ranked_fallback_replay,False,R125,retail,3,10,False,no_r125_ranked_fallback,,,,,,,,,,False,True,5
+r125_ranked_fallback_replay,False,R125,retail,3,11,True,,get_item_details,"{""item_id"": ""8349118980""}",non_reference_tool,1,62,0,proof_complete,False,True,False,False,6
+r125_ranked_fallback_replay,False,R125,retail,3,12,True,,get_product_details,"{""product_id"": ""4354588079""}",same_tool_wrong_args,1,62,10,proof_complete,False,True,False,False,5
+rank_score_ge_50_margin_ge_0,False,R125,airline,1,2,False,score_below_threshold,,,,,,,,,,True,True,5
+rank_score_ge_50_margin_ge_0,False,R125,airline,1,3,False,score_below_threshold,,,,,,,,,,True,True,5
+rank_score_ge_50_margin_ge_0,False,R125,airline,1,4,False,score_below_threshold,,,,,,,,,,True,True,4
+rank_score_ge_50_margin_ge_0,False,R125,airline,1,5,False,score_below_threshold,,,,,,,,,,True,True,3
+rank_score_ge_50_margin_ge_0,False,R125,airline,1,6,False,score_below_threshold,,,,,,,,,,True,True,2
+rank_score_ge_50_margin_ge_0,False,R125,retail,3,3,True,,get_order_details,"{""order_id"": ""#W2378156""}",exact_future_reference,1,52,0,proof_complete,False,True,False,True,5
+rank_score_ge_50_margin_ge_0,False,R125,retail,3,4,True,,get_order_details,"{""order_id"": ""#W4776164""}",exact_future_reference,1,52,0,proof_complete,False,True,False,True,4
+rank_score_ge_50_margin_ge_0,False,R125,retail,3,5,True,,get_item_details,"{""item_id"": ""6324294385""}",non_reference_tool,1,62,0,proof_complete,False,True,False,True,7
+rank_score_ge_50_margin_ge_0,False,R125,retail,3,6,True,,get_item_details,"{""item_id"": ""8349118980""}",non_reference_tool,1,62,0,proof_complete,False,False,False,True,6
+rank_score_ge_50_margin_ge_0,False,R125,retail,3,7,True,,get_item_details,"{""item_id"": ""8349118980""}",non_reference_tool,1,62,0,proof_complete,False,False,False,True,5
+rank_score_ge_50_margin_ge_0,False,R125,retail,3,8,True,,get_item_details,"{""item_id"": ""3799046073""}",non_reference_tool,1,62,0,proof_complete,False,False,False,True,5
+rank_score_ge_50_margin_ge_0,False,R125,retail,3,9,True,,get_item_details,"{""item_id"": ""3799046073""}",non_reference_tool,1,62,0,proof_complete,False,True,False,True,6
+rank_score_ge_50_margin_ge_0,False,R125,retail,3,10,True,,get_item_details,"{""item_id"": ""8349118980""}",non_reference_tool,1,62,0,proof_complete,False,False,False,True,5
+rank_score_ge_50_margin_ge_0,False,R125,retail,3,11,True,,get_item_details,"{""item_id"": ""8349118980""}",non_reference_tool,1,62,0,proof_complete,False,True,False,False,6
+rank_score_ge_50_margin_ge_0,False,R125,retail,3,12,True,,get_product_details,"{""product_id"": ""4354588079""}",same_tool_wrong_args,1,62,10,proof_complete,False,True,False,False,5
+rank_score_ge_50_margin_ge_1,False,R125,airline,1,2,False,score_below_threshold,,,,,,,,,,True,True,5
+rank_score_ge_50_margin_ge_1,False,R125,airline,1,3,False,score_below_threshold,,,,,,,,,,True,True,5
+rank_score_ge_50_margin_ge_1,False,R125,airline,1,4,False,score_below_threshold,,,,,,,,,,True,True,4
+rank_score_ge_50_margin_ge_1,False,R125,airline,1,5,False,score_below_threshold,,,,,,,,,,True,True,3
+rank_score_ge_50_margin_ge_1,False,R125,airline,1,6,False,score_below_threshold,,,,,,,,,,True,True,2
+rank_score_ge_50_margin_ge_1,False,R125,retail,3,3,False,margin_below_threshold,,,,,,,,,,False,True,5
+rank_score_ge_50_margin_ge_1,False,R125,retail,3,4,False,margin_below_threshold,,,,,,,,,,False,True,4
+rank_score_ge_50_margin_ge_1,False,R125,retail,3,5,False,margin_below_threshold,,,,,,,,,,False,True,7
+rank_score_ge_50_margin_ge_1,False,R125,retail,3,6,False,margin_below_threshold,,,,,,,,,,False,True,6
+rank_score_ge_50_margin_ge_1,False,R125,retail,3,7,False,margin_below_threshold,,,,,,,,,,False,True,5
+rank_score_ge_50_margin_ge_1,False,R125,retail,3,8,False,margin_below_threshold,,,,,,,,,,False,True,5
+rank_score_ge_50_margin_ge_1,False,R125,retail,3,9,False,margin_below_threshold,,,,,,,,,,False,True,6
+rank_score_ge_50_margin_ge_1,False,R125,retail,3,10,False,margin_below_threshold,,,,,,,,,,False,True,5
+rank_score_ge_50_margin_ge_1,False,R125,retail,3,11,False,margin_below_threshold,,,,,,,,,,False,False,6
+rank_score_ge_50_margin_ge_1,False,R125,retail,3,12,True,,get_product_details,"{""product_id"": ""4354588079""}",same_tool_wrong_args,1,62,10,proof_complete,False,True,False,False,5
+rank_score_ge_50_margin_ge_11,False,R125,airline,1,2,False,score_below_threshold,,,,,,,,,,True,True,5
+rank_score_ge_50_margin_ge_11,False,R125,airline,1,3,False,score_below_threshold,,,,,,,,,,True,True,5
+rank_score_ge_50_margin_ge_11,False,R125,airline,1,4,False,score_below_threshold,,,,,,,,,,True,True,4
+rank_score_ge_50_margin_ge_11,False,R125,airline,1,5,False,score_below_threshold,,,,,,,,,,True,True,3
+rank_score_ge_50_margin_ge_11,False,R125,airline,1,6,False,score_below_threshold,,,,,,,,,,True,True,2
+rank_score_ge_50_margin_ge_11,False,R125,retail,3,3,False,margin_below_threshold,,,,,,,,,,False,True,5
+rank_score_ge_50_margin_ge_11,False,R125,retail,3,4,False,margin_below_threshold,,,,,,,,,,False,True,4
+rank_score_ge_50_margin_ge_11,False,R125,retail,3,5,False,margin_below_threshold,,,,,,,,,,False,True,7
+rank_score_ge_50_margin_ge_11,False,R125,retail,3,6,False,margin_below_threshold,,,,,,,,,,False,True,6
+rank_score_ge_50_margin_ge_11,False,R125,retail,3,7,False,margin_below_threshold,,,,,,,,,,False,True,5
+rank_score_ge_50_margin_ge_11,False,R125,retail,3,8,False,margin_below_threshold,,,,,,,,,,False,True,5
+rank_score_ge_50_margin_ge_11,False,R125,retail,3,9,False,margin_below_threshold,,,,,,,,,,False,True,6
+rank_score_ge_50_margin_ge_11,False,R125,retail,3,10,False,margin_below_threshold,,,,,,,,,,False,True,5
+rank_score_ge_50_margin_ge_11,False,R125,retail,3,11,False,margin_below_threshold,,,,,,,,,,False,False,6
+rank_score_ge_50_margin_ge_11,False,R125,retail,3,12,False,margin_below_threshold,,,,,,,,,,False,False,5
+rank_score_ge_50_no_proof_probe,False,R125,airline,1,2,False,score_below_threshold,,,,,,,,,,True,True,5
+rank_score_ge_50_no_proof_probe,False,R125,airline,1,3,False,score_below_threshold,,,,,,,,,,True,True,5
+rank_score_ge_50_no_proof_probe,False,R125,airline,1,4,False,score_below_threshold,,,,,,,,,,True,True,4
+rank_score_ge_50_no_proof_probe,False,R125,airline,1,5,False,score_below_threshold,,,,,,,,,,True,True,3
+rank_score_ge_50_no_proof_probe,False,R125,airline,1,6,False,score_below_threshold,,,,,,,,,,True,True,2
+rank_score_ge_50_no_proof_probe,False,R125,retail,3,3,True,,get_order_details,"{""order_id"": ""#W2378156""}",exact_future_reference,1,52,0,proof_complete,False,True,False,True,5
+rank_score_ge_50_no_proof_probe,False,R125,retail,3,4,True,,get_order_details,"{""order_id"": ""#W4776164""}",exact_future_reference,1,52,0,proof_complete,False,True,False,True,4
+rank_score_ge_50_no_proof_probe,False,R125,retail,3,5,True,,get_item_details,"{""item_id"": ""6324294385""}",non_reference_tool,1,62,0,proof_complete,False,True,False,True,7
+rank_score_ge_50_no_proof_probe,False,R125,retail,3,6,True,,get_item_details,"{""item_id"": ""8349118980""}",non_reference_tool,1,62,0,proof_complete,False,False,False,True,6
+rank_score_ge_50_no_proof_probe,False,R125,retail,3,7,True,,get_item_details,"{""item_id"": ""8349118980""}",non_reference_tool,1,62,0,proof_complete,False,False,False,True,5
+rank_score_ge_50_no_proof_probe,False,R125,retail,3,8,True,,get_item_details,"{""item_id"": ""3799046073""}",non_reference_tool,1,62,0,proof_complete,False,False,False,True,5
+rank_score_ge_50_no_proof_probe,False,R125,retail,3,9,True,,get_item_details,"{""item_id"": ""3799046073""}",non_reference_tool,1,62,0,proof_complete,False,True,False,True,6
+rank_score_ge_50_no_proof_probe,False,R125,retail,3,10,True,,get_item_details,"{""item_id"": ""8349118980""}",non_reference_tool,1,62,0,proof_complete,False,False,False,True,5
+rank_score_ge_50_no_proof_probe,False,R125,retail,3,11,True,,get_item_details,"{""item_id"": ""8349118980""}",non_reference_tool,1,62,0,proof_complete,False,True,False,False,6
+rank_score_ge_50_no_proof_probe,False,R125,retail,3,12,True,,get_product_details,"{""product_id"": ""4354588079""}",same_tool_wrong_args,1,62,10,proof_complete,False,True,False,False,5
+rank_score_ge_50_margin_ge_1_no_proof_probe,False,R125,airline,1,2,False,score_below_threshold,,,,,,,,,,True,True,5
+rank_score_ge_50_margin_ge_1_no_proof_probe,False,R125,airline,1,3,False,score_below_threshold,,,,,,,,,,True,True,5
+rank_score_ge_50_margin_ge_1_no_proof_probe,False,R125,airline,1,4,False,score_below_threshold,,,,,,,,,,True,True,4
+rank_score_ge_50_margin_ge_1_no_proof_probe,False,R125,airline,1,5,False,score_below_threshold,,,,,,,,,,True,True,3
+rank_score_ge_50_margin_ge_1_no_proof_probe,False,R125,airline,1,6,False,score_below_threshold,,,,,,,,,,True,True,2
+rank_score_ge_50_margin_ge_1_no_proof_probe,False,R125,retail,3,3,False,margin_below_threshold,,,,,,,,,,False,True,5
+rank_score_ge_50_margin_ge_1_no_proof_probe,False,R125,retail,3,4,False,margin_below_threshold,,,,,,,,,,False,True,4
+rank_score_ge_50_margin_ge_1_no_proof_probe,False,R125,retail,3,5,False,margin_below_threshold,,,,,,,,,,False,True,7
+rank_score_ge_50_margin_ge_1_no_proof_probe,False,R125,retail,3,6,False,margin_below_threshold,,,,,,,,,,False,True,6
+rank_score_ge_50_margin_ge_1_no_proof_probe,False,R125,retail,3,7,False,margin_below_threshold,,,,,,,,,,False,True,5
+rank_score_ge_50_margin_ge_1_no_proof_probe,False,R125,retail,3,8,False,margin_below_threshold,,,,,,,,,,False,True,5
+rank_score_ge_50_margin_ge_1_no_proof_probe,False,R125,retail,3,9,False,margin_below_threshold,,,,,,,,,,False,True,6
+rank_score_ge_50_margin_ge_1_no_proof_probe,False,R125,retail,3,10,False,margin_below_threshold,,,,,,,,,,False,True,5
+rank_score_ge_50_margin_ge_1_no_proof_probe,False,R125,retail,3,11,False,margin_below_threshold,,,,,,,,,,False,False,6
+rank_score_ge_50_margin_ge_1_no_proof_probe,False,R125,retail,3,12,True,,get_product_details,"{""product_id"": ""4354588079""}",same_tool_wrong_args,1,62,10,proof_complete,False,True,False,False,5
+oracle_exact_next_if_available,True,R125,airline,1,2,True,,get_reservation_details,"{""reservation_id"": ""Q69X3R""}",exact_next_reference,4,12,0,proof_probe_complete,True,False,True,True,5
+oracle_exact_next_if_available,True,R125,airline,1,3,True,,get_reservation_details,"{""reservation_id"": ""Q69X3R""}",exact_next_reference,4,12,0,proof_probe_complete,True,False,True,True,5
+oracle_exact_next_if_available,True,R125,airline,1,4,True,,get_reservation_details,"{""reservation_id"": ""Q69X3R""}",exact_next_reference,3,12,0,proof_probe_complete,True,False,True,True,4
+oracle_exact_next_if_available,True,R125,airline,1,5,True,,get_reservation_details,"{""reservation_id"": ""Q69X3R""}",exact_next_reference,2,12,0,proof_probe_complete,True,False,True,True,3
+oracle_exact_next_if_available,True,R125,airline,1,6,True,,get_reservation_details,"{""reservation_id"": ""Q69X3R""}",exact_next_reference,1,12,0,proof_probe_complete,True,False,True,True,2
+oracle_exact_next_if_available,True,R125,retail,3,3,False,no_exact_next_candidate,,,,,,,,,,False,True,5
+oracle_exact_next_if_available,True,R125,retail,3,4,False,no_exact_next_candidate,,,,,,,,,,False,True,4
+oracle_exact_next_if_available,True,R125,retail,3,5,False,no_exact_next_candidate,,,,,,,,,,False,True,7
+oracle_exact_next_if_available,True,R125,retail,3,6,False,no_exact_next_candidate,,,,,,,,,,False,True,6
+oracle_exact_next_if_available,True,R125,retail,3,7,False,no_exact_next_candidate,,,,,,,,,,False,True,5
+oracle_exact_next_if_available,True,R125,retail,3,8,False,no_exact_next_candidate,,,,,,,,,,False,True,5
+oracle_exact_next_if_available,True,R125,retail,3,9,False,no_exact_next_candidate,,,,,,,,,,False,True,6
+oracle_exact_next_if_available,True,R125,retail,3,10,False,no_exact_next_candidate,,,,,,,,,,False,True,5
+oracle_exact_next_if_available,True,R125,retail,3,11,False,no_exact_next_candidate,,,,,,,,,,False,False,6
+oracle_exact_next_if_available,True,R125,retail,3,12,False,no_exact_next_candidate,,,,,,,,,,False,False,5
+oracle_any_reference_if_available,True,R125,airline,1,2,True,,get_reservation_details,"{""reservation_id"": ""Q69X3R""}",exact_next_reference,4,12,0,proof_probe_complete,True,False,True,True,5
+oracle_any_reference_if_available,True,R125,airline,1,3,True,,get_reservation_details,"{""reservation_id"": ""Q69X3R""}",exact_next_reference,4,12,0,proof_probe_complete,True,False,True,True,5
+oracle_any_reference_if_available,True,R125,airline,1,4,True,,get_reservation_details,"{""reservation_id"": ""Q69X3R""}",exact_next_reference,3,12,0,proof_probe_complete,True,False,True,True,4
+oracle_any_reference_if_available,True,R125,airline,1,5,True,,get_reservation_details,"{""reservation_id"": ""Q69X3R""}",exact_next_reference,2,12,0,proof_probe_complete,True,False,True,True,3
+oracle_any_reference_if_available,True,R125,airline,1,6,True,,get_reservation_details,"{""reservation_id"": ""Q69X3R""}",exact_next_reference,1,12,0,proof_probe_complete,True,False,True,True,2
+oracle_any_reference_if_available,True,R125,retail,3,3,True,,get_order_details,"{""order_id"": ""#W2378156""}",exact_future_reference,1,52,0,proof_complete,False,True,False,True,5
+oracle_any_reference_if_available,True,R125,retail,3,4,True,,get_order_details,"{""order_id"": ""#W4776164""}",exact_future_reference,1,52,0,proof_complete,False,True,False,True,4
+oracle_any_reference_if_available,True,R125,retail,3,5,True,,get_product_details,"{""product_id"": ""9523456873""}",exact_future_reference,4,62,10,proof_complete,False,False,False,True,7
+oracle_any_reference_if_available,True,R125,retail,3,6,True,,get_product_details,"{""product_id"": ""9523456873""}",exact_future_reference,3,62,10,proof_complete,False,False,False,True,6
+oracle_any_reference_if_available,True,R125,retail,3,7,True,,get_order_details,"{""order_id"": ""#W6247578""}",exact_future_reference,3,52,0,proof_complete,False,False,False,True,5
+oracle_any_reference_if_available,True,R125,retail,3,8,True,,get_order_details,"{""order_id"": ""#W6679257""}",exact_future_reference,4,52,0,proof_complete,False,False,False,True,5
+oracle_any_reference_if_available,True,R125,retail,3,9,True,,get_order_details,"{""order_id"": ""#W9711842""}",exact_future_reference,4,52,0,proof_complete,False,False,False,True,6
+oracle_any_reference_if_available,True,R125,retail,3,10,True,,get_order_details,"{""order_id"": ""#W9711842""}",exact_future_reference,3,52,0,proof_complete,False,False,False,True,5
+oracle_any_reference_if_available,True,R125,retail,3,11,False,no_exact_reference_candidate,,,,,,,,,,False,False,6
+oracle_any_reference_if_available,True,R125,retail,3,12,False,no_exact_reference_candidate,,,,,,,,,,False,False,5
