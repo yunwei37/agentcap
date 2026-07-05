@@ -1,0 +1,2 @@
+source_run_id,domain,task_id,event_id,tool,args_json,actionability_class,proof_status,executed_same_call_event_ids,executed_same_call_rounds,executed_same_call_bound_reference_ids,diagnosis,next_mechanism_target
+R148,retail,3,retail:3:3_3,get_product_details,"{""product_id"": ""9523456873""}",candidate_selection_or_planning_gap,missing_existing_exact_next_candidate,retail:3:3_10,step_5,retail:3:3_10,same_tool_args_already_executed_for_different_reference,repeated_event_selection_or_reference_accounting
