@@ -1,0 +1,12 @@
+source_run_id,domain,task_id,steps_with_candidates,runtime_candidates,proof_complete_candidates,exact_next_reference_candidates,any_exact_reference_candidates,top_exact_next_reference_steps,top_any_exact_reference_steps,steps_with_correct_candidate_but_top_wrong,selected_candidates,selected_exact_next_reference,selected_any_exact_reference,ranked_fallback_steps,ranked_fallback_selected_exact_next_reference,ranked_fallback_selected_any_exact_reference,ranked_fallback_missed_exact_next_reference,proof_complete_non_reference_or_wrong_arg_candidates,tool_oracle_pass,all_reference_actions_executed,action_reward,env_reward
+R125,airline,1,5,19,19,5,5,1,1,4,4,1,1,0,0,0,0,14,False,True,1.0,0.0
+R125,airline,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,False,False,0.0,0.0
+R125,airline,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,False,False,0.0,0.0
+R125,airline,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,False,False,0.0,1.0
+R125,retail,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,False,False,0.0,0.0
+R125,retail,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,False,False,0.0,0.0
+R125,retail,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,False,False,0.0,0.0
+R125,retail,3,10,54,54,0,24,0,2,0,10,0,6,6,0,2,0,30,False,False,0.0,0.0
+R125,retail,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,False,False,0.0,0.0
+R125,telecom,[mobile_data_issue]user_abroad_roaming_disabled_on[PERSONA:Easy],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,False,True,1.0,0.0
+R125,telecom,[mobile_data_issue]user_abroad_roaming_disabled_off[PERSONA:Hard],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,False,False,0.0,0.0
