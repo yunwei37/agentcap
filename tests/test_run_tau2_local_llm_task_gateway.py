@@ -871,6 +871,47 @@ def test_compiler_corpus_mode_requires_source_and_disables_reference_hints():
             dry_run=True,
         )
 
+    with pytest.raises(ValueError, match="requires compiler-corpus"):
+        runner.run_experiment(
+            benchmark_dir=Path("benchmarks/tau2-bench"),
+            output_dir=Path("/tmp/intentcap-test-unused"),
+            lease_source="exact-reference",
+            stepwise_runtime_evidence_lease_hints=True,
+            dry_run=True,
+        )
+
+    with pytest.raises(ValueError, match="requires compiler_runtime_binding"):
+        runner.run_experiment(
+            benchmark_dir=Path("benchmarks/tau2-bench"),
+            output_dir=Path("/tmp/intentcap-test-unused"),
+            lease_source="compiler-corpus",
+            compiler_run_dir=Path("results/eval/R074"),
+            stepwise_runtime_evidence_lease_hints=True,
+            dry_run=True,
+        )
+
+    with pytest.raises(ValueError, match="requires stepwise_runtime_evidence_lease_hints"):
+        runner.run_experiment(
+            benchmark_dir=Path("benchmarks/tau2-bench"),
+            output_dir=Path("/tmp/intentcap-test-unused"),
+            lease_source="compiler-corpus",
+            compiler_run_dir=Path("results/eval/R074"),
+            compiler_runtime_binding=True,
+            stepwise_runtime_evidence_fallback=True,
+            dry_run=True,
+        )
+
+    with pytest.raises(ValueError, match="requires stepwise_runtime_evidence_lease_hints"):
+        runner.run_experiment(
+            benchmark_dir=Path("benchmarks/tau2-bench"),
+            output_dir=Path("/tmp/intentcap-test-unused"),
+            lease_source="compiler-corpus",
+            compiler_run_dir=Path("results/eval/R074"),
+            compiler_runtime_binding=True,
+            stepwise_runtime_evidence_hint_choice_fallback=True,
+            dry_run=True,
+        )
+
 
 def test_step_prompt_reports_tool_results_without_reference_actions():
     prompt = runner.build_step_prompt(
@@ -1003,6 +1044,124 @@ def test_compiler_lease_arg_hints_come_only_from_active_leases():
     ]
 
 
+def test_runtime_evidence_compiler_hints_use_templates_and_tool_results_only():
+    trace = {
+        "metadata": {
+            "runtime_bindable_compiler_leases": [
+                {
+                    "id": "template:cancel",
+                    "tool": "cancel_reservation",
+                    "object": "tau2.airline.assistant.cancel_reservation",
+                    "static_args": {},
+                    "runtime_args": ["reservation_id"],
+                    "allowed_arg_keys": ["reservation_id"],
+                }
+            ]
+        }
+    }
+
+    hints = runner.build_runtime_evidence_compiler_hints(
+        trace=trace,
+        action_rows=[
+            {
+                "model_tool": "get_user_details",
+                "model_args_json": '{"user_id": "u1"}',
+                "executed": True,
+                "tool_result_preview": (
+                    '{"content":"{\\"reservations\\":[\\"Q69X3R\\",\\"MZDDS4\\"]}"}'
+                ),
+            }
+        ],
+    )
+
+    assert hints == [
+        {
+            "tool": "cancel_reservation",
+            "arguments": {"reservation_id": "Q69X3R"},
+            "complete_arguments": True,
+            "grounding": (
+                "runtime-bindable compiler template plus executed tool-result "
+                "evidence; no reference actions used"
+            ),
+            "lease_template_id": "template:cancel",
+            "runtime_args": ["reservation_id"],
+        },
+        {
+            "tool": "cancel_reservation",
+            "arguments": {"reservation_id": "MZDDS4"},
+            "complete_arguments": True,
+            "grounding": (
+                "runtime-bindable compiler template plus executed tool-result "
+                "evidence; no reference actions used"
+            ),
+            "lease_template_id": "template:cancel",
+            "runtime_args": ["reservation_id"],
+        },
+    ]
+
+
+def test_runtime_evidence_compiler_hints_require_all_runtime_args():
+    trace = {
+        "metadata": {
+            "runtime_bindable_compiler_leases": [
+                {
+                    "id": "template:enable",
+                    "tool": "enable_roaming",
+                    "object": "tau2.telecom.assistant.enable_roaming",
+                    "static_args": {},
+                    "runtime_args": ["customer_id", "line_id"],
+                    "allowed_arg_keys": ["customer_id", "line_id"],
+                }
+            ]
+        }
+    }
+
+    assert runner.build_runtime_evidence_compiler_hints(
+        trace=trace,
+        action_rows=[
+            {
+                "executed": True,
+                "tool_result_preview": '{"content":"{\\"customer_id\\":\\"C1001\\"}"}',
+            }
+        ],
+    ) == []
+
+    hints = runner.build_runtime_evidence_compiler_hints(
+        trace=trace,
+        action_rows=[
+            {
+                "executed": True,
+                "tool_result_preview": (
+                    '{"content":"{\\"customer_id\\":\\"C1001\\",\\"line_id\\":\\"L1002\\"}"}'
+                ),
+            }
+        ],
+    )
+
+    assert hints[0]["arguments"] == {"customer_id": "C1001", "line_id": "L1002"}
+
+
+def test_runtime_evidence_fallback_uses_distinct_marker():
+    hint = {
+        "tool": "cancel_reservation",
+        "arguments": {"reservation_id": "Q69X3R"},
+        "complete_arguments": True,
+    }
+
+    call = runner.build_single_hint_fallback_call_with_marker(
+        [hint],
+        marker={"_intentcap_synthesized_from_runtime_evidence_hint": True},
+    )
+
+    assert call == {
+        "tool": "cancel_reservation",
+        "arguments": {
+            "reservation_id": "Q69X3R",
+            "_intentcap_synthesized_from_runtime_evidence_hint": True,
+        },
+    }
+
+
 def test_compiler_lease_fallback_uses_complete_active_hint_marker():
     hint = {
         "tool": "create_task",
@@ -1089,6 +1248,40 @@ def test_step_prompt_can_include_compiler_lease_hints_without_reference_actions(
     assert "active_compiler_lease_hints" in prompt
     assert "Visible compiler value" in prompt
     assert "Hidden reference" not in prompt
+    assert "evaluation_criteria" not in prompt
+
+
+def test_step_prompt_can_include_runtime_evidence_hints_without_reference_actions():
+    prompt = runner.build_step_prompt(
+        domain="airline",
+        raw_task={
+            "id": "t",
+            "instruction": "Cancel the visible reservation.",
+            "evaluation_criteria": {
+                "actions": [
+                    {
+                        "name": "cancel_reservation",
+                        "arguments": {"reservation_id": "HIDDEN"},
+                    }
+                ]
+            },
+        },
+        tools=[{"name": "cancel_reservation", "parameters": {}}],
+        step_index=2,
+        action_rows=[],
+        runtime_evidence_lease_hints=[
+            {
+                "tool": "cancel_reservation",
+                "arguments": {"reservation_id": "Q69X3R"},
+                "complete_arguments": True,
+                "grounding": "runtime-bindable compiler template plus executed tool-result evidence; no reference actions used",
+            }
+        ],
+    )
+
+    assert "runtime_evidence_compiler_hints" in prompt
+    assert "Q69X3R" in prompt
+    assert "HIDDEN" not in prompt
     assert "evaluation_criteria" not in prompt
 
 
@@ -1199,6 +1392,43 @@ def test_hint_choice_prompt_omits_reference_actions():
     assert "evaluation_criteria" not in prompt
 
 
+def test_runtime_evidence_hint_choice_prompt_includes_intent_evidence_not_reference():
+    prompt = runner.build_hint_choice_prompt(
+        domain="airline",
+        raw_task={
+            "id": "t",
+            "instruction": "Cancel the PHL to LGA reservation.",
+            "evaluation_criteria": {
+                "actions": [
+                    {
+                        "name": "cancel_reservation",
+                        "arguments": {"reservation_id": "HIDDEN"},
+                    }
+                ]
+            },
+        },
+        step_index=2,
+        action_rows=[],
+        complete_hints=[
+            {
+                "tool": "cancel_reservation",
+                "arguments": {"reservation_id": "Q69X3R"},
+                "complete_arguments": True,
+                "grounding": "runtime evidence",
+                "intent_evidence": "User wants to cancel the PHL to LGA reservation.",
+                "lease_template_id": "template:cancel",
+            }
+        ],
+        hint_label="runtime_evidence_compiler_hints",
+    )
+
+    assert "runtime_evidence_compiler_hints" in prompt
+    assert "User wants to cancel the PHL to LGA reservation" in prompt
+    assert "template:cancel" in prompt
+    assert "HIDDEN" not in prompt
+    assert "evaluation_criteria" not in prompt
+
+
 def test_compact_hint_choice_prompt_forbids_reasoning_without_reference_actions():
     prompt = runner.build_hint_choice_prompt(
         domain="retail",
@@ -1261,6 +1491,21 @@ def test_hint_choice_fallback_requires_valid_hint_id():
             "product_id": "1656367028",
             "_intentcap_synthesized_from_hint": True,
             "_intentcap_hint_choice_id": "hint_1",
+        },
+    }
+
+    runtime_call = runner.build_hint_choice_fallback_call_with_marker(
+        hints,
+        {"selected_hint_id": "hint_0"},
+        marker_name="_intentcap_synthesized_from_runtime_evidence_hint_choice",
+    )
+
+    assert runtime_call == {
+        "tool": "get_order_details",
+        "arguments": {
+            "order_id": "#W2378156",
+            "_intentcap_synthesized_from_runtime_evidence_hint_choice": True,
+            "_intentcap_hint_choice_id": "hint_0",
         },
     }
 

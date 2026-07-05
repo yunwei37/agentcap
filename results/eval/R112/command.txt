@@ -1,0 +1,1 @@
+PYTHONPATH=src /usr/bin/python scripts/score_tau2_invalid_reference_oracle.py --run-id R112 --residual-dir results/eval/R111 --feasibility-dir results/eval/R067 --source-run-dir results/eval/R109 --output-dir results/eval/R112
