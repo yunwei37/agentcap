@@ -1334,6 +1334,363 @@ def test_runtime_value_proof_allows_write_after_matching_detail_probe():
     assert binding["lease"]["args"] == {"reservation_id": {"equals": "Q69X3R"}}
 
 
+def test_runtime_value_proof_allows_retail_item_list_with_structured_option_context():
+    trace = {
+        "metadata": {
+            "runtime_bindable_compiler_leases": [
+                {
+                    "id": "template:modify-items",
+                    "tool": "modify_pending_order_items",
+                    "object": "tau2.retail.assistant.modify_pending_order_items",
+                    "static_args": {},
+                    "runtime_args": [
+                        "item_ids",
+                        "new_item_ids",
+                        "order_id",
+                        "payment_method_id",
+                    ],
+                    "allowed_arg_keys": [
+                        "item_ids",
+                        "new_item_ids",
+                        "order_id",
+                        "payment_method_id",
+                    ],
+                    "intent_evidence": (
+                        "User wants to modify pending small tshirt items to "
+                        "purple, polyester, v-neck."
+                    ),
+                    "tool_type": "write",
+                    "proof_required": True,
+                }
+            ]
+        }
+    }
+    order = {
+        "order_id": "#W4776164",
+        "items": [
+            {
+                "name": "T-Shirt",
+                "item_id": "8349118980",
+                "options": {
+                    "color": "blue",
+                    "size": "S",
+                    "material": "cotton",
+                    "style": "v-neck",
+                },
+            }
+        ],
+        "payment_history": [{"payment_method_id": "credit_card_9513926"}],
+    }
+    product = {
+        "name": "T-Shirt",
+        "variants": {
+            "9647292434": {
+                "name": "T-Shirt",
+                "item_id": "9647292434",
+                "options": {
+                    "color": "purple",
+                    "size": "S",
+                    "material": "polyester",
+                    "style": "v-neck",
+                },
+                "available": True,
+            }
+        },
+    }
+    action_rows = [
+        {"executed": True, "tool_result_preview": json.dumps({"content": json.dumps(order)})},
+        {"executed": True, "tool_result_preview": json.dumps({"content": json.dumps(product)})},
+    ]
+
+    binding = runner.build_runtime_bound_compiler_lease(
+        trace=trace,
+        event={
+            "object": "tau2.retail.assistant.modify_pending_order_items",
+            "args": {
+                "item_ids": ["8349118980"],
+                "new_item_ids": ["9647292434"],
+                "order_id": "#W4776164",
+                "payment_method_id": "credit_card_9513926",
+            },
+        },
+        domain="retail",
+        task_id="3",
+        index=0,
+        action_rows=action_rows,
+        require_value_proof=True,
+    )
+
+    assert binding["attempted"] is True
+    assert binding["reason"] == "runtime evidence value-proof bound"
+    assert binding["lease"]["args"] == {
+        "item_ids": {"equals": ["8349118980"]},
+        "new_item_ids": {"equals": ["9647292434"]},
+        "order_id": {"equals": "#W4776164"},
+        "payment_method_id": {"equals": "credit_card_9513926"},
+    }
+
+
+def test_runtime_value_proof_blocks_retail_item_list_without_new_option_context():
+    trace = {
+        "metadata": {
+            "runtime_bindable_compiler_leases": [
+                {
+                    "id": "template:modify-items",
+                    "tool": "modify_pending_order_items",
+                    "object": "tau2.retail.assistant.modify_pending_order_items",
+                    "static_args": {},
+                    "runtime_args": [
+                        "item_ids",
+                        "new_item_ids",
+                        "order_id",
+                        "payment_method_id",
+                    ],
+                    "allowed_arg_keys": [
+                        "item_ids",
+                        "new_item_ids",
+                        "order_id",
+                        "payment_method_id",
+                    ],
+                    "intent_evidence": (
+                        "User wants to modify pending small tshirt items to "
+                        "purple, polyester, v-neck."
+                    ),
+                    "tool_type": "write",
+                    "proof_required": True,
+                }
+            ]
+        }
+    }
+    action_rows = [
+        {
+            "executed": True,
+            "tool_result_preview": (
+                '{"content":"{\\"order_id\\":\\"#W4776164\\",'
+                '\\"items\\":[{\\"name\\":\\"T-Shirt\\",'
+                '\\"item_id\\":\\"8349118980\\",'
+                '\\"options\\":{\\"color\\":\\"blue\\",\\"size\\":\\"S\\",'
+                '\\"material\\":\\"cotton\\",\\"style\\":\\"v-neck\\"}}],'
+                '\\"payment_history\\":[{\\"payment_method_id\\":'
+                '\\"credit_card_9513926\\"}],'
+                '\\"candidate_items\\":[\\"9647292434\\"]}"}'
+            ),
+        }
+    ]
+
+    binding = runner.build_runtime_bound_compiler_lease(
+        trace=trace,
+        event={
+            "object": "tau2.retail.assistant.modify_pending_order_items",
+            "args": {
+                "item_ids": ["8349118980"],
+                "new_item_ids": ["9647292434"],
+                "order_id": "#W4776164",
+                "payment_method_id": "credit_card_9513926",
+            },
+        },
+        domain="retail",
+        task_id="3",
+        index=0,
+        action_rows=action_rows,
+        require_value_proof=True,
+    )
+
+    assert binding["attempted"] is True
+    assert binding["lease"] is None
+    assert binding["reason"].startswith(
+        "missing runtime value proof for template:modify-items"
+    )
+
+
+def test_runtime_value_proof_blocks_unproven_leaf_in_multi_item_list():
+    good_item_id = "9647292434"
+    bad_item_id = "5555555555"
+    trace = {
+        "metadata": {
+            "runtime_bindable_compiler_leases": [
+                {
+                    "id": "template:modify-items",
+                    "tool": "modify_pending_order_items",
+                    "object": "tau2.retail.assistant.modify_pending_order_items",
+                    "static_args": {},
+                    "runtime_args": [
+                        "item_ids",
+                        "new_item_ids",
+                        "order_id",
+                        "payment_method_id",
+                    ],
+                    "allowed_arg_keys": [
+                        "item_ids",
+                        "new_item_ids",
+                        "order_id",
+                        "payment_method_id",
+                    ],
+                    "intent_evidence": (
+                        "User wants to modify pending small tshirt items to "
+                        "purple, polyester, v-neck."
+                    ),
+                    "tool_type": "write",
+                    "proof_required": True,
+                }
+            ]
+        }
+    }
+    order = {
+        "order_id": "#W4776164",
+        "items": [
+            {
+                "name": "T-Shirt",
+                "item_id": "8349118980",
+                "options": {
+                    "color": "blue",
+                    "size": "S",
+                    "material": "cotton",
+                    "style": "v-neck",
+                },
+            }
+        ],
+        "payment_history": [{"payment_method_id": "credit_card_9513926"}],
+    }
+    product = {
+        "name": "T-Shirt",
+        "variants": {
+            good_item_id: {
+                "name": "T-Shirt",
+                "item_id": good_item_id,
+                "options": {
+                    "color": "purple",
+                    "size": "S",
+                    "material": "polyester",
+                    "style": "v-neck",
+                },
+            },
+            bad_item_id: {
+                "name": "T-Shirt",
+                "item_id": bad_item_id,
+                "options": {
+                    "color": "red",
+                    "size": "L",
+                    "material": "wool",
+                    "style": "crew",
+                },
+            },
+        },
+    }
+    action_rows = [
+        {"executed": True, "tool_result_preview": json.dumps({"content": json.dumps(order)})},
+        {"executed": True, "tool_result_preview": json.dumps({"content": json.dumps(product)})},
+    ]
+
+    binding = runner.build_runtime_bound_compiler_lease(
+        trace=trace,
+        event={
+            "object": "tau2.retail.assistant.modify_pending_order_items",
+            "args": {
+                "item_ids": ["8349118980"],
+                "new_item_ids": [good_item_id, bad_item_id],
+                "order_id": "#W4776164",
+                "payment_method_id": "credit_card_9513926",
+            },
+        },
+        domain="retail",
+        task_id="3",
+        index=0,
+        action_rows=action_rows,
+        require_value_proof=True,
+    )
+
+    assert binding["attempted"] is True
+    assert binding["lease"] is None
+    assert binding["reason"].startswith(
+        "missing runtime value proof for template:modify-items"
+    )
+
+
+def test_runtime_value_proof_blocks_scalar_list_sibling_proof_pollution():
+    bad_item_id = "5555555555"
+    trace = {
+        "metadata": {
+            "runtime_bindable_compiler_leases": [
+                {
+                    "id": "template:modify-items",
+                    "tool": "modify_pending_order_items",
+                    "object": "tau2.retail.assistant.modify_pending_order_items",
+                    "static_args": {},
+                    "runtime_args": [
+                        "item_ids",
+                        "new_item_ids",
+                        "order_id",
+                        "payment_method_id",
+                    ],
+                    "allowed_arg_keys": [
+                        "item_ids",
+                        "new_item_ids",
+                        "order_id",
+                        "payment_method_id",
+                    ],
+                    "intent_evidence": (
+                        "User wants to modify pending small tshirt items to "
+                        "purple, polyester, v-neck."
+                    ),
+                    "tool_type": "write",
+                    "proof_required": True,
+                }
+            ]
+        }
+    }
+    order = {
+        "order_id": "#W4776164",
+        "items": [
+            {
+                "name": "T-Shirt",
+                "item_id": "8349118980",
+                "options": {
+                    "color": "blue",
+                    "size": "S",
+                    "material": "cotton",
+                    "style": "v-neck",
+                },
+            }
+        ],
+        "payment_history": [{"payment_method_id": "credit_card_9513926"}],
+        "candidate_items": [
+            bad_item_id,
+            "T-Shirt",
+            "small",
+            "purple",
+            "polyester",
+            "v-neck",
+        ],
+    }
+    action_rows = [
+        {"executed": True, "tool_result_preview": json.dumps({"content": json.dumps(order)})}
+    ]
+
+    binding = runner.build_runtime_bound_compiler_lease(
+        trace=trace,
+        event={
+            "object": "tau2.retail.assistant.modify_pending_order_items",
+            "args": {
+                "item_ids": ["8349118980"],
+                "new_item_ids": [bad_item_id],
+                "order_id": "#W4776164",
+                "payment_method_id": "credit_card_9513926",
+            },
+        },
+        domain="retail",
+        task_id="3",
+        index=0,
+        action_rows=action_rows,
+        require_value_proof=True,
+    )
+
+    assert binding["attempted"] is True
+    assert binding["lease"] is None
+    assert binding["reason"].startswith(
+        "missing runtime value proof for template:modify-items"
+    )
+
+
 def test_runtime_value_proof_hints_suppress_write_and_emit_read_probe():
     trace = {
         "metadata": {

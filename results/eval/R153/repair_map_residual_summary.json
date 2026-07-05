@@ -1,0 +1,75 @@
+{
+  "analysis": "saved repair-map execution residual audit",
+  "candidate_csv": "results/eval/R131/runtime_evidence_candidate_correctness.csv",
+  "current_db_feasible_actionability_class_counts": {
+    "candidate_selection_or_planning_gap": 1,
+    "runtime_candidate_generation_gap": 4,
+    "tool_activation_gap": 3,
+    "upstream_planning_gap": 5
+  },
+  "current_db_feasible_missing_reference_actions": 13,
+  "current_task_primary_actionability_counts": {
+    "candidate_selection_or_planning_gap": 1,
+    "reward_residual_not_missing_action": 6,
+    "runtime_candidate_generation_gap": 2,
+    "tool_activation_gap": 2
+  },
+  "db_feasible_missing_reduction_vs_previous": 3,
+  "feasibility_csv": "results/eval/R067/reference_feasibility.csv",
+  "git_status": "## main...origin/main\n M scripts/run_tau2_local_llm_task_gateway.py\n M tests/test_run_tau2_local_llm_task_gateway.py\n?? results/eval/R152/\n?? results/eval/R153/",
+  "next_mechanism_priority": [
+    "generate_runtime_candidates_for_visible_tool_argument_evidence",
+    "add_planner_candidate_correctness_before_execution",
+    "activate_or_compile_missing_tools_when_argument_evidence_exists",
+    "gather_missing_argument_evidence",
+    "debug_reward_env_residuals_after_reference_completion"
+  ],
+  "no_dataset_sync": true,
+  "no_model_execution": true,
+  "no_tool_execution": true,
+  "notes": [
+    "This is an offline saved-artifact audit over a completed task-loop run and earlier diagnostic CSVs.",
+    "It does not run models, execute tools, clone benchmarks, sync datasets, or reveal hidden references to a model.",
+    "Reference labels are used only to measure post-hoc exactness and residual actionability.",
+    "The result supports a residual-diagnosis claim, not non-oracle utility success."
+  ],
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "previous_actionability_csv": "results/eval/R146/remaining_missing_actionability.csv",
+  "previous_db_feasible_missing_reference_actions": 16,
+  "project_head": "af4b5c411cd375ae169a8766c1807143317873f6",
+  "python": "3.12.3",
+  "recall_missing_gap_class_counts": {
+    "tool_not_visible_arg_evidence": 2,
+    "tool_not_visible_no_arg_evidence": 6,
+    "tool_visible_arg_evidence_not_called": 5,
+    "tool_visible_no_arg_evidence": 3
+  },
+  "repair_map_candidates_executed_by_any_path": 23,
+  "repair_map_candidates_not_executed": 2,
+  "repair_map_candidates_still_missing_after_source_run": 2,
+  "repair_map_csv": "results/eval/R144/cumulative_repair_map.csv",
+  "repair_map_eligible_candidates": 25,
+  "repair_map_execution_status_counts": {
+    "not_executed": 2,
+    "repair_map_fallback_executed": 23
+  },
+  "repair_map_fallback_executed_candidates": 23,
+  "run_id": "R153",
+  "script_sha256": "578189251223c9616c079b27d6716c85dc01a8467d08881be0f0c62ddf835922",
+  "source_adjusted_action_env_pass_tasks": 0,
+  "source_db_feasible_reference_complete_tasks": 6,
+  "source_exact_executed_calls": 45,
+  "source_executed_reference_actions": 45,
+  "source_missing_reference_actions": 16,
+  "source_off_lease_calls": 9,
+  "source_off_lease_category_counts": {
+    "off_lease_same_tool_wrong_args": 5,
+    "off_lease_wrong_or_hallucinated_tool": 4
+  },
+  "source_reward_residual_tasks_without_missing_action": 6,
+  "source_run": "R152",
+  "source_run_dir": "results/eval/R152",
+  "source_same_tool_wrong_args_calls": 5,
+  "source_tool_oracle_pass_tasks": 0,
+  "source_wrong_or_hallucinated_tool_calls": 4
+}

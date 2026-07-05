@@ -1,0 +1,49 @@
+{
+  "actionability_csv": "results/eval/R161/remaining_missing_actionability.csv",
+  "analysis": "saved residual recovery candidate plan",
+  "candidate_csv": "results/eval/R131/runtime_evidence_candidate_correctness.csv",
+  "db_feasible_actionability_class_counts": {
+    "candidate_selection_or_planning_gap": 1,
+    "runtime_candidate_generation_gap": 8,
+    "tool_activation_gap": 3,
+    "upstream_planning_gap": 5
+  },
+  "db_feasible_missing_actions_before_plan": 17,
+  "eligible_existing_exact_candidate_recoveries": 0,
+  "eligible_generated_runtime_candidates": 8,
+  "eligible_high_impact_recovery_candidates": 3,
+  "eligible_recovery_candidates": 8,
+  "git_status": "## main...origin/main\n M docs/autopaper/intentcap-autopaper.md\n M docs/background-related-work.md\n M docs/design.md\n M docs/evaluation.md\n M docs/idea-story.md\n M docs/implementation.md\n M scripts/run_tau2_local_llm_task_gateway.py\n M tests/test_run_tau2_local_llm_task_gateway.py\n?? results/eval/R152/\n?? results/eval/R153/\n?? results/eval/R154/\n?? results/eval/R155/\n?? results/eval/R156/\n?? results/eval/R157/\n?? results/eval/R158/\n?? results/eval/R159/\n?? results/eval/R160/\n?? results/eval/R161/",
+  "next_execution_input": "results/eval/R162/candidate_generation_repair_map.csv",
+  "no_dataset_sync": true,
+  "no_model_run": true,
+  "no_tool_execution": true,
+  "not_yet_candidate_ready_class_counts": {
+    "tool_activation_gap": 3,
+    "upstream_planning_gap": 5
+  },
+  "not_yet_candidate_ready_db_feasible_missing_actions": 8,
+  "notes": [
+    "This is an offline saved residual recovery-plan analysis.",
+    "Reference arguments and exact-next labels are used only as post-hoc exactness targets.",
+    "The emitted candidate map is compatible with the existing repair-map task-loop fallback.",
+    "The result supports a next-execution-input claim, not non-oracle utility success."
+  ],
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "potential_db_feasible_missing_after_recovery_plan": 8,
+  "project_head": "af4b5c411cd375ae169a8766c1807143317873f6",
+  "python": "3.12.3",
+  "recovery_kind_counts": {
+    "generate_runtime_candidate_from_visible_state": 8
+  },
+  "reward_residual_tasks_without_missing_action": 6,
+  "run_dir": "results/eval/R160",
+  "run_id": "R162",
+  "script_sha256": "f6f3780997b72b1ecd3fcd894fc16484a074a8081f7afe7640f912687e1175ca",
+  "task_primary_recovery_kind_counts": {
+    "generate_runtime_candidate_from_visible_state": 3,
+    "none": 8
+  },
+  "task_residual_csv": "results/eval/R161/task_repair_residuals.csv",
+  "tasks_with_recovery_candidates": 3
+}

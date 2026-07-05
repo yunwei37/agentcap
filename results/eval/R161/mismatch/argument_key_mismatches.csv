@@ -1,0 +1,7 @@
+run_id,domain,task_id,round,index,model_tool,issue,key,model_value_json,reference_value_json,category,closest_reference_event_id
+R160,retail,2,step_8,7,get_product_details,wrong_value,product_id,"""4354588079""","""6086499569""",off_lease_same_tool_wrong_args,retail:2:2_1
+R160,retail,2,step_9,8,get_product_details,wrong_value,product_id,"""7314138884""","""6086499569""",off_lease_same_tool_wrong_args,retail:2:2_1
+R160,retail,2,step_10,9,get_product_details,wrong_value,product_id,"""8940227892""","""6086499569""",off_lease_same_tool_wrong_args,retail:2:2_1
+R160,retail,3,step_8,7,get_order_details,missing_from_model,order_id,,"""#W6247578""",off_lease_same_tool_wrong_args,retail:3:3_5
+R160,retail,4,step_7,6,get_product_details,wrong_value,product_id,"""4354588079""","""6086499569""",off_lease_same_tool_wrong_args,retail:4:4_1
+R160,retail,4,step_11,10,get_product_details,wrong_value,product_id,"""8940227892""","""6086499569""",off_lease_same_tool_wrong_args,retail:4:4_1

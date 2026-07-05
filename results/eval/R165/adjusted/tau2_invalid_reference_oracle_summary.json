@@ -1,0 +1,41 @@
+{
+  "adjusted_action_env_pass_rate": 0.0,
+  "adjusted_action_env_pass_tasks": 0,
+  "adjusted_category_counts": {
+    "feasible_refs_complete_but_reward_failed": 6,
+    "missing_db_feasible_reference_actions": 5
+  },
+  "analysis": "saved tau2 invalid-reference-aware oracle accounting",
+  "db_feasible_reference_actions": 58,
+  "db_feasible_reference_complete_rate": 0.5454545454545454,
+  "db_feasible_reference_complete_tasks": 6,
+  "executed_db_feasible_reference_actions": 41,
+  "feasibility_dir": "results/eval/R067",
+  "feasible_refs_complete_but_reward_failed_tasks": 6,
+  "git_status": "## main...origin/main\n M docs/autopaper/intentcap-autopaper.md\n M docs/background-related-work.md\n M docs/design.md\n M docs/evaluation.md\n M docs/idea-story.md\n M docs/implementation.md\n M scripts/run_tau2_local_llm_task_gateway.py\n M tests/test_run_tau2_local_llm_task_gateway.py\n?? results/eval/R152/\n?? results/eval/R153/\n?? results/eval/R154/\n?? results/eval/R155/\n?? results/eval/R156/\n?? results/eval/R157/\n?? results/eval/R158/\n?? results/eval/R159/\n?? results/eval/R160/\n?? results/eval/R161/\n?? results/eval/R162/\n?? results/eval/R163/\n?? results/eval/R164/",
+  "inspects_hidden_references": false,
+  "invalid_reference_actions": 3,
+  "invalid_reference_only_tasks": 0,
+  "missing_db_feasible_reference_actions": 17,
+  "no_dataset_sync": true,
+  "no_model_execution": true,
+  "no_tool_execution": true,
+  "notes": [
+    "This pass combines saved residual-completion rows with reference-feasibility rows only.",
+    "It does not change the official tau2 tool-oracle score.",
+    "Adjusted action/env pass excludes references already classified as invalid by the provided reference-feasibility audit, then still requires env_reward == 1.0.",
+    "It is an oracle-quality/accounting audit, not a fresh model run or utility improvement."
+  ],
+  "official_reference_actions": 61,
+  "official_tool_oracle_pass_rate": 0.0,
+  "official_tool_oracle_pass_tasks": 0,
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "af4b5c411cd375ae169a8766c1807143317873f6",
+  "python": "3.12.3",
+  "residual_dir": "results/eval/R165/residual",
+  "run_id": "R165_adjusted",
+  "script_sha256": "f4a57305b240d62f2ef995cdb6d6858f94c2b4fe7048972b9c5e87ffb8b546b8",
+  "source_run": "R164",
+  "source_run_dir": "results/eval/R164",
+  "tasks": 11
+}

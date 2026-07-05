@@ -1,0 +1,198 @@
+You are a tau2 assistant agent operating one step at a time.
+The input includes trusted task text, available tool schemas, and prior gateway decisions with executed tool-result previews.
+Choose at most one next assistant tool call using only input.available_tools.
+Do not repeat a blocked call with the same arguments.
+The optional active_compiler_lease_hints are generated from active compiler leases, not from hidden reference actions. Each complete hint is already authorized by the checker; prefer a useful complete hint when continuing the task.
+If no safe useful tool call is apparent, return an empty actions list.
+Return exactly one JSON object and no prose.
+The hidden reference actions are not provided.
+Input JSON:
+{
+  "active_compiler_lease_hints": [
+    {
+      "arguments": {
+        "order_id": "#W2378156"
+      },
+      "complete_arguments": true,
+      "grounding": "active compiler lease strict argument constraints; no reference actions used",
+      "lease_id": "compiler-live:retail:1:1:get_order_details",
+      "tool": "get_order_details"
+    }
+  ],
+  "available_tools": [
+    {
+      "description": "Exchange items in a delivered order to new items of the same product type.\n\nFor a delivered order, return or exchange can be only done once by the agent.\nThe agent needs to explain the exchange detail and ask for explicit user confirmation (yes/no) to proceed.",
+      "name": "exchange_delivered_order_items",
+      "parameters": {
+        "properties": {
+          "item_ids": {
+            "description": "The item ids to be exchanged, each such as '1008292230'. There could be duplicate items in the list.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Item Ids",
+            "type": "array"
+          },
+          "new_item_ids": {
+            "description": "The item ids to be exchanged for, each such as '1008292230'.\nThere could be duplicate items in the list. Each new item id should match the item id\nin the same position and be of the same product.",
+            "items": {
+              "type": "string"
+            },
+            "title": "New Item Ids",
+            "type": "array"
+          },
+          "order_id": {
+            "description": "The order id, such as '#W0000000'. Be careful there is a '#' symbol at the beginning of the order id.",
+            "title": "Order Id",
+            "type": "string"
+          },
+          "payment_method_id": {
+            "description": "The payment method id to pay or receive refund for the item price difference,\nsuch as 'gift_card_0000000' or 'credit_card_0000000'. These can be looked up\nfrom the user or order details.",
+            "title": "Payment Method Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "order_id",
+          "item_ids",
+          "new_item_ids",
+          "payment_method_id"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Find user id by first name, last name, and zip code. If the user is not found, the function\n\nwill return an error message. By default, find user id by email, and only call this function\nif the user is not found by email or cannot remember email.",
+      "name": "find_user_id_by_name_zip",
+      "parameters": {
+        "properties": {
+          "first_name": {
+            "description": "The first name of the customer, such as 'John'.",
+            "title": "First Name",
+            "type": "string"
+          },
+          "last_name": {
+            "description": "The last name of the customer, such as 'Doe'.",
+            "title": "Last Name",
+            "type": "string"
+          },
+          "zip": {
+            "description": "The zip code of the customer, such as '12345'.",
+            "title": "Zip",
+            "type": "string"
+          }
+        },
+        "required": [
+          "first_name",
+          "last_name",
+          "zip"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Get the status and details of an order.",
+      "name": "get_order_details",
+      "parameters": {
+        "properties": {
+          "order_id": {
+            "description": "The order id, such as '#W0000000'. Be careful there is a '#' symbol at the beginning of the order id.",
+            "title": "Order Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "order_id"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Get the inventory details of a product.",
+      "name": "get_product_details",
+      "parameters": {
+        "properties": {
+          "product_id": {
+            "description": "The product id, such as '6086499569'. Be careful the product id is different from the item id.",
+            "title": "Product Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_id"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Get the details of a user, including their orders.",
+      "name": "get_user_details",
+      "parameters": {
+        "properties": {
+          "user_id": {
+            "description": "The user id, such as 'sara_doe_496'.",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    }
+  ],
+  "domain": "retail",
+  "output_schema": {
+    "actions": [
+      {
+        "arguments": {
+          "arg_name": "arg_value"
+        },
+        "tool": "tool_name"
+      }
+    ],
+    "final_response": "short user-facing response"
+  },
+  "previous_gateway_results": [
+    {
+      "arguments": {
+        "first_name": "Yusuf",
+        "last_name": "Rossi",
+        "zip": "19122"
+      },
+      "executed": true,
+      "gateway_action": "execute",
+      "gateway_reason": "allowed",
+      "round": "step_1",
+      "tool": "find_user_id_by_name_zip",
+      "tool_result_preview": "{\"content\": \"yusuf_rossi_9620\", \"error\": false, \"id\": \"model:0\", \"requestor\": \"assistant\", \"role\": \"tool\", \"timestamp\": \"2026-07-05T14:59:28.048215\", \"turn_idx\": null}"
+    }
+  ],
+  "step_index": 2,
+  "task": {
+    "description": {
+      "notes": null,
+      "purpose": null,
+      "relevant_policies": null
+    },
+    "id": "1",
+    "initial_state": null,
+    "user_scenario": {
+      "instructions": {
+        "domain": "retail",
+        "known_info": "You are Yusuf Rossi in zip code 19122.",
+        "reason_for_call": "You received your order #W2378156 and wish to exchange the mechanical keyboard for the same one but with clicky switches and the smart thermostat for one compatible with Google Home instead of Apple HomeKit. If there is no keyboard that is clicky, RGB backlight, full size, you'd rather only exchange the thermostat.",
+        "task_instructions": "You are detail-oriented and want to make sure everything is addressed in one go.",
+        "unknown_info": "You do not remember your email address"
+      },
+      "persona": null
+    }
+  }
+}
+Output JSON:

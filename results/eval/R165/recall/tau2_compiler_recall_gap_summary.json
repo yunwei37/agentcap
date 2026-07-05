@@ -1,0 +1,39 @@
+{
+  "analysis": "saved local-Qwen tau2 compiler-lease recall gap classification",
+  "executed_reference_actions": 41,
+  "git_status": "## main...origin/main\n M docs/autopaper/intentcap-autopaper.md\n M docs/background-related-work.md\n M docs/design.md\n M docs/evaluation.md\n M docs/idea-story.md\n M docs/implementation.md\n M scripts/run_tau2_local_llm_task_gateway.py\n M tests/test_run_tau2_local_llm_task_gateway.py\n?? results/eval/R152/\n?? results/eval/R153/\n?? results/eval/R154/\n?? results/eval/R155/\n?? results/eval/R156/\n?? results/eval/R157/\n?? results/eval/R158/\n?? results/eval/R159/\n?? results/eval/R160/\n?? results/eval/R161/\n?? results/eval/R162/\n?? results/eval/R163/\n?? results/eval/R164/",
+  "missing_gap_class_counts": {
+    "tool_not_visible_arg_evidence": 3,
+    "tool_not_visible_no_arg_evidence": 5,
+    "tool_visible_arg_evidence_not_called": 9,
+    "tool_visible_no_arg_evidence": 3
+  },
+  "missing_reference_actions": 20,
+  "missing_with_all_arg_evidence": 12,
+  "missing_with_any_arg_evidence": 12,
+  "missing_with_complete_compiler_hint": 0,
+  "missing_with_tool_visible": 12,
+  "no_dataset_sync": true,
+  "notes": [
+    "This analysis reads existing R164 local tau2 task-gateway artifacts only.",
+    "It does not run models, execute tools, clone benchmarks, sync datasets, or inspect hidden benchmark task files.",
+    "Argument evidence means the exact reference argument leaf values appeared in saved prompt task text or prior gateway-result previews.",
+    "Tool visibility means the saved step prompt exposed the tool under the current active compiler leases.",
+    "A complete compiler hint means an active compiler lease yielded the exact tool and arguments as a prompt hint."
+  ],
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "af4b5c411cd375ae169a8766c1807143317873f6",
+  "python": "3.12.3",
+  "reference_actions": 61,
+  "run_dir": "results/eval/R164",
+  "run_id": "R165_recall",
+  "script_sha256": "629159b9313e261c6fd720c1033b11c35ee8b33f0b4132359285e78deedfe3fc",
+  "source_run": "R164",
+  "task_gap_category_counts": {
+    "no_missing_references": 6,
+    "tool_not_visible_arg_evidence": 2,
+    "tool_visible_arg_evidence_not_called": 3
+  },
+  "tasks": 11,
+  "tool_oracle_pass_tasks": 0
+}

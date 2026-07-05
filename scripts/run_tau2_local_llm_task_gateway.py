@@ -230,8 +230,27 @@ INTENT_TOKEN_ALIASES = {
     "disabled": ("disabled", "false", "off"),
     "enabled": ("enabled", "true", "on"),
     "laguardia": ("laguardia", "lga"),
+    "options": ("options", "option"),
     "philadelphia": ("philadelphia", "phl"),
+    "shirt": ("shirt", "t-shirt", "tshirt", "t shirt"),
+    "shirts": ("shirts", "shirt", "t-shirt", "tshirt", "t shirt"),
+    "tshirt": ("tshirt", "t-shirt", "t shirt", "shirt"),
 }
+SEMANTIC_RUNTIME_PROOF_ARG_KEYWORDS = (
+    "booking",
+    "flight",
+    "item",
+    "product",
+    "reservation",
+    "variant",
+)
+SUPPORTING_RUNTIME_PROOF_ARG_KEYWORDS = (
+    "address",
+    "customer",
+    "order",
+    "payment",
+    "user",
+)
 
 
 def main() -> int:
@@ -2593,11 +2612,9 @@ def runtime_evidence_hint_rank(
 
 
 def _matched_intent_tokens(context: str, tokens: list[str]) -> list[str]:
-    lower_context = context.lower()
     matched: list[str] = []
     for token in tokens:
-        aliases = INTENT_TOKEN_ALIASES.get(token, (token,))
-        if any(alias.lower() in lower_context for alias in aliases):
+        if _token_matches_context(token, context):
             matched.append(token)
     return matched
 
@@ -3161,27 +3178,67 @@ def runtime_value_proof_status(
             "tokens": [],
         }
 
-    missing: dict[str, list[str]] = {}
-    for arg_name in [str(name) for name in template.get("runtime_args", [])]:
-        value = args.get(arg_name)
-        contexts = _executed_tool_result_contexts_for_value(value, action_rows)
-        if not contexts or not any(_context_has_intent_tokens(context, tokens) for context in contexts):
-            missing[arg_name] = tokens
+    runtime_args = [str(name) for name in template.get("runtime_args", [])]
+    context_missing: dict[str, list[str]] = {}
+    semantic_missing: dict[str, list[str]] = {}
+    semantic_contexts: list[str] = []
+    semantic_arg_names = [
+        arg_name
+        for arg_name in runtime_args
+        if _runtime_arg_requires_semantic_value_proof(arg_name, template)
+    ]
+    if not semantic_arg_names and runtime_args:
+        semantic_arg_names = runtime_args
 
-    if missing:
+    for arg_name in runtime_args:
+        value = args.get(arg_name)
+        leaf_contexts, missing_leaf_values = _executed_tool_result_leaf_proof_contexts_for_value(
+            value,
+            action_rows,
+        )
+        if missing_leaf_values:
+            context_missing[arg_name] = missing_leaf_values
+            continue
+        if arg_name not in semantic_arg_names:
+            continue
+
+        leaf_missing: list[str] = []
+        for leaf, contexts in leaf_contexts:
+            combined = "\n".join(contexts)
+            semantic_contexts.extend(contexts)
+            if _runtime_arg_context_has_minimum_intent_evidence(arg_name, combined, tokens):
+                continue
+            matched = set(_matched_intent_tokens(combined, tokens))
+            missing_tokens = [token for token in tokens if token not in matched]
+            leaf_missing.append(f"{leaf}: {', '.join(missing_tokens)}")
+        if leaf_missing:
+            semantic_missing[arg_name] = leaf_missing
+
+    matched_semantic_tokens = set(_matched_intent_tokens("\n".join(semantic_contexts), tokens))
+    global_missing_tokens = [token for token in tokens if token not in matched_semantic_tokens]
+    if context_missing or semantic_missing or global_missing_tokens:
         return {
             "required": True,
             "complete": False,
-            "reason": "runtime value context lacks intent discriminator tokens",
+            "reason": "runtime value context lacks structured intent discriminator proof",
             "tokens": tokens,
-            "missing_args": missing,
+            "missing_args": {
+                **{
+                    arg_name: [f"missing context for {leaf}" for leaf in leaf_values]
+                    for arg_name, leaf_values in context_missing.items()
+                },
+                **semantic_missing,
+            },
+            "global_missing_tokens": global_missing_tokens,
+            "semantic_args": semantic_arg_names,
         }
 
     return {
         "required": True,
         "complete": True,
-        "reason": "runtime value context satisfies intent discriminator tokens",
+        "reason": "runtime value context satisfies structured intent discriminator proof",
         "tokens": tokens,
+        "semantic_args": semantic_arg_names,
     }
 
 
@@ -3215,17 +3272,52 @@ def _split_identifier(value: str) -> set[str]:
     return {part for part in re.split(r"[^a-zA-Z0-9]+|_", value.lower()) if part}
 
 
-def _context_has_intent_tokens(context: str, tokens: list[str]) -> bool:
-    lower_context = context.lower()
+def _runtime_arg_requires_semantic_value_proof(arg_name: str, template: dict[str, Any]) -> bool:
+    normalized = arg_name.lower()
+    if any(keyword in normalized for keyword in SEMANTIC_RUNTIME_PROOF_ARG_KEYWORDS):
+        return True
+    if any(keyword in normalized for keyword in SUPPORTING_RUNTIME_PROOF_ARG_KEYWORDS):
+        return False
+    runtime_args = [str(name) for name in template.get("runtime_args", [])]
+    return len(runtime_args) == 1
+
+
+def _runtime_arg_context_has_minimum_intent_evidence(
+    arg_name: str,
+    context: str,
+    tokens: list[str],
+) -> bool:
+    matched = set(_matched_intent_tokens(context, tokens))
     if not tokens:
         return True
-    matches = 0
-    for token in tokens:
-        aliases = INTENT_TOKEN_ALIASES.get(token, (token,))
-        if any(alias.lower() in lower_context for alias in aliases):
-            matches += 1
-    required = len(tokens) if any(token in INTENT_TOKEN_ALIASES for token in tokens) else min(2, len(tokens))
-    return matches >= required
+    if arg_name.lower().startswith(("new_", "target_", "to_")):
+        return all(token in matched for token in tokens)
+    return len(matched) >= min(2, len(tokens))
+
+
+def _context_has_intent_tokens(context: str, tokens: list[str]) -> bool:
+    if not tokens:
+        return True
+    return len(set(_matched_intent_tokens(context, tokens))) >= min(2, len(tokens))
+
+
+def _token_matches_context(token: str, context: str) -> bool:
+    lower_context = context.lower()
+    if token == "small" and _context_has_small_size_option(lower_context):
+        return True
+    aliases = INTENT_TOKEN_ALIASES.get(token, (token,))
+    return any(alias.lower() in lower_context for alias in aliases)
+
+
+def _context_has_small_size_option(lower_context: str) -> bool:
+    if re.search(r"\bsmall\b", lower_context):
+        return True
+    return bool(
+        re.search(
+            r"(?:\\?\"|\b)size(?:\\?\"|\b)\s*:\s*(?:\\?\")s(?:\\?\"|\b)",
+            lower_context,
+        )
+    )
 
 
 def _executed_tool_result_contexts_for_value(
@@ -3244,6 +3336,102 @@ def _executed_tool_result_contexts_for_value(
     return contexts
 
 
+def _executed_tool_result_proof_contexts_for_value(
+    value: Any,
+    action_rows: list[dict[str, Any]],
+) -> tuple[list[str], list[str]]:
+    leaf_contexts, missing_leaves = _executed_tool_result_leaf_proof_contexts_for_value(
+        value,
+        action_rows,
+    )
+    contexts: list[str] = []
+    for _leaf, leaf_context_values in leaf_contexts:
+        for context in leaf_context_values:
+            if context not in contexts:
+                contexts.append(context)
+    return contexts, missing_leaves
+
+
+def _executed_tool_result_leaf_proof_contexts_for_value(
+    value: Any,
+    action_rows: list[dict[str, Any]],
+) -> tuple[list[tuple[str, list[str]]], list[str]]:
+    leaves = _runtime_value_leaf_values(value)
+    if not leaves:
+        leaves = [value]
+
+    leaf_contexts: list[tuple[str, list[str]]] = []
+    missing_leaves: list[str] = []
+    for leaf in leaves:
+        contexts = _executed_tool_result_local_contexts_for_value(leaf, action_rows)
+        unique_leaf_contexts: list[str] = []
+        for context in contexts:
+            if context not in unique_leaf_contexts:
+                unique_leaf_contexts.append(context)
+        if not unique_leaf_contexts:
+            missing_leaves.append(str(leaf))
+            continue
+        leaf_contexts.append((str(leaf), unique_leaf_contexts))
+    return leaf_contexts, missing_leaves
+
+
+def _executed_tool_result_local_contexts_for_value(
+    value: Any,
+    action_rows: list[dict[str, Any]],
+) -> list[str]:
+    contexts: list[str] = []
+    for row in action_rows:
+        if not row.get("executed"):
+            continue
+        for decoded in _decode_nested_json_values(str(row.get("tool_result_preview", ""))):
+            for context in _json_local_contexts_containing_value(decoded, value):
+                text = json.dumps(context, sort_keys=True, default=_json_default)
+                if text not in contexts:
+                    contexts.append(text)
+    return contexts
+
+
+def _executed_tool_result_text_windows_for_value(
+    value: Any,
+    action_rows: list[dict[str, Any]],
+    *,
+    radius: int = 1200,
+) -> list[str]:
+    value_text = str(value)
+    if not value_text:
+        return []
+    windows: list[str] = []
+    for row in action_rows:
+        if not row.get("executed"):
+            continue
+        preview = str(row.get("tool_result_preview", ""))
+        start = preview.find(value_text)
+        while start >= 0:
+            left = max(0, start - radius)
+            right = min(len(preview), start + len(value_text) + radius)
+            window = preview[left:right]
+            if window and window not in windows:
+                windows.append(window)
+            start = preview.find(value_text, start + len(value_text))
+    return windows
+
+
+def _runtime_value_leaf_values(value: Any) -> list[Any]:
+    if isinstance(value, dict):
+        leaves: list[Any] = []
+        for child in value.values():
+            leaves.extend(_runtime_value_leaf_values(child))
+        return leaves
+    if isinstance(value, list):
+        leaves: list[Any] = []
+        for child in value:
+            leaves.extend(_runtime_value_leaf_values(child))
+        return leaves
+    if isinstance(value, bool) or value is None:
+        return []
+    return [value]
+
+
 def _json_contexts_containing_value(node: Any, target: Any) -> list[Any]:
     contexts: list[Any] = []
     if _json_contains_value(node, target):
@@ -3255,6 +3443,29 @@ def _json_contexts_containing_value(node: Any, target: Any) -> list[Any]:
         for child in node:
             contexts.extend(_json_contexts_containing_value(child, target))
     return contexts
+
+
+def _json_local_contexts_containing_value(node: Any, target: Any) -> list[Any]:
+    if isinstance(node, dict):
+        for child in node.values():
+            if child == target:
+                return [node]
+        contexts: list[Any] = []
+        for child in node.values():
+            contexts.extend(_json_local_contexts_containing_value(child, target))
+        return contexts
+
+    if isinstance(node, list):
+        contexts: list[Any] = []
+        for child in node:
+            if child == target:
+                # A scalar list sibling is not local evidence for this leaf. If a list
+                # contains objects, recursion below can still recover the matched object.
+                continue
+            contexts.extend(_json_local_contexts_containing_value(child, target))
+        return contexts
+
+    return []
 
 
 def _json_contains_value(node: Any, target: Any) -> bool:
