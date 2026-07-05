@@ -1141,6 +1141,57 @@ def test_runtime_evidence_compiler_hints_require_all_runtime_args():
     assert hints[0]["arguments"] == {"customer_id": "C1001", "line_id": "L1002"}
 
 
+def test_runtime_evidence_ranked_hints_prefer_intent_matching_value_context():
+    trace = {
+        "metadata": {
+            "runtime_bindable_compiler_leases": [
+                {
+                    "id": "template:cancel",
+                    "tool": "cancel_reservation",
+                    "object": "tau2.airline.assistant.cancel_reservation",
+                    "static_args": {},
+                    "runtime_args": ["reservation_id"],
+                    "allowed_arg_keys": ["reservation_id"],
+                    "intent_evidence": (
+                        "User wants to cancel reservation from Philadelphia to LaGuardia"
+                    ),
+                    "tool_type": "write",
+                    "proof_required": True,
+                }
+            ]
+        }
+    }
+    action_rows = [
+        {
+            "executed": True,
+            "tool_result_preview": (
+                '{"content":"{\\"reservation_id\\":\\"Q69X3R\\",'
+                '\\"origin\\":\\"JFK\\",\\"destination\\":\\"BOS\\"}"}'
+            ),
+        },
+        {
+            "executed": True,
+            "tool_result_preview": (
+                '{"content":"{\\"reservation_id\\":\\"MZDDS4\\",'
+                '\\"origin\\":\\"PHL\\",\\"destination\\":\\"LGA\\"}"}'
+            ),
+        },
+    ]
+
+    hints = runner.build_runtime_evidence_compiler_hints(
+        trace=trace,
+        action_rows=action_rows,
+        rank_hints=True,
+    )
+
+    assert [hint["arguments"]["reservation_id"] for hint in hints] == [
+        "MZDDS4",
+        "Q69X3R",
+    ]
+    assert hints[0]["rank_score"] > hints[1]["rank_score"]
+    assert "intent_tokens:philadelphia|laguardia" in hints[0]["rank_reasons"]
+
+
 def test_runtime_value_proof_blocks_write_from_undifferentiated_id_list():
     trace = {
         "metadata": {

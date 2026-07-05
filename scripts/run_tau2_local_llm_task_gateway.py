@@ -82,6 +82,7 @@ ROW_FIELDS = [
     "stepwise_state_grounded_arg_hints",
     "stepwise_compiler_lease_hints",
     "stepwise_runtime_evidence_lease_hints",
+    "stepwise_runtime_evidence_rank_hints",
     "stepwise_compact_json_prompts",
     "stepwise_state_grounded_arg_hint_steps",
     "stepwise_compiler_lease_hint_steps",
@@ -190,6 +191,7 @@ INTENT_PROOF_STOPWORDS = {
     "customer",
     "details",
     "from",
+    "gather",
     "get",
     "identified",
     "identify",
@@ -200,9 +202,11 @@ INTENT_PROOF_STOPWORDS = {
     "needed",
     "needs",
     "prior",
+    "prove",
     "reservation",
     "result",
     "retrieve",
+    "satisfies",
     "task",
     "that",
     "the",
@@ -210,6 +214,7 @@ INTENT_PROOF_STOPWORDS = {
     "tool",
     "user",
     "using",
+    "value",
     "verify",
     "want",
     "wants",
@@ -355,6 +360,14 @@ def main() -> int:
         ),
     )
     parser.add_argument(
+        "--stepwise-runtime-evidence-rank-hints",
+        action="store_true",
+        help=(
+            "Rank runtime-evidence compiler hints by proof completeness and "
+            "intent-token evidence before exposing them to the model or fallback."
+        ),
+    )
+    parser.add_argument(
         "--stepwise-single-hint-fallback",
         action="store_true",
         help=(
@@ -433,6 +446,7 @@ def main() -> int:
         stepwise_state_grounded_arg_hints=args.stepwise_state_grounded_arg_hints,
         stepwise_compiler_lease_hints=args.stepwise_compiler_lease_hints,
         stepwise_runtime_evidence_lease_hints=args.stepwise_runtime_evidence_lease_hints,
+        stepwise_runtime_evidence_rank_hints=args.stepwise_runtime_evidence_rank_hints,
         stepwise_compact_json_prompts=args.stepwise_compact_json_prompts,
         stepwise_single_hint_fallback=args.stepwise_single_hint_fallback,
         stepwise_hint_choice_fallback=args.stepwise_hint_choice_fallback,
@@ -473,6 +487,7 @@ def run_experiment(
     stepwise_state_grounded_arg_hints: bool = False,
     stepwise_compiler_lease_hints: bool = False,
     stepwise_runtime_evidence_lease_hints: bool = False,
+    stepwise_runtime_evidence_rank_hints: bool = False,
     stepwise_compact_json_prompts: bool = False,
     stepwise_single_hint_fallback: bool = False,
     stepwise_hint_choice_fallback: bool = False,
@@ -520,6 +535,11 @@ def run_experiment(
     ):
         raise ValueError(
             "stepwise_runtime_evidence_hint_choice_fallback requires "
+            "stepwise_runtime_evidence_lease_hints"
+        )
+    if stepwise_runtime_evidence_rank_hints and not stepwise_runtime_evidence_lease_hints:
+        raise ValueError(
+            "stepwise_runtime_evidence_rank_hints requires "
             "stepwise_runtime_evidence_lease_hints"
         )
     if feedback_rounds > 0 and stepwise_max_steps > 0:
@@ -645,6 +665,9 @@ def run_experiment(
                     stepwise_runtime_evidence_lease_hints=(
                         stepwise_runtime_evidence_lease_hints
                     ),
+                    stepwise_runtime_evidence_rank_hints=(
+                        stepwise_runtime_evidence_rank_hints
+                    ),
                     stepwise_compact_json_prompts=stepwise_compact_json_prompts,
                     stepwise_single_hint_fallback=stepwise_single_hint_fallback,
                     stepwise_hint_choice_fallback=stepwise_hint_choice_fallback,
@@ -699,6 +722,7 @@ def run_experiment(
         stepwise_state_grounded_arg_hints=stepwise_state_grounded_arg_hints,
         stepwise_compiler_lease_hints=stepwise_compiler_lease_hints,
         stepwise_runtime_evidence_lease_hints=stepwise_runtime_evidence_lease_hints,
+        stepwise_runtime_evidence_rank_hints=stepwise_runtime_evidence_rank_hints,
         stepwise_compact_json_prompts=stepwise_compact_json_prompts,
         stepwise_single_hint_fallback=stepwise_single_hint_fallback,
         stepwise_hint_choice_fallback=stepwise_hint_choice_fallback,
@@ -769,6 +793,7 @@ def _run_task(
     stepwise_state_grounded_arg_hints: bool,
     stepwise_compiler_lease_hints: bool,
     stepwise_runtime_evidence_lease_hints: bool,
+    stepwise_runtime_evidence_rank_hints: bool,
     stepwise_compact_json_prompts: bool,
     stepwise_single_hint_fallback: bool,
     stepwise_hint_choice_fallback: bool,
@@ -887,6 +912,7 @@ def _run_task(
             state_grounded_arg_hints=stepwise_state_grounded_arg_hints,
             compiler_lease_hints=stepwise_compiler_lease_hints,
             runtime_evidence_lease_hints=stepwise_runtime_evidence_lease_hints,
+            runtime_evidence_rank_hints=stepwise_runtime_evidence_rank_hints,
             compact_json_prompts=stepwise_compact_json_prompts,
             step_prompt_dir=step_prompt_dir,
             step_raw_dir=step_raw_dir,
@@ -1125,6 +1151,7 @@ def _run_task(
         "stepwise_state_grounded_arg_hints": stepwise_state_grounded_arg_hints,
         "stepwise_compiler_lease_hints": stepwise_compiler_lease_hints,
         "stepwise_runtime_evidence_lease_hints": stepwise_runtime_evidence_lease_hints,
+        "stepwise_runtime_evidence_rank_hints": stepwise_runtime_evidence_rank_hints,
         "stepwise_compact_json_prompts": stepwise_compact_json_prompts,
         "stepwise_state_grounded_arg_hint_steps": sum(
             1 for step in stepwise_result["steps"] if step.get("state_grounded_arg_hints")
@@ -1283,6 +1310,7 @@ def run_stepwise_model_loop(
     state_grounded_arg_hints: bool,
     compiler_lease_hints: bool,
     runtime_evidence_lease_hints: bool,
+    runtime_evidence_rank_hints: bool,
     compact_json_prompts: bool,
     step_prompt_dir: Path,
     step_raw_dir: Path,
@@ -1351,8 +1379,10 @@ def run_stepwise_model_loop(
         runtime_hints = (
             build_runtime_evidence_compiler_hints(
                 trace=gateway.trace_gateway.trace,
+                raw_task=raw_task,
                 action_rows=action_rows,
                 require_value_proof=compiler_runtime_value_proof,
+                rank_hints=runtime_evidence_rank_hints,
             )
             if runtime_evidence_lease_hints
             else []
@@ -2152,10 +2182,12 @@ def build_compiler_lease_arg_hints(
 def build_runtime_evidence_compiler_hints(
     *,
     trace: dict[str, Any],
+    raw_task: dict[str, Any] | None = None,
     action_rows: list[dict[str, Any]],
     max_values_per_arg: int = 8,
     max_hints: int = 16,
     require_value_proof: bool = False,
+    rank_hints: bool = False,
 ) -> list[dict[str, Any]]:
     """Expose runtime-bindable compiler calls grounded in executed tool results.
 
@@ -2181,6 +2213,7 @@ def build_runtime_evidence_compiler_hints(
         if row.get("model_tool")
     }
     evidence_by_key = _executed_tool_result_values_by_key(action_rows)
+    visible_state = _visible_state_text(raw_task or {}, action_rows)
     hints: list[dict[str, Any]] = []
     seen: set[tuple[str, str]] = set()
 
@@ -2248,10 +2281,92 @@ def build_runtime_evidence_compiler_hints(
             intent_evidence = str(template.get("intent_evidence", ""))
             if intent_evidence:
                 hint["intent_evidence"] = intent_evidence
+            if rank_hints:
+                rank = runtime_evidence_hint_rank(
+                    template=template,
+                    args=args,
+                    proof=proof,
+                    action_rows=action_rows,
+                    visible_state=visible_state,
+                )
+                hint["rank_score"] = rank["score"]
+                hint["rank_reasons"] = rank["reasons"]
             hints.append(hint)
-            if len(hints) >= max_hints:
+            if len(hints) >= max_hints and not rank_hints:
                 return hints
-    return hints
+    if rank_hints:
+        hints.sort(
+            key=lambda hint: (
+                -int(hint.get("rank_score", 0)),
+                str(hint.get("tool", "")),
+                json.dumps(hint.get("arguments", {}), sort_keys=True, default=_json_default),
+            )
+        )
+    return hints[:max_hints]
+
+
+def runtime_evidence_hint_rank(
+    *,
+    template: dict[str, Any],
+    args: dict[str, Any],
+    proof: dict[str, Any],
+    action_rows: list[dict[str, Any]],
+    visible_state: str,
+) -> dict[str, Any]:
+    """Score runtime hints without granting authority.
+
+    The score is advisory prompt metadata. It prefers candidates whose runtime
+    value already has proof-relevant local context, and it keeps read proof
+    probes below already-proven writes.
+    """
+    score = 0
+    reasons: list[str] = []
+    if proof.get("required") and proof.get("complete"):
+        score += 100
+        reasons.append("value_proof_complete")
+    elif template.get("proof_probe") is True:
+        score += 20
+        reasons.append("proof_probe")
+    else:
+        score += 40
+        reasons.append("runtime_evidence_complete")
+
+    tokens = _intent_discriminator_tokens(template)
+    runtime_args = [str(name) for name in template.get("runtime_args", [])]
+    contexts: list[str] = []
+    for arg_name in runtime_args:
+        contexts.extend(_executed_tool_result_contexts_for_value(args.get(arg_name), action_rows))
+        if _value_is_grounded(args.get(arg_name), visible_state):
+            score += 2
+
+    if tokens and contexts:
+        matched_tokens = _matched_intent_tokens("\n".join(contexts), tokens)
+        if matched_tokens:
+            score += 10 * len(matched_tokens)
+            reasons.append(f"intent_tokens:{'|'.join(matched_tokens)}")
+        else:
+            score -= 5
+            reasons.append("no_intent_tokens_in_value_context")
+
+    if template.get("proof_probe") is True and tokens:
+        score -= 5
+        reasons.append("read_before_write_probe")
+
+    if _runtime_template_requires_value_proof(template) and not proof.get("required"):
+        score -= 10
+        reasons.append("high_impact_without_required_value_proof")
+
+    return {"score": score, "reasons": reasons}
+
+
+def _matched_intent_tokens(context: str, tokens: list[str]) -> list[str]:
+    lower_context = context.lower()
+    matched: list[str] = []
+    for token in tokens:
+        aliases = INTENT_TOKEN_ALIASES.get(token, (token,))
+        if any(alias.lower() in lower_context for alias in aliases):
+            matched.append(token)
+    return matched
 
 
 def _runtime_arg_candidate_values(
@@ -2451,6 +2566,8 @@ def build_hint_choice_prompt(
                 hint.get("proof_probe_for_template_id", "")
             ),
             value_proof=hint.get("value_proof", {}),
+            rank_score=hint.get("rank_score", ""),
+            rank_reasons=hint.get("rank_reasons", []),
         )
         for index, hint in enumerate(complete_hints)
     ]
@@ -3447,6 +3564,7 @@ def summarize(
     stepwise_state_grounded_arg_hints: bool = False,
     stepwise_compiler_lease_hints: bool = False,
     stepwise_runtime_evidence_lease_hints: bool = False,
+    stepwise_runtime_evidence_rank_hints: bool = False,
     stepwise_compact_json_prompts: bool = False,
     stepwise_single_hint_fallback: bool = False,
     stepwise_hint_choice_fallback: bool = False,
@@ -3520,6 +3638,10 @@ def summarize(
         notes.append(
             "Stepwise runtime-evidence compiler hints expose candidate calls derived only from runtime-bindable compiler templates and already executed tool-result evidence; hidden reference actions are not used to generate these hints."
         )
+    if stepwise_runtime_evidence_rank_hints:
+        notes.append(
+            "Stepwise runtime-evidence hint ranking orders candidates by proof completeness and intent-token evidence; ranking changes prompt order only and does not mint authority."
+        )
     if stepwise_compact_json_prompts:
         notes.append(
             "Stepwise compact JSON prompts constrain the local model output protocol only; they do not expose additional tools, arguments, leases, or hidden reference actions."
@@ -3581,6 +3703,7 @@ def summarize(
         "stepwise_state_grounded_arg_hints": stepwise_state_grounded_arg_hints,
         "stepwise_compiler_lease_hints": stepwise_compiler_lease_hints,
         "stepwise_runtime_evidence_lease_hints": stepwise_runtime_evidence_lease_hints,
+        "stepwise_runtime_evidence_rank_hints": stepwise_runtime_evidence_rank_hints,
         "stepwise_compact_json_prompts": stepwise_compact_json_prompts,
         "stepwise_single_hint_fallback": stepwise_single_hint_fallback,
         "stepwise_hint_choice_fallback": stepwise_hint_choice_fallback,
