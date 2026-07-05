@@ -1,0 +1,8 @@
+source_run_id,domain,task_id,eligible_repairs,visible_tool_argument_repairs,complete_hint_repairs,high_impact_repairs,repair_event_ids,primary_repair_class
+R125,airline,2,1,1,0,0,airline:2:2_1,visible_tool_argument_candidate_generation
+R125,retail,0,2,2,0,0,retail:0:0_2|retail:0:0_3,visible_tool_argument_candidate_generation
+R125,retail,1,2,2,0,0,retail:1:1_2|retail:1:1_3,visible_tool_argument_candidate_generation
+R125,retail,2,1,1,0,0,retail:2:2_4,visible_tool_argument_candidate_generation
+R125,retail,3,3,3,0,1,retail:3:3_10|retail:3:3_11|retail:3:3_12,visible_tool_argument_candidate_generation
+R125,retail,4,2,2,0,0,retail:4:4_4|retail:4:4_11,visible_tool_argument_candidate_generation
+R125,telecom,[mobile_data_issue]user_abroad_roaming_disabled_off[PERSONA:Hard],1,0,1,1,telecom:[mobile_data_issue]user_abroad_roaming_disabled_off[PERSONA:Hard]:enable_roaming_0,existing_complete_compiler_hint_replay
