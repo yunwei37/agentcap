@@ -1,0 +1,7 @@
+run_id,run_kind,source_run_id,strict_argument_lowering,tasks,reference_actions,lease_rows,active_leases,exact_reference_actions,broad_or_runtime_actions_admitted,broad_or_runtime_actions_blocked,missing_tool_actions,constraint_mismatch_actions,exact_active_leases,broad_or_runtime_active_leases,inactive_broad_or_runtime_leases,invalid_tool_leases,model_calls,exact_executed_calls,off_lease_calls,wrong_or_hallucinated_tool_calls,same_tool_wrong_args_calls,source_path
+R074,visible_lease_compiler,,,15,61,47,47,11,0,34,16,0,0,0,0,0,0,0,0,0,0,results/eval/R074
+R077,visible_lease_compiler,,,15,61,46,46,11,0,26,24,0,0,0,0,0,0,0,0,0,0,results/eval/R077
+R075,compiler_gateway_replay,R074,False,11,61,41,41,11,34,0,16,0,14,27,0,0,0,0,0,0,0,results/eval/R075
+R076,compiler_gateway_replay,R074,True,11,61,41,14,11,0,34,16,0,14,0,27,0,0,0,0,0,0,results/eval/R076
+R078,compiler_gateway_replay,R077,True,11,61,39,17,11,0,26,24,0,17,0,22,0,0,0,0,0,0,results/eval/R078
+R080,task_loop_mismatch,R079,,11,61,0,0,0,0,0,0,0,0,0,0,0,9,7,2,2,0,results/eval/R080

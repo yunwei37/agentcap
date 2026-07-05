@@ -1,0 +1,185 @@
+{
+  "action_label_counts": {
+    "broad_or_runtime_arg_admitted": 34,
+    "broad_or_runtime_arg_blocked": 60,
+    "exact_reference_action_covered": 33,
+    "missing_reference_tool": 56
+  },
+  "analysis": "tau2 compiler lease validity and oracle-distance audit from saved artifacts",
+  "compiler_runs": [
+    "results/eval/R074",
+    "results/eval/R077"
+  ],
+  "exact_reference_action_coverage_rate": 0.18032786885245902,
+  "git_status": "## main...origin/main\n?? scripts/analyze_tau2_compiler_validity.py\n?? tests/test_analyze_tau2_compiler_validity.py",
+  "input_digests": [
+    {
+      "bytes": 2971,
+      "path": "results/eval/R074/llm_visible_lease_compiler_summary.json",
+      "sha256": "f6b46c566d92291833d8a7da174e9f7fee1f937ce6096bb1ca6c01f3b7bc86a5"
+    },
+    {
+      "bytes": 13845,
+      "path": "results/eval/R074/lease_results.csv",
+      "sha256": "680a32acd1f83a534a9a7f694fee1f6e952e8ac83106eac2383cb2d25c9a1aca"
+    },
+    {
+      "bytes": 10111,
+      "path": "results/eval/R074/reference_coverage.csv",
+      "sha256": "d3cc19a295c519aa0aad52e27f10a14b7b317e3888c45995df10ed19412447cc"
+    },
+    {
+      "bytes": 6967,
+      "path": "results/eval/R074/task_results.csv",
+      "sha256": "c82289df67563988e08790e37531ff0df23c5dab56a33c3710c84599fac73ff3"
+    },
+    {
+      "bytes": 3379,
+      "path": "results/eval/R077/llm_visible_lease_compiler_summary.json",
+      "sha256": "44ef46e326948f4968bc25d13c5313e0f6a50fe0d0724bcb0fd69bbf0b9fdf49"
+    },
+    {
+      "bytes": 16406,
+      "path": "results/eval/R077/lease_results.csv",
+      "sha256": "4357c147864688992c7f31ea8d7b35ca23f3da0f01170ff4bbb8b1bee5f7ce32"
+    },
+    {
+      "bytes": 9928,
+      "path": "results/eval/R077/reference_coverage.csv",
+      "sha256": "f915f90c93a058c2e4e6a3f98ea4b23b932eca047a27c4fcb9bd937f9b82b7fe"
+    },
+    {
+      "bytes": 6973,
+      "path": "results/eval/R077/task_results.csv",
+      "sha256": "eb4a30eaf76a014406eb9e55b7c94ce28a2e80a690d075de82966ebb316d605d"
+    },
+    {
+      "bytes": 2488,
+      "path": "results/eval/R075/compiler_gateway_replay_summary.json",
+      "sha256": "9fb586d59aaf0a324708f99ec3b6cecb0a7d231a9bd7ebe339f7d5d0da4a32bd"
+    },
+    {
+      "bytes": 15607,
+      "path": "results/eval/R075/lease_results.csv",
+      "sha256": "7d6850faec562393818ff3afa9e44791ac326039e294e101371e53b6f0e780ff"
+    },
+    {
+      "bytes": 12135,
+      "path": "results/eval/R075/action_results.csv",
+      "sha256": "5c15de8c468c77c88c626aa47d3cff77bd271aa2ff022bfe0b1fcd4f5dff2290"
+    },
+    {
+      "bytes": 878,
+      "path": "results/eval/R075/task_results.csv",
+      "sha256": "0be35ec1c9810472fab368e10ab9b2ef8e7e8ff9e6211968c5a0c37ace0dd68d"
+    },
+    {
+      "bytes": 2850,
+      "path": "results/eval/R076/compiler_gateway_replay_summary.json",
+      "sha256": "4341a0634704d2e6f45ed3a0cb51c2977d9506c59cf526a7a6adde0362d6f0e7"
+    },
+    {
+      "bytes": 16470,
+      "path": "results/eval/R076/lease_results.csv",
+      "sha256": "9566a1294257496bbe8343a2c0942bfbcb7c1bdddfc71c839dc208bee7073e5d"
+    },
+    {
+      "bytes": 10732,
+      "path": "results/eval/R076/action_results.csv",
+      "sha256": "02310a852a4e776295d88b3f35aa0f7a7a4bb4a3f4f70bc60ffb0fec37c7cba8"
+    },
+    {
+      "bytes": 933,
+      "path": "results/eval/R076/task_results.csv",
+      "sha256": "219d0ac6dd4e46275164768b057e2d5d128d5ad6894f38aa00d3df9113f42198"
+    },
+    {
+      "bytes": 2894,
+      "path": "results/eval/R078/compiler_gateway_replay_summary.json",
+      "sha256": "57508684f03acd715adb5b7dc3bc05c19041b91b529aad594b7b1895a1ec0019"
+    },
+    {
+      "bytes": 17197,
+      "path": "results/eval/R078/lease_results.csv",
+      "sha256": "7cf3a6975f61dc037d736e33fa284e7dd7faf66b5004a268e1eebf9834abba78"
+    },
+    {
+      "bytes": 10637,
+      "path": "results/eval/R078/action_results.csv",
+      "sha256": "a60b77c580596d52c34b32da0a8c8f01a35b47df3c37b7d23bc5964aaacfc35e"
+    },
+    {
+      "bytes": 936,
+      "path": "results/eval/R078/task_results.csv",
+      "sha256": "4513080bfcce4268806e573968f4c328577aa3c774f4e5aa1715bffa41b95aa4"
+    },
+    {
+      "bytes": 7809,
+      "path": "results/eval/R080/tau2_task_gateway_mismatch_summary.json",
+      "sha256": "33c1b1656d22c7603a8e747a9a2c82f41416584902255bfdae6e4fc8c633e48e"
+    },
+    {
+      "bytes": 3338,
+      "path": "results/eval/R080/model_call_mismatches.csv",
+      "sha256": "7fcff738a49fa04b4b6fbe3cb1f95030bd82be2d0a3e34b241dc48cb865be2aa"
+    },
+    {
+      "bytes": 917,
+      "path": "results/eval/R080/task_mismatch_summary.csv",
+      "sha256": "2e1efe0f828bb4d6779b5be144d233ef2bb641c5e4dce99ea1397011a164fdf8"
+    },
+    {
+      "bytes": 337,
+      "path": "results/eval/R080/run_mismatch_summary.csv",
+      "sha256": "448bf65a79da83568c2cb3cf69b2e680dd75289f216bb0cbdb8551281c4a95a0"
+    }
+  ],
+  "lease_label_counts": {
+    "broad_or_runtime_active_lease": 27,
+    "exact_active_lease": 45,
+    "inactive_broad_or_runtime_lease": 49
+  },
+  "lease_label_rows": 121,
+  "no_dataset_sync": true,
+  "non_strict_action_label_counts": {
+    "broad_or_runtime_arg_admitted": 34,
+    "exact_reference_action_covered": 11,
+    "missing_reference_tool": 16
+  },
+  "notes": [
+    "This audit does not run models, execute tools, clone, sync, or download datasets; it reads saved R074/R077 compiler, R075/R076/R078 replay, and R080 task-loop mismatch artifacts only.",
+    "Reference actions are used only for offline labeling and oracle-distance accounting; they were not available to the LLM compiler at synthesis time.",
+    "exact_reference_action_covered means a replayed reference event matched a compiler lease whose reference arguments were all constrained.",
+    "broad_or_runtime_arg_admitted is a non-strict replay hazard: the tool matched, but at least one reference argument was broad/runtime.",
+    "broad_or_runtime_arg_blocked is the strict-lowering counterpart: the same class of lease is not active until runtime binding or a narrower compiler policy exists.",
+    "The result is reviewer-auditable compiler validity evidence, not a blinded expert-oracle lease study."
+  ],
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "59931c9c98fea0c5eeeb8b0bfa46cbd946947f8a",
+  "python": "3.12.3",
+  "reference_action_label_rows": 183,
+  "replay_reference_actions": 183,
+  "replay_runs": [
+    "results/eval/R075",
+    "results/eval/R076",
+    "results/eval/R078"
+  ],
+  "run_id": "R090",
+  "run_rows": 6,
+  "script_sha256": "ead70f9d2bcbb4aef064c13c467b13264b1e703e013e0225b5dc858c82c63b0a",
+  "strict_action_label_counts": {
+    "broad_or_runtime_arg_blocked": 60,
+    "exact_reference_action_covered": 22,
+    "missing_reference_tool": 40
+  },
+  "strict_exact_reference_action_coverage_rate": 0.18032786885245902,
+  "strict_reference_actions": 122,
+  "task_loop_call_label_rows": 9,
+  "task_loop_label_counts": {
+    "exact_model_call_executed": 7,
+    "wrong_or_hallucinated_tool_call": 2
+  },
+  "task_mismatch_runs": [
+    "results/eval/R080"
+  ]
+}
