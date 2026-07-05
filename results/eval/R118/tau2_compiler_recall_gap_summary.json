@@ -1,0 +1,41 @@
+{
+  "analysis": "saved local-Qwen tau2 compiler-lease recall gap classification",
+  "executed_reference_actions": 21,
+  "git_status": "## main...origin/main\n M scripts/run_tau2_local_llm_task_gateway.py\n M tests/test_run_tau2_local_llm_task_gateway.py\n?? results/eval/R114/\n?? results/eval/R115/\n?? results/eval/R116/\n?? results/eval/R117/",
+  "missing_gap_class_counts": {
+    "complete_compiler_hint_not_called": 1,
+    "tool_not_visible_arg_evidence": 2,
+    "tool_not_visible_no_arg_evidence": 6,
+    "tool_visible_arg_evidence_not_called": 11,
+    "tool_visible_no_arg_evidence": 20
+  },
+  "missing_reference_actions": 40,
+  "missing_with_all_arg_evidence": 14,
+  "missing_with_any_arg_evidence": 16,
+  "missing_with_complete_compiler_hint": 1,
+  "missing_with_tool_visible": 32,
+  "no_dataset_sync": true,
+  "notes": [
+    "This analysis reads existing R114 local tau2 task-gateway artifacts only.",
+    "It does not run models, execute tools, clone benchmarks, sync datasets, or inspect hidden benchmark task files.",
+    "Argument evidence means the exact reference argument leaf values appeared in saved prompt task text or prior gateway-result previews.",
+    "Tool visibility means the saved step prompt exposed the tool under the current active compiler leases.",
+    "A complete compiler hint means an active compiler lease yielded the exact tool and arguments as a prompt hint."
+  ],
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "94d2b9d9d93a56dfdea804d79bf4c8de1319b671",
+  "python": "3.12.3",
+  "reference_actions": 61,
+  "run_dir": "results/eval/R114",
+  "run_id": "R118",
+  "script_sha256": "629159b9313e261c6fd720c1033b11c35ee8b33f0b4132359285e78deedfe3fc",
+  "source_run": "R114",
+  "task_gap_category_counts": {
+    "complete_compiler_hint_not_called": 1,
+    "no_missing_references": 3,
+    "tool_not_visible_arg_evidence": 2,
+    "tool_visible_arg_evidence_not_called": 5
+  },
+  "tasks": 11,
+  "tool_oracle_pass_tasks": 0
+}

@@ -92,9 +92,12 @@ ROW_FIELDS = [
     "stepwise_runtime_evidence_fallbacks",
     "stepwise_runtime_evidence_hint_choice_fallbacks",
     "compiler_runtime_binding",
+    "compiler_runtime_value_proof",
+    "compiler_runtime_proof_probes",
     "compiler_runtime_binding_attempts",
     "compiler_runtime_binding_successes",
     "compiler_runtime_binding_missing_evidence",
+    "compiler_runtime_binding_missing_value_proof",
     "stepwise_steps_attempted",
     "stepwise_model_calls",
     "step_prompt_paths",
@@ -156,6 +159,68 @@ UNSUPPORTED_ROW_FIELDS = ["domain", "task_id", "reason"]
 TOOL_EXPOSURE_MODES = ("all", "leased")
 LEASE_SOURCE_MODES = ("exact-reference", "compiler-corpus")
 RUNTIME_BINDING_MODES = {"runtime_from_prior_tool", "runtime_value"}
+HIGH_IMPACT_TOOL_PREFIXES = (
+    "book_",
+    "cancel_",
+    "create_",
+    "delete_",
+    "enable_",
+    "exchange_",
+    "modify_",
+    "refuel_",
+    "resume_",
+    "return_",
+    "send_",
+    "suspend_",
+    "transfer_",
+    "update_",
+)
+INTENT_PROOF_STOPWORDS = {
+    "able",
+    "after",
+    "agent",
+    "also",
+    "and",
+    "any",
+    "argument",
+    "available",
+    "before",
+    "call",
+    "current",
+    "customer",
+    "details",
+    "from",
+    "get",
+    "identified",
+    "identify",
+    "into",
+    "line",
+    "must",
+    "need",
+    "needed",
+    "needs",
+    "prior",
+    "reservation",
+    "result",
+    "retrieve",
+    "task",
+    "that",
+    "the",
+    "this",
+    "tool",
+    "user",
+    "using",
+    "verify",
+    "want",
+    "wants",
+    "with",
+}
+INTENT_TOKEN_ALIASES = {
+    "disabled": ("disabled", "false", "off"),
+    "enabled": ("enabled", "true", "on"),
+    "laguardia": ("laguardia", "lga"),
+    "philadelphia": ("philadelphia", "phl"),
+}
 
 
 def main() -> int:
@@ -327,6 +392,23 @@ def main() -> int:
             "argument value appears in already executed tool-result evidence."
         ),
     )
+    parser.add_argument(
+        "--compiler-runtime-value-proof",
+        action="store_true",
+        help=(
+            "Require high-impact runtime-bound compiler leases to have value-level "
+            "proof from executed tool results before minting a one-shot exact lease."
+        ),
+    )
+    parser.add_argument(
+        "--compiler-runtime-proof-probes",
+        action="store_true",
+        help=(
+            "Derive low-risk read probes, such as get_reservation_details(id), "
+            "from high-impact runtime templates so the model can gather value-level "
+            "proof before a write."
+        ),
+    )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -361,6 +443,8 @@ def main() -> int:
         ),
         reference_user_simulator=args.reference_user_simulator,
         compiler_runtime_binding=args.compiler_runtime_binding,
+        compiler_runtime_value_proof=args.compiler_runtime_value_proof,
+        compiler_runtime_proof_probes=args.compiler_runtime_proof_probes,
         dry_run=args.dry_run,
     )
     print(json.dumps(result["summary"], indent=2, sort_keys=True))
@@ -397,6 +481,8 @@ def run_experiment(
     stepwise_runtime_evidence_hint_choice_fallback: bool = False,
     reference_user_simulator: bool = False,
     compiler_runtime_binding: bool = False,
+    compiler_runtime_value_proof: bool = False,
+    compiler_runtime_proof_probes: bool = False,
     dry_run: bool = False,
     runner: Callable[[list[str], int], tuple[str, str, int, float]] | None = None,
 ) -> dict[str, Any]:
@@ -456,6 +542,10 @@ def run_experiment(
         )
     if compiler_runtime_binding and lease_source != "compiler-corpus":
         raise ValueError("compiler_runtime_binding requires compiler-corpus lease source")
+    if compiler_runtime_value_proof and not compiler_runtime_binding:
+        raise ValueError("compiler_runtime_value_proof requires compiler_runtime_binding")
+    if compiler_runtime_proof_probes and not compiler_runtime_binding:
+        raise ValueError("compiler_runtime_proof_probes requires compiler_runtime_binding")
     if stepwise_runtime_evidence_lease_hints and lease_source != "compiler-corpus":
         raise ValueError(
             "stepwise_runtime_evidence_lease_hints requires compiler-corpus lease source"
@@ -567,6 +657,8 @@ def run_experiment(
                     ),
                     reference_user_simulator=reference_user_simulator,
                     compiler_runtime_binding=compiler_runtime_binding,
+                    compiler_runtime_value_proof=compiler_runtime_value_proof,
+                    compiler_runtime_proof_probes=compiler_runtime_proof_probes,
                     dry_run=dry_run,
                     runner=runner,
                 )
@@ -617,6 +709,8 @@ def run_experiment(
         ),
         reference_user_simulator=reference_user_simulator,
         compiler_runtime_binding=compiler_runtime_binding,
+        compiler_runtime_value_proof=compiler_runtime_value_proof,
+        compiler_runtime_proof_probes=compiler_runtime_proof_probes,
         dry_run=dry_run,
     )
 
@@ -683,6 +777,8 @@ def _run_task(
     stepwise_runtime_evidence_hint_choice_fallback: bool,
     reference_user_simulator: bool,
     compiler_runtime_binding: bool,
+    compiler_runtime_value_proof: bool,
+    compiler_runtime_proof_probes: bool,
     dry_run: bool,
     runner: Callable[[list[str], int], tuple[str, str, int, float]],
 ) -> dict[str, Any]:
@@ -724,6 +820,7 @@ def _run_task(
             compiler_record=compiler_record,
             tools_by_name=compiler_tools_by_name,
             expose_runtime_bindable=compiler_runtime_binding,
+            runtime_proof_probes=compiler_runtime_proof_probes,
         )
     else:
         trace = build_task_trace(domain, task_id, reference_actions)
@@ -820,6 +917,7 @@ def _run_task(
             bound_reference_ids=bound_reference_ids,
             include_reference_event_ids=lease_source == "exact-reference",
             compiler_runtime_binding=compiler_runtime_binding,
+            compiler_runtime_value_proof=compiler_runtime_value_proof,
         )
         steps = stepwise_result["steps"]
         if steps:
@@ -875,6 +973,7 @@ def _run_task(
             bound_reference_ids=bound_reference_ids,
             include_reference_event_ids=lease_source == "exact-reference",
             compiler_runtime_binding=compiler_runtime_binding,
+            compiler_runtime_value_proof=compiler_runtime_value_proof,
         )
 
         if (
@@ -935,6 +1034,7 @@ def _run_task(
                 bound_reference_ids=bound_reference_ids,
                 include_reference_event_ids=lease_source == "exact-reference",
                 compiler_runtime_binding=compiler_runtime_binding,
+                compiler_runtime_value_proof=compiler_runtime_value_proof,
             )
 
     if reference_user_simulator:
@@ -1057,6 +1157,8 @@ def _run_task(
             if step.get("runtime_evidence_hint_choice_fallback")
         ),
         "compiler_runtime_binding": compiler_runtime_binding,
+        "compiler_runtime_value_proof": compiler_runtime_value_proof,
+        "compiler_runtime_proof_probes": compiler_runtime_proof_probes,
         "compiler_runtime_binding_attempts": sum(
             1 for row in action_rows if row.get("runtime_binding_attempted")
         ),
@@ -1067,6 +1169,13 @@ def _run_task(
             1
             for row in action_rows
             if str(row.get("runtime_binding_reason", "")).startswith("missing runtime evidence")
+        ),
+        "compiler_runtime_binding_missing_value_proof": sum(
+            1
+            for row in action_rows
+            if str(row.get("runtime_binding_reason", "")).startswith(
+                "missing runtime value proof"
+            )
         ),
         "stepwise_steps_attempted": len(stepwise_result["steps"]),
         "stepwise_model_calls": len(stepwise_model_calls),
@@ -1114,6 +1223,8 @@ def _run_task(
             "active_leases": len(trace.get("leases", [])),
             "compiler_source_parse_ok": compiler_source_parse_ok,
             "compiler_runtime_binding": compiler_runtime_binding,
+            "compiler_runtime_value_proof": compiler_runtime_value_proof,
+            "compiler_runtime_proof_probes": compiler_runtime_proof_probes,
             "prompt_path": str(prompt_path),
             "raw_output_path": str(raw_path),
             "raw_output_sha256": _sha256(raw_payload.encode()),
@@ -1200,6 +1311,7 @@ def run_stepwise_model_loop(
     bound_reference_ids: list[str],
     include_reference_event_ids: bool,
     compiler_runtime_binding: bool,
+    compiler_runtime_value_proof: bool = False,
 ) -> dict[str, Any]:
     task_id = str(raw_task.get("id", ""))
     steps: list[dict[str, Any]] = []
@@ -1240,6 +1352,7 @@ def run_stepwise_model_loop(
             build_runtime_evidence_compiler_hints(
                 trace=gateway.trace_gateway.trace,
                 action_rows=action_rows,
+                require_value_proof=compiler_runtime_value_proof,
             )
             if runtime_evidence_lease_hints
             else []
@@ -1432,6 +1545,7 @@ def run_stepwise_model_loop(
             bound_reference_ids=bound_reference_ids,
             include_reference_event_ids=include_reference_event_ids,
             compiler_runtime_binding=compiler_runtime_binding,
+            compiler_runtime_value_proof=compiler_runtime_value_proof,
         )
         steps.append(
             {
@@ -1503,6 +1617,7 @@ def execute_model_calls(
     bound_reference_ids: list[str],
     include_reference_event_ids: bool,
     compiler_runtime_binding: bool = False,
+    compiler_runtime_value_proof: bool = False,
 ) -> list[dict[str, Any]]:
     blocked_calls: list[dict[str, Any]] = []
     for offset, model_call in enumerate(model_calls):
@@ -1526,6 +1641,7 @@ def execute_model_calls(
             index=index,
             action_rows=action_rows,
             enabled=compiler_runtime_binding,
+            require_value_proof=compiler_runtime_value_proof,
         )
         decision = record.get("decision", {})
         model_args = {
@@ -1615,6 +1731,7 @@ def call_gateway_with_optional_runtime_binding(
     index: int,
     action_rows: list[dict[str, Any]],
     enabled: bool,
+    require_value_proof: bool = False,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     default_binding = {
         "attempted": False,
@@ -1634,6 +1751,7 @@ def call_gateway_with_optional_runtime_binding(
         task_id=task_id,
         index=index,
         action_rows=action_rows,
+        require_value_proof=require_value_proof,
     )
     if not binding["attempted"] or binding.get("lease") is None:
         return gateway.call(event, decision=decision), {
@@ -1652,7 +1770,7 @@ def call_gateway_with_optional_runtime_binding(
         "attempted": True,
         "allowed": bool(runtime_decision.get("allowed")),
         "lease_id": str(lease.get("id", "")),
-        "reason": "runtime evidence bound" if runtime_decision.get("allowed") else str(
+        "reason": str(binding["reason"]) if runtime_decision.get("allowed") else str(
             runtime_decision.get("reason", "")
         ),
         "args": binding["args"],
@@ -1667,6 +1785,7 @@ def build_runtime_bound_compiler_lease(
     task_id: str,
     index: int,
     action_rows: list[dict[str, Any]],
+    require_value_proof: bool = False,
 ) -> dict[str, Any]:
     templates = (
         (trace.get("metadata") or {}).get("runtime_bindable_compiler_leases")
@@ -1743,14 +1862,34 @@ def build_runtime_bound_compiler_lease(
             )
             continue
 
+        proof = runtime_value_proof_status(
+            template=template,
+            args=event_args,
+            action_rows=action_rows,
+            require_value_proof=require_value_proof,
+        )
+        if not proof["complete"]:
+            reasons.append(
+                f"missing runtime value proof for {template.get('id')}: "
+                f"{proof['reason']}"
+            )
+            continue
+
         runtime_values = {name: event_args.get(name) for name in runtime_args}
         lease_id = (
             f"compiler-runtime-live:{domain}:{task_id}:{index}:"
             f"{str(template.get('tool', 'tool'))}"
         )
+        binding_reason = (
+            "runtime evidence proof probe bound"
+            if template.get("proof_probe") is True
+            else "runtime evidence value-proof bound"
+            if proof.get("required")
+            else "runtime evidence bound"
+        )
         return {
             "attempted": True,
-            "reason": "runtime evidence bound",
+            "reason": binding_reason,
             "args": runtime_values,
             "lease": {
                 "id": lease_id,
@@ -2016,6 +2155,7 @@ def build_runtime_evidence_compiler_hints(
     action_rows: list[dict[str, Any]],
     max_values_per_arg: int = 8,
     max_hints: int = 16,
+    require_value_proof: bool = False,
 ) -> list[dict[str, Any]]:
     """Expose runtime-bindable compiler calls grounded in executed tool results.
 
@@ -2074,6 +2214,14 @@ def build_runtime_evidence_compiler_hints(
             expected_keys = {str(name) for name in template.get("allowed_arg_keys", [])}
             if set(args) != expected_keys:
                 continue
+            proof = runtime_value_proof_status(
+                template=template,
+                args=args,
+                action_rows=action_rows,
+                require_value_proof=require_value_proof,
+            )
+            if not proof["complete"]:
+                continue
             args_key = json.dumps(args, sort_keys=True, default=_json_default)
             dedupe_key = (tool_name, args_key)
             if dedupe_key in seen or dedupe_key in attempted:
@@ -2090,6 +2238,13 @@ def build_runtime_evidence_compiler_hints(
                 "lease_template_id": str(template.get("id", "")),
                 "runtime_args": runtime_args,
             }
+            if proof["required"] or template.get("proof_probe") is True:
+                hint["value_proof"] = proof
+            if template.get("proof_probe") is True:
+                hint["proof_probe"] = True
+                hint["proof_probe_for_template_id"] = str(
+                    template.get("proof_probe_for_template_id", "")
+                )
             intent_evidence = str(template.get("intent_evidence", ""))
             if intent_evidence:
                 hint["intent_evidence"] = intent_evidence
@@ -2291,6 +2446,11 @@ def build_hint_choice_prompt(
             grounding=str(hint.get("grounding", "")),
             intent_evidence=str(hint.get("intent_evidence", "")),
             lease_template_id=str(hint.get("lease_template_id", "")),
+            proof_probe=hint.get("proof_probe", False),
+            proof_probe_for_template_id=str(
+                hint.get("proof_probe_for_template_id", "")
+            ),
+            value_proof=hint.get("value_proof", {}),
         )
         for index, hint in enumerate(complete_hints)
     ]
@@ -2440,6 +2600,137 @@ def _value_is_grounded(value: Any, visible_state: str) -> bool:
         return bool(value) and all(_value_is_grounded(item, visible_state) for item in value)
     if isinstance(value, dict):
         return bool(value) and all(_value_is_grounded(item, visible_state) for item in value.values())
+    return False
+
+
+def runtime_value_proof_status(
+    *,
+    template: dict[str, Any],
+    args: dict[str, Any],
+    action_rows: list[dict[str, Any]],
+    require_value_proof: bool,
+) -> dict[str, Any]:
+    required = require_value_proof and _runtime_template_requires_value_proof(template)
+    if not required:
+        return {
+            "required": False,
+            "complete": True,
+            "reason": "value proof not required",
+            "tokens": [],
+        }
+
+    tokens = _intent_discriminator_tokens(template)
+    if not tokens:
+        return {
+            "required": True,
+            "complete": True,
+            "reason": "no discriminator tokens in intent evidence",
+            "tokens": [],
+        }
+
+    missing: dict[str, list[str]] = {}
+    for arg_name in [str(name) for name in template.get("runtime_args", [])]:
+        value = args.get(arg_name)
+        contexts = _executed_tool_result_contexts_for_value(value, action_rows)
+        if not contexts or not any(_context_has_intent_tokens(context, tokens) for context in contexts):
+            missing[arg_name] = tokens
+
+    if missing:
+        return {
+            "required": True,
+            "complete": False,
+            "reason": "runtime value context lacks intent discriminator tokens",
+            "tokens": tokens,
+            "missing_args": missing,
+        }
+
+    return {
+        "required": True,
+        "complete": True,
+        "reason": "runtime value context satisfies intent discriminator tokens",
+        "tokens": tokens,
+    }
+
+
+def _runtime_template_requires_value_proof(template: dict[str, Any]) -> bool:
+    if template.get("proof_probe") is True:
+        return False
+    if template.get("proof_required") is True:
+        return True
+    tool_type = str(template.get("tool_type", "")).lower()
+    tool_name = str(template.get("tool", "")).lower()
+    return tool_type == "write" or tool_name.startswith(HIGH_IMPACT_TOOL_PREFIXES)
+
+
+def _intent_discriminator_tokens(template: dict[str, Any]) -> list[str]:
+    intent = str(template.get("intent_evidence", "")).lower()
+    ignored = set(INTENT_PROOF_STOPWORDS)
+    ignored.update(_split_identifier(str(template.get("tool", ""))))
+    for arg_name in [str(name) for name in template.get("runtime_args", [])]:
+        ignored.update(_split_identifier(arg_name))
+
+    tokens: list[str] = []
+    for token in re.findall(r"[a-z][a-z0-9]+", intent):
+        if len(token) < 3 or token in ignored:
+            continue
+        if token not in tokens:
+            tokens.append(token)
+    return tokens[:8]
+
+
+def _split_identifier(value: str) -> set[str]:
+    return {part for part in re.split(r"[^a-zA-Z0-9]+|_", value.lower()) if part}
+
+
+def _context_has_intent_tokens(context: str, tokens: list[str]) -> bool:
+    lower_context = context.lower()
+    if not tokens:
+        return True
+    matches = 0
+    for token in tokens:
+        aliases = INTENT_TOKEN_ALIASES.get(token, (token,))
+        if any(alias.lower() in lower_context for alias in aliases):
+            matches += 1
+    required = len(tokens) if any(token in INTENT_TOKEN_ALIASES for token in tokens) else min(2, len(tokens))
+    return matches >= required
+
+
+def _executed_tool_result_contexts_for_value(
+    value: Any,
+    action_rows: list[dict[str, Any]],
+) -> list[str]:
+    contexts: list[str] = []
+    for row in action_rows:
+        if not row.get("executed"):
+            continue
+        for decoded in _decode_nested_json_values(str(row.get("tool_result_preview", ""))):
+            for context in _json_contexts_containing_value(decoded, value):
+                text = json.dumps(context, sort_keys=True, default=_json_default)
+                if text not in contexts:
+                    contexts.append(text)
+    return contexts
+
+
+def _json_contexts_containing_value(node: Any, target: Any) -> list[Any]:
+    contexts: list[Any] = []
+    if _json_contains_value(node, target):
+        contexts.append(node)
+    if isinstance(node, dict):
+        for child in node.values():
+            contexts.extend(_json_contexts_containing_value(child, target))
+    elif isinstance(node, list):
+        for child in node:
+            contexts.extend(_json_contexts_containing_value(child, target))
+    return contexts
+
+
+def _json_contains_value(node: Any, target: Any) -> bool:
+    if node == target:
+        return True
+    if isinstance(node, dict):
+        return any(_json_contains_value(child, target) for child in node.values())
+    if isinstance(node, list):
+        return any(_json_contains_value(child, target) for child in node)
     return False
 
 
@@ -2748,6 +3039,7 @@ def build_compiler_corpus_task_trace(
     compiler_record: dict[str, Any],
     tools_by_name: dict[str, Any],
     expose_runtime_bindable: bool = False,
+    runtime_proof_probes: bool = False,
 ) -> tuple[dict[str, Any], set[str], set[str]]:
     """Build active runtime leases from saved compiler output only.
 
@@ -2764,6 +3056,7 @@ def build_compiler_corpus_task_trace(
     invalid_tool_count = 0
     inactive_broad_count = 0
     runtime_bindable_templates: list[dict[str, Any]] = []
+    runtime_proof_probe_templates: list[dict[str, Any]] = []
 
     for index, lease in enumerate(model_leases):
         if not isinstance(lease, dict):
@@ -2804,7 +3097,9 @@ def build_compiler_corpus_task_trace(
                     ),
                     "argument_policy": argument_policy,
                     "intent_evidence": str(lease.get("intent_evidence", "")),
+                    "tool_type": str(getattr(tool, "tool_type", "unknown")),
                 }
+                template["proof_required"] = _runtime_template_requires_value_proof(template)
                 runtime_bindable_templates.append(template)
                 if expose_runtime_bindable:
                     active_tool_names.add(tool_name)
@@ -2825,6 +3120,20 @@ def build_compiler_corpus_task_trace(
                 "data_may_depend_on": [TRUSTED_TASK_INTENT],
             }
         )
+
+    if runtime_proof_probes:
+        runtime_proof_probe_templates = build_runtime_proof_probe_templates(
+            domain=domain,
+            runtime_templates=runtime_bindable_templates,
+            tools_by_name=tools_by_name,
+        )
+        runtime_bindable_templates.extend(runtime_proof_probe_templates)
+        for template in runtime_proof_probe_templates:
+            tool_name = str(template.get("tool", ""))
+            object_name = str(template.get("object", ""))
+            if tool_name and object_name:
+                active_tool_names.add(tool_name)
+                active_object_names.add(object_name)
 
     decisions = sorted(f"{domain}.{tool_name}.tool_choice" for tool_name in active_tool_names)
     return (
@@ -2848,6 +3157,7 @@ def build_compiler_corpus_task_trace(
                 "inactive_broad_or_runtime_arg_leases": inactive_broad_count,
                 "runtime_bindable_compiler_leases": runtime_bindable_templates,
                 "runtime_bindable_compiler_lease_count": len(runtime_bindable_templates),
+                "runtime_proof_probe_template_count": len(runtime_proof_probe_templates),
                 "runtime_bindable_tools_exposed": expose_runtime_bindable,
                 "note": (
                     "Active leases are strict lowerings of saved compiler output. "
@@ -2862,6 +3172,78 @@ def build_compiler_corpus_task_trace(
         active_tool_names,
         active_object_names,
     )
+
+
+def build_runtime_proof_probe_templates(
+    *,
+    domain: str,
+    runtime_templates: list[dict[str, Any]],
+    tools_by_name: dict[str, Any],
+) -> list[dict[str, Any]]:
+    probes: list[dict[str, Any]] = []
+    seen: set[tuple[str, str, str]] = set()
+    for template in runtime_templates:
+        if not _runtime_template_requires_value_proof(template):
+            continue
+        for arg_name in [str(name) for name in template.get("runtime_args", [])]:
+            probe_tool = _find_runtime_proof_probe_tool(arg_name, tools_by_name)
+            if probe_tool is None:
+                continue
+            probe_tool_name = str(getattr(probe_tool, "name", ""))
+            key = (str(template.get("id", "")), probe_tool_name, arg_name)
+            if key in seen:
+                continue
+            seen.add(key)
+            object_name = f"tau2.{domain}.assistant.{probe_tool_name}"
+            probes.append(
+                {
+                    "id": f"{template.get('id')}:proof-probe:{probe_tool_name}:{arg_name}",
+                    "tool": probe_tool_name,
+                    "object": object_name,
+                    "static_args": {},
+                    "runtime_args": [arg_name],
+                    "allowed_arg_keys": [arg_name],
+                    "argument_policy": {
+                        arg_name: {"mode": "runtime_from_prior_tool", "values": []}
+                    },
+                    "intent_evidence": (
+                        "Gather details to prove runtime value satisfies: "
+                        f"{template.get('intent_evidence', '')}"
+                    ),
+                    "tool_type": str(getattr(probe_tool, "tool_type", "read")),
+                    "proof_probe": True,
+                    "proof_probe_for_template_id": str(template.get("id", "")),
+                    "proof_required": False,
+                }
+            )
+    return probes
+
+
+def _find_runtime_proof_probe_tool(arg_name: str, tools_by_name: dict[str, Any]) -> Any | None:
+    if not arg_name.endswith("_id"):
+        return None
+    stem = arg_name.removesuffix("_id")
+    preferred_names = [
+        f"get_{stem}_details",
+        f"get_{stem}",
+        f"find_{stem}_by_id",
+    ]
+    for name in preferred_names:
+        tool = tools_by_name.get(name)
+        if _is_read_probe_tool(tool, arg_name):
+            return tool
+    for tool in tools_by_name.values():
+        if _is_read_probe_tool(tool, arg_name):
+            return tool
+    return None
+
+
+def _is_read_probe_tool(tool: Any, arg_name: str) -> bool:
+    if tool is None:
+        return False
+    if str(getattr(tool, "tool_type", "")).lower() != "read":
+        return False
+    return tuple(getattr(tool, "arguments", ()) or ()) == (arg_name,)
 
 
 def lower_strict_compiler_argument_policy(
@@ -3073,6 +3455,8 @@ def summarize(
     stepwise_runtime_evidence_hint_choice_fallback: bool = False,
     reference_user_simulator: bool = False,
     compiler_runtime_binding: bool = False,
+    compiler_runtime_value_proof: bool = False,
+    compiler_runtime_proof_probes: bool = False,
     dry_run: bool = False,
 ) -> dict[str, Any]:
     compiler_run_dirs = _normalize_compiler_run_dirs(compiler_run_dir)
@@ -3168,6 +3552,14 @@ def summarize(
         notes.append(
             "Compiler runtime binding exposes runtime-placeholder compiler tools but mints only one-shot exact leases when proposed runtime argument values are found in already executed tool-result evidence."
         )
+    if compiler_runtime_value_proof:
+        notes.append(
+            "Compiler runtime value proof requires high-impact runtime-bound leases to show value-level intent evidence in executed tool-result context before a one-shot lease is minted."
+        )
+    if compiler_runtime_proof_probes:
+        notes.append(
+            "Compiler runtime proof probes derive low-risk read calls from high-impact runtime templates so the agent can gather value-level proof before a write."
+        )
     return {
         "run_id": run_id,
         "analysis": (
@@ -3199,6 +3591,8 @@ def summarize(
         ),
         "reference_user_simulator": reference_user_simulator,
         "compiler_runtime_binding": compiler_runtime_binding,
+        "compiler_runtime_value_proof": compiler_runtime_value_proof,
+        "compiler_runtime_proof_probes": compiler_runtime_proof_probes,
         "tool_schema_count_min": min(tool_schema_counts) if tool_schema_counts else 0,
         "tool_schema_count_max": max(tool_schema_counts) if tool_schema_counts else 0,
         "tool_schema_count_avg": (
@@ -3261,6 +3655,13 @@ def summarize(
             1
             for row in action_rows
             if str(row.get("runtime_binding_reason", "")).startswith("missing runtime evidence")
+        ),
+        "compiler_runtime_binding_missing_value_proof": sum(
+            1
+            for row in action_rows
+            if str(row.get("runtime_binding_reason", "")).startswith(
+                "missing runtime value proof"
+            )
         ),
         "tasks_with_model_calls": sum(1 for row in task_rows if int(row["model_calls"]) > 0),
         "reference_actions": sum(int(row["reference_actions"]) for row in task_rows),

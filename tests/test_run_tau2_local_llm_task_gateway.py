@@ -1141,6 +1141,212 @@ def test_runtime_evidence_compiler_hints_require_all_runtime_args():
     assert hints[0]["arguments"] == {"customer_id": "C1001", "line_id": "L1002"}
 
 
+def test_runtime_value_proof_blocks_write_from_undifferentiated_id_list():
+    trace = {
+        "metadata": {
+            "runtime_bindable_compiler_leases": [
+                {
+                    "id": "template:cancel",
+                    "tool": "cancel_reservation",
+                    "object": "tau2.airline.assistant.cancel_reservation",
+                    "static_args": {},
+                    "runtime_args": ["reservation_id"],
+                    "allowed_arg_keys": ["reservation_id"],
+                    "intent_evidence": (
+                        "User wants to cancel reservation from Philadelphia to LaGuardia"
+                    ),
+                    "tool_type": "write",
+                    "proof_required": True,
+                }
+            ]
+        }
+    }
+    action_rows = [
+        {
+            "executed": True,
+            "tool_result_preview": (
+                '{"content":"{\\"reservations\\":[\\"Q69X3R\\",\\"MZDDS4\\"]}"}'
+            ),
+        }
+    ]
+
+    binding = runner.build_runtime_bound_compiler_lease(
+        trace=trace,
+        event={
+            "object": "tau2.airline.assistant.cancel_reservation",
+            "args": {"reservation_id": "Q69X3R"},
+        },
+        domain="airline",
+        task_id="1",
+        index=0,
+        action_rows=action_rows,
+        require_value_proof=True,
+    )
+
+    assert binding["attempted"] is True
+    assert binding["lease"] is None
+    assert binding["reason"].startswith("missing runtime value proof for template:cancel")
+
+
+def test_runtime_value_proof_allows_write_after_matching_detail_probe():
+    trace = {
+        "metadata": {
+            "runtime_bindable_compiler_leases": [
+                {
+                    "id": "template:cancel",
+                    "tool": "cancel_reservation",
+                    "object": "tau2.airline.assistant.cancel_reservation",
+                    "static_args": {},
+                    "runtime_args": ["reservation_id"],
+                    "allowed_arg_keys": ["reservation_id"],
+                    "intent_evidence": (
+                        "User wants to cancel reservation from Philadelphia to LaGuardia"
+                    ),
+                    "tool_type": "write",
+                    "proof_required": True,
+                }
+            ]
+        }
+    }
+    action_rows = [
+        {
+            "executed": True,
+            "tool_result_preview": (
+                '{"content":"{\\"reservation_id\\":\\"Q69X3R\\",'
+                '\\"origin\\":\\"PHL\\",\\"destination\\":\\"LGA\\"}"}'
+            ),
+        }
+    ]
+
+    binding = runner.build_runtime_bound_compiler_lease(
+        trace=trace,
+        event={
+            "object": "tau2.airline.assistant.cancel_reservation",
+            "args": {"reservation_id": "Q69X3R"},
+        },
+        domain="airline",
+        task_id="1",
+        index=0,
+        action_rows=action_rows,
+        require_value_proof=True,
+    )
+
+    assert binding["attempted"] is True
+    assert binding["reason"] == "runtime evidence value-proof bound"
+    assert binding["lease"]["args"] == {"reservation_id": {"equals": "Q69X3R"}}
+
+
+def test_runtime_value_proof_hints_suppress_write_and_emit_read_probe():
+    trace = {
+        "metadata": {
+            "runtime_bindable_compiler_leases": [
+                {
+                    "id": "template:cancel",
+                    "tool": "cancel_reservation",
+                    "object": "tau2.airline.assistant.cancel_reservation",
+                    "static_args": {},
+                    "runtime_args": ["reservation_id"],
+                    "allowed_arg_keys": ["reservation_id"],
+                    "intent_evidence": (
+                        "User wants to cancel reservation from Philadelphia to LaGuardia"
+                    ),
+                    "tool_type": "write",
+                    "proof_required": True,
+                },
+                {
+                    "id": "template:cancel:proof-probe:get_reservation_details:reservation_id",
+                    "tool": "get_reservation_details",
+                    "object": "tau2.airline.assistant.get_reservation_details",
+                    "static_args": {},
+                    "runtime_args": ["reservation_id"],
+                    "allowed_arg_keys": ["reservation_id"],
+                    "intent_evidence": (
+                        "Gather details to prove runtime value satisfies: User wants "
+                        "to cancel reservation from Philadelphia to LaGuardia"
+                    ),
+                    "tool_type": "read",
+                    "proof_probe": True,
+                    "proof_probe_for_template_id": "template:cancel",
+                    "proof_required": False,
+                },
+            ]
+        }
+    }
+
+    hints = runner.build_runtime_evidence_compiler_hints(
+        trace=trace,
+        action_rows=[
+            {
+                "model_tool": "get_user_details",
+                "model_args_json": '{"user_id": "u1"}',
+                "executed": True,
+                "tool_result_preview": (
+                    '{"content":"{\\"reservations\\":[\\"Q69X3R\\",\\"MZDDS4\\"]}"}'
+                ),
+            }
+        ],
+        require_value_proof=True,
+    )
+
+    assert {hint["tool"] for hint in hints} == {"get_reservation_details"}
+    assert [hint["arguments"] for hint in hints] == [
+        {"reservation_id": "Q69X3R"},
+        {"reservation_id": "MZDDS4"},
+    ]
+    assert all(hint["proof_probe"] is True for hint in hints)
+    assert all(hint["value_proof"]["required"] is False for hint in hints)
+
+
+def test_compiler_corpus_task_trace_derives_read_proof_probe():
+    compiler_record = {
+        "parsed_model_json": {
+            "leases": [
+                {
+                    "tool": "cancel_reservation",
+                    "argument_policy": {
+                        "reservation_id": {
+                            "mode": "runtime_from_prior_tool",
+                            "values": [],
+                        }
+                    },
+                    "intent_evidence": (
+                        "User wants to cancel reservation from Philadelphia to LaGuardia"
+                    ),
+                }
+            ]
+        },
+        "task_row": {"parse_ok": True},
+    }
+    tools_by_name = {
+        "cancel_reservation": SimpleNamespace(
+            name="cancel_reservation",
+            arguments=("reservation_id",),
+            tool_type="write",
+        ),
+        "get_reservation_details": SimpleNamespace(
+            name="get_reservation_details",
+            arguments=("reservation_id",),
+            tool_type="read",
+        ),
+    }
+
+    trace, active_tools, active_objects = runner.build_compiler_corpus_task_trace(
+        domain="airline",
+        task_id="1",
+        compiler_record=compiler_record,
+        tools_by_name=tools_by_name,
+        expose_runtime_bindable=True,
+        runtime_proof_probes=True,
+    )
+
+    templates = trace["metadata"]["runtime_bindable_compiler_leases"]
+    assert trace["metadata"]["runtime_proof_probe_template_count"] == 1
+    assert any(template.get("proof_probe") is True for template in templates)
+    assert "cancel_reservation" in active_tools
+    assert "get_reservation_details" in active_tools
+    assert "tau2.airline.assistant.get_reservation_details" in active_objects
+
+
 def test_runtime_evidence_fallback_uses_distinct_marker():
     hint = {
         "tool": "cancel_reservation",
