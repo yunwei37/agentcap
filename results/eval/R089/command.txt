@@ -1,0 +1,1 @@
+PYTHONPATH=src /usr/bin/python scripts/run_residual_local_llm_gateway.py --trace examples/residual_workflow_suite.json --output-dir results/eval/R089 --run-id R089 --feedback-rounds 1 --n-predict 512 --ctx-size 4096 --timeout-seconds 120
