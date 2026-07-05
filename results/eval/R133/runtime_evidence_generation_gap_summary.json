@@ -1,0 +1,43 @@
+{
+  "analysis": "saved local-Qwen tau2 exact-next runtime-evidence candidate generation gap",
+  "candidate_csv": "results/eval/R131/runtime_evidence_candidate_correctness.csv",
+  "db_feasible_generator_upper_bound_exact_next_steps": 5,
+  "db_feasible_generator_upper_bound_gain_over_current": 0,
+  "db_feasible_generator_upper_bound_step_coverage": 0.3333333333333333,
+  "db_feasible_runtime_evidence_upper_bound_exact_next_steps": 5,
+  "db_feasible_runtime_evidence_upper_bound_gain_over_current": 0,
+  "db_feasible_runtime_evidence_upper_bound_step_coverage": 0.3333333333333333,
+  "feasibility_csv": "results/eval/R067/reference_feasibility.csv",
+  "generation_gap_class_counts": {
+    "existing_exact_next_candidate": 5,
+    "invalid_exact_next_reference": 10
+  },
+  "generator_upper_bound_exact_next_steps": 5,
+  "generator_upper_bound_gain_over_current": 0,
+  "generator_upper_bound_step_coverage": 0.3333333333333333,
+  "git_status": "## main...origin/main\n?? results/eval/R133/\n?? scripts/analyze_tau2_runtime_evidence_candidate_generation.py\n?? tests/test_analyze_tau2_runtime_evidence_candidate_generation.py",
+  "no_dataset_sync": true,
+  "notes": [
+    "This analysis reads saved R125/R131 local tau2 artifacts only.",
+    "It does not run models, execute tools, clone benchmarks, sync datasets, or reveal hidden reference actions to a model.",
+    "Reference actions are used only as a post-hoc oracle to classify why exact-next candidates were absent.",
+    "generator_upper_bound_exact_next_possible counts steps where the exact-next tool is visible and all exact-next argument leaf values appear in saved task text or prior gateway-result previews.",
+    "runtime_evidence_upper_bound_exact_next_possible is stricter: argument leaf values must appear in prior gateway-result previews.",
+    "If a saved feasibility audit marks the exact-next reference as invalid_schema_example_reference, the step is excluded from DB-feasible upper-bound counts."
+  ],
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "07e48078e252ef7e18581a40f6a941399fcc65cd",
+  "python": "3.12.3",
+  "run_dir": "results/eval/R125",
+  "run_id": "R133",
+  "runtime_evidence_upper_bound_exact_next_steps": 5,
+  "runtime_evidence_upper_bound_gain_over_current": 0,
+  "runtime_evidence_upper_bound_step_coverage": 0.3333333333333333,
+  "script_sha256": "4d400c30ae48106d316b7536b24a9e13735eb06eb3dec5c5471d1ee5a59be000",
+  "source_run": "R125",
+  "steps": 15,
+  "steps_with_existing_exact_next_candidate": 5,
+  "steps_with_invalid_exact_next_reference": 10,
+  "steps_without_exact_next_candidate": 10,
+  "tasks": 2
+}
