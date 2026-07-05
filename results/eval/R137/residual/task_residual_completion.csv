@@ -1,0 +1,12 @@
+source_run_id,domain,task_id,reference_actions,model_calls,executed_reference_actions,missing_reference_actions,executed_prefix_actions,missing_complete_visible_actions,missing_partial_visible_actions,missing_hidden_actions,residual_category,tool_oracle_pass,all_reference_actions_executed,exact_sequence_match,action_reward,env_reward,stepwise_single_hint_fallbacks,stepwise_hint_choice_fallbacks
+R136,airline,1,2,2,1,1,1,0,0,1,missing_hidden_actions,False,False,False,0.0,0.0,0,0
+R136,airline,2,3,2,2,1,2,0,0,1,missing_hidden_actions,False,False,False,0.0,0.0,0,0
+R136,airline,3,2,1,1,1,1,0,0,1,missing_hidden_actions,False,False,False,0.0,0.0,0,0
+R136,airline,4,6,0,0,6,0,0,0,6,missing_hidden_actions,False,False,False,0.0,1.0,0,0
+R136,retail,0,5,4,4,1,4,0,0,1,missing_hidden_actions,False,False,False,0.0,0.0,0,0
+R136,retail,1,5,4,4,1,4,0,0,1,missing_hidden_actions,False,False,False,0.0,0.0,0,0
+R136,retail,2,11,3,3,8,1,0,0,8,missing_hidden_actions,False,False,False,0.0,0.0,0,0
+R136,retail,3,12,12,8,4,1,0,0,4,missing_hidden_actions,False,False,False,0.0,0.0,0,0
+R136,retail,4,13,11,8,5,1,0,0,5,missing_hidden_actions,False,False,False,0.0,0.0,0,0
+R136,telecom,[mobile_data_issue]user_abroad_roaming_disabled_on[PERSONA:Easy],1,2,1,0,0,0,0,0,all_references_executed_but_reward_failed,False,True,False,1.0,0.0,0,0
+R136,telecom,[mobile_data_issue]user_abroad_roaming_disabled_off[PERSONA:Hard],1,1,1,0,1,0,0,0,all_references_executed_but_reward_failed,False,True,True,1.0,0.0,0,0

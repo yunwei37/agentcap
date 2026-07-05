@@ -473,7 +473,7 @@ def build_summary(
         "project_head": git_output(["git", "rev-parse", "HEAD"]),
         "git_status": git_output(["git", "status", "--short", "--branch"]),
         "notes": [
-            "This analysis reads saved R067/R128/R129/R131 artifacts only.",
+            "This analysis reads the provided saved missing-reference, feasibility, adjusted-task, and candidate artifacts only.",
             "Reference labels are used only post-hoc to classify the current utility failure surface.",
             "A runtime exact candidate means R131 observed a runtime-evidence candidate bound to this missing reference event at some step; it does not imply the model executed it.",
             "DB-feasible counts exclude saved feasibility rows marked invalid_schema_example_reference.",
@@ -598,7 +598,7 @@ def read_csv(path: Path) -> list[dict[str, str]]:
 
 def write_csv(path: Path, rows: list[dict[str, Any]], fields: list[str]) -> None:
     with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
+        writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore", lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 
