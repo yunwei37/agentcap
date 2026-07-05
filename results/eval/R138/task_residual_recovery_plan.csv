@@ -1,0 +1,12 @@
+source_run_id,domain,task_id,eligible_recovery_candidates,generated_recovery_candidates,existing_exact_candidate_recoveries,high_impact_recovery_candidates,recovery_event_ids,primary_recovery_kind,not_yet_actionable_db_feasible_missing_actions,reward_residual_not_missing_action
+R136,airline,1,1,0,1,0,airline:1:1_1,planner_select_existing_exact_candidate,0,False
+R136,airline,2,1,1,0,0,airline:2:2_2,generate_runtime_candidate_from_visible_state,0,False
+,airline,3,0,0,0,0,,none,1,False
+,airline,4,0,0,0,0,,none,6,False
+R136,retail,0,1,1,0,1,retail:0:0_4,generate_runtime_candidate_from_visible_state,0,False
+R136,retail,1,1,1,0,1,retail:1:1_4,generate_runtime_candidate_from_visible_state,0,False
+R136,retail,2,4,4,0,0,retail:2:2_5|retail:2:2_6|retail:2:2_7|retail:2:2_8,generate_runtime_candidate_from_visible_state,3,False
+R136,retail,3,3,3,0,1,retail:3:3_11|retail:3:3_10|retail:3:3_12,generate_runtime_candidate_from_visible_state,0,False
+R136,retail,4,4,4,0,2,retail:4:4_4|retail:4:4_10|retail:4:4_12|retail:4:4_13,generate_runtime_candidate_from_visible_state,0,False
+,telecom,[mobile_data_issue]user_abroad_roaming_disabled_off[PERSONA:Hard],0,0,0,0,,none,0,True
+,telecom,[mobile_data_issue]user_abroad_roaming_disabled_on[PERSONA:Easy],0,0,0,0,,none,0,True
