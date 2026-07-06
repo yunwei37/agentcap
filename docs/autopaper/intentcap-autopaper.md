@@ -258,6 +258,13 @@ R092-R103 是 R091/R095/R099 后必须加的降温证据。R092 只读保存的 
 - E7：explicitly approved web-only candidate。优先候选来自 R026：Skill-Inject/MCPSecBench 用于 Skill/MCP security，MCP-Bench/ToolSandbox/WorkBench 用于 utility/recovery；harmful/safety 类数据必须先写 safety protocol。
 
 ## 下一步门槛
-下一步最有价值的是五选一：第一，继续做 R187/R197/R198 之后的 closed-loop compiler/planner，把 upstream/CEGAR 及 reward/env residual tasks 单独 debug，而不是继续修已经被 R194 解释为 duplicate observed reads 的 read-like miss 或 R198 已解释的 activation drift；第二，把 R027/R087-R198 扩展成 10-30 个跨 benchmark tasks 的独立 expert-oracle lease study，并加入 blinded proof-completeness labels；第三，把 R087 residual workflow patterns 放进已有本地 benchmark/model loop；第四，做 planner-confirmed runtime candidate generation，让 candidate-correctness predicate 在执行前参与选择；第五，在明确批准后导入一个 R026 top candidate。选择新 workload 时以 R026 的候选排序为入口，优先看 Skill-Inject、MCPSecBench、MCP-Bench、ToolSandbox 和 WorkBench；HarmfulSkillBench/AgentHarm 类数据必须先写 safety protocol。不默认 clone/sync。没有其中至少一个结果前，中文论文不应把当前证据写成 end-to-end cross-domain online benchmark 或完整 compiler evaluation。
+下一步门槛应直接对应四个主实验，而不是继续堆 run IDs：
+
+1. **E1 matched wrapper gate。** 在已有本地安全 workload 和一个已有本地 utility slice 上，同时跑 IntentCap 与 vanilla/static ACL/exact-tool ACL/tool-guard/OS-only 风格 baseline。成功标准是 dangerous actions 明显下降，且同一任务集上的 benign utility 损失可解释。
+2. **E2 residual-lift gate。** 把 R087 的 temporal/budget/delegation/holder/proof residual patterns 放进已有 benchmark 或 model-loop setting，再跑 closest-baseline labelers。成功标准是至少一个 residual class 仍然不是 provenance/IFC/taint baseline 能解释，但会被 IntentCap 阻断。
+3. **E3 planner/CEGAR gate。** 接着 R198 的 post-activation residual 做 planner-confirmed runtime candidate generation，并与 proof-only、rank-only、filter-only negative controls 对比。成功标准不是多执行 calls，而是提高 task-correct executions 或 reward，同时保持 0 dangerous execute、0 tool errors、无 broad/runtime lease activation。
+4. **E4 expert-oracle gate。** 先写 10-30 个任务的 sample manifest 和 blinded expert lease protocol，再做 expert-oracle distance scoring。成功标准是 IntentCap 比 static/Skill/MCP/policy baselines 更接近 expert oracle，且 authority breadth 更小。
+
+只有上述 gate 至少一个推进后，才扩展 task count 或请求显式批准导入 R026 top candidate。选择新 workload 时以 R026 的候选排序为入口，优先看 Skill-Inject、MCPSecBench、MCP-Bench、ToolSandbox 和 WorkBench；HarmfulSkillBench/AgentHarm 类数据必须先写 safety protocol。不默认 clone/sync。没有这些 gate 的结果前，中文论文不应把当前证据写成 end-to-end cross-domain online benchmark、完整 compiler evaluation 或 expert-oracle least-privilege 结果。
 
 R198 之后，read-only activation、duplicate-read accounting、`modify_pending_order_items` proof completeness、`return_delivered_order_items` grouped-list proof、该 return write 的 bounded activation、以及 post-activation residual audit 都不是当前 blocker。剩余真正机制目标是 upstream/CEGAR planning、planner-confirmed candidate generation、reward/env residual debugging、以及独立 expert/proof-completeness labels。下一步如果继续做 tau2 compiler path，成功标准不是更多 fallback attempts，而是在不扩大 authority 的前提下修 planner/reward/env residual。

@@ -138,6 +138,8 @@ Completeness: partial.
 
 The run tracker remains necessary for provenance, but the paper should not present R001-R198 as independent experiments. Those runs should be folded into the four anchor experiments above.
 
+Immediate execution priority: first close one gate for the four-anchor spine before adding more probes. The preferred order is E1 matched wrapper on existing local workloads, E2 residual-lift into an existing benchmark/model loop, E3 post-R198 planner/CEGAR recovery, then E4 blinded expert-oracle lease scoring. New external datasets remain gated by explicit approval and the R026 web-metadata ranking.
+
 ### Core Mechanism
 - Intent certificate rooted in trusted user selections and approvals.
 - Context authority labels over influence modes and decision classes.

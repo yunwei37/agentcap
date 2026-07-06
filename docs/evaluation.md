@@ -90,6 +90,16 @@ The submitted paper should present four anchor experiments, not the full R001-R1
 
 Result organization rule: E1 is the first figure/table, E2 is the decisive novelty ablation, E3 contains the R070-R198 compiler/checker path, and E4 contains authority/oracle scoring. Individual runs such as R175/R180 read activation, R187 checker-only evidence proof, R197 bounded write activation, and R198 residual delta should appear as sub-results inside E3, not as separate paper experiments.
 
+## Immediate Execution Gates
+The next work should advance these four gates in order. A new run is main-paper relevant only if it closes one of these gates; otherwise it belongs in the run tracker as provenance or appendix material.
+
+| Experiment | Current best evidence | Highest-risk missing evidence | Next executable gate | Success criterion | If it fails |
+|---|---|---|---|---|---|
+| E1 | R010/R017/R018 show saved and cached-output gateway blocking; R062/R065 show exact-oracle tau2 utility; R187/R197 show safe non-oracle bounded execution but no utility lift. | matched security and utility comparison against vanilla/static/tool-guard/OS-only wrappers on the same tasks. | Implement or run a matched wrapper over one existing local workload first, preferably AgentDojo or InjecAgent plus a tau2 utility slice; do not import a new dataset before this local gate. | IntentCap lowers dangerous actions with no dangerous gateway execute and reports bounded utility loss on the same task set. | Narrow TC4 to safety-layer evidence and keep utility as E3 follow-up rather than an E1 claim. |
+| E2 | R082 shows strongest provenance/IFC labelers explain current saved denials; R083/R087 show 6/6 residual lease-semantics denials in controlled/local workflow suites. | benchmark-derived residual cases where temporal/budget/delegation/proof lease semantics matter beyond provenance/taint. | Lift the R087 residual patterns into an existing benchmark/model loop or create a small benchmark-derived residual adapter from already local artifacts. | At least one residual class survives closest-baseline labelers and is blocked by IntentCap under model-proposed actions. | State novelty as proof-carrying lease organization and compiler/checker operationalization, not as a broad new context-provenance boundary. |
+| E3 | R070-R198 establish strict lowering, runtime binding, value proof, read/write activation, and residual localization; R198 leaves 2 adjusted DB-feasible misses and reward/env/planning work. | planner-confirmed candidate generation and CEGAR recovery that improves task reward without widening authority. | Build the next local tau2 compiler loop around planner-confirmed runtime candidates for the post-R198 residual, with proof-only/rank-only/filter-only negative controls. | More task-correct executions or reward progress with 0 dangerous execute, 0 tool errors, and no broad/runtime lease activation. | Report the current result as checker-safe bounded execution and make planner quality a future-work limitation. |
+| E4 | R019/R020/R022/R027/R081 quantify authority reduction against saved oracle profiles and static policies. | blinded expert-oracle leases and policy-family baselines on 10-30 sampled tasks. | Write an expert-oracle labeling protocol and sample manifest before scoring; then run `score_oracle_lease_distance.py` on expert rows, not only current project-generated oracle profiles. | IntentCap is closer to expert oracle and exposes less authority than static/Skill/MCP/policy baselines while preserving authorized data use. | Narrow least-privilege claim to saved-trace/object-scope authority reduction and avoid expert-oracle wording. |
+
 ## Detailed Evidence Placement
 | Block | Claim | Experiment | Baselines/variants | Metric(s) | Oracle | Figure/table | Priority |
 |---|---|---|---|---|---|---|---|
@@ -211,13 +221,11 @@ C2/C3 R185-R198 update: R187 clears the 3 remaining `modify_pending_order_items`
 - Manual review protocol for ambiguous natural-language summaries, recorded as non-final evidence.
 
 ### Run Order
-1. Sanity: local PDF wrong-sink trace with hand-written labels and leases.
-2. Setup probe: AgentDojo install/import and one documented benchmark command.
-3. Probe: AgentDojo subset with offline checker over hand-labeled traces.
-4. Baseline: vanilla/static allowlist on same subset.
-5. Expansion probe: InjecAgent or MCPTox adapter.
-6. Utility probe: tau2/tau3 or MCP-Bench benign tasks.
-7. Main runs: broaden task count and baselines after adapters stabilize.
+1. E1 matched wrapper gate: run IntentCap and named access-control/tool-guard baselines on one existing local security workload plus one existing local utility slice.
+2. E2 residual-lift gate: move at least one R087-style lease-semantics residual into a benchmark-derived or model-loop setting and re-run closest-baseline labelers.
+3. E3 planner/CEGAR gate: attack the post-R198 tau2 residual with planner-confirmed runtime candidate generation and proof/rank/filter negative controls.
+4. E4 expert-oracle gate: write the task sample manifest and blinded expert-lease protocol, then score distance against static/Skill/MCP/policy baselines.
+5. Expansion gate: only after one of E1-E4 has a positive result, broaden task count or request explicit approval for one R026-ranked external dataset.
 
 ## Run Tracker
 | Run ID | Claim | Purpose | Command/config | Commit | Machine | Seed/reps | Result path | Status |
