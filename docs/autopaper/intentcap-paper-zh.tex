@@ -112,7 +112,9 @@ Accepted leases 被分发到多个 enforcement boundaries。Context constructor 
 
 \section{形式化模型}
 
-\sys 的形式化目标不是为任意自然语言推理建模，而是为 runtime 已经抽取出的安全相关事件提供可检查语义。一个 agent execution 被表示为事件 trace：
+\sys 的形式化目标不是为任意自然语言推理建模，而是为上一节 checker pipeline 的输入和输出提供可检查语义。Compiler、gateway 和 runtime adapters 负责把模型计划、工具调用、MCP 调用、本地执行和 delegation 转换成安全相关事件；checker 只对这些事件、active leases、intent certificate 和 provenance labels 做确定性判断。因此，模型刻意不讨论 LLM 内部是否“理解”指令，而是讨论一个被 instrumentation 暴露出来的 authority-bearing event 是否应被接受。
+
+一个 agent execution 被表示为事件 trace：
 
 \[
 \tau = e_1, e_2, \ldots, e_n .
@@ -174,7 +176,7 @@ Checker judgment 写作：
 
 其中 \(\Gamma\) 是全局策略，\(I\) 是 intent certificate，\(K\) 是 active leases，\(\sigma\) 是 runtime state。事件被接受当且仅当存在 \(\kappa \in K\) 使得以下条件同时成立：operation 匹配；object 和 arguments 满足 lease predicate；event purpose 可由 \(I\) 推导；\(prov_C(e)\) 中的每个 context 都拥有影响该 decision class 所需的 authority；\(prov_D(e)\) 满足 flow policy；temporal guard 和 budget 尚未过期；delegated leases 不宽于 parent leases。
 
-由此得到三个安全性质：
+一个 trace 被接受，表示其中每个 protected event 都按上述 judgment 顺序通过 checker，并且每个通过事件对 \(\sigma\) 的更新会消耗预算、推进 temporal state、记录 provenance，并更新 active leases。下面三个性质是这一 checker semantics 的直接安全后果；它们不是关于任意 prompt 的全局声明，而是关于 accepted traces 的 trace-level properties。
 
 \paragraph{Property 1: No Unauthorized Influence.}
 对任意 accepted trace \(\tau\)，如果事件 \(e \in \tau\) 属于 protected decision class \(d\)，则对所有 \(c \in prov_C(e)\)，都有 \((mode_d,d) \in auth(c)\)。换言之，未被授权影响 \(d\) 的 context 不能成为该决策的控制依赖。
