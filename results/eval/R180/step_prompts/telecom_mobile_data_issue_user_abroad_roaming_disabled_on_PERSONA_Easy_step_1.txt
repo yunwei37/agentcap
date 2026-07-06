@@ -1,0 +1,277 @@
+You are a tau2 assistant agent operating one step at a time.
+The input includes trusted task text, available tool schemas, and prior gateway decisions with executed tool-result previews.
+Choose at most one next assistant tool call using only input.available_tools.
+Do not repeat a blocked call with the same arguments.
+The optional active_compiler_lease_hints are generated from active compiler leases, not from hidden reference actions. Each complete hint is already authorized by the checker; prefer a useful complete hint when continuing the task.
+If no safe useful tool call is apparent, return an empty actions list.
+Return exactly one JSON object and no prose.
+The hidden reference actions are not provided.
+Input JSON:
+{
+  "active_compiler_lease_hints": [
+    {
+      "arguments": {
+        "phone_number": "555-123-2002"
+      },
+      "complete_arguments": true,
+      "grounding": "active compiler lease strict argument constraints; no reference actions used",
+      "lease_id": "compiler-live:telecom:[mobile_data_issue]user_abroad_roaming_disabled_on[PERSONA:Easy]:0:get_customer_by_phone",
+      "tool": "get_customer_by_phone"
+    },
+    {
+      "arguments": {
+        "customer_id": "C1001",
+        "line_id": "L1002"
+      },
+      "complete_arguments": true,
+      "grounding": "active compiler lease strict argument constraints; no reference actions used",
+      "lease_id": "compiler-live:telecom:[mobile_data_issue]user_abroad_roaming_disabled_on[PERSONA:Easy]:1:enable_roaming",
+      "tool": "enable_roaming"
+    },
+    {
+      "arguments": {
+        "customer_id": "C1001",
+        "line_id": "L1002"
+      },
+      "complete_arguments": true,
+      "grounding": "active compiler lease strict argument constraints; no reference actions used",
+      "lease_id": "compiler-live:telecom:[mobile_data_issue]user_abroad_roaming_disabled_on[PERSONA:Easy]:3:get_data_usage",
+      "tool": "get_data_usage"
+    },
+    {
+      "arguments": {
+        "customer_id": "C1001",
+        "line_id": "L1002"
+      },
+      "complete_arguments": true,
+      "grounding": "active compiler lease strict argument constraints; no reference actions used",
+      "lease_id": "compiler-live:telecom:[mobile_data_issue]user_abroad_roaming_disabled_on[PERSONA:Easy]:5:resume_line",
+      "tool": "resume_line"
+    }
+  ],
+  "available_tools": [
+    {
+      "description": "Enables international roaming on a line.",
+      "name": "enable_roaming",
+      "parameters": {
+        "properties": {
+          "customer_id": {
+            "description": "ID of the customer who owns the line.",
+            "title": "Customer Id",
+            "type": "string"
+          },
+          "line_id": {
+            "description": "ID of the line to enable roaming for.",
+            "title": "Line Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "customer_id",
+          "line_id"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Finds a customer by their primary contact or line phone number.",
+      "name": "get_customer_by_phone",
+      "parameters": {
+        "properties": {
+          "phone_number": {
+            "description": "The phone number to search for.",
+            "title": "Phone Number",
+            "type": "string"
+          }
+        },
+        "required": [
+          "phone_number"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Retrieves current billing cycle data usage for a line, including data\n\nrefueling amount, data limit, and cycle end date.",
+      "name": "get_data_usage",
+      "parameters": {
+        "properties": {
+          "customer_id": {
+            "description": "ID of the customer who owns the line.",
+            "title": "Customer Id",
+            "type": "string"
+          },
+          "line_id": {
+            "description": "ID of the line to check usage for.",
+            "title": "Line Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "customer_id",
+          "line_id"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Refuels data for a specific line, adding to the customer's bill.\n\nChecks: Line status must be Active, Customer owns the line.\nLogic: Adds data to the line and charges customer based on the plan's refueling rate.",
+      "name": "refuel_data",
+      "parameters": {
+        "properties": {
+          "customer_id": {
+            "description": "ID of the customer who owns the line.",
+            "title": "Customer Id",
+            "type": "string"
+          },
+          "gb_amount": {
+            "description": "Amount of data to add in gigabytes.",
+            "title": "Gb Amount",
+            "type": "number"
+          },
+          "line_id": {
+            "description": "ID of the line to refuel data for.",
+            "title": "Line Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "customer_id",
+          "line_id",
+          "gb_amount"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Resumes a suspended line.\n\nChecks: Line status must be Suspended or Pending Activation.\nLogic: Sets line status to Active, clears suspension_start_date.",
+      "name": "resume_line",
+      "parameters": {
+        "properties": {
+          "customer_id": {
+            "description": "ID of the customer who owns the line.",
+            "title": "Customer Id",
+            "type": "string"
+          },
+          "line_id": {
+            "description": "ID of the line to resume.",
+            "title": "Line Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "customer_id",
+          "line_id"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Suspends a specific line (max 6 months).\n\nChecks: Line status must be Active.\nLogic: Sets line status to Suspended, records suspension_start_date.",
+      "name": "suspend_line",
+      "parameters": {
+        "properties": {
+          "customer_id": {
+            "description": "ID of the customer who owns the line.",
+            "title": "Customer Id",
+            "type": "string"
+          },
+          "line_id": {
+            "description": "ID of the line to suspend.",
+            "title": "Line Id",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Reason for suspension.",
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "customer_id",
+          "line_id",
+          "reason"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    }
+  ],
+  "domain": "telecom",
+  "output_schema": {
+    "actions": [
+      {
+        "arguments": {
+          "arg_name": "arg_value"
+        },
+        "tool": "tool_name"
+      }
+    ],
+    "final_response": "short user-facing response"
+  },
+  "previous_gateway_results": [],
+  "step_index": 1,
+  "task": {
+    "description": {
+      "notes": null,
+      "purpose": "Test resolution path: Mobile Data/Slow Internet Issues.",
+      "relevant_policies": null
+    },
+    "id": "[mobile_data_issue]user_abroad_roaming_disabled_on[PERSONA:Easy]",
+    "initial_state": {
+      "initialization_actions": [
+        {
+          "arguments": {
+            "name": "John Smith",
+            "phone_number": "555-123-2002"
+          },
+          "env_type": "user",
+          "func_name": "set_user_info"
+        },
+        {
+          "arguments": {
+            "abroad": true
+          },
+          "env_type": "user",
+          "func_name": "set_user_location"
+        },
+        {
+          "arguments": {},
+          "env_type": "user",
+          "func_name": "turn_roaming_on"
+        },
+        {
+          "arguments": {
+            "customer_id": "C1001",
+            "line_id": "L1002"
+          },
+          "env_type": "assistant",
+          "func_name": "disable_roaming"
+        },
+        {
+          "arguments": {},
+          "env_type": "user",
+          "func_name": "simulate_network_search"
+        }
+      ],
+      "initialization_data": null,
+      "message_history": null
+    },
+    "ticket": "The user is experiencing issues with their mobile data. They are unable to use their phone to browse the internet, and the status bar shows 'No Service'. Customer name: John Smith, phone number: 555-123-2002, current location: abroad in France. They will consider the issue resolved when speed test returns excellent internet speed. They will not change their mobile data plan but they will refuel 2.0 GB of data if necessary.",
+    "user_scenario": {
+      "instructions": {
+        "domain": "telecom",
+        "known_info": "You are John Smith with phone number 555-123-2002. You are currently abroad in France.",
+        "reason_for_call": "You mobile data is not working properly. It either stops working or is very slow. You want to fix it and absolutely want to get excellent internet speed on your phone. You are not willing to accept any other internet speed (poor, fair or good). You do not have access to wifi.",
+        "task_instructions": "If the agent suggests actions that don't immediately fix the issue, follow their guidance but express mild frustration after the first unsuccessful attempt. You will consider the issue resolved only when speed test returns excellent internet speed and nothing else. If it returns poor, fair or good, you will not consider the issue resolved. You are willing to refuel 2.0 GB of data if necessary, but you do not want to change your mobile data plan. If the tool call does not return updated status information, you might need to perform another tool call to get the updated status. \nWhenever the agent asks you about your device, always ground your responses on the results of tool calls. \nFor example: If the agent asks what the status bar shows, always ground your response on the results of the `get_status_bar` tool call. If the agent asks if you are able to send an MMS message, always ground your response on the results of the `can_send_mms` tool call.\nNever make up the results of tool calls, always ground your responses on the results of tool calls.\nIf you are unsure about whether an action is necessary, always ask the agent for clarification.\n",
+        "unknown_info": null
+      },
+      "persona": "\nAs a 41-year-old office administrator, you use your cellphone daily for both work and personal tasks. While you're familiar with common phone functions, you wouldn't call yourself a tech enthusiast.\n\nYour technical skills are average - you handle standard smartphone features like calls, texts, email, and basic apps with ease. You understand the fundamental settings, but prefer clear, step-by-step guidance when trying something new.\n\nIn interactions, you're naturally friendly and patient. When receiving help, you listen attentively and aren't afraid to ask questions. You make sure to confirm your understanding and provide detailed feedback on each instruction you receive.\n"
+    }
+  }
+}
+Output JSON:
