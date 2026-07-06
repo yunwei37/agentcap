@@ -1,0 +1,1 @@
+python scripts/build_expert_oracle_policy_rows.py --run-id R201P --manifest results/eval/R199/expert_oracle_task_manifest.csv --injecagent-case-exposure results/injecagent/R019/case_exposure.csv --mcptox-event-exposure results/mcptox/R020/event_exposure.csv --tau2-task-exposure results/tau2/R022/task_exposure.csv --output-dir results/eval/R201P

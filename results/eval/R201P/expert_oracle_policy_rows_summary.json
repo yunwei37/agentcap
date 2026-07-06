@@ -1,0 +1,69 @@
+{
+  "analysis": "expert-oracle policy-row normalization",
+  "git_status": "?? scripts/build_expert_oracle_policy_rows.py\n?? tests/test_build_expert_oracle_policy_rows.py",
+  "input_digests": [
+    {
+      "bytes": 18378,
+      "path": "results/eval/R199/expert_oracle_task_manifest.csv",
+      "sha256": "afca480c09d54d6093eecbff83b274e9e4d8a371e067fc825ab3fd2543fa543b"
+    },
+    {
+      "bytes": 748566,
+      "path": "results/injecagent/R019/case_exposure.csv",
+      "sha256": "47da8f08e634f149cbe66dd12d3298d7bf879f64c12df734136bf2fee3555b6b"
+    },
+    {
+      "bytes": 1969811,
+      "path": "results/mcptox/R020/event_exposure.csv",
+      "sha256": "2fbd4d0a9d7040d909289b249e9f6c5cc984a8c31d372f23690ba74c49276660"
+    },
+    {
+      "bytes": 3035614,
+      "path": "results/tau2/R022/task_exposure.csv",
+      "sha256": "a3ad3c23e1a6cc7306c3048d323d7f86bb2788b4686bcc95671865a10fbfac90"
+    }
+  ],
+  "machine": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "manifest_samples": 24,
+  "missing_policy_samples": [],
+  "missing_policy_samples_count": 0,
+  "no_dataset_sync": true,
+  "notes": [
+    "Rows are normalized policy candidates and baseline exposure proxies, not expert labels.",
+    "Use with score_expert_oracle_policy_distance.py only after adjudicated expert oracle rows exist.",
+    "The script reads saved R199/R019/R020/R022 local CSV artifacts only."
+  ],
+  "policy_rows": 144,
+  "project_head": "10425abc4a73cfd54dbfe2e0106f43032401c0c4",
+  "row_status": "ok",
+  "rows_by_benchmark": {
+    "InjecAgent": 48,
+    "MCPTox": 48,
+    "tau2-bench / tau3-bench": 48
+  },
+  "rows_by_kind": {
+    "baseline_exposure_proxy": 120,
+    "intentcap_candidate": 24
+  },
+  "rows_by_policy": {
+    "authentic_server_allowlist": 8,
+    "benchmark_user_tools": 8,
+    "catalog_all_tools": 8,
+    "domain_assistant_all": 8,
+    "domain_assistant_regular": 8,
+    "exact_tool_acl": 8,
+    "global_all_tools": 8,
+    "global_assistant_regular": 8,
+    "global_authentic_tools": 8,
+    "global_observed_tools": 8,
+    "intentcap_one_shot": 8,
+    "intentcap_provenance": 8,
+    "intentcap_reference_events": 8,
+    "observed_server_allowlist": 8,
+    "observed_trace_tools": 8,
+    "task_reference_tools": 8,
+    "task_tool_allowlist": 8,
+    "toolkit_allowlist": 8
+  },
+  "run_id": "R201P"
+}
