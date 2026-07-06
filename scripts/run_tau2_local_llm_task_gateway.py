@@ -97,6 +97,8 @@ ROW_FIELDS = [
     "stepwise_repair_map_priority_steps",
     "stepwise_repair_map_fallback",
     "stepwise_repair_map_fallback_steps",
+    "stepwise_tool_activation_priority",
+    "stepwise_tool_activation_priority_steps",
     "compiler_runtime_binding",
     "compiler_runtime_value_proof",
     "compiler_runtime_proof_probes",
@@ -104,6 +106,8 @@ ROW_FIELDS = [
     "compiler_runtime_binding_successes",
     "compiler_runtime_binding_missing_evidence",
     "compiler_runtime_binding_missing_value_proof",
+    "tool_activation_binding_attempts",
+    "tool_activation_binding_successes",
     "stepwise_steps_attempted",
     "stepwise_model_calls",
     "step_prompt_paths",
@@ -146,6 +150,11 @@ ACTION_ROW_FIELDS = [
     "runtime_binding_lease_id",
     "runtime_binding_reason",
     "runtime_binding_args_json",
+    "tool_activation_binding_attempted",
+    "tool_activation_binding_allowed",
+    "tool_activation_binding_lease_id",
+    "tool_activation_binding_reason",
+    "tool_activation_binding_args_json",
     "executed",
     "tool_error",
     "tool_result_preview",
@@ -450,6 +459,26 @@ def main() -> int:
         ),
     )
     parser.add_argument(
+        "--stepwise-tool-activation-csv",
+        type=Path,
+        default=None,
+        help=(
+            "Optional saved tool-activation candidate CSV, such as "
+            "results/eval/R174/tool_activation_candidates.csv. Only eligible "
+            "read-only rows with visible argument evidence are consumed."
+        ),
+    )
+    parser.add_argument(
+        "--stepwise-tool-activation-priority",
+        action="store_true",
+        help=(
+            "In compiler-corpus stepwise mode, synthesize visible read-only "
+            "missing-tool activation candidates before asking the model. The "
+            "call gets only a one-shot exact lease after visible-value recheck "
+            "and still passes through the normal gateway."
+        ),
+    )
+    parser.add_argument(
         "--stepwise-single-hint-fallback",
         action="store_true",
         help=(
@@ -549,6 +578,8 @@ def main() -> int:
         stepwise_repair_map_csv=args.stepwise_repair_map_csv,
         stepwise_repair_map_fallback=args.stepwise_repair_map_fallback,
         stepwise_repair_map_priority=args.stepwise_repair_map_priority,
+        stepwise_tool_activation_csv=args.stepwise_tool_activation_csv,
+        stepwise_tool_activation_priority=args.stepwise_tool_activation_priority,
         reference_user_simulator=args.reference_user_simulator,
         compiler_runtime_binding=args.compiler_runtime_binding,
         compiler_runtime_value_proof=args.compiler_runtime_value_proof,
@@ -594,6 +625,8 @@ def run_experiment(
     stepwise_repair_map_csv: Path | None = None,
     stepwise_repair_map_fallback: bool = False,
     stepwise_repair_map_priority: bool = False,
+    stepwise_tool_activation_csv: Path | None = None,
+    stepwise_tool_activation_priority: bool = False,
     reference_user_simulator: bool = False,
     compiler_runtime_binding: bool = False,
     compiler_runtime_value_proof: bool = False,
@@ -664,12 +697,29 @@ def run_experiment(
         raise ValueError("stepwise_repair_map_priority requires stepwise_repair_map_csv")
     if stepwise_repair_map_csv is not None and not stepwise_repair_map_csv.exists():
         raise ValueError(f"stepwise_repair_map_csv does not exist: {stepwise_repair_map_csv}")
+    if stepwise_tool_activation_priority and stepwise_tool_activation_csv is None:
+        raise ValueError(
+            "stepwise_tool_activation_priority requires stepwise_tool_activation_csv"
+        )
+    if (
+        stepwise_tool_activation_csv is not None
+        and not stepwise_tool_activation_csv.exists()
+    ):
+        raise ValueError(
+            f"stepwise_tool_activation_csv does not exist: {stepwise_tool_activation_csv}"
+        )
     if feedback_rounds > 0 and stepwise_max_steps > 0:
         raise ValueError("feedback_rounds and stepwise_max_steps are mutually exclusive")
+    if stepwise_tool_activation_priority and stepwise_max_steps <= 0:
+        raise ValueError("stepwise_tool_activation_priority requires stepwise_max_steps")
     if tool_exposure not in TOOL_EXPOSURE_MODES:
         raise ValueError(f"tool_exposure must be one of {TOOL_EXPOSURE_MODES}")
     if lease_source not in LEASE_SOURCE_MODES:
         raise ValueError(f"lease_source must be one of {LEASE_SOURCE_MODES}")
+    if stepwise_tool_activation_priority and lease_source != "compiler-corpus":
+        raise ValueError(
+            "stepwise_tool_activation_priority requires compiler-corpus lease source"
+        )
     compiler_run_dirs = _normalize_compiler_run_dirs(compiler_run_dir)
     if lease_source == "compiler-corpus" and not compiler_run_dirs:
         raise ValueError("compiler_run_dir is required for compiler-corpus lease source")
@@ -740,6 +790,11 @@ def run_experiment(
     repair_map_by_task = (
         load_repair_map_candidates(stepwise_repair_map_csv)
         if stepwise_repair_map_csv is not None
+        else {}
+    )
+    tool_activation_by_task = (
+        load_read_tool_activation_candidates(stepwise_tool_activation_csv)
+        if stepwise_tool_activation_csv is not None
         else {}
     )
 
@@ -817,6 +872,11 @@ def run_experiment(
                     repair_map_candidates=repair_map_by_task.get((domain, task_id), []),
                     stepwise_repair_map_fallback=stepwise_repair_map_fallback,
                     stepwise_repair_map_priority=stepwise_repair_map_priority,
+                    tool_activation_candidates=tool_activation_by_task.get(
+                        (domain, task_id),
+                        [],
+                    ),
+                    stepwise_tool_activation_priority=stepwise_tool_activation_priority,
                     reference_user_simulator=reference_user_simulator,
                     compiler_runtime_binding=compiler_runtime_binding,
                     compiler_runtime_value_proof=compiler_runtime_value_proof,
@@ -883,6 +943,9 @@ def run_experiment(
         stepwise_repair_map_fallback=stepwise_repair_map_fallback,
         stepwise_repair_map_priority=stepwise_repair_map_priority,
         repair_map_by_task=repair_map_by_task,
+        stepwise_tool_activation_csv=stepwise_tool_activation_csv,
+        stepwise_tool_activation_priority=stepwise_tool_activation_priority,
+        tool_activation_by_task=tool_activation_by_task,
         reference_user_simulator=reference_user_simulator,
         compiler_runtime_binding=compiler_runtime_binding,
         compiler_runtime_value_proof=compiler_runtime_value_proof,
@@ -958,6 +1021,8 @@ def _run_task(
     repair_map_candidates: list[dict[str, Any]],
     stepwise_repair_map_fallback: bool,
     stepwise_repair_map_priority: bool,
+    tool_activation_candidates: list[dict[str, Any]],
+    stepwise_tool_activation_priority: bool,
     reference_user_simulator: bool,
     compiler_runtime_binding: bool,
     compiler_runtime_value_proof: bool,
@@ -1005,6 +1070,13 @@ def _run_task(
             expose_runtime_bindable=compiler_runtime_binding,
             runtime_proof_probes=compiler_runtime_proof_probes,
         )
+        activation_object_names = attach_read_tool_activation_templates(
+            trace=trace,
+            domain=domain,
+            task_id=task_id,
+            candidates=tool_activation_candidates,
+        )
+        active_object_names.update(activation_object_names)
     else:
         trace = build_task_trace(domain, task_id, reference_actions)
         active_tool_names = {action.name for action in reference_actions}
@@ -1101,6 +1173,8 @@ def _run_task(
             repair_map_candidates=repair_map_candidates,
             repair_map_fallback=stepwise_repair_map_fallback,
             repair_map_priority=stepwise_repair_map_priority,
+            tool_activation_candidates=tool_activation_candidates,
+            tool_activation_priority=stepwise_tool_activation_priority,
             pending_reference_actions=pending,
             reference_by_event=reference_by_event,
             reference_event_ids=[action.event_id for action in reference_actions],
@@ -1170,6 +1244,7 @@ def _run_task(
             include_reference_event_ids=lease_source == "exact-reference",
             compiler_runtime_binding=compiler_runtime_binding,
             compiler_runtime_value_proof=compiler_runtime_value_proof,
+            raw_task=raw_task,
         )
 
         if (
@@ -1231,6 +1306,7 @@ def _run_task(
                 include_reference_event_ids=lease_source == "exact-reference",
                 compiler_runtime_binding=compiler_runtime_binding,
                 compiler_runtime_value_proof=compiler_runtime_value_proof,
+                raw_task=raw_task,
             )
 
     if reference_user_simulator:
@@ -1366,14 +1442,26 @@ def _run_task(
         "stepwise_repair_map_fallback_steps": sum(
             1 for step in stepwise_result["steps"] if step.get("repair_map_fallback")
         ),
+        "stepwise_tool_activation_priority": stepwise_tool_activation_priority,
+        "stepwise_tool_activation_priority_steps": sum(
+            1
+            for step in stepwise_result["steps"]
+            if step.get("tool_activation_priority")
+        ),
         "compiler_runtime_binding": compiler_runtime_binding,
         "compiler_runtime_value_proof": compiler_runtime_value_proof,
         "compiler_runtime_proof_probes": compiler_runtime_proof_probes,
         "compiler_runtime_binding_attempts": sum(
-            1 for row in action_rows if row.get("runtime_binding_attempted")
+            1
+            for row in action_rows
+            if row.get("runtime_binding_attempted")
+            and not row.get("tool_activation_binding_attempted")
         ),
         "compiler_runtime_binding_successes": sum(
-            1 for row in action_rows if row.get("runtime_binding_allowed")
+            1
+            for row in action_rows
+            if row.get("runtime_binding_allowed")
+            and not row.get("tool_activation_binding_allowed")
         ),
         "compiler_runtime_binding_missing_evidence": sum(
             1
@@ -1386,6 +1474,12 @@ def _run_task(
             if str(row.get("runtime_binding_reason", "")).startswith(
                 "missing runtime value proof"
             )
+        ),
+        "tool_activation_binding_attempts": sum(
+            1 for row in action_rows if row.get("tool_activation_binding_attempted")
+        ),
+        "tool_activation_binding_successes": sum(
+            1 for row in action_rows if row.get("tool_activation_binding_allowed")
         ),
         "stepwise_steps_attempted": len(stepwise_result["steps"]),
         "stepwise_model_calls": len(stepwise_model_calls),
@@ -1529,6 +1623,8 @@ def run_stepwise_model_loop(
     include_reference_event_ids: bool,
     compiler_runtime_binding: bool,
     compiler_runtime_value_proof: bool = False,
+    tool_activation_candidates: list[dict[str, Any]] | None = None,
+    tool_activation_priority: bool = False,
 ) -> dict[str, Any]:
     task_id = str(raw_task.get("id", ""))
     steps: list[dict[str, Any]] = []
@@ -1539,6 +1635,7 @@ def run_stepwise_model_loop(
     last_returncode = 0
     reference_event_set = set(reference_event_ids)
     empty_retry_count = 0
+    tool_activation_candidates = tool_activation_candidates or []
 
     for step_index in range(1, max_steps + 1):
         visible_tools = select_tool_schemas(
@@ -1593,6 +1690,17 @@ def run_stepwise_model_loop(
         prompt_path.write_text(prompt)
 
         priority_repair_call = None
+        priority_tool_activation_call = None
+        if not dry_run and tool_activation_priority:
+            priority_tool_activation_call = build_tool_activation_priority_call(
+                tool_activation_candidates=tool_activation_candidates,
+                domain=domain,
+                task_id=task_id,
+                step_index=step_index,
+                raw_task=raw_task,
+                action_rows=action_rows,
+                pending_reference_actions=pending_reference_actions,
+            )
         if not dry_run and repair_map_priority:
             priority_repair_call = build_repair_map_fallback_call(
                 repair_map_candidates=repair_map_candidates,
@@ -1604,7 +1712,9 @@ def run_stepwise_model_loop(
                 pending_reference_actions=pending_reference_actions,
             )
 
-        if priority_repair_call is not None:
+        if priority_tool_activation_call is not None:
+            stdout, stderr, returncode, latency = "", "", 0, 0.0
+        elif priority_repair_call is not None:
             stdout, stderr, returncode, latency = "", "", 0, 0.0
         elif dry_run:
             stdout, stderr, returncode, latency = "", "", 0, 0.0
@@ -1626,7 +1736,12 @@ def run_stepwise_model_loop(
 
         parsed = None if dry_run else parse_model_json(stdout)
         parse_ok = parse_ok or parsed is not None
-        model_calls = [priority_repair_call] if priority_repair_call is not None else normalize_model_calls(parsed)[:1]
+        if priority_tool_activation_call is not None:
+            model_calls = [priority_tool_activation_call]
+        elif priority_repair_call is not None:
+            model_calls = [priority_repair_call]
+        else:
+            model_calls = normalize_model_calls(parsed)[:1]
         single_hint_fallback_used = False
         hint_choice_fallback_used = False
         compiler_lease_fallback_used = False
@@ -1635,6 +1750,7 @@ def run_stepwise_model_loop(
         runtime_evidence_hint_choice_fallback_used = False
         repair_map_fallback_used = False
         repair_map_priority_used = priority_repair_call is not None
+        tool_activation_priority_used = priority_tool_activation_call is not None
         hint_choice_prompt_path = ""
         hint_choice_raw_path = ""
         hint_choice_parsed = None
@@ -1791,6 +1907,13 @@ def run_stepwise_model_loop(
             action_rows=action_rows,
             pending_reference_actions=pending_reference_actions,
         )
+        tool_activation_candidates_this_step = tool_activation_candidates_for_step(
+            tool_activation_candidates=tool_activation_candidates,
+            step_index=step_index,
+            raw_task=raw_task,
+            action_rows=action_rows,
+            pending_reference_actions=pending_reference_actions,
+        )
         all_calls.extend(model_calls)
         before_row_count = len(action_rows)
         blocked_calls = execute_model_calls(
@@ -1811,6 +1934,7 @@ def run_stepwise_model_loop(
             include_reference_event_ids=include_reference_event_ids,
             compiler_runtime_binding=compiler_runtime_binding,
             compiler_runtime_value_proof=compiler_runtime_value_proof,
+            raw_task=raw_task,
         )
         steps.append(
             {
@@ -1840,6 +1964,8 @@ def run_stepwise_model_loop(
                 "repair_map_candidates": repair_candidates_this_step,
                 "repair_map_fallback": repair_map_fallback_used,
                 "repair_map_priority": repair_map_priority_used,
+                "tool_activation_candidates": tool_activation_candidates_this_step,
+                "tool_activation_priority": tool_activation_priority_used,
                 "hint_choice_prompt_path": hint_choice_prompt_path,
                 "hint_choice_raw_output_path": hint_choice_raw_path,
                 "hint_choice_raw_output_sha256": (
@@ -1889,6 +2015,7 @@ def execute_model_calls(
     include_reference_event_ids: bool,
     compiler_runtime_binding: bool = False,
     compiler_runtime_value_proof: bool = False,
+    raw_task: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     blocked_calls: list[dict[str, Any]] = []
     for offset, model_call in enumerate(model_calls):
@@ -1904,15 +2031,18 @@ def execute_model_calls(
         if bound_action is not None:
             pending_reference_actions.remove(bound_action)
             bound_reference_ids.append(bound_action.event_id)
-        record, runtime_binding = call_gateway_with_optional_runtime_binding(
-            gateway=gateway,
-            event=event,
-            domain=domain,
-            task_id=task_id,
-            index=index,
-            action_rows=action_rows,
-            enabled=compiler_runtime_binding,
-            require_value_proof=compiler_runtime_value_proof,
+        record, runtime_binding, tool_activation_binding = (
+            call_gateway_with_optional_runtime_binding(
+                gateway=gateway,
+                event=event,
+                domain=domain,
+                task_id=task_id,
+                index=index,
+                action_rows=action_rows,
+                enabled=compiler_runtime_binding,
+                require_value_proof=compiler_runtime_value_proof,
+                raw_task=raw_task or {},
+            )
         )
         decision = record.get("decision", {})
         raw_model_args = dict(model_call.get("arguments") or {})
@@ -1985,6 +2115,15 @@ def execute_model_calls(
                     sort_keys=True,
                     default=_json_default,
                 ),
+                "tool_activation_binding_attempted": tool_activation_binding["attempted"],
+                "tool_activation_binding_allowed": tool_activation_binding["allowed"],
+                "tool_activation_binding_lease_id": tool_activation_binding["lease_id"],
+                "tool_activation_binding_reason": tool_activation_binding["reason"],
+                "tool_activation_binding_args_json": json.dumps(
+                    tool_activation_binding["args"],
+                    sort_keys=True,
+                    default=_json_default,
+                ),
                 "executed": bool(record.get("executed")),
                 "tool_error": bool(record.get("error")),
                 "tool_result_preview": result_preview,
@@ -2014,7 +2153,8 @@ def call_gateway_with_optional_runtime_binding(
     action_rows: list[dict[str, Any]],
     enabled: bool,
     require_value_proof: bool = False,
-) -> tuple[dict[str, Any], dict[str, Any]]:
+    raw_task: dict[str, Any] | None = None,
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     default_binding = {
         "attempted": False,
         "allowed": False,
@@ -2022,9 +2162,45 @@ def call_gateway_with_optional_runtime_binding(
         "reason": "",
         "args": {},
     }
+    default_activation = dict(default_binding)
     decision = gateway.trace_gateway.authorize(event).to_dict()
-    if decision.get("allowed") or not enabled:
-        return gateway.call(event, decision=decision), default_binding
+    if decision.get("allowed"):
+        return gateway.call(event, decision=decision), default_binding, default_activation
+
+    activation = build_visible_read_tool_activation_lease(
+        trace=gateway.trace_gateway.trace,
+        event=event,
+        domain=domain,
+        task_id=task_id,
+        index=index,
+        raw_task=raw_task or {},
+        action_rows=action_rows,
+    )
+    if activation["attempted"]:
+        if activation.get("lease") is None:
+            return gateway.call(event, decision=decision), default_binding, {
+                "attempted": True,
+                "allowed": False,
+                "lease_id": "",
+                "reason": activation["reason"],
+                "args": activation["args"],
+            }
+        lease = activation["lease"]
+        gateway.trace_gateway.leases.append(lease)
+        record = gateway.call(event)
+        activation_decision = record.get("decision", {})
+        return record, default_binding, {
+            "attempted": True,
+            "allowed": bool(activation_decision.get("allowed")),
+            "lease_id": str(lease.get("id", "")),
+            "reason": str(activation["reason"])
+            if activation_decision.get("allowed")
+            else str(activation_decision.get("reason", "")),
+            "args": activation["args"],
+        }
+
+    if not enabled:
+        return gateway.call(event, decision=decision), default_binding, default_activation
 
     binding = build_runtime_bound_compiler_lease(
         trace=gateway.trace_gateway.trace,
@@ -2036,26 +2212,121 @@ def call_gateway_with_optional_runtime_binding(
         require_value_proof=require_value_proof,
     )
     if not binding["attempted"] or binding.get("lease") is None:
-        return gateway.call(event, decision=decision), {
-            "attempted": binding["attempted"],
-            "allowed": False,
-            "lease_id": "",
-            "reason": binding["reason"],
-            "args": binding["args"],
-        }
+        return (
+            gateway.call(event, decision=decision),
+            {
+                "attempted": binding["attempted"],
+                "allowed": False,
+                "lease_id": "",
+                "reason": binding["reason"],
+                "args": binding["args"],
+            },
+            default_activation,
+        )
 
     lease = binding["lease"]
     gateway.trace_gateway.leases.append(lease)
     record = gateway.call(event)
     runtime_decision = record.get("decision", {})
-    return record, {
+    return (
+        record,
+        {
+            "attempted": True,
+            "allowed": bool(runtime_decision.get("allowed")),
+            "lease_id": str(lease.get("id", "")),
+            "reason": str(binding["reason"]) if runtime_decision.get("allowed") else str(
+                runtime_decision.get("reason", "")
+            ),
+            "args": binding["args"],
+        },
+        default_activation,
+    )
+
+
+def build_visible_read_tool_activation_lease(
+    *,
+    trace: dict[str, Any],
+    event: dict[str, Any],
+    domain: str,
+    task_id: str,
+    index: int,
+    raw_task: dict[str, Any],
+    action_rows: list[dict[str, Any]],
+) -> dict[str, Any]:
+    markers = event.get("intentcap_markers")
+    if not isinstance(markers, dict) or not markers.get(
+        "_intentcap_synthesized_from_tool_activation"
+    ):
+        return {"attempted": False, "reason": "", "args": {}, "lease": None}
+    marker_event_id = str(markers.get("_intentcap_tool_activation_event_id", ""))
+    templates = (
+        (trace.get("metadata") or {}).get("read_tool_activation_templates")
+        if isinstance(trace.get("metadata"), dict)
+        else []
+    )
+    if not isinstance(templates, list):
+        templates = []
+    event_args = {
+        key: value
+        for key, value in dict(event.get("args") or {}).items()
+        if not str(key).startswith("_intentcap_")
+    }
+    visible_state = _visible_state_text(raw_task, action_rows)
+    reasons: list[str] = []
+    for template in templates:
+        if not isinstance(template, dict):
+            continue
+        if marker_event_id and str(template.get("event_id", "")) != marker_event_id:
+            continue
+        if str(template.get("object", "")) != str(event.get("object", "")):
+            reasons.append(f"object mismatch for {template.get('id')}")
+            continue
+        if str(template.get("tool_type", "")).lower() != "read":
+            reasons.append(f"non-read activation template {template.get('id')}")
+            continue
+        allowed_arg_keys = {str(name) for name in template.get("allowed_arg_keys", [])}
+        if set(event_args) != allowed_arg_keys:
+            reasons.append(
+                f"argument key set mismatch for {template.get('id')}: "
+                f"expected {sorted(allowed_arg_keys)}, got {sorted(event_args)}"
+            )
+            continue
+        template_args = dict(template.get("args") or {})
+        if event_args != template_args:
+            reasons.append(f"argument value mismatch for {template.get('id')}")
+            continue
+        if not all(
+            _value_is_grounded(value, visible_state)
+            for value in _leaf_values(event_args)
+        ):
+            reasons.append(f"missing visible argument evidence for {template.get('id')}")
+            continue
+        lease_id = f"tool-activation-live:{domain}:{task_id}:{index}:{template.get('tool')}"
+        return {
+            "attempted": True,
+            "reason": "visible read-tool activation bound",
+            "args": event_args,
+            "lease": {
+                "id": lease_id,
+                "op": "tool.call",
+                "object": str(template.get("object", "")),
+                "args": {
+                    name: {"equals": event_args[name]}
+                    for name in sorted(allowed_arg_keys)
+                },
+                "allowed_arg_keys": sorted(allowed_arg_keys),
+                "control_may_depend_on": [TRUSTED_TASK_INTENT],
+                "data_may_depend_on": [TRUSTED_TASK_INTENT],
+                "budget": {"invocations": 1},
+                "tool_activation_template_id": str(template.get("id", "")),
+                "tool_activation_event_id": str(template.get("event_id", "")),
+            },
+        }
+    return {
         "attempted": True,
-        "allowed": bool(runtime_decision.get("allowed")),
-        "lease_id": str(lease.get("id", "")),
-        "reason": str(binding["reason"]) if runtime_decision.get("allowed") else str(
-            runtime_decision.get("reason", "")
-        ),
-        "args": binding["args"],
+        "reason": "; ".join(reasons) if reasons else "no read-tool activation template accepted",
+        "args": event_args,
+        "lease": None,
     }
 
 
@@ -2856,6 +3127,122 @@ def load_repair_map_candidates(csv_path: Path | None) -> dict[tuple[str, str], l
     return by_task
 
 
+def load_read_tool_activation_candidates(
+    csv_path: Path | None,
+) -> dict[tuple[str, str], list[dict[str, Any]]]:
+    """Load saved read-only missing-tool activation candidates.
+
+    The CSV is generated by ``analyze_tau2_tool_activation_gaps.py``. Only rows
+    that are already proven read-only, schema-backed, and visible-argument-ready
+    are loaded; write/high-impact rows remain evidence-gathering targets.
+    """
+    if csv_path is None or not csv_path.exists():
+        return {}
+    by_task: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    with csv_path.open(newline="", encoding="utf-8") as handle:
+        for row in csv.DictReader(handle):
+            if not _truthy(row.get("activation_eligible", "")):
+                continue
+            if str(row.get("tool_type", "")).lower() != "read":
+                continue
+            if (
+                str(row.get("activation_kind", ""))
+                != "read_only_tool_activation_from_visible_argument"
+            ):
+                continue
+            if str(row.get("proof_status", "")) != "activation_candidate_ready":
+                continue
+            candidate = _parse_json_dict(row.get("candidate_json", ""))
+            tool = str(candidate.get("tool") or row.get("tool", ""))
+            args = candidate.get("arguments", _parse_json_dict(row.get("args_json", "")))
+            if not tool or not isinstance(args, dict):
+                continue
+            activation = {
+                "domain": str(row.get("domain", "")),
+                "task_id": str(row.get("task_id", "")),
+                "event_id": str(row.get("event_id", "")),
+                "tool": tool,
+                "arguments": args,
+                "activation_kind": str(row.get("activation_kind", "")),
+                "proof_status": str(row.get("proof_status", "")),
+                "earliest_activation_step": _int_or_zero(
+                    row.get("earliest_arg_visible_step", "")
+                ),
+            }
+            by_task.setdefault((activation["domain"], activation["task_id"]), []).append(
+                activation
+            )
+    for rows in by_task.values():
+        rows.sort(
+            key=lambda row: (
+                int(row.get("earliest_activation_step", 0)),
+                str(row.get("event_id", "")),
+                str(row.get("tool", "")),
+                json.dumps(row.get("arguments", {}), sort_keys=True, default=_json_default),
+            )
+        )
+    return by_task
+
+
+def attach_read_tool_activation_templates(
+    *,
+    trace: dict[str, Any],
+    domain: str,
+    task_id: str,
+    candidates: list[dict[str, Any]],
+) -> set[str]:
+    """Attach read-tool activation templates without exposing tool schemas."""
+    if not candidates:
+        return set()
+    metadata = trace.setdefault("metadata", {})
+    if not isinstance(metadata, dict):
+        metadata = {}
+        trace["metadata"] = metadata
+    templates: list[dict[str, Any]] = []
+    object_names: set[str] = set()
+    decisions: set[str] = set()
+    for index, candidate in enumerate(candidates):
+        if str(candidate.get("domain", "")) != domain or str(candidate.get("task_id", "")) != task_id:
+            continue
+        tool = str(candidate.get("tool", ""))
+        args = candidate.get("arguments")
+        event_id = str(candidate.get("event_id", ""))
+        if not tool or not event_id or not isinstance(args, dict):
+            continue
+        object_name = f"tau2.{domain}.assistant.{tool}"
+        templates.append(
+            {
+                "id": f"tool-activation-template:{domain}:{task_id}:{index}:{tool}",
+                "tool": tool,
+                "object": object_name,
+                "event_id": event_id,
+                "args": dict(args),
+                "allowed_arg_keys": sorted(str(key) for key in args),
+                "activation_kind": str(candidate.get("activation_kind", "")),
+                "proof_status": str(candidate.get("proof_status", "")),
+                "earliest_activation_step": int(
+                    candidate.get("earliest_activation_step", 0)
+                ),
+                "tool_type": "read",
+            }
+        )
+        object_names.add(object_name)
+        decisions.add(f"{domain}.{tool}.tool_choice")
+    if not templates:
+        return set()
+    metadata.setdefault("read_tool_activation_templates", []).extend(templates)
+    metadata["read_tool_activation_template_count"] = len(
+        metadata.get("read_tool_activation_templates", [])
+    )
+    labels = trace.setdefault("labels", {})
+    trusted_label = labels.setdefault(TRUSTED_TASK_INTENT, {})
+    allowed = trusted_label.setdefault("allowed", {})
+    allowed_tool_select = set(allowed.get("tool_select", []))
+    allowed_tool_select.update(decisions)
+    allowed["tool_select"] = sorted(allowed_tool_select)
+    return object_names
+
+
 def build_repair_map_fallback_call(
     *,
     repair_map_candidates: list[dict[str, Any]],
@@ -2913,6 +3300,80 @@ def repair_map_candidates_for_step(
     available: list[dict[str, Any]] = []
     for candidate in repair_map_candidates:
         if int(candidate.get("earliest_synthesis_step", 0)) > step_index:
+            continue
+        event_id = str(candidate.get("event_id", ""))
+        if event_id and event_id not in pending_event_ids:
+            continue
+        tool = str(candidate.get("tool", ""))
+        args = dict(candidate.get("arguments") or {})
+        args_key = json.dumps(args, sort_keys=True, default=_json_default)
+        if (tool, args_key) in attempted:
+            continue
+        if not all(_value_is_grounded(value, visible_state) for value in _leaf_values(args)):
+            continue
+        available.append(candidate)
+    return available
+
+
+def build_tool_activation_priority_call(
+    *,
+    tool_activation_candidates: list[dict[str, Any]],
+    domain: str,
+    task_id: str,
+    step_index: int,
+    raw_task: dict[str, Any],
+    action_rows: list[dict[str, Any]],
+    pending_reference_actions: list[ReferenceAction],
+) -> dict[str, Any] | None:
+    candidates = tool_activation_candidates_for_step(
+        tool_activation_candidates=tool_activation_candidates,
+        step_index=step_index,
+        raw_task=raw_task,
+        action_rows=action_rows,
+        pending_reference_actions=pending_reference_actions,
+    )
+    if not candidates:
+        return None
+    selected = candidates[0]
+    return {
+        "tool": str(selected["tool"]),
+        "arguments": {
+            **dict(selected["arguments"]),
+            "_intentcap_synthesized_from_tool_activation": True,
+            "_intentcap_tool_activation_event_id": str(selected.get("event_id", "")),
+            "_intentcap_tool_activation_kind": str(
+                selected.get("activation_kind", "")
+            ),
+            "_intentcap_tool_activation_source": "saved_visible_read_activation_candidate",
+        },
+    }
+
+
+def tool_activation_candidates_for_step(
+    *,
+    tool_activation_candidates: list[dict[str, Any]],
+    step_index: int,
+    raw_task: dict[str, Any],
+    action_rows: list[dict[str, Any]],
+    pending_reference_actions: list[ReferenceAction],
+) -> list[dict[str, Any]]:
+    visible_state = _visible_state_text(raw_task, action_rows)
+    attempted = {
+        (
+            str(row.get("model_tool", "")),
+            json.dumps(
+                _parse_json_dict(row.get("model_args_json", "")),
+                sort_keys=True,
+                default=_json_default,
+            ),
+        )
+        for row in action_rows
+        if row.get("model_tool")
+    }
+    pending_event_ids = {action.event_id for action in pending_reference_actions}
+    available: list[dict[str, Any]] = []
+    for candidate in tool_activation_candidates:
+        if int(candidate.get("earliest_activation_step", 0)) > step_index:
             continue
         event_id = str(candidate.get("event_id", ""))
         if event_id and event_id not in pending_event_ids:
@@ -4054,7 +4515,10 @@ def bind_model_call(
         if not str(key).startswith("_intentcap_")
     }
     bound = None
-    preferred_event_id = str(raw_args.get("_intentcap_repair_map_event_id", ""))
+    preferred_event_id = str(
+        raw_args.get("_intentcap_repair_map_event_id", "")
+        or raw_args.get("_intentcap_tool_activation_event_id", "")
+    )
     if preferred_event_id:
         for action in pending_reference_actions:
             if (
@@ -4089,6 +4553,11 @@ def bind_model_call(
             "control_provenance": [TRUSTED_TASK_INTENT],
             "data_provenance": [TRUSTED_TASK_INTENT],
             "intentcap_event_type": "tau2_model_proposed_action",
+            "intentcap_markers": {
+                key: value
+                for key, value in raw_args.items()
+                if str(key).startswith("_intentcap_")
+            },
             "domain": domain,
             "task_id": task_id,
             "logical_tool": tool,
@@ -4217,6 +4686,9 @@ def summarize(
     stepwise_repair_map_fallback: bool = False,
     stepwise_repair_map_priority: bool = False,
     repair_map_by_task: dict[tuple[str, str], list[dict[str, Any]]] | None = None,
+    stepwise_tool_activation_csv: Path | None = None,
+    stepwise_tool_activation_priority: bool = False,
+    tool_activation_by_task: dict[tuple[str, str], list[dict[str, Any]]] | None = None,
     reference_user_simulator: bool = False,
     compiler_runtime_binding: bool = False,
     compiler_runtime_value_proof: bool = False,
@@ -4324,6 +4796,10 @@ def summarize(
         notes.append(
             "Stepwise repair-map priority is a post-hoc scheduling upper-bound diagnostic: it executes visible pending repair-map candidates before asking the model, and each synthesized call still passes through the normal gateway. It is not counted as non-oracle compiler success."
         )
+    if stepwise_tool_activation_priority:
+        notes.append(
+            "Stepwise tool-activation priority consumes only saved read-only activation candidates, rechecks visible argument evidence at runtime, mints one-shot exact leases, and then sends synthesized calls through the normal gateway. It is a bounded diagnostic, not a broad tool exposure policy."
+        )
     if reference_user_simulator:
         notes.append(
             "Reference user-simulator replay executes benchmark user-side actions only after preceding assistant reference actions have executed; these actions are counted separately and do not expand assistant authority."
@@ -4391,6 +4867,18 @@ def summarize(
         "stepwise_repair_map_candidate_rows": sum(
             len(rows) for rows in (repair_map_by_task or {}).values()
         ),
+        "stepwise_tool_activation_csv": str(stepwise_tool_activation_csv or ""),
+        "stepwise_tool_activation_digest": (
+            _file_digest(stepwise_tool_activation_csv)
+            if stepwise_tool_activation_csv is not None
+            and stepwise_tool_activation_csv.exists()
+            else None
+        ),
+        "stepwise_tool_activation_priority": stepwise_tool_activation_priority,
+        "stepwise_tool_activation_candidate_tasks": len(tool_activation_by_task or {}),
+        "stepwise_tool_activation_candidate_rows": sum(
+            len(rows) for rows in (tool_activation_by_task or {}).values()
+        ),
         "reference_user_simulator": reference_user_simulator,
         "compiler_runtime_binding": compiler_runtime_binding,
         "compiler_runtime_value_proof": compiler_runtime_value_proof,
@@ -4457,11 +4945,21 @@ def summarize(
         "stepwise_repair_map_priority_steps": sum(
             int(row.get("stepwise_repair_map_priority_steps", 0)) for row in task_rows
         ),
+        "stepwise_tool_activation_priority_steps": sum(
+            int(row.get("stepwise_tool_activation_priority_steps", 0))
+            for row in task_rows
+        ),
         "compiler_runtime_binding_attempts": sum(
-            1 for row in action_rows if row.get("runtime_binding_attempted")
+            1
+            for row in action_rows
+            if row.get("runtime_binding_attempted")
+            and not row.get("tool_activation_binding_attempted")
         ),
         "compiler_runtime_binding_successes": sum(
-            1 for row in action_rows if row.get("runtime_binding_allowed")
+            1
+            for row in action_rows
+            if row.get("runtime_binding_allowed")
+            and not row.get("tool_activation_binding_allowed")
         ),
         "compiler_runtime_binding_missing_evidence": sum(
             1
@@ -4474,6 +4972,12 @@ def summarize(
             if str(row.get("runtime_binding_reason", "")).startswith(
                 "missing runtime value proof"
             )
+        ),
+        "tool_activation_binding_attempts": sum(
+            1 for row in action_rows if row.get("tool_activation_binding_attempted")
+        ),
+        "tool_activation_binding_successes": sum(
+            1 for row in action_rows if row.get("tool_activation_binding_allowed")
         ),
         "tasks_with_model_calls": sum(1 for row in task_rows if int(row["model_calls"]) > 0),
         "reference_actions": sum(int(row["reference_actions"]) for row in task_rows),

@@ -516,20 +516,23 @@ def test_compiler_runtime_binding_requires_prior_tool_result_evidence():
         },
     )
 
-    blocked, blocked_binding = runner.call_gateway_with_optional_runtime_binding(
-        gateway=gateway_without_evidence,
-        event=event,
-        domain="mock",
-        task_id="t",
-        index=1,
-        action_rows=[],
-        enabled=True,
+    blocked, blocked_binding, blocked_activation = (
+        runner.call_gateway_with_optional_runtime_binding(
+            gateway=gateway_without_evidence,
+            event=event,
+            domain="mock",
+            task_id="t",
+            index=1,
+            action_rows=[],
+            enabled=True,
+        )
     )
 
     assert blocked["executed"] is False
     assert blocked_binding["attempted"] is True
     assert blocked_binding["allowed"] is False
     assert blocked_binding["reason"].startswith("missing runtime evidence")
+    assert blocked_activation["attempted"] is False
 
     trace_with_evidence, _, _ = runner.build_compiler_corpus_task_trace(
         domain="mock",
@@ -566,19 +569,21 @@ def test_compiler_runtime_binding_requires_prior_tool_result_evidence():
             }
         },
     )
-    allowed, allowed_binding = runner.call_gateway_with_optional_runtime_binding(
-        gateway=gateway_with_evidence,
-        event=event,
-        domain="mock",
-        task_id="t",
-        index=1,
-        action_rows=[
-            {
-                "executed": True,
-                "tool_result_preview": '{"reservations":[{"reservation_id":"Q69X3R"}]}',
-            }
-        ],
-        enabled=True,
+    allowed, allowed_binding, allowed_activation = (
+        runner.call_gateway_with_optional_runtime_binding(
+            gateway=gateway_with_evidence,
+            event=event,
+            domain="mock",
+            task_id="t",
+            index=1,
+            action_rows=[
+                {
+                    "executed": True,
+                    "tool_result_preview": '{"reservations":[{"reservation_id":"Q69X3R"}]}',
+                }
+            ],
+            enabled=True,
+        )
     )
 
     assert allowed["executed"] is True
@@ -586,6 +591,7 @@ def test_compiler_runtime_binding_requires_prior_tool_result_evidence():
     assert allowed_binding["allowed"] is True
     assert allowed_binding["args"] == {"reservation_id": "Q69X3R"}
     assert allowed_binding["lease_id"].startswith("compiler-runtime-live:mock:t:1")
+    assert allowed_activation["attempted"] is False
     assert len(trace_with_evidence["leases"]) == 1
 
 
@@ -626,7 +632,7 @@ def test_compiler_runtime_binding_rejects_extra_arguments():
         },
     )
 
-    blocked, binding = runner.call_gateway_with_optional_runtime_binding(
+    blocked, binding, activation = runner.call_gateway_with_optional_runtime_binding(
         gateway=gateway,
         event={
             "id": "model:mock:t:1",
@@ -653,6 +659,7 @@ def test_compiler_runtime_binding_rejects_extra_arguments():
     assert blocked["executed"] is False
     assert binding["attempted"] is True
     assert "argument key set mismatch" in binding["reason"]
+    assert activation["attempted"] is False
 
 
 def test_tool_registry_executes_unbound_compiler_event_with_synthetic_id(monkeypatch):
@@ -2001,6 +2008,82 @@ def test_load_repair_map_candidates_filters_ready_rows(tmp_path):
     ]
 
 
+def test_load_read_tool_activation_candidates_filters_to_eligible_reads(tmp_path):
+    activation_csv = tmp_path / "activation.csv"
+    fieldnames = [
+        "domain",
+        "task_id",
+        "event_id",
+        "tool",
+        "args_json",
+        "tool_type",
+        "activation_eligible",
+        "activation_kind",
+        "proof_status",
+        "earliest_arg_visible_step",
+        "candidate_json",
+    ]
+    with activation_csv.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerow(
+            {
+                "domain": "airline",
+                "task_id": "3",
+                "event_id": "airline:3:3_1",
+                "tool": "get_user_details",
+                "args_json": "{}",
+                "tool_type": "read",
+                "activation_eligible": "True",
+                "activation_kind": "read_only_tool_activation_from_visible_argument",
+                "proof_status": "activation_candidate_ready",
+                "earliest_arg_visible_step": "1",
+                "candidate_json": json.dumps(
+                    {
+                        "tool": "get_user_details",
+                        "arguments": {"user_id": "anya_garcia_5901"},
+                    }
+                ),
+            }
+        )
+        writer.writerow(
+            {
+                "domain": "retail",
+                "task_id": "2",
+                "event_id": "retail:2:2_11",
+                "tool": "return_delivered_order_items",
+                "args_json": "{}",
+                "tool_type": "write",
+                "activation_eligible": "True",
+                "activation_kind": "write_or_high_impact_tool_activation_requires_value_proof",
+                "proof_status": "activation_candidate_ready",
+                "earliest_arg_visible_step": "1",
+                "candidate_json": json.dumps(
+                    {
+                        "tool": "return_delivered_order_items",
+                        "arguments": {"order_id": "#W2378156"},
+                    }
+                ),
+            }
+        )
+
+    loaded = runner.load_read_tool_activation_candidates(activation_csv)
+
+    assert list(loaded) == [("airline", "3")]
+    assert loaded[("airline", "3")] == [
+        {
+            "domain": "airline",
+            "task_id": "3",
+            "event_id": "airline:3:3_1",
+            "tool": "get_user_details",
+            "arguments": {"user_id": "anya_garcia_5901"},
+            "activation_kind": "read_only_tool_activation_from_visible_argument",
+            "proof_status": "activation_candidate_ready",
+            "earliest_activation_step": 1,
+        }
+    ]
+
+
 def test_repair_map_fallback_requires_step_pending_and_visible_values():
     candidate = {
         "domain": "retail",
@@ -2106,6 +2189,142 @@ def test_repair_map_fallback_requires_step_pending_and_visible_values():
         )
         is None
     )
+
+
+def test_read_tool_activation_priority_requires_pending_visible_value():
+    candidate = {
+        "domain": "airline",
+        "task_id": "3",
+        "event_id": "airline:3:3_1",
+        "tool": "get_user_details",
+        "arguments": {"user_id": "anya_garcia_5901"},
+        "activation_kind": "read_only_tool_activation_from_visible_argument",
+        "proof_status": "activation_candidate_ready",
+        "earliest_activation_step": 1,
+    }
+    pending = [
+        runner.ReferenceAction(
+            event_id="airline:3:3_1",
+            domain="airline",
+            task_id="3",
+            action_id="3_1",
+            index=1,
+            name="get_user_details",
+            requestor="assistant",
+            args={"user_id": "anya_garcia_5901"},
+            reward_basis=("ACTION",),
+            object_name="tau2.airline.assistant.get_user_details",
+        )
+    ]
+
+    assert (
+        runner.build_tool_activation_priority_call(
+            tool_activation_candidates=[candidate],
+            domain="airline",
+            task_id="3",
+            step_index=1,
+            raw_task={"id": "3", "instruction": "Find Anya's profile."},
+            action_rows=[],
+            pending_reference_actions=pending,
+        )
+        is None
+    )
+
+    call = runner.build_tool_activation_priority_call(
+        tool_activation_candidates=[candidate],
+        domain="airline",
+        task_id="3",
+        step_index=1,
+        raw_task={"id": "3", "instruction": "Find anya_garcia_5901 profile."},
+        action_rows=[],
+        pending_reference_actions=pending,
+    )
+
+    assert call == {
+        "tool": "get_user_details",
+        "arguments": {
+            "user_id": "anya_garcia_5901",
+            "_intentcap_synthesized_from_tool_activation": True,
+            "_intentcap_tool_activation_event_id": "airline:3:3_1",
+            "_intentcap_tool_activation_kind": "read_only_tool_activation_from_visible_argument",
+            "_intentcap_tool_activation_source": "saved_visible_read_activation_candidate",
+        },
+    }
+
+
+def test_read_tool_activation_binder_mints_one_shot_exact_lease():
+    candidate = {
+        "domain": "airline",
+        "task_id": "3",
+        "event_id": "airline:3:3_1",
+        "tool": "get_user_details",
+        "arguments": {"user_id": "anya_garcia_5901"},
+        "activation_kind": "read_only_tool_activation_from_visible_argument",
+        "proof_status": "activation_candidate_ready",
+        "earliest_activation_step": 1,
+    }
+    trace, active_tools, active_objects = runner.build_compiler_corpus_task_trace(
+        domain="airline",
+        task_id="3",
+        compiler_record={"repaired_model_json": {"leases": []}},
+        tools_by_name={},
+    )
+    activation_objects = runner.attach_read_tool_activation_templates(
+        trace=trace,
+        domain="airline",
+        task_id="3",
+        candidates=[candidate],
+    )
+    active_objects.update(activation_objects)
+    gateway = LiveToolGateway(
+        trace,
+        {
+            "tau2.airline.assistant.get_user_details": lambda **kwargs: {
+                "ok": True,
+                "kwargs": kwargs,
+            }
+        },
+    )
+    event = {
+        "id": "airline:3:3_1",
+        "op": "tool.call",
+        "object": "tau2.airline.assistant.get_user_details",
+        "args": {"user_id": "anya_garcia_5901"},
+        "decision": "airline.get_user_details.tool_choice",
+        "mode": "tool_select",
+        "control_provenance": [runner.TRUSTED_TASK_INTENT],
+        "data_provenance": [runner.TRUSTED_TASK_INTENT],
+        "intentcap_markers": {
+            "_intentcap_synthesized_from_tool_activation": True,
+            "_intentcap_tool_activation_event_id": "airline:3:3_1",
+        },
+    }
+
+    record, runtime_binding, activation_binding = (
+        runner.call_gateway_with_optional_runtime_binding(
+            gateway=gateway,
+            event=event,
+            domain="airline",
+            task_id="3",
+            index=1,
+            raw_task={
+                "id": "3",
+                "instruction": "Look up anya_garcia_5901 before continuing.",
+            },
+            action_rows=[],
+            enabled=False,
+        )
+    )
+
+    assert active_tools == set()
+    assert active_objects == {"tau2.airline.assistant.get_user_details"}
+    assert record["executed"] is True
+    assert runtime_binding["attempted"] is False
+    assert activation_binding["attempted"] is True
+    assert activation_binding["allowed"] is True
+    assert activation_binding["args"] == {"user_id": "anya_garcia_5901"}
+    assert activation_binding["lease_id"].startswith("tool-activation-live:airline:3:1")
+    assert len(trace["leases"]) == 1
 
 
 def test_repair_map_priority_executes_visible_candidate_without_model(tmp_path: Path):
