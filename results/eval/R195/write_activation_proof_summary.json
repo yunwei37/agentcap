@@ -1,0 +1,28 @@
+{
+  "action_log_rows_scanned": 61,
+  "action_results_csv": "results/eval/R187/action_results.csv",
+  "activation_csv": "results/eval/R192/tool_activation_candidates.csv",
+  "analysis": "saved tau2 write activation proof-readiness audit",
+  "dataset_sync": false,
+  "git_status": "## main...origin/main\n M docs/autopaper/intentcap-autopaper.md\n M docs/background-related-work.md\n M docs/design.md\n M docs/evaluation.md\n M docs/idea-story.md\n M docs/implementation.md\n?? results/eval/R195/\n?? scripts/analyze_tau2_write_activation_proof.py\n?? tests/test_analyze_tau2_write_activation_proof.py",
+  "input_write_activation_blockers": 1,
+  "machine": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "model_or_tool_execution": false,
+  "notes": [
+    "This audit reuses the runtime structured value-proof predicate.",
+    "It does not expose hidden reference actions to an online planner and does not mint authority.",
+    "A complete proof row is a candidate for a future bounded activation run, not an official score change."
+  ],
+  "official_tau2_score_changed": false,
+  "output_dir": "results/eval/R195",
+  "potential_adjusted_missing_after_complete_write_activation": 1,
+  "prior_adjusted_missing": 1,
+  "project_git_commit": "79e4922a2aa8ebccef21913bc4e0820bbbe383a0",
+  "proof_complete_write_activation_candidates": 0,
+  "proof_gap_class_counts": {
+    "collective_tokens_present_but_leaf_threshold_missing": 1
+  },
+  "ready_event_ids": [],
+  "run_dir": "results/eval/R187",
+  "run_id": "R195"
+}

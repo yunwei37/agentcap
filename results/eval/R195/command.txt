@@ -1,0 +1,1 @@
+python scripts/analyze_tau2_write_activation_proof.py --run-id R195 --activation-csv results/eval/R192/tool_activation_candidates.csv --action-results-csv results/eval/R187/action_results.csv --run-dir results/eval/R187 --prior-adjusted-missing 1 --output-dir results/eval/R195
