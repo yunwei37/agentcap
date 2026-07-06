@@ -3651,6 +3651,7 @@ def runtime_value_proof_status(
     context_missing: dict[str, list[str]] = {}
     semantic_missing: dict[str, list[str]] = {}
     semantic_contexts: list[str] = []
+    grouped_semantic_args: list[str] = []
     semantic_arg_names = [
         arg_name
         for arg_name in runtime_args
@@ -3671,10 +3672,21 @@ def runtime_value_proof_status(
         if arg_name not in semantic_arg_names:
             continue
 
+        for _leaf, contexts in leaf_contexts:
+            semantic_contexts.extend(contexts)
+        if _runtime_arg_grouped_list_has_complete_intent_evidence(
+            arg_name,
+            value,
+            leaf_contexts,
+            tokens,
+            template,
+        ):
+            grouped_semantic_args.append(arg_name)
+            continue
+
         leaf_missing: list[str] = []
         for leaf, contexts in leaf_contexts:
             combined = "\n".join(contexts)
-            semantic_contexts.extend(contexts)
             if _runtime_arg_context_has_minimum_intent_evidence(arg_name, combined, tokens):
                 continue
             matched = set(_matched_intent_tokens(combined, tokens))
@@ -3700,6 +3712,7 @@ def runtime_value_proof_status(
             },
             "global_missing_tokens": global_missing_tokens,
             "semantic_args": semantic_arg_names,
+            "grouped_semantic_args": grouped_semantic_args,
         }
 
     return {
@@ -3708,6 +3721,7 @@ def runtime_value_proof_status(
         "reason": "runtime value context satisfies structured intent discriminator proof",
         "tokens": tokens,
         "semantic_args": semantic_arg_names,
+        "grouped_semantic_args": grouped_semantic_args,
     }
 
 
@@ -3762,6 +3776,41 @@ def _runtime_arg_context_has_minimum_intent_evidence(
     if arg_name.lower().startswith(("new_", "target_", "to_")):
         return all(token in matched for token in tokens)
     return len(matched) >= min(2, len(tokens))
+
+
+def _runtime_arg_grouped_list_has_complete_intent_evidence(
+    arg_name: str,
+    value: Any,
+    leaf_contexts: list[tuple[str, list[str]]],
+    tokens: list[str],
+    template: dict[str, Any],
+) -> bool:
+    if not _runtime_arg_allows_grouped_list_intent_proof(arg_name, value, template):
+        return False
+    if not tokens:
+        return True
+
+    covered: set[str] = set()
+    for _leaf, contexts in leaf_contexts:
+        matched = set(_matched_intent_tokens("\n".join(contexts), tokens))
+        if not matched:
+            return False
+        covered.update(matched)
+    return all(token in covered for token in tokens)
+
+
+def _runtime_arg_allows_grouped_list_intent_proof(
+    arg_name: str,
+    value: Any,
+    template: dict[str, Any],
+) -> bool:
+    normalized_arg = arg_name.lower()
+    if normalized_arg.startswith(("new_", "target_", "to_")):
+        return False
+    if not isinstance(value, list) or len(_runtime_value_leaf_values(value)) < 2:
+        return False
+    tool_name = str(template.get("tool", "")).lower()
+    return tool_name.startswith("return_") and "item" in normalized_arg
 
 
 def _context_has_intent_tokens(context: str, tokens: list[str]) -> bool:

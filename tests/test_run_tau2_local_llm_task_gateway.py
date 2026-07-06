@@ -1806,6 +1806,92 @@ def test_runtime_value_proof_blocks_scalar_list_sibling_proof_pollution():
     )
 
 
+def test_runtime_value_proof_allows_return_item_grouped_list_context():
+    template = {
+        "id": "template:return-items",
+        "tool": "return_delivered_order_items",
+        "object": "tau2.retail.assistant.return_delivered_order_items",
+        "static_args": {},
+        "runtime_args": ["item_ids", "order_id", "payment_method_id"],
+        "allowed_arg_keys": ["item_ids", "order_id", "payment_method_id"],
+        "intent_evidence": "return the cleaner, headphone, and smart watch",
+        "tool_type": "write",
+        "proof_required": True,
+    }
+    order = {
+        "order_id": "#O",
+        "items": [
+            {"name": "Vacuum Cleaner", "item_id": "cleaner_item"},
+            {"name": "Headphones", "item_id": "headphone_item"},
+            {"name": "Smart Watch", "item_id": "watch_item"},
+        ],
+        "payment_history": [{"payment_method_id": "card"}],
+    }
+
+    proof = runner.runtime_value_proof_status(
+        template=template,
+        args={
+            "item_ids": ["cleaner_item", "headphone_item", "watch_item"],
+            "order_id": "#O",
+            "payment_method_id": "card",
+        },
+        action_rows=[
+            {
+                "executed": True,
+                "tool_result_evidence": json.dumps({"content": json.dumps(order)}),
+            }
+        ],
+        require_value_proof=True,
+    )
+
+    assert proof["complete"] is True
+    assert proof["grouped_semantic_args"] == ["item_ids"]
+
+
+def test_runtime_value_proof_blocks_unmatched_leaf_in_grouped_return_list():
+    template = {
+        "id": "template:return-items",
+        "tool": "return_delivered_order_items",
+        "object": "tau2.retail.assistant.return_delivered_order_items",
+        "static_args": {},
+        "runtime_args": ["item_ids", "order_id", "payment_method_id"],
+        "allowed_arg_keys": ["item_ids", "order_id", "payment_method_id"],
+        "intent_evidence": "return the cleaner, headphone, and smart watch",
+        "tool_type": "write",
+        "proof_required": True,
+    }
+    order = {
+        "order_id": "#O",
+        "items": [
+            {"name": "Vacuum Cleaner", "item_id": "cleaner_item"},
+            {"name": "Headphones", "item_id": "headphone_item"},
+            {"name": "Smart Watch", "item_id": "watch_item"},
+            {"name": "Desk Lamp", "item_id": "lamp_item"},
+        ],
+        "payment_history": [{"payment_method_id": "card"}],
+    }
+
+    proof = runner.runtime_value_proof_status(
+        template=template,
+        args={
+            "item_ids": ["cleaner_item", "headphone_item", "watch_item", "lamp_item"],
+            "order_id": "#O",
+            "payment_method_id": "card",
+        },
+        action_rows=[
+            {
+                "executed": True,
+                "tool_result_evidence": json.dumps({"content": json.dumps(order)}),
+            }
+        ],
+        require_value_proof=True,
+    )
+
+    assert proof["complete"] is False
+    assert proof["grouped_semantic_args"] == []
+    assert any("lamp_item" in value for value in proof["missing_args"]["item_ids"])
+
+
 def test_runtime_value_proof_hints_suppress_write_and_emit_read_probe():
     trace = {
         "metadata": {

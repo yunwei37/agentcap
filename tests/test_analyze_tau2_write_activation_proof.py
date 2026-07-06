@@ -32,7 +32,7 @@ def test_gap_class_separates_collective_list_proof_from_missing_context():
     )
 
 
-def test_build_proof_row_reports_grouped_list_proof_gap(monkeypatch):
+def test_build_proof_row_reports_grouped_list_proof_ready(monkeypatch):
     monkeypatch.setattr(
         analyzer,
         "task_text_from_record",
@@ -72,6 +72,6 @@ def test_build_proof_row_reports_grouped_list_proof_gap(monkeypatch):
     assert row["semantic_tokens"] == "cleaner|headphone|smart|watch"
     assert row["value_context_complete"] is True
     assert row["collective_intent_tokens_covered"] is True
-    assert row["value_proof_complete"] is False
-    assert row["proof_gap_class"] == "collective_tokens_present_but_leaf_threshold_missing"
-    assert row["write_activation_candidate_ready"] is False
+    assert row["value_proof_complete"] is True
+    assert row["proof_gap_class"] == "write_activation_value_proof_complete"
+    assert row["write_activation_candidate_ready"] is True
