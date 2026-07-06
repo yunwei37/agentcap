@@ -1,0 +1,49 @@
+{
+  "actionability_csv": "results/eval/R170/remaining_missing_actionability.csv",
+  "activation_kind_counts": {
+    "missing_visible_argument_evidence": 1,
+    "read_only_tool_activation_from_visible_argument": 2
+  },
+  "analysis": "saved tau2 tool-activation gap audit",
+  "benchmark_dir": "benchmarks/tau2-bench",
+  "blocked_write_event_ids": [],
+  "eligible_event_ids": [
+    "airline:3:3_1",
+    "airline:4:4_0"
+  ],
+  "eligible_read_only_activation_candidates": 2,
+  "git_status": "## main...origin/main\n?? scripts/analyze_tau2_tool_activation_gaps.py\n?? tests/test_analyze_tau2_tool_activation_gaps.py",
+  "input_actionability_class_counts": {
+    "candidate_selection_or_planning_gap": 2,
+    "invalid_reference": 3,
+    "runtime_candidate_generation_gap": 8,
+    "tool_activation_gap": 3,
+    "upstream_planning_gap": 5
+  },
+  "input_tool_activation_gaps": 3,
+  "no_dataset_sync": true,
+  "no_model_run": true,
+  "no_tool_execution": true,
+  "notes": [
+    "Read-only activation candidates are not executed here; they identify where a future runner can mint one-shot runtime leases from visible argument evidence.",
+    "Write/high-impact missing-tool rows are not activation-ready without the structured value-proof path.",
+    "Reference arguments are used only as post-hoc exactness targets for saved-artifact diagnosis."
+  ],
+  "official_tau2_score_changed": false,
+  "output_dir": "results/eval/R174",
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "potential_adjusted_missing_after_read_activation_candidates": 15,
+  "prior_adjusted_db_feasible_missing": 17,
+  "project_head": "19f956f9257f2e5ba812b09443ba3bcc5d0460f7",
+  "proof_status_counts": {
+    "activation_candidate_ready": 2,
+    "missing_visible_argument_value": 1
+  },
+  "python": "3.12.3",
+  "run_dir": "results/eval/R169",
+  "run_id": "R174",
+  "script_sha256": "89db260e7651f7d724077494d088431640fa7aedf6bfb3de533234d570989a52",
+  "task_rows": 3,
+  "tasks_with_activation_candidates": 2,
+  "write_or_high_impact_activation_blockers": 0
+}
