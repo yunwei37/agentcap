@@ -1,0 +1,292 @@
+{
+  "analysis": "saved local-Qwen tau2 task-gateway mismatch classification",
+  "argument_key_mismatch_summary": {
+    "affected_same_tool_wrong_arg_calls": 5,
+    "argument_key_issues": 5,
+    "issue_counts": {
+      "wrong_value": 5
+    },
+    "issue_key_counts": {
+      "wrong_value:product_id": 5
+    },
+    "key_counts": {
+      "product_id": 5
+    },
+    "tool_counts": {
+      "get_product_details": 5
+    }
+  },
+  "category_counts": {
+    "exact_executed": 44,
+    "off_lease_repeated_or_consumed_exact_args": 3,
+    "off_lease_same_tool_wrong_args": 5,
+    "off_lease_wrong_or_hallucinated_tool": 4
+  },
+  "exact_executed_calls": 44,
+  "git_status": "## main...origin/main",
+  "input_task_gateway_summaries": [
+    {
+      "action_outcome_counts": {
+        "allowed": 53,
+        "blocked": 3
+      },
+      "action_reward_pass_tasks": 7,
+      "active_leases_total": 58,
+      "all_reference_actions_executed_tasks": 7,
+      "analysis": "fresh local Qwen tau2 task proposals through saved compiler-corpus IntentCap leases",
+      "benchmark": "tau2-bench / tau3-bench",
+      "bound_reference_calls": 47,
+      "compiler_run_dir": "results/eval/R074 | results/eval/R077",
+      "compiler_run_dirs": [
+        "results/eval/R074",
+        "results/eval/R077"
+      ],
+      "compiler_runtime_binding": true,
+      "compiler_runtime_binding_attempts": 41,
+      "compiler_runtime_binding_missing_evidence": 0,
+      "compiler_runtime_binding_missing_value_proof": 3,
+      "compiler_runtime_binding_successes": 38,
+      "compiler_runtime_proof_probes": true,
+      "compiler_runtime_value_proof": true,
+      "compiler_source_parse_ok_tasks": 11,
+      "ctx_size": 8192,
+      "domains_requested": [
+        "airline",
+        "retail",
+        "telecom"
+      ],
+      "dry_run": false,
+      "env_reward_pass_tasks": 0,
+      "exact_sequence_match_tasks": 5,
+      "executed_calls": 53,
+      "feedback_attempted_tasks": 0,
+      "feedback_gateway_allowed": 0,
+      "feedback_gateway_blocked": 0,
+      "feedback_model_calls": 0,
+      "feedback_rounds": 0,
+      "gateway_allowed": 53,
+      "gateway_blocked": 3,
+      "git_status": "## main...origin/main\n M scripts/run_tau2_local_llm_task_gateway.py\n M tests/test_run_tau2_local_llm_task_gateway.py\n?? results/eval/R175/",
+      "gpu_layers": 999,
+      "initial_gateway_allowed": 0,
+      "initial_gateway_blocked": 0,
+      "initial_model_calls": 0,
+      "input_digests": [
+        {
+          "bytes": 155528,
+          "path": "benchmarks/tau2-bench/data/tau2/domains/airline/tasks.json",
+          "sha256": "ccd8ba737b4cc371415af70151187788f728d6108d0916e73bb4317b40542052"
+        },
+        {
+          "bytes": 345982,
+          "path": "benchmarks/tau2-bench/data/tau2/domains/retail/tasks.json",
+          "sha256": "8e03ebce7901bd6218e7a7dc3105faa9324091a68058f7fe61c65262868812e8"
+        },
+        {
+          "bytes": 13977063,
+          "path": "benchmarks/tau2-bench/data/tau2/domains/telecom/tasks.json",
+          "sha256": "37e562e1ae3242577407e1303b1548bc64e7ea68e37d36173e6747990ceaf8a4"
+        }
+      ],
+      "lease_source": "compiler-corpus",
+      "llama_bin": "/home/yunwei37/workspace/llama.cpp-latest/build/bin/llama-completion",
+      "llama_bin_sha256": "12761f8c49a086d648412d0f76f69cc18f17928662e38e005aee85e7135ffd84",
+      "llama_version": "version: 9870 (2d973636e)\nbuilt with GNU 13.3.0 for Linux x86_64",
+      "max_tasks_per_domain": 5,
+      "model": "/home/yunwei37/.cache/huggingface/hub/models--DevQuasar--Qwen.Qwen3.6-27B-GGUF/snapshots/b19fa7e8538a1a5f66452eb3b3167e026177be1d/Qwen.Qwen3.6-27B.f16.gguf.Q4_K_M.gguf",
+      "model_bytes": 16547398976,
+      "model_calls": 56,
+      "model_parse_success_tasks": 10,
+      "n_predict": 1536,
+      "notes": [
+        "This run uses the existing local tau2-bench artifact only; it does not clone, sync, or download datasets.",
+        "The model sees task text and tool schemas, but not evaluation_criteria.actions.",
+        "This is a small fixed-domain pilot over the requested tau2 domains, not a benchmark-scale tau2/tau3 online run.",
+        "Active leases are loaded from saved compiler output and strict-lowered only when every declared tool argument has a non-empty equals_any policy.",
+        "Multiple saved compiler corpora are unioned by task before strict lowering; this broadens candidate lease recall without using hidden reference actions to mint leases.",
+        "Reference actions are used for post-hoc task scoring and exact-match accounting only; they are not used to mint runtime leases.",
+        "State-grounded argument hints are disabled in compiler-corpus mode because they depend on exact reference-action leases.",
+        "Tool prompts expose only schemas covered by active compiler-corpus leases.",
+        "Stepwise prompts include prior gateway decisions and executed tool-result previews but still do not reveal evaluation_criteria.actions.",
+        "Stepwise empty-action retries ask the model to re-check visible task state after an empty actions response; they do not reveal hidden reference actions.",
+        "Stepwise compiler-lease hints expose candidate calls derived only from active compiler leases; hidden reference actions are not used to generate these hints.",
+        "Stepwise runtime-evidence compiler hints expose candidate calls derived only from runtime-bindable compiler templates and already executed tool-result evidence; hidden reference actions are not used to generate these hints.",
+        "Stepwise runtime-evidence hint ranking orders candidates by proof completeness and intent-token evidence; ranking changes prompt order only and does not mint authority.",
+        "Stepwise compiler-lease fallback deterministically synthesizes at most one complete active compiler-lease hint after an empty model action; synthesized calls still pass through the gateway.",
+        "Stepwise runtime-evidence ranked fallback deterministically synthesizes the top complete ranked runtime-evidence compiler hint after an empty model action only when it passes the configured score and margin; synthesized calls still pass through the runtime binder and gateway.",
+        "Stepwise repair-map fallback is a post-hoc upper-bound diagnostic: it reads saved exact-candidate repair rows, rechecks that candidate argument values are visible in current task/tool-result state, and sends synthesized calls through the normal gateway. It is not counted as non-oracle compiler success.",
+        "Stepwise repair-map priority is a post-hoc scheduling upper-bound diagnostic: it executes visible pending repair-map candidates before asking the model, and each synthesized call still passes through the normal gateway. It is not counted as non-oracle compiler success.",
+        "Stepwise tool-activation priority consumes only saved read-only activation candidates, rechecks visible argument evidence at runtime, mints one-shot exact leases, and then sends synthesized calls through the normal gateway. It is a bounded diagnostic, not a broad tool exposure policy.",
+        "Reference user-simulator replay executes benchmark user-side actions only after preceding assistant reference actions have executed; these actions are counted separately and do not expand assistant authority.",
+        "Compiler runtime binding exposes runtime-placeholder compiler tools but mints only one-shot exact leases when proposed runtime argument values are found in already executed tool-result evidence.",
+        "Compiler runtime value proof requires high-impact runtime-bound leases to show value-level intent evidence in executed tool-result context before a one-shot lease is minted.",
+        "Compiler runtime proof probes derive low-risk read calls from high-impact runtime templates so the agent can gather value-level proof before a write."
+      ],
+      "off_lease_calls_blocked": 0,
+      "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+      "project_head": "63134113bf2a8ec1b82b6205cad9db3cda8f0b1d",
+      "python": "3.12.3",
+      "reference_actions": 61,
+      "reference_user_actions": 1,
+      "reference_user_simulator": true,
+      "run_id": "R175",
+      "script_sha256": "65d82b558399eddfec8da66070f03f4d1159d02f50b809bebfe83ed1e27f9b52",
+      "stepwise_compact_json_prompts": false,
+      "stepwise_compiler_lease_fallback": true,
+      "stepwise_compiler_lease_fallbacks": 4,
+      "stepwise_compiler_lease_hint_steps": 15,
+      "stepwise_compiler_lease_hints": true,
+      "stepwise_empty_retries": 1,
+      "stepwise_empty_retry_steps": 2,
+      "stepwise_gateway_allowed": 53,
+      "stepwise_gateway_blocked": 3,
+      "stepwise_hint_choice_fallback": false,
+      "stepwise_hint_choice_fallbacks": 0,
+      "stepwise_max_steps": 12,
+      "stepwise_model_calls": 56,
+      "stepwise_repair_map_candidate_rows": 27,
+      "stepwise_repair_map_candidate_tasks": 8,
+      "stepwise_repair_map_csv": "results/eval/R168/cumulative_repair_map.csv",
+      "stepwise_repair_map_digest": {
+        "bytes": 21013,
+        "path": "results/eval/R168/cumulative_repair_map.csv",
+        "sha256": "c85094c3c17135af68bdb577791b469c5368bd937826369d199235df6c7f9f95"
+      },
+      "stepwise_repair_map_fallback": true,
+      "stepwise_repair_map_fallbacks": 0,
+      "stepwise_repair_map_priority": true,
+      "stepwise_repair_map_priority_steps": 23,
+      "stepwise_runtime_evidence_fallback": false,
+      "stepwise_runtime_evidence_fallbacks": 0,
+      "stepwise_runtime_evidence_hint_choice_fallback": false,
+      "stepwise_runtime_evidence_hint_choice_fallbacks": 0,
+      "stepwise_runtime_evidence_lease_hint_steps": 30,
+      "stepwise_runtime_evidence_lease_hints": true,
+      "stepwise_runtime_evidence_rank_hints": true,
+      "stepwise_runtime_evidence_ranked_fallback": true,
+      "stepwise_runtime_evidence_ranked_fallback_margin": 0,
+      "stepwise_runtime_evidence_ranked_fallback_min_score": 50,
+      "stepwise_runtime_evidence_ranked_fallbacks": 13,
+      "stepwise_single_hint_fallback": false,
+      "stepwise_single_hint_fallbacks": 0,
+      "stepwise_state_grounded_arg_hint_steps": 0,
+      "stepwise_state_grounded_arg_hints": false,
+      "stepwise_steps_attempted": 60,
+      "stepwise_tasks": 11,
+      "stepwise_tool_activation_candidate_rows": 2,
+      "stepwise_tool_activation_candidate_tasks": 2,
+      "stepwise_tool_activation_csv": "results/eval/R174/tool_activation_candidates.csv",
+      "stepwise_tool_activation_digest": {
+        "bytes": 1841,
+        "path": "results/eval/R174/tool_activation_candidates.csv",
+        "sha256": "f8401d8c8738908a39ad98c4d814119af4ed86bb58fd7cbcc579c21df7f91468"
+      },
+      "stepwise_tool_activation_priority": true,
+      "stepwise_tool_activation_priority_steps": 2,
+      "tasks_evaluated": 11,
+      "tasks_with_model_calls": 11,
+      "timeout_seconds": 300,
+      "tool_activation_binding_attempts": 2,
+      "tool_activation_binding_successes": 2,
+      "tool_error_calls": 0,
+      "tool_exposure": "leased",
+      "tool_oracle_applicable_tasks": 11,
+      "tool_oracle_pass_rate": 0.0,
+      "tool_oracle_pass_tasks": 0,
+      "tool_schema_count_avg": 4.2727272727272725,
+      "tool_schema_count_max": 6,
+      "tool_schema_count_min": 1,
+      "unsupported_reason_counts": {
+        "no_assistant_reference_actions": 4
+      },
+      "unsupported_tasks": 4,
+      "user_simulator_executed_actions": 1,
+      "user_simulator_tool_error_actions": 0
+    }
+  ],
+  "model_calls": 56,
+  "no_dataset_sync": true,
+  "notes": [
+    "This analysis reads existing R175 local tau2 task-gateway artifacts only.",
+    "It does not run models, execute tools, clone benchmarks, sync datasets, or reveal hidden reference actions to a model.",
+    "Mismatch categories compare model-proposed tool calls against the saved per-task reference-action lease oracle."
+  ],
+  "off_lease_calls": 12,
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "fb626f85db15cd104e910cae7cf4e328d9a6cac3",
+  "python": "3.12.3",
+  "reference_actions": 61,
+  "round_category_counts": {
+    "step_1": {
+      "exact_executed": 9,
+      "off_lease_wrong_or_hallucinated_tool": 1
+    },
+    "step_10": {
+      "exact_executed": 2,
+      "off_lease_repeated_or_consumed_exact_args": 1
+    },
+    "step_11": {
+      "off_lease_same_tool_wrong_args": 2,
+      "off_lease_wrong_or_hallucinated_tool": 1
+    },
+    "step_12": {
+      "exact_executed": 1,
+      "off_lease_wrong_or_hallucinated_tool": 1
+    },
+    "step_2": {
+      "exact_executed": 9
+    },
+    "step_3": {
+      "exact_executed": 6
+    },
+    "step_4": {
+      "exact_executed": 5
+    },
+    "step_5": {
+      "exact_executed": 5
+    },
+    "step_6": {
+      "exact_executed": 2,
+      "off_lease_same_tool_wrong_args": 1,
+      "off_lease_wrong_or_hallucinated_tool": 1
+    },
+    "step_7": {
+      "exact_executed": 2,
+      "off_lease_repeated_or_consumed_exact_args": 1
+    },
+    "step_8": {
+      "exact_executed": 2,
+      "off_lease_same_tool_wrong_args": 1
+    },
+    "step_9": {
+      "exact_executed": 1,
+      "off_lease_repeated_or_consumed_exact_args": 1,
+      "off_lease_same_tool_wrong_args": 1
+    }
+  },
+  "run_id": "R176_mismatch",
+  "run_rows": [
+    {
+      "dominant_off_lease_category": "off_lease_same_tool_wrong_args",
+      "exact_executed_calls": 44,
+      "model_calls": 56,
+      "off_lease_calls": 12,
+      "reference_actions": 61,
+      "repeated_or_consumed_exact_args_calls": 3,
+      "run_id": "R175",
+      "same_tool_wrong_args_calls": 5,
+      "tasks": 11,
+      "tool_oracle_pass_rate": 0.0,
+      "tool_oracle_pass_tasks": 0,
+      "unsupported_tasks": 4,
+      "wrong_or_hallucinated_tool_calls": 4
+    }
+  ],
+  "script_sha256": "bd76e9111f97e42eca6fb6348d7c0f408e1e21f3bb5d8fb4dd2d6ea90373cc39",
+  "source_runs": [
+    "R175"
+  ],
+  "tasks": 11,
+  "tool_oracle_pass_rate": 0.0,
+  "tool_oracle_pass_tasks": 0
+}

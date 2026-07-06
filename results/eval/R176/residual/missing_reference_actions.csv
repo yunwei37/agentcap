@@ -1,0 +1,18 @@
+source_run_id,domain,task_id,reference_index,event_id,tool,args_json,visibility,grounded_keys,hidden_keys
+R175,airline,4,1,airline:4:4_1,get_reservation_details,"{""reservation_id"": ""NM1VX1""}",hidden,,reservation_id
+R175,airline,4,2,airline:4:4_2,get_reservation_details,"{""reservation_id"": ""KC18K6""}",hidden,,reservation_id
+R175,airline,4,3,airline:4:4_3,get_reservation_details,"{""reservation_id"": ""S61CZX""}",hidden,,reservation_id
+R175,airline,4,4,airline:4:4_4,get_reservation_details,"{""reservation_id"": ""H8Q05L""}",hidden,,reservation_id
+R175,airline,4,5,airline:4:4_5,get_reservation_details,"{""reservation_id"": ""WUNA5K""}",hidden,,reservation_id
+R175,retail,2,1,retail:2:2_1,get_product_details,"{""product_id"": ""6086499569""}",hidden,,product_id
+R175,retail,2,2,retail:2:2_3,get_product_details,"{""product_id"": ""9523456873""}",hidden,,product_id
+R175,retail,2,10,retail:2:2_11,return_delivered_order_items,"{""item_ids"": [""4602305039"", ""4202497723"", ""9408160950""], ""order_id"": ""#W2378156"", ""payment_method_id"": ""credit_card_9513926""}",hidden,,item_ids|order_id|payment_method_id
+R175,retail,3,1,retail:3:3_1,get_product_details,"{""product_id"": ""6086499569""}",hidden,,product_id
+R175,retail,3,2,retail:3:3_3,get_product_details,"{""product_id"": ""9523456873""}",hidden,,product_id
+R175,retail,3,3,retail:3:3_4,get_user_details,"{""user_id"": ""yusuf_rossi_9620""}",hidden,,user_id
+R175,retail,3,11,retail:3:3_12,modify_pending_order_items,"{""item_ids"": [""8349118980""], ""new_item_ids"": [""9647292434""], ""order_id"": ""#W4776164"", ""payment_method_id"": ""credit_card_9513926""}",hidden,,item_ids|new_item_ids|order_id|payment_method_id
+R175,retail,4,1,retail:4:4_1,get_product_details,"{""product_id"": ""6086499569""}",hidden,,product_id
+R175,retail,4,2,retail:4:4_3,get_product_details,"{""product_id"": ""9523456873""}",hidden,,product_id
+R175,retail,4,3,retail:4:4_4,get_user_details,"{""user_id"": ""yusuf_rossi_9620""}",hidden,,user_id
+R175,retail,4,11,retail:4:4_12,modify_pending_order_items,"{""item_ids"": [""3799046073""], ""new_item_ids"": [""9647292434""], ""order_id"": ""#W6247578"", ""payment_method_id"": ""credit_card_9513926""}",hidden,,item_ids|new_item_ids|order_id|payment_method_id
+R175,retail,4,12,retail:4:4_13,modify_pending_order_items,"{""item_ids"": [""8349118980""], ""new_item_ids"": [""9647292434""], ""order_id"": ""#W4776164"", ""payment_method_id"": ""credit_card_9513926""}",hidden,,item_ids|new_item_ids|order_id|payment_method_id
