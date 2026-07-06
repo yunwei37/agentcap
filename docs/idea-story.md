@@ -132,13 +132,13 @@ Completeness: partial.
 
 ### Paper-Facing Evaluation Spine
 - E1 End-to-end security and utility: compare IntentCap with vanilla agents, static ACLs, exact-tool ACLs, MCP/server allowlists, tool-call guards, and OS/sandbox-only enforcement on security and benign utility workflows.
-- E2 Context-influence isolation: use ablations and closest provenance/IFC/taint labelers to show whether influence modes and control/data provenance provide residual value beyond tool/resource permission.
-- E3 Compiler/checker recovery: organize the R070-R198 local Qwen/llama.cpp compiler path as one experiment about LLM proposals, deterministic rejection, proof completeness, denial recovery, and planner/CEGAR gaps.
-- E4 Least-privilege lease quality: score IntentCap leases against static policy families and blinded expert-oracle leases using risk-weighted authority breadth and oracle distance.
+- E2 Lease quality and authority reduction: score IntentCap leases against static policy families and blinded expert-oracle leases using risk-weighted authority breadth, context-influence breadth, and oracle distance.
+- E3 Context-influence mechanism ablation: use ablations and closest provenance/IFC/taint labelers to show whether intent certificates, influence modes, and control/data provenance provide residual value beyond tool/resource permission.
+- E4 Compiler/checker recovery: organize the R070-R198 local Qwen/llama.cpp compiler path as one experiment about LLM proposals, deterministic rejection, proof completeness, denial recovery, and planner/CEGAR gaps.
 
 The run tracker remains necessary for provenance, but the paper should not present R001-R198 as independent experiments. Those runs should be folded into the four anchor experiments above.
 
-Immediate execution priority: first close one gate for the four-anchor spine before adding more probes. The preferred order is E1 matched wrapper on existing local workloads, E2 residual-lift into an existing benchmark/model loop, E3 post-R198 planner/CEGAR recovery, then E4 blinded expert-oracle lease scoring. New external datasets remain gated by explicit approval and the R026 web-metadata ranking.
+Immediate execution priority: first close one gate for the four-anchor spine before adding more probes. The preferred order is E1 matched wrapper on existing local workloads, E2 blinded expert-oracle lease scoring, E3 residual-lift into an existing benchmark/model loop, then E4 post-R198 planner/CEGAR recovery. New external datasets remain gated by explicit approval and the R026 web-metadata ranking.
 
 ### Core Mechanism
 - Intent certificate rooted in trusted user selections and approvals.
