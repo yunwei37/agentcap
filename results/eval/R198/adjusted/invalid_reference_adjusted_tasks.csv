@@ -1,0 +1,12 @@
+run_id,source_run_id,domain,task_id,official_reference_actions,invalid_reference_actions,db_feasible_reference_actions,official_executed_reference_actions,executed_db_feasible_reference_actions,official_missing_reference_actions,missing_db_feasible_reference_actions,official_tool_oracle_pass,official_all_reference_actions_executed,db_feasible_reference_complete,official_action_reward,official_env_reward,adjusted_action_env_pass,adjusted_category
+R198_adjusted,R197,airline,1,2,0,2,2,2,0,0,False,True,True,1.0,0.0,False,feasible_refs_complete_but_reward_failed
+R198_adjusted,R197,airline,2,3,0,3,3,3,0,0,False,True,True,1.0,0.0,False,feasible_refs_complete_but_reward_failed
+R198_adjusted,R197,airline,3,2,0,2,2,2,0,0,False,True,True,1.0,0.0,False,feasible_refs_complete_but_reward_failed
+R198_adjusted,R197,airline,4,6,0,6,6,6,0,0,False,True,True,1.0,0.0,False,feasible_refs_complete_but_reward_failed
+R198_adjusted,R197,retail,0,5,0,5,5,5,0,0,False,True,True,1.0,0.0,False,feasible_refs_complete_but_reward_failed
+R198_adjusted,R197,retail,1,5,0,5,5,5,0,0,False,True,True,1.0,0.0,False,feasible_refs_complete_but_reward_failed
+R198_adjusted,R197,retail,2,11,1,10,9,9,2,1,False,False,False,0.0,0.0,False,missing_db_feasible_reference_actions
+R198_adjusted,R197,retail,3,12,1,11,7,7,5,4,False,False,False,0.0,0.0,False,missing_db_feasible_reference_actions
+R198_adjusted,R197,retail,4,13,1,12,10,10,3,2,False,False,False,0.0,0.0,False,missing_db_feasible_reference_actions
+R198_adjusted,R197,telecom,[mobile_data_issue]user_abroad_roaming_disabled_on[PERSONA:Easy],1,0,1,1,1,0,0,False,True,True,1.0,0.0,False,feasible_refs_complete_but_reward_failed
+R198_adjusted,R197,telecom,[mobile_data_issue]user_abroad_roaming_disabled_off[PERSONA:Hard],1,0,1,1,1,0,0,False,True,True,1.0,0.0,False,feasible_refs_complete_but_reward_failed
