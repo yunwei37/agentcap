@@ -137,7 +137,7 @@ Completeness: partial.
 - E3 Context-influence mechanism ablation: use ablations and closest provenance/IFC/taint labelers to show whether intent certificates, influence modes, and control/data provenance provide residual value beyond tool/resource permission.
 - E4 Compiler/checker recovery: organize the R070-R198 local Qwen/llama.cpp compiler path as one experiment about LLM proposals, deterministic rejection, proof completeness, denial recovery, and planner/CEGAR gaps.
 
-The run tracker remains necessary for provenance, but the paper should not present R001-R198 as independent experiments. Those runs should be folded into the four anchor experiments above.
+The run tracker remains necessary for provenance, but the paper should not present R001-R198 as independent experiments. Those runs should be folded into the four anchor experiments above. This is now a hard organization rule: new work is main-paper relevant only if it strengthens one of the four anchor experiments as a main comparison, ablation, stress/failure case, negative control, or oracle/provenance check. Otherwise it should stay out of the main evaluation.
 
 Immediate execution priority: first close one gate for the four-anchor spine before adding more probes. The preferred order is E1 matched wrapper on existing local workloads, E2 expert labels/adjudication over the R199 manifest, E3 residual-lift into an existing benchmark/model loop, then E4 post-R198 planner/CEGAR recovery. New external datasets remain gated by explicit approval and the R026 web-metadata ranking.
 

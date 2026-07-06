@@ -84,6 +84,8 @@ The submitted paper should present four anchor experiments, not the full R001-R1
 
 Reviewer-facing order matters. E1 is the system result, E2 is the least-privilege result, E3 is the novelty-isolation ablation, and E4 is the compiler/checker practicality result. Any additional probe must be classified as a main comparison, ablation, stress case, negative control, or provenance item inside one of these four blocks before it belongs in the paper.
 
+Core experiment contract: the main paper should have at most four result blocks. A run ID is not an experiment; it is evidence for one of the four blocks. If a new run cannot change the answer to E1, E2, E3, or E4, it should be appendix/provenance only or not run. Each core block needs one primary table/figure, a named oracle, named baselines, and a failure interpretation that narrows the paper claim instead of spawning another disconnected probe.
+
 | ID | Core experiment | Primary claim tested | Workloads | Baselines | Main metrics | Paper role |
 |---|---|---|---|---|---|---|
 | E1 | End-to-end security and utility | IntentCap blocks unauthorized context-to-decision influence while preserving useful benign execution. | AgentDojo/InjecAgent/MCPTox security traces plus tau2/tau3 or MCP utility tasks. | vanilla agent, static tool ACL, exact-tool ACL, MCP/server allowlist, tool-call guard, OS/sandbox-only where available. | attack success, wrong sink, exfiltration, unauthorized approval/delegation, benign task completion, false denial, tool errors. | Main anchor result: does the system help on realistic workflows? |
@@ -92,6 +94,15 @@ Reviewer-facing order matters. E1 is the system result, E2 is the least-privileg
 | E4 | Compiler, checker, and recovery practicality | LLM-generated plans and leases can be useful only when checked, denied structurally, and repaired without widening authority. | Local Qwen/llama.cpp lease corpus, tau2/tau3 compiler task loop, bounded repair/activation/recovery runs. | LLM-only accept, checker strict, checker+feedback, checker+CEGAR planner, proof-only/rank-only/filter-only variants. | invalid leases rejected, valid leases accepted, dangerous execute, recovery after denial, exact-next precision/recall, proof completeness, official task reward. | Mechanism practicality: shows "LLM proposes, checker decides" can be operational. |
 
 Result organization rule: E1 is the first figure/table, E2 contains authority/oracle scoring, E3 is the decisive novelty ablation, and E4 contains the R070-R198 compiler/checker path. Individual runs such as R175/R180 read activation, R187 checker-only evidence proof, R197 bounded write activation, and R198 residual delta should appear as sub-results inside E4, not as separate paper experiments.
+
+Main-paper figure budget:
+
+| Slot | Figure/table | What it must prove | What belongs in appendix |
+|---|---|---|---|
+| F1 | E1 security/utility comparison | Same workloads, same model, different authorization wrappers; IntentCap lowers dangerous actions with bounded utility loss. | Per-run trace exports, cached-output provenance, adapter sanity checks. |
+| F2 | E2 authority/oracle distance | IntentCap leases are narrower and closer to expert leases than static tool/server/Skill/policy families. | Label packet construction, scorer implementation checks, individual lease JSON. |
+| F3 | E3 mechanism ablation | Influence modes, intent certificates, and control/data provenance reject cases that object/tool policies and taint/provenance baselines miss. | Microbenchmark-only residual cases unless lifted into a benchmark/model loop. |
+| F4 | E4 compiler/checker/recovery | LLM proposals need deterministic checking, and recovery improves only when evidence-bound leases remain narrow. | R070-R198 chronological diagnostics, negative controls, residual accounting. |
 
 ## Immediate Execution Gates
 The next work should advance these four gates in order. A new run is main-paper relevant only if it closes one of these gates; otherwise it belongs in the run tracker as provenance or appendix material.

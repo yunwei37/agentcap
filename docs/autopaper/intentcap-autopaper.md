@@ -233,6 +233,8 @@ R092-R103 是 R091/R095/R099 后必须加的降温证据。R092 只读保存的 
 ## 评估计划
 论文正文不应该把 R001-R198 或旧的 E1-E6 当成一串并列实验来讲。顶会版本应收敛成四个核心实验，每个实验对应一个可被 falsify 的主 claim：
 
+这个收敛不是排版问题，而是 claim 纪律：run ID 只是证据来源，不是实验编号。主文最多应有四个结果块，每个块对应一个核心问题、一组强 baseline、一个明确 oracle 和一个失败后必须收窄的 claim。新的小 run 只有在能改变 E1、E2、E3 或 E4 的结论时才进入正文；否则只能作为 appendix/provenance、negative control 或后续调试记录。
+
 - **E1 端到端安全与效用。** 在 AgentDojo/InjecAgent/MCPTox 安全工作流和 tau2/tau3 或 MCP utility 工作流上，比较 vanilla agent、static ACL、exact-tool ACL、MCP/server allowlist、tool-call guard、OS/sandbox-only 和 IntentCap。核心指标是 attack success、wrong sink、exfiltration、approval/delegation violation、benign completion、false denial、recovery 和 tool errors。这是论文第一张主结果表，回答“系统整体是否真的有用”。
 - **E2 lease quality / authority reduction。** 对 10-30 个跨 security traces、tau2/tau3 或 MCP utility、Skill-style workflow 的任务写 blinded expert leases，比较 static/domain/global ACL、exact-tool ACL、MCP server allowlist、Skill manifest/SkillGuard-style policy、Progent/PCAS/AgentSpec-style policy 和 IntentCap。核心指标是 risk score、exposed tools/methods/sinks/paths/args、influence-mode breadth、delegation breadth 和 distance to expert oracle。这是论文第二个主结果，证明 IntentCap 不是只“挡攻击”，而是真的降低授权面。
 - **E3 context-influence 机制消融。** 把文档注入、MCP poisoning、malicious Skill/tool-result、subagent/delegation residual suites 放在一起，比较完整 IntentCap、去掉 intent certificate、去掉 influence lattice、去掉 control/data split、object-only、no-provenance、provenance-authority/IFC/taint labelers。核心指标是 protected decisions 中有多少被 unauthorized context 控制，以及哪些 residual denials 只有 lease semantics 能解释。这是最关键的 novelty 实验，证明本文不是普通 tool permission。
