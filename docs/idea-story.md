@@ -130,6 +130,14 @@ Completeness: partial.
 - Stretch claim: IntentCap can serve as a portable policy synthesis layer across Skills, MCP servers, local scripts, and subagents, with enforcement backends ranging from tool gateways to OS monitors.
 - Evidence needed to promote stretch claim: at least two independent benchmark families plus one MCP/security benchmark with comparable utility and attack metrics.
 
+### Paper-Facing Evaluation Spine
+- E1 End-to-end security and utility: compare IntentCap with vanilla agents, static ACLs, exact-tool ACLs, MCP/server allowlists, tool-call guards, and OS/sandbox-only enforcement on security and benign utility workflows.
+- E2 Context-influence isolation: use ablations and closest provenance/IFC/taint labelers to show whether influence modes and control/data provenance provide residual value beyond tool/resource permission.
+- E3 Compiler/checker recovery: organize the R070-R198 local Qwen/llama.cpp compiler path as one experiment about LLM proposals, deterministic rejection, proof completeness, denial recovery, and planner/CEGAR gaps.
+- E4 Least-privilege lease quality: score IntentCap leases against static policy families and blinded expert-oracle leases using risk-weighted authority breadth and oracle distance.
+
+The run tracker remains necessary for provenance, but the paper should not present R001-R198 as independent experiments. Those runs should be folded into the four anchor experiments above.
+
 ### Core Mechanism
 - Intent certificate rooted in trusted user selections and approvals.
 - Context authority labels over influence modes and decision classes.

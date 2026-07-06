@@ -231,6 +231,15 @@ R092-R103 是 R091/R095/R099 后必须加的降温证据。R092 只读保存的 
 - 不能在没有确认前自动同步新的 eval dataset；后续应先从官方网页、论文、data card、repo metadata 做候选筛选，再明确下载边界。
 
 ## 评估计划
+论文正文不应该把 R001-R198 或旧的 E1-E6 当成一串并列实验来讲。顶会版本应收敛成四个核心实验，每个实验对应一个可被 falsify 的主 claim：
+
+- **E1 端到端安全与效用。** 在 AgentDojo/InjecAgent/MCPTox 安全工作流和 tau2/tau3 或 MCP utility 工作流上，比较 vanilla agent、static ACL、exact-tool ACL、MCP/server allowlist、tool-call guard、OS/sandbox-only 和 IntentCap。核心指标是 attack success、wrong sink、exfiltration、approval/delegation violation、benign completion、false denial、recovery 和 tool errors。这是论文第一张主结果表，回答“系统整体是否真的有用”。
+- **E2 context-influence 隔离与消融。** 把文档注入、MCP poisoning、malicious Skill/tool-result、subagent/delegation residual suites 放在一起，比较完整 IntentCap、去掉 influence lattice、去掉 control/data split、object-only、no-provenance、provenance-authority/IFC/taint labelers。核心指标是 protected decisions 中有多少被 unauthorized context 控制，以及哪些 residual denials 只有 lease semantics 能解释。这是最关键的 novelty 实验，证明本文不是普通 tool permission。
+- **E3 compiler/checker recovery。** 把 R070-R198 的 local Qwen/llama.cpp lease compiler、tau2/tau3 task loop、runtime binding、value proof、read/write activation、post-activation residual audit 组织成一个实验，而不是许多小实验。比较 LLM-only accept、checker strict、checker+feedback、proof-only/rank-only/filter-only、checker+CEGAR planner。核心指标是 invalid accepted、valid rejected、proof completeness、exact-next precision/recall、denial recovery、dangerous execute 和 official task reward。
+- **E4 least-privilege lease quality。** 对 10-30 个跨 security traces、tau2/tau3 或 MCP utility、Skill-style workflow 的任务写 blinded expert leases，比较 static/domain/global ACL、exact-tool ACL、MCP server allowlist、Skill manifest/SkillGuard-style policy、Progent/PCAS/AgentSpec-style policy 和 IntentCap。核心指标是 risk score、exposed tools/methods/sinks/paths/args、influence-mode breadth、delegation breadth 和 distance to expert oracle。
+
+旧的 E1-E6 条目保留为 provenance 和子结果索引；写论文时应折叠进上面四个主实验，而不是作为六个并列实验出现。
+
 - E1：AgentDojo influence-denial。比较 vanilla、static tool filter、AuthGraph/PACT/AIRGuard-style provenance-authority labelers、FIDES/RTBAS/CaMeL/PFI/NeuroTaint-style flow or taint baselines、Task Shield/DRIFT 和 IntentCap，指标包括 attack success、wrong-sink rate、utility、false denial、以及 residual-denial class。
 - E2：InjecAgent cached/fresh model replay。继续从 cached outputs 推进到 fresh inference，并加入 AuthGraph/PACT/AIRGuard-style 和 IFC/taint-style trace labelers，观察哪些 blocked attacker decisions 只是被 simpler baselines 解释，哪些需要 IntentCap 的 proof-carrying lease / decision-class / delegation semantics。
 - E3：MCPTox MCP poisoning。重点比较 exact-tool ACL、server allowlist、AgentGuard/AgentBound-style access control、AuthGraph/PACT/AIRGuard-style provenance-authority labelers、IFC/taint baselines 和 IntentCap provenance lease，证明 tool description 不能作为 authorize/tool-select/sink-select 的 control source，并报告哪些 denial 不是静态 MCP policy 或参数 provenance 合同能表达的。
