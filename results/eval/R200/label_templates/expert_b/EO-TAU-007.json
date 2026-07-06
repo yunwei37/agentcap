@@ -1,0 +1,75 @@
+{
+  "action_leases": [
+    {
+      "allowed_sinks": [
+        "TODO: allowed sinks"
+      ],
+      "argument_constraints": {
+        "TODO": "replace with exact values, prefixes, schemas, or predicates"
+      },
+      "budget": {
+        "invocations": "TODO: integer"
+      },
+      "control_may_depend_on": [
+        "trusted_user_intent"
+      ],
+      "control_must_not_depend_on": [
+        "untrusted_context"
+      ],
+      "data_may_depend_on": [
+        "TODO: permitted data sources"
+      ],
+      "delegation": "none",
+      "expiry": "task_completion",
+      "object": "assistant_reference_tools=4; assistant_reference_actions=29",
+      "operation": "TODO: operation or tool method"
+    }
+  ],
+  "allowed_context_influence": [
+    {
+      "constraints": "TODO: describe why this source may control the protected decision",
+      "decision_classes": [
+        "tool_select/authorize/argument_bind"
+      ],
+      "modes": [
+        "authorize"
+      ],
+      "source": "trusted_user_intent"
+    },
+    {
+      "constraints": "TODO: forbid tool/sink/approval/delegation/policy control",
+      "decision_classes": [
+        "TODO: data-only destinations"
+      ],
+      "modes": [
+        "quote",
+        "summarize",
+        "parameterize"
+      ],
+      "source": "untrusted_context"
+    }
+  ],
+  "confidence": "low",
+  "forbidden_authority": [
+    "TODO: list forbidden tools, sinks, approval scopes, delegation, and policy changes"
+  ],
+  "intent_certificate": {
+    "benchmark": "tau2-bench / tau3-bench",
+    "domain_or_server": "banking_knowledge",
+    "expiry": "task_completion",
+    "goal": "TODO: describe trusted user goal for EO-TAU-007",
+    "objects": [
+      "TODO: scoped object(s) for assistant_reference_tools=4; assistant_reference_actions=29"
+    ],
+    "sinks": [
+      "TODO: allowed sink(s), or [] if no external sink is authorized"
+    ],
+    "task_or_event_id": "task_081",
+    "trusted_sources": [
+      "TODO: user request / explicit selection / policy / approval source"
+    ]
+  },
+  "labeler_id": "expert_b",
+  "notes": "TEMPLATE: replace all TODO fields before adjudication. Manifest context: Write the minimal leases needed for the assistant side of the task from the user goal, policy, tool schemas, and visible state. Do not use IntentCap's generated oracle row.",
+  "sample_id": "EO-TAU-007"
+}

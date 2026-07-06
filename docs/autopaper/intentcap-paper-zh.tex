@@ -1,0 +1,154 @@
+\documentclass[UTF8,a4paper,11pt]{ctexart}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xspace}
+
+\newcommand{\sys}{\textsc{IntentCap}\xspace}
+\emergencystretch=2em
+
+\title{\sys: 面向 LLM Agent Extensions 的 Intent-Carrying Capabilities}
+\author{Anonymous}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+LLM agents 正在从固定工具调用器演变为可扩展的执行环境。一个 agent 可以加载 Skills，连接 MCP servers，运行本地脚本，并将部分任务委托给 subagents。现有权限系统通常约束扩展能调用哪些工具、访问哪些文件或连接哪些网络端点；但在 agent 中，文本本身也会影响未来的权限决策。一个文档、工具结果或 Skill instruction 可能改变 agent 选择的工具、目标 sink、approval scope 或 delegation target。由此产生的问题不是单纯的 resource access，而是：哪些 context 可以影响哪些 authority-bearing decisions。
+
+本文提出 \sys，一种面向 LLM agent extensions 的 intent-carrying capability model。\sys 将用户当前意图作为权限根，并将 context influence 显式建模为 capability。系统首先从 trusted user input、explicit object/sink selection、policy 或 fresh approval 中生成结构化 intent certificate；随后将 agent plan 编译为短期、可衰减、可审计的 capability leases。每个 lease 不仅约束 operation、object 和 arguments，还约束 control/data provenance、允许的 influence modes、data-flow sinks、temporal order、budget 和 delegation。LLM 可以提出 plan 和 candidate leases，但不属于 trusted computing base；deterministic checker 负责验证 intent derivation 和 provenance constraints，并将通过的 leases 下发到 context constructor、tool gateway、MCP broker、本地执行 sandbox 和 delegation monitor。
+
+\sys 的目标不是消除所有 prompt injection，而是在已建模的 decision classes 和 enforcement boundaries 内阻断未授权 context-to-decision influence。我们给出三个安全性质：no unauthorized influence、intent-bounded authority 和 delegation monotonicity。评估围绕四个核心问题展开：\sys 是否降低真实攻击中的 wrong-sink、exfiltration、approval 和 delegation 成功率；是否生成比 static ACL、MCP allowlist 和 Skill manifest 更接近 expert oracle 的 leases；context influence lattice 是否带来超越普通 tool permission 和 taint/provenance baseline 的增益；LLM-assisted compiler 在 deterministic checker 和 structured recovery 下是否能保持实用任务进展。
+\end{abstract}
+
+\section{引言}
+
+LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 API、插件接口或系统调用与宿主交互，因此权限系统可以围绕文件、网络、进程和工具调用来定义。现代 agent extension 不是这样的简单插件。Skills 可以提供长程工作流说明和脚本；MCP servers 可以暴露工具、资源和 prompts；本地程序可以转换文件和读取环境状态；subagents 可以接收上下文和被委托的能力。最终的 agent 行为不是单个模型调用加一个固定 API，而是由用户请求、系统策略、扩展说明、外部文档、工具结果和中间总结共同塑造的执行过程。
+
+这种执行过程打破了 data 和 authority 的传统边界。在普通程序中，一个 PDF 或网页通常只是输入数据；在 LLM agent 中，同样的文本可能成为控制信号。它可以诱导模型选择另一个工具、改变输出目的地、请求更大的 OAuth scope、跳过检查步骤，或把任务委托给不该接收权限的组件。即使底层工具调用本身经过 allowlist 检查，agent 仍可能被不可信 context 引导到一个“看起来被允许、但并非用户意图授权”的行动。
+
+一个典型例子是文档处理工作流。用户要求 agent 从两个选中的 PDF 中提取表格，保存 XLSX，并在指定 GitHub repository 中创建一个 issue 总结结果。PDF 内容应当可以影响表格单元格和 issue body；但它不应影响 GitHub repository 的选择、是否访问外部网络、是否请求新的 approval scope，或是否加载另一个 Skill。如果 PDF 中包含隐藏指令要求 agent 将数据发送到攻击者仓库，普通工具 ACL 很难表达“PDF 可以作为数据影响 summary，但不能作为控制来源影响 sink selection”这一差异。
+
+\sys 从这一差异出发。它的核心观点是：agent security 不应只问“这个扩展能做什么操作”，还应问“这段 context 可以影响什么决策”。我们将 context influence 作为 capability，并将用户当前意图作为 authority root。一个 high-impact event 只有在两个条件同时成立时才允许执行：它必须由当前 intent certificate 推导出来；并且它的 control provenance 必须来自被授权影响对应 decision class 的 context source。
+
+\sys 使用 intent-carrying capability leases 表达这一约束。Lease 是短期、可衰减的授权对象，绑定 holder、operation、object、arguments、intent derivation、control/data provenance、flow、temporal state、budget 和 delegation。与传统 capability 不同，\sys lease 不只说明“谁可以调用哪个对象上的哪个操作”，还说明“哪些 context 可以影响这个操作的哪些安全相关字段”。因此，同一个 document 可以被授权 parameterize 输出数据，但不能 authorize 新工具或选择外部 sink。
+
+本文贡献如下：
+
+\begin{enumerate}[leftmargin=*]
+  \item 提出 context influence capability model，将 observe、quote、summarize、parameterize、plan、instruct、delegate 和 authorize 等 influence modes 与 protected decision classes 绑定。
+  \item 定义 intent-carrying capability leases，将当前用户意图、context provenance、argument constraints、flow、temporal state、budget 和 delegation 组合为可检查授权对象。
+  \item 设计 LLM-assisted capability compiler 与 deterministic checker，使 LLM 生成的计划和权限提议保持在 TCB 之外。
+  \item 实现多边界 enforcement prototype，覆盖 context construction、tool/MCP invocation、本地执行和 subagent delegation。
+  \item 设计围绕四个核心 claim 的评估：端到端安全/效用、lease quality/authority reduction、context-influence ablation、compiler/checker recovery。
+\end{enumerate}
+
+\section{威胁模型与目标}
+
+\sys 面向可扩展 agent runtime。Agent 可以读取外部文档、加载 Skills、连接 MCP servers、运行本地脚本、调用工具，并将部分任务委托给 subagents。攻击者可以控制部分输入 context，例如 PDF、网页、邮件、issue comment、MCP tool result、Skill instruction、script output 或 subagent summary。攻击目标是让 agent 超出用户当前意图：读取无关私有文件、向错误 sink 发送数据、创建错误 repository 的 issue、请求更宽 approval、修改策略、跳过检查，或将权限委托给恶意组件。
+
+我们不假设 LLM 会可靠遵守安全指令；不信任外部文档、工具结果、MCP annotations 或 unsigned Skill instructions；也不假设静态分析能完美理解任意脚本。\sys 依赖的 TCB 包括 intent certificate issuer、deterministic checker、provenance tracker、audit log 和 enforcement adapters。OS sandbox 或 ActPlane-style monitor 可以作为执行后端，但不是本文的核心贡献；\sys 关注的是上游 policy synthesis 和 context-authority checking。
+
+设计目标包括：
+
+\begin{itemize}[leftmargin=*]
+  \item 将 high-impact authority 绑定到当前用户意图、显式选择、管理员策略或 fresh approval。
+  \item 区分 data dependency 和 control dependency，允许不可信 context 作为数据使用，同时阻止其影响 protected decisions。
+  \item 将权限铸造成短期、可衰减、可审计的 leases，而不是安装期或 server 级别的 ambient permission。
+  \item 让 LLM 只提出计划和 lease 候选，不让其决定最终授权。
+  \item 将同一 lease language lowering 到 context、tool、MCP、本地执行和 delegation 边界。
+\end{itemize}
+
+非目标同样重要。\sys 不声称解决 prompt injection，不声称自动 compiler 永远正确，不替代 sandbox，也不保证所有 agent 决策都能被完整追踪。它的安全性质只覆盖已建模的 decision classes 和已接入的 enforcement boundaries。
+
+\section{系统设计}
+
+\sys 的输入是当前任务、可用扩展和运行时上下文。输出是一组 proof-carrying capability leases，以及一个 enforcement plan。系统可以分成四层：intent certificates、context authority labels、effect IR 与 lease checker。
+
+\subsection{Intent Certificates}
+
+Intent certificate 是结构化安全对象，而不是 prompt 中的一段自然语言。它记录用户目标、选择的对象、允许的 sinks、禁止的 sinks、approval tokens 和 expiry。对于 PDF 处理任务，certificate 会命名选中的 PDF 路径、输出目录、唯一授权的 GitHub repository、禁止任意网络访问的约束，以及创建 issue 所需的 fresh approval。LLM 可以提出 certificate fields，但 trusted parser、UI、administrator policy 或 approval step 必须 canonicalize 这些字段。Certificate 是后续 capability derivation 的根。
+
+\subsection{Context Authority}
+
+每个 context cell 都带 provenance label，记录 origin、integrity、confidentiality、purpose、time 和 endorsements。\sys 的关键增加是为 context source 指定 influence modes。PDF text 可以被允许 quote、summarize 或 parameterize spreadsheet cells，但禁止 plan、delegate 或 authorize。Signed Skill instructions 可以在其 declared workflow scope 内 instruct extraction procedure，但不能为自己请求额外工具。MCP tool results 和 annotations 必须按照 server trust 处理；MCP specification 已经提醒 tool behavior annotations 不能默认可信~\cite{mcp-spec}，\sys 将这一原则变成 deterministic provenance rule。
+
+\subsection{Effect IR and Leases}
+
+Agent plan 被编译成安全相关 effect graph。IR 不追求表达完整程序语义，而是捕捉会影响 authority 的事件：context use、tool call、MCP call、file read/write、subprocess execution、network connection、approval request 和 subagent delegation。每个 effect 记录 data provenance 和 control provenance。这个区分是 \sys 的关键：不可信 PDF bytes 可以是 output data 的 data dependency，但不应是 sink selection 的 control dependency。
+
+Lease 绑定 operation、object、arguments、intent、influence、flow、temporal、budget、expiry 和 delegation。一个 PDF extraction lease 可以允许脚本读取两个选中文件并写入输出目录，但禁止网络、secrets 和额外 subprocess；GitHub issue lease 可以允许一次 \texttt{create\_issue(repo=org/repo-x)}，但要求 repo control provenance 只能来自 trusted user intent。
+
+\subsection{Compiler and Checker}
+
+\sys 使用 LLM-assisted 但 checker-verified 的 pipeline。Compiler frontend 总结 Skill metadata、MCP schemas、local scripts、observed traces 和 policy；推导 plan 与 security-relevant effects；并为当前 run 提出 candidate leases。Frontend 不在 TCB 内。Deterministic checker 验证每个 lease 是否满足 global policy、intent certificate、provenance constraints、flow rules、temporal guards、budgets 和 delegation monotonicity。
+
+Checker 的安全性质是刻意保守的。No unauthorized influence：accepted trace 中任何 protected decision 的 control provenance 都必须具有对应 influence mode。Intent-bounded authority：每个 high-impact event 都有 active lease 和 trusted intent derivation。Delegation monotonicity：delegated capability sets 单调缩小，除非 trusted issuer 创建 fresh lease。
+
+\section{实现}
+
+Prototype 由 compiler frontend、deterministic checker 和 runtime adapters 组成。Compiler frontend 使用规则和 LLM-assisted summaries 从 Skills、MCP schemas、local scripts 和 task plan 中推导 candidate effects。所有候选都必须经过 checker。
+
+Runtime adapters 负责把 lease language lowering 到具体边界。Context constructor 将 trusted instructions、untrusted data 和 policy feedback 分区，并记录 provenance。Tool gateway 只暴露 active leases 覆盖的 tools，并验证参数。MCP broker 以 server/tool/method 粒度限制调用，而不是只允许或禁止整个 server。Execution sandbox 将 file/process/network/secrets constraints 下发到底层执行环境。Delegation monitor 确保 subagents 只获得 attenuated leases。
+
+Audit log 记录每次 allow/deny 的 lease、intent、provenance 和 checker reason。这个日志既用于安全解释，也用于 compiler refinement：当 benign action 被拒绝时，runtime 返回结构化 denial，LLM 可以提出更窄的替代计划或请求 fresh approval；checker 仍然决定是否接受。
+
+\section{评估计划}
+
+本文评估只组织成四个核心实验。Run IDs、pilot probes 和 residual analyses 是这些实验的证据来源，不是论文的实验编号。
+
+\subsection{E1: End-to-End Security and Utility}
+
+问题：在同一模型、同一任务上，\sys 是否比 vanilla agent、static ACL、exact-tool ACL、MCP/server allowlist、tool-call guard 和 OS/sandbox-only wrapper 更能阻断攻击，同时保持可接受的 benign task progress？
+
+Workloads 包括 document injection、tool-result injection、MCP poisoning 和 tau2/tau3-style utility tasks。指标包括 attack success、wrong sink、exfiltration、approval/delegation violations、benign completion、false denial、recovery rate 和 tool errors。成功条件不是“所有任务都成功”，而是在危险动作显著下降的同时，utility 损失有界且可解释。
+
+\subsection{E2: Lease Quality and Authority Reduction}
+
+问题：\sys 生成的 run-time leases 是否比 static extension/server policies 更接近 least privilege？
+
+实验使用跨 security traces、MCP poisoning、stateful utility tasks 和 Skill-style workflows 的 blinded expert oracle。两名专家独立编写 minimal leases，经 adjudication 后作为 oracle。比较对象包括 domain/global ACL、exact-tool ACL、MCP server allowlist、Skill manifest-style policy、Progent/PCAS/AgentSpec-style policy 和 \sys。指标包括 risk-weighted authority score、exposed tools/methods/sinks/paths/arguments、context-influence breadth、delegation breadth 和 oracle distance。
+
+\subsection{E3: Context-Influence Mechanism Ablation}
+
+问题：\sys 的价值是否来自 context influence model，而不是普通工具权限或 taint/provenance baseline？
+
+实验比较完整 \sys、no intent certificate、no influence lattice、no control/data split、object-only checker、no-provenance checker，以及 AuthGraph/PACT/AIRGuard-style provenance-authority 和 IFC/taint-style labelers。关键指标是 protected decisions 中有多少被 unauthorized context 控制，以及哪些 denials 只能由 lease semantics、temporal/budget/delegation/proof constraints 解释。
+
+如果 strongest provenance/taint baselines 已经解释所有 denials，论文 claim 必须收窄为“proof-carrying lease compiler/checker organization”，而不能声称新的 security boundary。
+
+\subsection{E4: Compiler, Checker, and Recovery Practicality}
+
+问题：LLM-assisted compiler 在 deterministic checker 下是否实用？当 checker 拒绝 broad/runtime leases 或 missing-proof writes 时，系统能否通过 structured recovery 提高任务进展，而不扩大 authority？
+
+实验比较 LLM-only accept、checker strict、checker+feedback、proof-only/rank-only/filter-only variants 和 checker+CEGAR planner。指标包括 invalid leases accepted、valid leases rejected、broad/runtime proposals rejected、proof completeness、exact-next precision/recall、denial recovery、dangerous execute、tool errors 和 official task reward。
+
+现有结果显示 checker 能阻止 broad/runtime compiler authority 执行，runtime binding 可以将可见证据降成 one-shot exact leases，read/write activation 可以在 proof complete 时安全执行；但当前 non-oracle utility 仍受 planner/candidate-generation/reward residual 限制。因此 E4 的最终实验必须证明 planner-confirmed recovery 提高 task-correct executions，而不能只报告 executed call 数增加。
+
+\section{当前证据与提交前缺口}
+
+当前 prototype 已经支持 checker/gateway、live local callable boundary、benchmark-derived replay、local Qwen/llama.cpp compiler probes、runtime binding、value proof、read/write activation 和 expert-oracle labeling setup。现有证据可以支撑三个谨慎结论：\sys 能在已建模 trace 上阻断 unauthorized context-to-decision influence；run-time leases 明显缩小 object/tool authority surface；deterministic checker 能阻止 LLM-proposed broad/runtime authority 直接执行。
+
+这些结论仍不足以支撑完整顶会 claim。提交前最重要的缺口是：
+
+\begin{itemize}[leftmargin=*]
+  \item matched E1 wrapper：同一 workload、同一 model、同一 task set 下与 strong baselines 对比 security 和 utility。
+  \item E2 expert oracle：完成 R200 模板的独立专家标注、adjudication 和 oracle-distance scoring。
+  \item E3 residual lift：将 lease-semantics residual 从构造 workflow 提升到 benchmark-derived 或 model-loop setting。
+  \item E4 planner/CEGAR：证明 recovery 能提高 task-correct executions 或 reward，同时保持零 dangerous execute、零 tool error 和无 broad/runtime lease activation。
+\end{itemize}
+
+因此本文当前应写成一个系统安全机制论文，而不是声称已经完成跨 benchmark end-to-end utility。最强的可信 claim 是：\sys 将 context influence 显式编译为 proof-carrying, attenuable capability leases，并在 checker-enforced boundaries 内阻断未授权 context 对 protected decisions 的控制；完整 utility 与 expert-oracle least-privilege 结论需要上述四个主实验闭环。
+
+\section{相关工作定位}
+
+\sys 应被定位为 agent decision authorization model，而不是 extension interface model 或 OS monitor。EIM/bpftime 将扩展能力表示为 host resources，并关注应用扩展的隔离和效率~\cite{eim-bpftime}。\sys 保护的是未来 agent decisions，例如 tool choice、sink selection、authority request 和 delegation。ActPlane 关注如何在 tool layer 之下执行 agent policies~\cite{actplane}；\sys 关注的是这些 policies 应如何从 intent 和 provenance 中生成。SkillGuard/SkillScope 等工作强调 Skill package 的 permission 和 behavior specification~\cite{skillguard}；\sys 是 run-centric 和 cross-extension 的，问的是当前 run 可以允许这个 Skill、这个 MCP server、这份文档和这个 subagent 影响什么。
+
+\bibliographystyle{plain}
+\bibliography{intentcap-paper-zh}
+
+\end{document}
