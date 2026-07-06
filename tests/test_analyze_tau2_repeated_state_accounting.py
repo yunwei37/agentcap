@@ -69,6 +69,50 @@ def test_non_read_same_args_call_gets_no_credit():
     assert row["adjusted_status"] == "no_credit"
 
 
+def test_action_log_duplicate_get_call_is_creditable():
+    rows = analyzer.build_action_duplicate_adjustment_rows(
+        source_run_id="RTEST",
+        existing_event_ids=set(),
+        actionability_rows=[
+            {
+                "domain": "retail",
+                "task_id": "2",
+                "event_id": "retail:2:2_3",
+                "tool": "get_product_details",
+                "args_json": '{"product_id":"9523456873"}',
+                "db_feasible": "True",
+            },
+            {
+                "domain": "retail",
+                "task_id": "2",
+                "event_id": "retail:2:2_11",
+                "tool": "return_delivered_order_items",
+                "args_json": '{"order_id":"#W2378156"}',
+                "db_feasible": "True",
+            },
+        ],
+        action_rows=[
+            {
+                "domain": "retail",
+                "task_id": "2",
+                "event_id": "retail:2:2_10",
+                "model_tool": "get_product_details",
+                "model_args_json": '{"product_id":"9523456873"}',
+                "bound_reference_event_id": "retail:2:2_10",
+                "executed": "True",
+                "tool_error": "False",
+            }
+        ],
+    )
+
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["event_id"] == "retail:2:2_3"
+    assert row["accounting_source"] == "action_results_duplicate_scan"
+    assert row["accounting_class"] == "idempotent_read_already_observed"
+    assert row["db_feasible_missing_delta"] == -1
+
+
 def test_analyze_writes_summary_and_adjustments(tmp_path):
     repeated_csv = tmp_path / "repeated.csv"
     with repeated_csv.open("w", newline="", encoding="utf-8") as handle:
@@ -129,14 +173,76 @@ def test_analyze_writes_summary_and_adjustments(tmp_path):
 
     actionability_csv = tmp_path / "missing.csv"
     with actionability_csv.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=["event_id", "db_feasible"], lineterminator="\n")
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=["domain", "task_id", "event_id", "tool", "args_json", "db_feasible"],
+            lineterminator="\n",
+        )
         writer.writeheader()
         writer.writerows(
             [
-                {"event_id": "a", "db_feasible": "True"},
-                {"event_id": "b", "db_feasible": "True"},
-                {"event_id": "invalid", "db_feasible": "False"},
+                {
+                    "domain": "retail",
+                    "task_id": "3",
+                    "event_id": "retail:3:3_3",
+                    "tool": "get_product_details",
+                    "args_json": '{"product_id":"p"}',
+                    "db_feasible": "True",
+                },
+                {
+                    "domain": "retail",
+                    "task_id": "3",
+                    "event_id": "retail:3:3_6",
+                    "tool": "get_order_details",
+                    "args_json": '{"order_id":"#O"}',
+                    "db_feasible": "True",
+                },
+                {
+                    "domain": "retail",
+                    "task_id": "3",
+                    "event_id": "retail:3:3_7",
+                    "tool": "get_user_details",
+                    "args_json": '{"user_id":"u"}',
+                    "db_feasible": "True",
+                },
+                {
+                    "domain": "retail",
+                    "task_id": "3",
+                    "event_id": "invalid",
+                    "tool": "get_product_details",
+                    "args_json": '{"product_id":"invalid"}',
+                    "db_feasible": "False",
+                },
             ]
+        )
+    action_results_csv = tmp_path / "actions.csv"
+    with action_results_csv.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=[
+                "domain",
+                "task_id",
+                "event_id",
+                "model_tool",
+                "model_args_json",
+                "bound_reference_event_id",
+                "executed",
+                "tool_error",
+            ],
+            lineterminator="\n",
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "domain": "retail",
+                "task_id": "3",
+                "event_id": "retail:3:3_11",
+                "model_tool": "get_user_details",
+                "model_args_json": '{"user_id":"u"}',
+                "bound_reference_event_id": "retail:3:3_11",
+                "executed": "True",
+                "tool_error": "False",
+            }
         )
 
     result = analyzer.analyze_repeated_state_accounting(
@@ -145,12 +251,14 @@ def test_analyze_writes_summary_and_adjustments(tmp_path):
         repeated_residual_csv=repeated_csv,
         missing_actionability_csv=actionability_csv,
         output_dir=tmp_path / "out",
+        action_results_csv=action_results_csv,
     )
 
     summary = result["summary"]
     assert summary["input_repeated_state_residuals"] == 2
-    assert summary["current_db_feasible_missing_before_accounting"] == 2
-    assert summary["idempotent_same_call_creditable"] == 1
+    assert summary["action_duplicate_scan_adjustments"] == 1
+    assert summary["current_db_feasible_missing_before_accounting"] == 3
+    assert summary["idempotent_same_call_creditable"] == 2
     assert summary["planner_selection_residuals"] == 1
     assert summary["adjusted_db_feasible_missing_after_idempotent_read_credit"] == 1
     assert (tmp_path / "out" / "repeated_state_adjustments.csv").exists()
