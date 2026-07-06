@@ -191,11 +191,19 @@ Checker judgment 写作：
 
 \section{实现}
 
-Prototype 由 compiler frontend、deterministic checker 和 runtime adapters 组成。Compiler frontend 使用规则和 LLM-assisted summaries 从 Skills、MCP schemas、local scripts 和 task plan 中推导 candidate effects。所有候选都必须经过 checker。
+我们的 prototype 是一个 Python-based agent authorization harness。它的目标不是替换生产级 MCP server、agent runtime 或 OS sandbox，而是验证三件事：lease language 是否足以表达 intent/context authority，deterministic checker 是否能在统一 event model 上执行这些约束，以及这些约束能否被 lowering 到 trace replay、live callable gateway 和 benchmark-derived workflows。
 
-Runtime adapters 负责把 lease language lowering 到具体边界。Context constructor 将 trusted instructions、untrusted data 和 policy feedback 分区，并记录 provenance。Tool gateway 只暴露 active leases 覆盖的 tools，并验证参数。MCP broker 以 server/tool/method 粒度限制调用，而不是只允许或禁止整个 server。Execution sandbox 将 file/process/network/secrets constraints 下发到底层执行环境。Delegation monitor 确保 subagents 只获得 attenuated leases。
+\paragraph{Checker and policy core.}
+Checker core 位于 \texttt{src/intentcap/}，实现 context labels、effect events、leases、checker state 和 proof objects。当前 checker 支持 exact、prefix、suffix 和 one-of argument predicates，支持 lease matching、holder scoping、control/data provenance checks、context-label influence-mode checks、temporal prerequisites、per-lease invocation budgets、proof-carrying intent/approval derivation，以及 delegated capability attenuation。这个 core 是本文的主要 TCB：LLM 输出、Skill 描述、MCP annotations 和 tool results 只能产生 candidate effects 或 candidate leases，不能绕过 checker 直接获得 authority。
 
-Audit log 记录每次 allow/deny 的 lease、intent、provenance 和 checker reason。这个日志既用于安全解释，也用于 compiler refinement：当 benign action 被拒绝时，runtime 返回结构化 denial，LLM 可以提出更窄的替代计划或请求 fresh approval；checker 仍然决定是否接受。
+\paragraph{Trace and live gateways.}
+\texttt{TraceGateway} 用同一个 checker replay benchmark-derived traces，并把每个事件记录为 execute/block decision。它用于把 AgentDojo、MCPTox、InjecAgent 和 tau2/tau3 reference artifacts 转换成统一的 protected-decision events，从而比较不同 policy variants 的 false accept、authority breadth 和 oracle distance。\texttt{LiveToolGateway} 则包裹本地 Python callables：只有 checker 接受的 event 才会真正调用注册函数；被拒绝的事件在 side effect 发生前停止。这一区分很重要：trace replay 提供大规模 policy evidence，live gateway 验证同一 lease semantics 可以保护真实 callable boundary。
+
+\paragraph{Compiler probes and runtime binding.}
+Prototype 还包含 local llama.cpp/Qwen frontend，用来模拟不可信 lease compiler 和 action proposer。模型可以根据 task text、tool schemas、已有 tool-result previews 或 checker feedback 生成 candidate leases/actions；系统只把通过 checker 的结果交给 gateway。对于 tau2/tau3-style stateful workflows，runtime binding 会从已经执行的 tool-result evidence 中铸造 exact one-shot leases，并重新检查参数值是否出现在当前可见 task/tool-result context 中。High-impact write candidates 还必须满足 structured value proof：例如列表参数需要逐项绑定到结构化上下文，不能从原始文本窗口或 sibling objects 中借用 authority。
+
+\paragraph{Artifact boundary.}
+当前 artifact 已经实现 checker/gateway、live local callable boundary、benchmark-derived replay adapters、local Qwen/llama.cpp compiler probes、runtime binding、structured value proof、read/write activation，以及 R199/R200 expert-oracle labeling packet。这些实现足以支撑机制性 claim：在已建模 traces 上，\sys 能拒绝 unauthorized context-to-decision influence；run-time exact leases 可以缩小 object/tool authority surface；checker 可以阻止 LLM-proposed broad/runtime authority 直接进入执行路径。它还不能单独支撑更强的端到端 claim：full MCP broker、生产级 execution sandbox、fresh user-simulator loop、独立 expert-oracle scoring 和 benchmark-scale utility/recovery evaluation 仍是评估完成前的 open items。
 
 \section{评估设计}
 
