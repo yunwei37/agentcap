@@ -20,33 +20,36 @@
 \maketitle
 
 \begin{abstract}
-LLM agents 正在从固定工具调用器演变为可扩展的执行环境。一个 agent 可以加载 Skills，连接 MCP servers，运行本地脚本，并将部分任务委托给 subagents。现有权限系统通常约束扩展能调用哪些工具、访问哪些文件或连接哪些网络端点；但在 agent 中，文本本身也会影响未来的权限决策。一个文档、工具结果或 Skill instruction 可能改变 agent 选择的工具、目标 sink、approval scope 或 delegation target。由此产生的问题不是单纯的 resource access，而是：哪些 context 可以影响哪些 authority-bearing decisions。
+LLM agents 正在从固定工具调用器演变为可扩展的执行环境。它们可以加载 Skills，连接 MCP servers，运行本地脚本，并将任务委托给 subagents。现有权限机制通常约束扩展能调用哪些工具、访问哪些文件或连接哪些网络端点；但在 agent 中，文本本身会影响未来的权限决策。一个文档、工具结果或 Skill instruction 可能改变 agent 选择的工具、目标 sink、approval scope 或 delegation target。因此，agent extension 的核心安全问题不只是 resource access，而是：哪些 context 可以影响哪些 authority-bearing decisions。
 
-本文提出 \sys，一种面向 LLM agent extensions 的 intent-carrying capability model。\sys 将用户当前意图作为权限根，并将 context influence 显式建模为 capability。系统首先从 trusted user input、explicit object/sink selection、policy 或 fresh approval 中生成结构化 intent certificate；随后将 agent plan 编译为短期、可衰减、可审计的 capability leases。每个 lease 不仅约束 operation、object 和 arguments，还约束 control/data provenance、允许的 influence modes、data-flow sinks、temporal order、budget 和 delegation。LLM 可以提出 plan 和 candidate leases，但不属于 trusted computing base；deterministic checker 负责验证 intent derivation 和 provenance constraints，并将通过的 leases 下发到 context constructor、tool gateway、MCP broker、本地执行 sandbox 和 delegation monitor。
+本文提出 \sys，一种面向 LLM agent extensions 的 intent-carrying capability model。\sys 将用户当前意图作为权限根，并将 context influence 显式建模为 capability。系统首先从 trusted user input、explicit object/sink selection、policy 或 fresh approval 中生成结构化 intent certificate；随后把 agent plan 编译为短期、可衰减、可审计的 capability leases。每个 lease 不仅约束 operation、object 和 arguments，还约束 control/data provenance、允许的 influence modes、data-flow sinks、temporal order、budget 和 delegation。LLM 可以提出 plan 和 candidate leases，但不属于 trusted computing base；deterministic checker 负责验证 intent derivation 和 provenance constraints，并将通过的 leases 下发到 context constructor、tool gateway、MCP broker、本地执行 sandbox 和 delegation monitor。
 
-\sys 的目标不是消除所有 prompt injection，而是在已建模的 decision classes 和 enforcement boundaries 内阻断未授权 context-to-decision influence。我们给出三个安全性质：no unauthorized influence、intent-bounded authority 和 delegation monotonicity。评估围绕四个核心问题展开：\sys 是否降低真实攻击中的 wrong-sink、exfiltration、approval 和 delegation 成功率；是否生成比 static ACL、MCP allowlist 和 Skill manifest 更接近 expert oracle 的 leases；context influence lattice 是否带来超越普通 tool permission 和 taint/provenance baseline 的增益；LLM-assisted compiler 在 deterministic checker 和 structured recovery 下是否能保持实用任务进展。
+\sys 的目标不是消除所有 prompt injection，而是在已建模的 decision classes 和 enforcement boundaries 内阻断未授权 context-to-decision influence。我们形式化三个安全性质：no unauthorized influence、intent-bounded authority 和 delegation monotonicity。评估围绕四个主实验展开：端到端攻击阻断与任务效用、run-time lease quality 与 authority reduction、context-influence mechanism ablation，以及 LLM-assisted compiler 在 deterministic checker 和 structured recovery 下的实用性。本文的中心结论是，保护 agent extensions 需要控制的不只是代码能做什么，还包括 context 被允许影响什么。
 \end{abstract}
 
 \section{引言}
 
-LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 API、插件接口或系统调用与宿主交互，因此权限系统可以围绕文件、网络、进程和工具调用来定义。现代 agent extension 不是这样的简单插件。Skills 可以提供长程工作流说明和脚本；MCP servers 可以暴露工具、资源和 prompts；本地程序可以转换文件和读取环境状态；subagents 可以接收上下文和被委托的能力。最终的 agent 行为不是单个模型调用加一个固定 API，而是由用户请求、系统策略、扩展说明、外部文档、工具结果和中间总结共同塑造的执行过程。
+LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 API、插件接口或系统调用与宿主交互，因此权限系统可以围绕文件、网络、进程和工具调用来定义。现代 agent extension 的边界更模糊：Skills 可以提供长程工作流说明和脚本；MCP servers 可以暴露工具、资源和 prompts；本地程序可以转换文件并读取环境状态；subagents 可以接收上下文和被委托的能力。最终的 agent 行为不是单个模型调用加一个固定 API，而是由用户请求、系统策略、扩展说明、外部文档、工具结果和中间总结共同塑造的执行过程。
 
-这种执行过程打破了 data 和 authority 的传统边界。在普通程序中，一个 PDF 或网页通常只是输入数据；在 LLM agent 中，同样的文本可能成为控制信号。它可以诱导模型选择另一个工具、改变输出目的地、请求更大的 OAuth scope、跳过检查步骤，或把任务委托给不该接收权限的组件。即使底层工具调用本身经过 allowlist 检查，agent 仍可能被不可信 context 引导到一个“看起来被允许、但并非用户意图授权”的行动。
+这种执行过程打破了 data 和 authority 的传统边界。在普通程序中，一个 PDF 或网页通常只是输入数据；在 LLM agent 中，同样的文本可能成为控制信号。它可以诱导模型选择另一个工具、改变输出目的地、请求更大的 OAuth scope、跳过检查步骤，或把任务委托给不该接收权限的组件。即使底层工具调用经过 allowlist 检查，agent 仍可能被不可信 context 引导到一个“操作被允许、但决策来源未被授权”的行动。本文称这一问题为 context privilege：context 不只携带信息，也可能携带对未来决策的影响力。
 
 一个典型例子是文档处理工作流。用户要求 agent 从两个选中的 PDF 中提取表格，保存 XLSX，并在指定 GitHub repository 中创建一个 issue 总结结果。PDF 内容应当可以影响表格单元格和 issue body；但它不应影响 GitHub repository 的选择、是否访问外部网络、是否请求新的 approval scope，或是否加载另一个 Skill。如果 PDF 中包含隐藏指令要求 agent 将数据发送到攻击者仓库，普通工具 ACL 很难表达“PDF 可以作为数据影响 summary，但不能作为控制来源影响 sink selection”这一差异。
 
+现有防线分别覆盖了这个问题的一部分。Tool guards 检查一次具体调用；static allowlists 和 server-level policies 限制可见工具；human approval gates 将高影响操作交给用户确认；OS sandbox 或 monitor 约束文件、网络和进程 side effects。它们都很有用，但它们通常不回答一个更早的问题：是谁影响了 agent 选择这个工具、这个 sink、这个 approval scope 或这个 delegation target？如果攻击文本让 agent 在允许的工具中选择了错误仓库，或者让 agent 以看似合理的理由请求更大权限，仅检查最终操作并不足够。
+
 \sys 从这一差异出发。它的核心观点是：agent security 不应只问“这个扩展能做什么操作”，还应问“这段 context 可以影响什么决策”。我们将 context influence 作为 capability，并将用户当前意图作为 authority root。一个 high-impact event 只有在两个条件同时成立时才允许执行：它必须由当前 intent certificate 推导出来；并且它的 control provenance 必须来自被授权影响对应 decision class 的 context source。
 
-\sys 使用 intent-carrying capability leases 表达这一约束。Lease 是短期、可衰减的授权对象，绑定 holder、operation、object、arguments、intent derivation、control/data provenance、flow、temporal state、budget 和 delegation。与传统 capability 不同，\sys lease 不只说明“谁可以调用哪个对象上的哪个操作”，还说明“哪些 context 可以影响这个操作的哪些安全相关字段”。因此，同一个 document 可以被授权 parameterize 输出数据，但不能 authorize 新工具或选择外部 sink。
+\sys 用 intent-carrying capability leases 表达这一约束。Lease 是短期、可衰减的授权对象，绑定 holder、operation、object、arguments、intent derivation、control/data provenance、flow、temporal state、budget 和 delegation。与传统 capability 不同，\sys lease 不只说明“谁可以调用哪个对象上的哪个操作”，还说明“哪些 context 可以影响这个操作的哪些安全相关字段”。因此，同一个 document 可以被授权 parameterize 输出数据，但不能 authorize 新工具或选择外部 sink。
+
+这一设计带来两个实现挑战。第一，lease 不能由 LLM 单独决定，否则攻击 context 仍可能通过 prompt 影响授权本身。第二，系统不能只在工具调用口检查权限，因为 untrusted context 可能先影响 plan、prompt construction、delegation 或 approval request。\sys 因此采用 LLM-assisted compiler 与 deterministic checker 的结构：LLM 只提出 plan 和 candidate leases；checker 根据 intent certificate、context labels、effect IR 和 global policy 验证 proof-carrying leases；runtime adapters 再将 leases lowering 到 context constructor、tool gateway、MCP broker、本地执行 sandbox 和 delegation monitor。
 
 本文贡献如下：
 
 \begin{enumerate}[leftmargin=*]
-  \item 提出 context influence capability model，将 observe、quote、summarize、parameterize、plan、instruct、delegate 和 authorize 等 influence modes 与 protected decision classes 绑定。
-  \item 定义 intent-carrying capability leases，将当前用户意图、context provenance、argument constraints、flow、temporal state、budget 和 delegation 组合为可检查授权对象。
-  \item 设计 LLM-assisted capability compiler 与 deterministic checker，使 LLM 生成的计划和权限提议保持在 TCB 之外。
-  \item 实现多边界 enforcement prototype，覆盖 context construction、tool/MCP invocation、本地执行和 subagent delegation。
-  \item 设计围绕四个核心 claim 的评估：端到端安全/效用、lease quality/authority reduction、context-influence ablation、compiler/checker recovery。
+  \item 我们提出 context influence capability model，将 context 的 observe、quote、summarize、parameterize、plan、instruct、delegate 和 authorize 等 influence modes 与 protected decision classes 显式绑定。
+  \item 我们定义 intent-carrying capability leases，将当前用户意图、control/data provenance、argument constraints、flow、temporal state、budget 和 delegation 组合为可检查授权对象，并给出三个 trace-level safety properties。
+  \item 我们设计 LLM-assisted capability compiler 与 deterministic checker，使 LLM 生成的计划和权限提议保持在 TCB 之外，并将通过的 leases 下发到 context、tool、MCP、本地执行和 delegation 边界。
+  \item 我们将评估收敛为四个 claim-facing 实验块：端到端安全与效用、lease quality 与 authority reduction、context-influence ablation、compiler/checker recovery，并明确哪些结果可以支撑顶会级 claim、哪些结果只应收窄论文表述。
 \end{enumerate}
 
 \section{威胁模型与目标}
