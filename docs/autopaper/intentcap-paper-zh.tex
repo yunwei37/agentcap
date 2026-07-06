@@ -179,37 +179,33 @@ Runtime adapters 负责把 lease language lowering 到具体边界。Context con
 
 Audit log 记录每次 allow/deny 的 lease、intent、provenance 和 checker reason。这个日志既用于安全解释，也用于 compiler refinement：当 benign action 被拒绝时，runtime 返回结构化 denial，LLM 可以提出更窄的替代计划或请求 fresh approval；checker 仍然决定是否接受。
 
-\section{评估计划}
+\section{评估设计}
 
-本文评估只组织成四个核心实验。Run IDs、pilot probes 和 residual analyses 是这些实验的证据来源，不是论文的实验编号。
+本文评估围绕四个可证伪问题组织。Run IDs、pilot probes 和 residual analyses 只作为这些问题的证据来源，不作为论文主实验编号。评估的共同原则是固定底层模型、任务顺序、工具描述和 prompt budget，尽量只改变授权层；当某个 baseline 只有 trace-level 或概念性复现时，结果必须标记为 partial comparison，不能写成完整数值胜利。所有 high-impact denials 使用 protected-decision oracle 判定：若某个 protected decision 的 control provenance 来自缺少相应 influence mode 的 context source，则该事件应被拒绝。
 
 \subsection{E1: End-to-End Security and Utility}
 
-问题：在同一模型、同一任务上，\sys 是否比 vanilla agent、static ACL、exact-tool ACL、MCP/server allowlist、tool-call guard 和 OS/sandbox-only wrapper 更能阻断攻击，同时保持可接受的 benign task progress？
+E1 检验 \sys 是否在真实 agent workflows 中降低攻击成功率，同时不把 benign task progress 降到不可用。Primary comparison 是同一模型和同一任务集下的 vanilla agent、static ACL、exact-tool ACL、MCP/server allowlist、tool-call guard、OS/sandbox-only wrapper 和完整 \sys。Workloads 覆盖 AgentDojo/InjecAgent-style document or tool-result injection、MCPTox-style MCP poisoning，以及 tau2/tau3 或 MCP utility slices。
 
-Workloads 包括 document injection、tool-result injection、MCP poisoning 和 tau2/tau3-style utility tasks。指标包括 attack success、wrong sink、exfiltration、approval/delegation violations、benign completion、false denial、recovery rate 和 tool errors。成功条件不是“所有任务都成功”，而是在危险动作显著下降的同时，utility 损失有界且可解释。
+主要指标是 attack success、wrong-sink rate、data exfiltration、approval/delegation violations、benign completion、false denial、recovery rate 和 tool errors。Oracle 来自 benchmark security/utility checks 与 \sys protected-decision labels。成功条件是：\sys 相比 access-control baselines 明显降低危险动作，并且 utility loss 有界、可由 denial/recovery 日志解释；若 utility collapse，论文只能主张 \sys 是安全 enforcement layer；若攻击仍通过，则必须定位到缺失的 provenance 或 enforcement boundary。
 
 \subsection{E2: Lease Quality and Authority Reduction}
 
-问题：\sys 生成的 run-time leases 是否比 static extension/server policies 更接近 least privilege？
+E2 检验 \sys 生成的 run-time leases 是否比 static extension/server policies 更接近 least privilege。实验单位不是单个工具调用，而是一个 run 在完成任务时暴露的 authority surface。样本来自 security traces、MCP poisoning、stateful utility tasks 和 Skill-style workflows。Oracle 是 blinded expert leases：两名专家在不看 \sys 输出的情况下独立写 minimal leases，经 adjudication 后形成 reference policy。
 
-实验使用跨 security traces、MCP poisoning、stateful utility tasks 和 Skill-style workflows 的 blinded expert oracle。两名专家独立编写 minimal leases，经 adjudication 后作为 oracle。比较对象包括 domain/global ACL、exact-tool ACL、MCP server allowlist、Skill manifest-style policy、Progent/PCAS/AgentSpec-style policy 和 \sys。指标包括 risk-weighted authority score、exposed tools/methods/sinks/paths/arguments、context-influence breadth、delegation breadth 和 oracle distance。
+比较对象包括 domain/global ACL、exact-tool ACL、MCP server allowlist、Skill manifest-style policy、Progent/PCAS/AgentSpec-style policy 和 \sys。指标包括 risk-weighted authority score、exposed tools/methods/sinks/paths/arguments、context-influence breadth、delegation breadth 和 oracle distance。成功条件是 \sys 在保持授权 data use 的同时降低 authority breadth 和 oracle distance；若 symbolic policy baselines 同样窄，则论文应把 least-privilege claim 收窄为 proof-carrying checker operationalization。
 
 \subsection{E3: Context-Influence Mechanism Ablation}
 
-问题：\sys 的价值是否来自 context influence model，而不是普通工具权限或 taint/provenance baseline？
+E3 隔离 \sys 的核心机制是否真的是 context influence capability，而不是普通 tool permission 或 taint/provenance tracking。实验比较完整 \sys、no intent certificate、no influence lattice、no control/data split、object-only checker、no-provenance checker，以及 AuthGraph/PACT/AIRGuard-style provenance-authority 和 IFC/taint-style labelers。Workloads 包括 document injection、MCP poisoning、malicious Skill/tool-result 和 residual workflow suites。
 
-实验比较完整 \sys、no intent certificate、no influence lattice、no control/data split、object-only checker、no-provenance checker，以及 AuthGraph/PACT/AIRGuard-style provenance-authority 和 IFC/taint-style labelers。关键指标是 protected decisions 中有多少被 unauthorized context 控制，以及哪些 denials 只能由 lease semantics、temporal/budget/delegation/proof constraints 解释。
-
-如果 strongest provenance/taint baselines 已经解释所有 denials，论文 claim 必须收窄为“proof-carrying lease compiler/checker organization”，而不能声称新的 security boundary。
+关键指标是 protected decisions 中 unauthorized context control 的接受率，以及每个 denial 是否只能由 lease semantics、temporal guards、budget、delegation 或 proof constraints 解释。成功条件是 ablations 或 access-control baselines 接受完整 \sys 拒绝的 protected-decision violations，并且 residual cases 不能被最强 provenance/taint baseline 完全解释。若最强 baseline 已解释所有 denials，论文必须放弃“新的 security boundary”表述，转而主张 \sys 是一种 proof-carrying lease compiler/checker organization。
 
 \subsection{E4: Compiler, Checker, and Recovery Practicality}
 
-问题：LLM-assisted compiler 在 deterministic checker 下是否实用？当 checker 拒绝 broad/runtime leases 或 missing-proof writes 时，系统能否通过 structured recovery 提高任务进展，而不扩大 authority？
+E4 检验 LLM-assisted compiler 在 deterministic checker 下是否可用。这里的对象不是模型能力本身，而是一个安全 pipeline：LLM 生成 candidate plans/leases，checker 拒绝 broad/runtime policies 或 missing-proof writes，runtime 返回 structured denial，planner 再生成更窄的替代动作。比较对象包括 LLM-only accept、checker strict、checker+feedback、proof-only/rank-only/filter-only variants 和 checker+CEGAR planner。
 
-实验比较 LLM-only accept、checker strict、checker+feedback、proof-only/rank-only/filter-only variants 和 checker+CEGAR planner。指标包括 invalid leases accepted、valid leases rejected、broad/runtime proposals rejected、proof completeness、exact-next precision/recall、denial recovery、dangerous execute、tool errors 和 official task reward。
-
-现有结果显示 checker 能阻止 broad/runtime compiler authority 执行，runtime binding 可以将可见证据降成 one-shot exact leases，read/write activation 可以在 proof complete 时安全执行；但当前 non-oracle utility 仍受 planner/candidate-generation/reward residual 限制。因此 E4 的最终实验必须证明 planner-confirmed recovery 提高 task-correct executions，而不能只报告 executed call 数增加。
+指标包括 invalid leases accepted、valid leases rejected、broad/runtime proposals rejected、proof completeness、exact-next precision/recall、denial recovery、dangerous execute、tool errors 和 benchmark task reward。成功条件不是简单增加 executed calls，而是在不激活 broad/runtime authority、零 dangerous execute、零 tool error 的前提下，提高 task-correct executions 或 reward。若 recovery 仍停滞，论文应把 utility claim 收窄为 bounded safety/proof completeness，并将 planner/candidate generation 明确列为 artifact gap。
 
 \section{当前证据与提交前缺口}
 
