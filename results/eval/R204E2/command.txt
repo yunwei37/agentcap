@@ -1,0 +1,1 @@
+python scripts/export_adjudicated_expert_oracle.py --run-id R204E2 --manifest results/eval/R199/expert_oracle_task_manifest.csv --schema results/eval/R199/expert_lease_label_schema.json --label-dir results/eval/R204E2/adjudicated_labels --output-dir results/eval/R204E2

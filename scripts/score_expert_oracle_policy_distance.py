@@ -288,9 +288,23 @@ def _canonical_jsonish(value: str) -> str:
     if not text:
         return ""
     try:
-        return json.dumps(json.loads(text), sort_keys=True, separators=(",", ":"))
+        return json.dumps(_normalize_constraints(json.loads(text)), sort_keys=True, separators=(",", ":"))
     except json.JSONDecodeError:
         return text
+
+
+def _normalize_constraints(value: Any) -> Any:
+    """Drop scorer/provenance metadata that is not part of lease authority."""
+    if isinstance(value, list):
+        return [_normalize_constraints(item) for item in value]
+    if isinstance(value, dict):
+        ignored_keys = {"source_baseline"}
+        return {
+            key: _normalize_constraints(item)
+            for key, item in value.items()
+            if key not in ignored_keys
+        }
+    return value
 
 
 def _read_csv(path: Path) -> list[dict[str, str]]:

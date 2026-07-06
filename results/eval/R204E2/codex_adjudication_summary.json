@@ -1,0 +1,33 @@
+{
+  "adjudication_status": "ok",
+  "analysis": "Codex expert-oracle adjudication labels",
+  "confidence_counts": {
+    "high": 16,
+    "medium": 8
+  },
+  "git_status": "M docs/autopaper/intentcap-autopaper.md\n M docs/autopaper/intentcap-paper-zh.tex\n M docs/evaluation.md\n M docs/idea-story.md\n M docs/implementation.md\n M scripts/score_expert_oracle_policy_distance.py\n M tests/test_score_expert_oracle_policy_distance.py\n?? results/eval/R204E2/\n?? results/eval/R205E2S/\n?? scripts/adjudicate_expert_oracle_labels_codex.py\n?? tests/test_adjudicate_expert_oracle_labels_codex.py",
+  "input_digests": [
+    {
+      "bytes": 18378,
+      "path": "results/eval/R199/expert_oracle_task_manifest.csv",
+      "sha256": "afca480c09d54d6093eecbff83b274e9e4d8a371e067fc825ab3fd2543fa543b"
+    }
+  ],
+  "labeler_id": "codex_adjudicated",
+  "labels_written": 24,
+  "machine": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "manifest_samples": 24,
+  "no_dataset_sync": true,
+  "notes": [
+    "Single project-author adjudication requested by the user; final camera-ready claims should still prefer independent human review.",
+    "Labels are derived from the R199 blinded manifest fields, not from R201P policy rows.",
+    "Every label binds authority to trusted intent and forbids untrusted context from authorizing tools, sinks, approvals, delegation, or policy updates."
+  ],
+  "project_head": "16c4fb28542a4b325e25c576625eff282b3f71ad",
+  "run_id": "R204E2",
+  "samples_by_benchmark": {
+    "InjecAgent": 8,
+    "MCPTox": 8,
+    "tau2-bench / tau3-bench": 8
+  }
+}

@@ -84,6 +84,27 @@ def test_scores_missing_coverage_and_argument_mismatch(tmp_path):
     assert scored["oracle_distance_score"] == 25
 
 
+def test_argument_comparison_ignores_source_baseline_metadata(tmp_path):
+    scorer = _load_scorer()
+    oracle = tmp_path / "oracle.csv"
+    policies = tmp_path / "policies.csv"
+    _write_csv(oracle, [_oracle_row("EO-001")])
+    policy = _policy_row("EO-001", "intentcap_candidate")
+    policy["lease_argument_constraints_json"] = json.dumps(
+        [{"mode": "exact", "source_baseline": "intentcap_reference_events"}]
+    )
+    _write_csv(policies, [policy])
+
+    result = scorer.score_policy_distance(
+        run_id="T202",
+        oracle_path=oracle,
+        policy_path=policies,
+        output_dir=tmp_path / "R202",
+    )
+
+    assert result["distance_rows"][0]["argument_constraint_mismatch"] == 0
+
+
 def test_missing_oracle_marks_summary_incomplete(tmp_path):
     scorer = _load_scorer()
     oracle = tmp_path / "oracle.csv"

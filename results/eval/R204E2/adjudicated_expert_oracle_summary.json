@@ -1,0 +1,172 @@
+{
+  "allow_partial": false,
+  "ambiguous_adjudicated_samples": [],
+  "ambiguous_adjudicated_samples_count": 0,
+  "analysis": "adjudicated expert-oracle export",
+  "confidence_counts": {
+    "high": 16,
+    "medium": 8
+  },
+  "export_status": "ok",
+  "exported_rows": 24,
+  "exported_rows_by_benchmark": {
+    "InjecAgent": 8,
+    "MCPTox": 8,
+    "tau2-bench / tau3-bench": 8
+  },
+  "git_status": "M docs/autopaper/intentcap-autopaper.md\n M docs/autopaper/intentcap-paper-zh.tex\n M docs/evaluation.md\n M docs/idea-story.md\n M docs/implementation.md\n M scripts/score_expert_oracle_policy_distance.py\n M tests/test_score_expert_oracle_policy_distance.py\n?? results/eval/R204E2/\n?? results/eval/R205E2S/\n?? scripts/adjudicate_expert_oracle_labels_codex.py\n?? tests/test_adjudicate_expert_oracle_labels_codex.py",
+  "input_digests": [
+    {
+      "bytes": 18378,
+      "path": "results/eval/R199/expert_oracle_task_manifest.csv",
+      "sha256": "afca480c09d54d6093eecbff83b274e9e4d8a371e067fc825ab3fd2543fa543b"
+    },
+    {
+      "bytes": 2892,
+      "path": "results/eval/R199/expert_lease_label_schema.json",
+      "sha256": "27acbb08a42d7ef68ccf6d82e3dfeaae36ed4474eb6dbde3f5967fe217c539bf"
+    }
+  ],
+  "invalid_labels": 0,
+  "label_digests": [
+    {
+      "bytes": 2658,
+      "path": "results/eval/R204E2/adjudicated_labels/EO-INJ-001.json",
+      "sha256": "cddfb9ed07766ddd3f6ab002dd6823f5156e032f650b038fe279db2f05dc714d"
+    },
+    {
+      "bytes": 2703,
+      "path": "results/eval/R204E2/adjudicated_labels/EO-INJ-002.json",
+      "sha256": "9b446165741d6c92f6aa9d4fb9352c540575f7c7191f57cc39ce2d9f1cc309df"
+    },
+    {
+      "bytes": 2676,
+      "path": "results/eval/R204E2/adjudicated_labels/EO-INJ-003.json",
+      "sha256": "46055e84540e9640c9aa10dfde195fb993c96e32b9bb0935fa7d68f95a793f29"
+    },
+    {
+      "bytes": 2636,
+      "path": "results/eval/R204E2/adjudicated_labels/EO-INJ-004.json",
+      "sha256": "eea5a028e8a262dd05e6f5eb7c1211dbc60e225d3a6698899ba5e58cd527c376"
+    },
+    {
+      "bytes": 2790,
+      "path": "results/eval/R204E2/adjudicated_labels/EO-INJ-005.json",
+      "sha256": "87603e64c79d35da599eed4c6531b74a21141f0b2d39d7efebc5ae54bcf8d113"
+    },
+    {
+      "bytes": 2667,
+      "path": "results/eval/R204E2/adjudicated_labels/EO-INJ-006.json",
+      "sha256": "0222bd664b298e981906f3bd09351d0ca06700f19f31766d456eb5aa5a81d5ab"
+    },
+    {
+      "bytes": 2631,
+      "path": "results/eval/R204E2/adjudicated_labels/EO-INJ-007.json",
+      "sha256": "d5728cabb41b2d8078feddcca08ee79f4821de2baa9f59ab9a385f4697e25f93"
+    },
+    {
+      "bytes": 2631,
+      "path": "results/eval/R204E2/adjudicated_labels/EO-INJ-008.json",
+      "sha256": "4ceec9251a618a4d40bd1c2184ef63e16bc3b031baa9e140679cd4dca188661f"
+    },
+    {
+      "bytes": 2700,
+      "path": "results/eval/R204E2/adjudicated_labels/EO-MCP-001.json",
+      "sha256": "f22ab7a6580c7354fecee591720f325b3d92b465db58b411aa1a12a0b07e315f"
+    },
+    {
+      "bytes": 2702,
+      "path": "results/eval/R204E2/adjudicated_labels/EO-MCP-002.json",
+      "sha256": "c616d61ef48e7a76a1796ab149fc333fe8c5638fd0184971b07cacbaf1157503"
+    },
+    {
+      "bytes": 2681,
+      "path": "results/eval/R204E2/adjudicated_labels/EO-MCP-003.json",
+      "sha256": "4f86e673a6916cc6fb80f0ffe69eebd8a8a3a52ae1e1e6d51275bb516d7f01b3"
+    },
+    {
+      "bytes": 2640,
+      "path": "results/eval/R204E2/adjudicated_labels/EO-MCP-004.json",
+      "sha256": "d23aac1684ffb3b5416e87012f493d6ea127e39425f0c83fc77d3f33741bd66e"
+    },
+    {
+      "bytes": 2650,
+      "path": "results/eval/R204E2/adjudicated_labels/EO-MCP-005.json",
+      "sha256": "ec710b37e2b76d0e0ca338a965e7f4927a9ab5d779709151f1cfa88aa31ab6b7"
+    },
+    {
+      "bytes": 2727,
+      "path": "results/eval/R204E2/adjudicated_labels/EO-MCP-006.json",
+      "sha256": "aeb66ba38d5aa1fc9f5545180b3887c6d64e186ef0f1683fb0550794e789fed7"
+    },
+    {
+      "bytes": 2624,
+      "path": "results/eval/R204E2/adjudicated_labels/EO-MCP-007.json",
+      "sha256": "4f7cf17a57686f20fdbaad63963abbcf608770ec22869ff9b5ed7a30b33b42dd"
+    },
+    {
+      "bytes": 2629,
+      "path": "results/eval/R204E2/adjudicated_labels/EO-MCP-008.json",
+      "sha256": "fa754bde634741c604de7b9286ccd74fef953fa1e3e410575f361d91491f6995"
+    },
+    {
+      "bytes": 2870,
+      "path": "results/eval/R204E2/adjudicated_labels/EO-TAU-001.json",
+      "sha256": "7b19bbd292a64fcc2551ead472dd9d9c057f3fe536c73e75ed5d2f785be45d41"
+    },
+    {
+      "bytes": 2970,
+      "path": "results/eval/R204E2/adjudicated_labels/EO-TAU-002.json",
+      "sha256": "63b6b2641ab8c48d66662502ed5995777813cc7068fda99f801e28dfd9402b79"
+    },
+    {
+      "bytes": 2902,
+      "path": "results/eval/R204E2/adjudicated_labels/EO-TAU-003.json",
+      "sha256": "5c4b8611e74d0359c410f01648b355587ff87241e1fee7715c237bfbe7669736"
+    },
+    {
+      "bytes": 2863,
+      "path": "results/eval/R204E2/adjudicated_labels/EO-TAU-004.json",
+      "sha256": "8277e30a5a73e5565955d1a893bd365ee40ec8b3f82bf468b53975691c321b41"
+    },
+    {
+      "bytes": 3923,
+      "path": "results/eval/R204E2/adjudicated_labels/EO-TAU-005.json",
+      "sha256": "c926b9f4bff0b437ba0f311991fb8c1c7d2c638a07478d64c3c515c9f5399018"
+    },
+    {
+      "bytes": 2870,
+      "path": "results/eval/R204E2/adjudicated_labels/EO-TAU-006.json",
+      "sha256": "d9815c186cd8bdf363a46f03a7ecbe9ed5ca502a4525c3833865ffd72a56bfe9"
+    },
+    {
+      "bytes": 2970,
+      "path": "results/eval/R204E2/adjudicated_labels/EO-TAU-007.json",
+      "sha256": "631dfc20c8234efeed5ab51eeaaf823eb9e896a35a6ad487afdd1abc62bc5eef"
+    },
+    {
+      "bytes": 3002,
+      "path": "results/eval/R204E2/adjudicated_labels/EO-TAU-008.json",
+      "sha256": "d9205528e64741fbd6113fa2e0da7e05ed94af3084926229b121db19ac1de5e1"
+    }
+  ],
+  "label_paths_total": 24,
+  "machine": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "manifest_samples_total": 24,
+  "missing_samples": [],
+  "missing_samples_count": 0,
+  "no_dataset_sync": true,
+  "notes": [
+    "This export consumes completed adjudicated labels; it does not create expert labels.",
+    "Default validation rejects TODO/TEMPLATE placeholders through the R200 validator.",
+    "Use these rows only after independent labeling and adjudication are complete."
+  ],
+  "project_head": "16c4fb28542a4b325e25c576625eff282b3f71ad",
+  "run_id": "R204E2",
+  "samples_by_benchmark": {
+    "InjecAgent": 8,
+    "MCPTox": 8,
+    "tau2-bench / tau3-bench": 8
+  },
+  "valid_label_paths": 24
+}

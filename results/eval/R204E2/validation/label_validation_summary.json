@@ -1,0 +1,26 @@
+{
+  "allow_placeholders": false,
+  "analysis": "expert-oracle label validation",
+  "git_status": "M docs/autopaper/intentcap-autopaper.md\n M docs/autopaper/intentcap-paper-zh.tex\n M docs/evaluation.md\n M docs/idea-story.md\n M docs/implementation.md\n M scripts/score_expert_oracle_policy_distance.py\n M tests/test_score_expert_oracle_policy_distance.py\n?? results/eval/R204E2/\n?? results/eval/R205E2S/\n?? scripts/adjudicate_expert_oracle_labels_codex.py\n?? tests/test_adjudicate_expert_oracle_labels_codex.py",
+  "input_digests": [
+    {
+      "bytes": 18378,
+      "path": "results/eval/R199/expert_oracle_task_manifest.csv",
+      "sha256": "afca480c09d54d6093eecbff83b274e9e4d8a371e067fc825ab3fd2543fa543b"
+    },
+    {
+      "bytes": 2892,
+      "path": "results/eval/R199/expert_lease_label_schema.json",
+      "sha256": "27acbb08a42d7ef68ccf6d82e3dfeaae36ed4474eb6dbde3f5967fe217c539bf"
+    }
+  ],
+  "invalid_labels": 0,
+  "label_dir": "results/eval/R204E2/adjudicated_labels",
+  "labels_total": 24,
+  "machine": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "16c4fb28542a4b325e25c576625eff282b3f71ad",
+  "report_path": "results/eval/R204E2/validation/label_validation_report.csv",
+  "validation_status": {
+    "ok": 24
+  }
+}
