@@ -471,13 +471,24 @@ def main() -> int:
         ),
     )
     parser.add_argument(
+        "--stepwise-write-activation-proof-csv",
+        type=Path,
+        default=None,
+        help=(
+            "Optional saved write-activation proof CSV, such as "
+            "results/eval/R196/write_activation_proof.csv. Only proof-complete "
+            "write/high-impact rows are consumed, and value proof is rechecked "
+            "before minting a one-shot exact lease."
+        ),
+    )
+    parser.add_argument(
         "--stepwise-tool-activation-priority",
         action="store_true",
         help=(
-            "In compiler-corpus stepwise mode, synthesize visible read-only "
-            "missing-tool activation candidates before asking the model. The "
-            "call gets only a one-shot exact lease after visible-value recheck "
-            "and still passes through the normal gateway."
+            "In compiler-corpus stepwise mode, synthesize visible missing-tool "
+            "activation candidates before asking the model. Reads require visible "
+            "argument evidence; writes also require structured value proof before "
+            "getting a one-shot exact lease."
         ),
     )
     parser.add_argument(
@@ -581,6 +592,7 @@ def main() -> int:
         stepwise_repair_map_fallback=args.stepwise_repair_map_fallback,
         stepwise_repair_map_priority=args.stepwise_repair_map_priority,
         stepwise_tool_activation_csv=args.stepwise_tool_activation_csv,
+        stepwise_write_activation_proof_csv=args.stepwise_write_activation_proof_csv,
         stepwise_tool_activation_priority=args.stepwise_tool_activation_priority,
         reference_user_simulator=args.reference_user_simulator,
         compiler_runtime_binding=args.compiler_runtime_binding,
@@ -628,6 +640,7 @@ def run_experiment(
     stepwise_repair_map_fallback: bool = False,
     stepwise_repair_map_priority: bool = False,
     stepwise_tool_activation_csv: Path | None = None,
+    stepwise_write_activation_proof_csv: Path | None = None,
     stepwise_tool_activation_priority: bool = False,
     reference_user_simulator: bool = False,
     compiler_runtime_binding: bool = False,
@@ -699,9 +712,14 @@ def run_experiment(
         raise ValueError("stepwise_repair_map_priority requires stepwise_repair_map_csv")
     if stepwise_repair_map_csv is not None and not stepwise_repair_map_csv.exists():
         raise ValueError(f"stepwise_repair_map_csv does not exist: {stepwise_repair_map_csv}")
-    if stepwise_tool_activation_priority and stepwise_tool_activation_csv is None:
+    if (
+        stepwise_tool_activation_priority
+        and stepwise_tool_activation_csv is None
+        and stepwise_write_activation_proof_csv is None
+    ):
         raise ValueError(
-            "stepwise_tool_activation_priority requires stepwise_tool_activation_csv"
+            "stepwise_tool_activation_priority requires stepwise_tool_activation_csv "
+            "or stepwise_write_activation_proof_csv"
         )
     if (
         stepwise_tool_activation_csv is not None
@@ -709,6 +727,14 @@ def run_experiment(
     ):
         raise ValueError(
             f"stepwise_tool_activation_csv does not exist: {stepwise_tool_activation_csv}"
+        )
+    if (
+        stepwise_write_activation_proof_csv is not None
+        and not stepwise_write_activation_proof_csv.exists()
+    ):
+        raise ValueError(
+            "stepwise_write_activation_proof_csv does not exist: "
+            f"{stepwise_write_activation_proof_csv}"
         )
     if feedback_rounds > 0 and stepwise_max_steps > 0:
         raise ValueError("feedback_rounds and stepwise_max_steps are mutually exclusive")
@@ -794,10 +820,13 @@ def run_experiment(
         if stepwise_repair_map_csv is not None
         else {}
     )
-    tool_activation_by_task = (
+    tool_activation_by_task = merge_candidate_maps(
         load_read_tool_activation_candidates(stepwise_tool_activation_csv)
         if stepwise_tool_activation_csv is not None
-        else {}
+        else {},
+        load_write_tool_activation_candidates(stepwise_write_activation_proof_csv)
+        if stepwise_write_activation_proof_csv is not None
+        else {},
     )
 
     for domain in domains:
@@ -946,6 +975,7 @@ def run_experiment(
         stepwise_repair_map_priority=stepwise_repair_map_priority,
         repair_map_by_task=repair_map_by_task,
         stepwise_tool_activation_csv=stepwise_tool_activation_csv,
+        stepwise_write_activation_proof_csv=stepwise_write_activation_proof_csv,
         stepwise_tool_activation_priority=stepwise_tool_activation_priority,
         tool_activation_by_task=tool_activation_by_task,
         reference_user_simulator=reference_user_simulator,
@@ -2267,10 +2297,11 @@ def build_visible_read_tool_activation_lease(
     ):
         return {"attempted": False, "reason": "", "args": {}, "lease": None}
     marker_event_id = str(markers.get("_intentcap_tool_activation_event_id", ""))
+    metadata = trace.get("metadata") if isinstance(trace.get("metadata"), dict) else {}
     templates = (
-        (trace.get("metadata") or {}).get("read_tool_activation_templates")
-        if isinstance(trace.get("metadata"), dict)
-        else []
+        metadata.get("tool_activation_templates")
+        or metadata.get("read_tool_activation_templates")
+        or []
     )
     if not isinstance(templates, list):
         templates = []
@@ -2289,9 +2320,7 @@ def build_visible_read_tool_activation_lease(
         if str(template.get("object", "")) != str(event.get("object", "")):
             reasons.append(f"object mismatch for {template.get('id')}")
             continue
-        if str(template.get("tool_type", "")).lower() != "read":
-            reasons.append(f"non-read activation template {template.get('id')}")
-            continue
+        tool_type = str(template.get("tool_type", "read") or "read").lower()
         allowed_arg_keys = {str(name) for name in template.get("allowed_arg_keys", [])}
         if set(event_args) != allowed_arg_keys:
             reasons.append(
@@ -2309,10 +2338,36 @@ def build_visible_read_tool_activation_lease(
         ):
             reasons.append(f"missing visible argument evidence for {template.get('id')}")
             continue
+        reason = "visible read-tool activation bound"
+        if tool_type != "read":
+            proof_template = {
+                "id": str(template.get("id", "")),
+                "tool": str(template.get("tool", "")),
+                "object": str(template.get("object", "")),
+                "static_args": {},
+                "runtime_args": sorted(allowed_arg_keys),
+                "allowed_arg_keys": sorted(allowed_arg_keys),
+                "intent_evidence": str(template.get("intent_evidence", "")),
+                "tool_type": tool_type,
+                "proof_required": True,
+            }
+            value_proof = runtime_value_proof_status(
+                template=proof_template,
+                args=event_args,
+                action_rows=action_rows,
+                require_value_proof=True,
+            )
+            if not bool(value_proof.get("complete", False)):
+                reasons.append(
+                    f"missing structured value proof for {template.get('id')}: "
+                    f"{value_proof.get('reason', '')}"
+                )
+                continue
+            reason = "visible write-tool activation value-proof bound"
         lease_id = f"tool-activation-live:{domain}:{task_id}:{index}:{template.get('tool')}"
         return {
             "attempted": True,
-            "reason": "visible read-tool activation bound",
+            "reason": reason,
             "args": event_args,
             "lease": {
                 "id": lease_id,
@@ -2332,7 +2387,7 @@ def build_visible_read_tool_activation_lease(
         }
     return {
         "attempted": True,
-        "reason": "; ".join(reasons) if reasons else "no read-tool activation template accepted",
+        "reason": "; ".join(reasons) if reasons else "no tool activation template accepted",
         "args": event_args,
         "lease": None,
     }
@@ -3173,6 +3228,8 @@ def load_read_tool_activation_candidates(
                 "arguments": args,
                 "activation_kind": str(row.get("activation_kind", "")),
                 "proof_status": str(row.get("proof_status", "")),
+                "tool_type": "read",
+                "intent_evidence": "",
                 "earliest_activation_step": _int_or_zero(
                     row.get("earliest_arg_visible_step", "")
                 ),
@@ -3192,6 +3249,74 @@ def load_read_tool_activation_candidates(
     return by_task
 
 
+def load_write_tool_activation_candidates(
+    csv_path: Path | None,
+) -> dict[tuple[str, str], list[dict[str, Any]]]:
+    """Load proof-complete write/high-impact activation candidates.
+
+    The CSV is generated by ``analyze_tau2_write_activation_proof.py``. Rows are
+    only a readiness signal: the runtime still rechecks visible argument
+    grounding and structured value proof before minting a one-shot write lease.
+    """
+    if csv_path is None or not csv_path.exists():
+        return {}
+    by_task: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    with csv_path.open(newline="", encoding="utf-8") as handle:
+        for row in csv.DictReader(handle):
+            if not _truthy(row.get("write_activation_candidate_ready", "")):
+                continue
+            if str(row.get("proof_gap_class", "")) != "write_activation_value_proof_complete":
+                continue
+            args = _parse_json_dict(row.get("args_json", ""))
+            tool = str(row.get("tool", ""))
+            if not tool or not args:
+                continue
+            activation = {
+                "domain": str(row.get("domain", "")),
+                "task_id": str(row.get("task_id", "")),
+                "event_id": str(row.get("event_id", "")),
+                "tool": tool,
+                "arguments": args,
+                "activation_kind": "write_or_high_impact_tool_activation_value_proof_complete",
+                "proof_status": str(row.get("proof_gap_class", "")),
+                "tool_type": str(row.get("tool_type", "write") or "write"),
+                "intent_evidence": str(row.get("intent_evidence", "")),
+                "earliest_activation_step": 1,
+            }
+            by_task.setdefault((activation["domain"], activation["task_id"]), []).append(
+                activation
+            )
+    for rows in by_task.values():
+        rows.sort(
+            key=lambda row: (
+                int(row.get("earliest_activation_step", 0)),
+                str(row.get("event_id", "")),
+                str(row.get("tool", "")),
+                json.dumps(row.get("arguments", {}), sort_keys=True, default=_json_default),
+            )
+        )
+    return by_task
+
+
+def merge_candidate_maps(
+    *maps: dict[tuple[str, str], list[dict[str, Any]]],
+) -> dict[tuple[str, str], list[dict[str, Any]]]:
+    merged: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for candidate_map in maps:
+        for key, rows in candidate_map.items():
+            merged.setdefault(key, []).extend(rows)
+    for rows in merged.values():
+        rows.sort(
+            key=lambda row: (
+                int(row.get("earliest_activation_step", 0)),
+                str(row.get("event_id", "")),
+                str(row.get("tool", "")),
+                json.dumps(row.get("arguments", {}), sort_keys=True, default=_json_default),
+            )
+        )
+    return merged
+
+
 def attach_read_tool_activation_templates(
     *,
     trace: dict[str, Any],
@@ -3199,7 +3324,7 @@ def attach_read_tool_activation_templates(
     task_id: str,
     candidates: list[dict[str, Any]],
 ) -> set[str]:
-    """Attach read-tool activation templates without exposing tool schemas."""
+    """Attach bounded activation templates without exposing tool schemas."""
     if not candidates:
         return set()
     metadata = trace.setdefault("metadata", {})
@@ -3218,6 +3343,7 @@ def attach_read_tool_activation_templates(
         if not tool or not event_id or not isinstance(args, dict):
             continue
         object_name = f"tau2.{domain}.assistant.{tool}"
+        tool_type = str(candidate.get("tool_type", "read") or "read").lower()
         templates.append(
             {
                 "id": f"tool-activation-template:{domain}:{task_id}:{index}:{tool}",
@@ -3228,10 +3354,11 @@ def attach_read_tool_activation_templates(
                 "allowed_arg_keys": sorted(str(key) for key in args),
                 "activation_kind": str(candidate.get("activation_kind", "")),
                 "proof_status": str(candidate.get("proof_status", "")),
+                "intent_evidence": str(candidate.get("intent_evidence", "")),
                 "earliest_activation_step": int(
                     candidate.get("earliest_activation_step", 0)
                 ),
-                "tool_type": "read",
+                "tool_type": tool_type,
             }
         )
         object_names.add(object_name)
@@ -3239,8 +3366,12 @@ def attach_read_tool_activation_templates(
     if not templates:
         return set()
     metadata.setdefault("read_tool_activation_templates", []).extend(templates)
+    metadata.setdefault("tool_activation_templates", []).extend(templates)
     metadata["read_tool_activation_template_count"] = len(
         metadata.get("read_tool_activation_templates", [])
+    )
+    metadata["tool_activation_template_count"] = len(
+        metadata.get("tool_activation_templates", [])
     )
     labels = trace.setdefault("labels", {})
     trusted_label = labels.setdefault(TRUSTED_TASK_INTENT, {})
@@ -3343,16 +3474,21 @@ def build_tool_activation_priority_call(
     if not candidates:
         return None
     selected = candidates[0]
+    activation_kind = str(selected.get("activation_kind", ""))
+    tool_type = str(selected.get("tool_type", "read") or "read").lower()
+    activation_source = (
+        "saved_value_proof_write_activation_candidate"
+        if "write" in activation_kind or tool_type != "read"
+        else "saved_visible_read_activation_candidate"
+    )
     return {
         "tool": str(selected["tool"]),
         "arguments": {
             **dict(selected["arguments"]),
             "_intentcap_synthesized_from_tool_activation": True,
             "_intentcap_tool_activation_event_id": str(selected.get("event_id", "")),
-            "_intentcap_tool_activation_kind": str(
-                selected.get("activation_kind", "")
-            ),
-            "_intentcap_tool_activation_source": "saved_visible_read_activation_candidate",
+            "_intentcap_tool_activation_kind": activation_kind,
+            "_intentcap_tool_activation_source": activation_source,
         },
     }
 
@@ -4769,6 +4905,7 @@ def summarize(
     stepwise_repair_map_priority: bool = False,
     repair_map_by_task: dict[tuple[str, str], list[dict[str, Any]]] | None = None,
     stepwise_tool_activation_csv: Path | None = None,
+    stepwise_write_activation_proof_csv: Path | None = None,
     stepwise_tool_activation_priority: bool = False,
     tool_activation_by_task: dict[tuple[str, str], list[dict[str, Any]]] | None = None,
     reference_user_simulator: bool = False,
@@ -4880,7 +5017,7 @@ def summarize(
         )
     if stepwise_tool_activation_priority:
         notes.append(
-            "Stepwise tool-activation priority consumes only saved read-only activation candidates, rechecks visible argument evidence at runtime, mints one-shot exact leases, and then sends synthesized calls through the normal gateway. It is a bounded diagnostic, not a broad tool exposure policy."
+            "Stepwise tool-activation priority consumes only saved activation candidates, rechecks visible argument evidence at runtime, rechecks structured value proof for write/high-impact candidates, mints one-shot exact leases, and then sends synthesized calls through the normal gateway. It is a bounded diagnostic, not a broad tool exposure policy."
         )
     if reference_user_simulator:
         notes.append(
@@ -4954,6 +5091,15 @@ def summarize(
             _file_digest(stepwise_tool_activation_csv)
             if stepwise_tool_activation_csv is not None
             and stepwise_tool_activation_csv.exists()
+            else None
+        ),
+        "stepwise_write_activation_proof_csv": str(
+            stepwise_write_activation_proof_csv or ""
+        ),
+        "stepwise_write_activation_proof_digest": (
+            _file_digest(stepwise_write_activation_proof_csv)
+            if stepwise_write_activation_proof_csv is not None
+            and stepwise_write_activation_proof_csv.exists()
             else None
         ),
         "stepwise_tool_activation_priority": stepwise_tool_activation_priority,

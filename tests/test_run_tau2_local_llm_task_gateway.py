@@ -2273,9 +2273,85 @@ def test_load_read_tool_activation_candidates_filters_to_eligible_reads(tmp_path
             "arguments": {"user_id": "anya_garcia_5901"},
             "activation_kind": "read_only_tool_activation_from_visible_argument",
             "proof_status": "activation_candidate_ready",
+            "tool_type": "read",
+            "intent_evidence": "",
             "earliest_activation_step": 1,
         }
     ]
+
+
+def test_load_write_tool_activation_candidates_filters_to_proof_complete(tmp_path):
+    activation_csv = tmp_path / "write_activation.csv"
+    fieldnames = [
+        "domain",
+        "task_id",
+        "event_id",
+        "tool",
+        "args_json",
+        "tool_type",
+        "proof_gap_class",
+        "write_activation_candidate_ready",
+        "intent_evidence",
+    ]
+    rows = [
+        {
+            "domain": "retail",
+            "task_id": "2",
+            "event_id": "retail:2:2_11",
+            "tool": "return_delivered_order_items",
+            "tool_type": "write",
+            "proof_gap_class": "write_activation_value_proof_complete",
+            "write_activation_candidate_ready": "True",
+            "intent_evidence": "return the cleaner, headphone, and smart watch",
+            "args_json": json.dumps(
+                {
+                    "item_ids": ["cleaner_item", "headphone_item", "watch_item"],
+                    "order_id": "#O",
+                    "payment_method_id": "card",
+                }
+            ),
+        },
+        {
+            "domain": "retail",
+            "task_id": "2",
+            "event_id": "retail:2:blocked",
+            "tool": "return_delivered_order_items",
+            "tool_type": "write",
+            "proof_gap_class": "write_activation_missing_value_proof",
+            "write_activation_candidate_ready": "False",
+            "intent_evidence": "return the lamp",
+            "args_json": json.dumps({"item_ids": ["lamp_item"]}),
+        },
+    ]
+    with activation_csv.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+    loaded = runner.load_write_tool_activation_candidates(activation_csv)
+
+    assert loaded == {
+        ("retail", "2"): [
+            {
+                "domain": "retail",
+                "task_id": "2",
+                "event_id": "retail:2:2_11",
+                "tool": "return_delivered_order_items",
+                "arguments": {
+                    "item_ids": ["cleaner_item", "headphone_item", "watch_item"],
+                    "order_id": "#O",
+                    "payment_method_id": "card",
+                },
+                "activation_kind": (
+                    "write_or_high_impact_tool_activation_value_proof_complete"
+                ),
+                "proof_status": "write_activation_value_proof_complete",
+                "tool_type": "write",
+                "intent_evidence": "return the cleaner, headphone, and smart watch",
+                "earliest_activation_step": 1,
+            }
+        ]
+    }
 
 
 def test_repair_map_fallback_requires_step_pending_and_visible_values():
@@ -2519,6 +2595,186 @@ def test_read_tool_activation_binder_mints_one_shot_exact_lease():
     assert activation_binding["args"] == {"user_id": "anya_garcia_5901"}
     assert activation_binding["lease_id"].startswith("tool-activation-live:airline:3:1")
     assert len(trace["leases"]) == 1
+
+
+def test_write_tool_activation_binder_mints_one_shot_exact_lease():
+    candidate = {
+        "domain": "retail",
+        "task_id": "2",
+        "event_id": "retail:2:2_11",
+        "tool": "return_delivered_order_items",
+        "arguments": {
+            "item_ids": ["cleaner_item", "headphone_item", "watch_item"],
+            "order_id": "#O",
+            "payment_method_id": "card",
+        },
+        "activation_kind": "write_or_high_impact_tool_activation_value_proof_complete",
+        "proof_status": "write_activation_value_proof_complete",
+        "tool_type": "write",
+        "intent_evidence": "return the cleaner, headphone, and smart watch",
+        "earliest_activation_step": 1,
+    }
+    order = {
+        "order_id": "#O",
+        "items": [
+            {"name": "Vacuum Cleaner", "item_id": "cleaner_item"},
+            {"name": "Headphones", "item_id": "headphone_item"},
+            {"name": "Smart Watch", "item_id": "watch_item"},
+        ],
+        "payment_history": [{"payment_method_id": "card"}],
+    }
+    trace, active_tools, active_objects = runner.build_compiler_corpus_task_trace(
+        domain="retail",
+        task_id="2",
+        compiler_record={"repaired_model_json": {"leases": []}},
+        tools_by_name={},
+    )
+    activation_objects = runner.attach_read_tool_activation_templates(
+        trace=trace,
+        domain="retail",
+        task_id="2",
+        candidates=[candidate],
+    )
+    active_objects.update(activation_objects)
+    gateway = LiveToolGateway(
+        trace,
+        {
+            "tau2.retail.assistant.return_delivered_order_items": lambda **kwargs: {
+                "ok": True,
+                "kwargs": kwargs,
+            }
+        },
+    )
+    event = {
+        "id": "retail:2:2_11",
+        "op": "tool.call",
+        "object": "tau2.retail.assistant.return_delivered_order_items",
+        "args": candidate["arguments"],
+        "decision": "retail.return_delivered_order_items.tool_choice",
+        "mode": "tool_select",
+        "control_provenance": [runner.TRUSTED_TASK_INTENT],
+        "data_provenance": [runner.TRUSTED_TASK_INTENT],
+        "intentcap_markers": {
+            "_intentcap_synthesized_from_tool_activation": True,
+            "_intentcap_tool_activation_event_id": "retail:2:2_11",
+        },
+    }
+
+    record, runtime_binding, activation_binding = (
+        runner.call_gateway_with_optional_runtime_binding(
+            gateway=gateway,
+            event=event,
+            domain="retail",
+            task_id="2",
+            index=11,
+            raw_task={"id": "2", "instruction": "Return selected delivered items."},
+            action_rows=[
+                {
+                    "executed": True,
+                    "tool_result_preview": json.dumps(order),
+                    "tool_result_evidence": json.dumps(
+                        {"content": json.dumps(order)}
+                    ),
+                }
+            ],
+            enabled=False,
+        )
+    )
+
+    assert active_tools == set()
+    assert active_objects == {"tau2.retail.assistant.return_delivered_order_items"}
+    assert record["executed"] is True
+    assert runtime_binding["attempted"] is False
+    assert activation_binding["attempted"] is True
+    assert activation_binding["allowed"] is True
+    assert activation_binding["reason"] == "visible write-tool activation value-proof bound"
+    assert activation_binding["args"] == candidate["arguments"]
+    assert activation_binding["lease_id"].startswith("tool-activation-live:retail:2:11")
+    assert len(trace["leases"]) == 1
+    assert trace["leases"][0]["args"]["item_ids"]["equals"] == [
+        "cleaner_item",
+        "headphone_item",
+        "watch_item",
+    ]
+
+
+def test_write_tool_activation_binder_blocks_missing_value_proof():
+    candidate = {
+        "domain": "retail",
+        "task_id": "2",
+        "event_id": "retail:2:2_11",
+        "tool": "return_delivered_order_items",
+        "arguments": {
+            "item_ids": ["cleaner_item", "headphone_item", "watch_item"],
+            "order_id": "#O",
+            "payment_method_id": "card",
+        },
+        "activation_kind": "write_or_high_impact_tool_activation_value_proof_complete",
+        "proof_status": "write_activation_value_proof_complete",
+        "tool_type": "write",
+        "intent_evidence": "return the cleaner, headphone, and smart watch",
+        "earliest_activation_step": 1,
+    }
+    trace, _, _ = runner.build_compiler_corpus_task_trace(
+        domain="retail",
+        task_id="2",
+        compiler_record={"repaired_model_json": {"leases": []}},
+        tools_by_name={},
+    )
+    runner.attach_read_tool_activation_templates(
+        trace=trace,
+        domain="retail",
+        task_id="2",
+        candidates=[candidate],
+    )
+    gateway = LiveToolGateway(
+        trace,
+        {
+            "tau2.retail.assistant.return_delivered_order_items": lambda **kwargs: {
+                "ok": True,
+                "kwargs": kwargs,
+            }
+        },
+    )
+    event = {
+        "id": "retail:2:2_11",
+        "op": "tool.call",
+        "object": "tau2.retail.assistant.return_delivered_order_items",
+        "args": candidate["arguments"],
+        "decision": "retail.return_delivered_order_items.tool_choice",
+        "mode": "tool_select",
+        "control_provenance": [runner.TRUSTED_TASK_INTENT],
+        "data_provenance": [runner.TRUSTED_TASK_INTENT],
+        "intentcap_markers": {
+            "_intentcap_synthesized_from_tool_activation": True,
+            "_intentcap_tool_activation_event_id": "retail:2:2_11",
+        },
+    }
+
+    record, runtime_binding, activation_binding = (
+        runner.call_gateway_with_optional_runtime_binding(
+            gateway=gateway,
+            event=event,
+            domain="retail",
+            task_id="2",
+            index=11,
+            raw_task={
+                "id": "2",
+                "instruction": (
+                    "Return #O cleaner_item headphone_item watch_item with card."
+                ),
+            },
+            action_rows=[],
+            enabled=False,
+        )
+    )
+
+    assert record["executed"] is False
+    assert runtime_binding["attempted"] is False
+    assert activation_binding["attempted"] is True
+    assert activation_binding["allowed"] is False
+    assert "missing structured value proof" in activation_binding["reason"]
+    assert len(trace["leases"]) == 0
 
 
 def test_repair_map_priority_executes_visible_candidate_without_model(tmp_path: Path):
