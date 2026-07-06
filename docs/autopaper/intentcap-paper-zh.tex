@@ -1,6 +1,8 @@
 \documentclass[UTF8,a4paper,11pt]{ctexart}
 
 \usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{booktabs}
 \usepackage{enumitem}
 \usepackage{hyperref}
@@ -87,7 +89,84 @@ Lease 绑定 operation、object、arguments、intent、influence、flow、tempor
 
 \sys 使用 LLM-assisted 但 checker-verified 的 pipeline。Compiler frontend 总结 Skill metadata、MCP schemas、local scripts、observed traces 和 policy；推导 plan 与 security-relevant effects；并为当前 run 提出 candidate leases。Frontend 不在 TCB 内。Deterministic checker 验证每个 lease 是否满足 global policy、intent certificate、provenance constraints、flow rules、temporal guards、budgets 和 delegation monotonicity。
 
-Checker 的安全性质是刻意保守的。No unauthorized influence：accepted trace 中任何 protected decision 的 control provenance 都必须具有对应 influence mode。Intent-bounded authority：每个 high-impact event 都有 active lease 和 trusted intent derivation。Delegation monotonicity：delegated capability sets 单调缩小，除非 trusted issuer 创建 fresh lease。
+Checker 的安全性质是刻意保守的。它不证明模型永远不会受提示注入影响，也不证明所有 agent 决策都被完整观察；它只保证被接入 checker 的 protected events 必须满足 lease、intent 和 provenance 约束。下一节给出这一性质的形式化接口。
+
+\section{形式化模型}
+
+\sys 的形式化目标不是为任意自然语言推理建模，而是为 runtime 已经抽取出的安全相关事件提供可检查语义。一个 agent execution 被表示为事件 trace：
+
+\[
+\tau = e_1, e_2, \ldots, e_n .
+\]
+
+事件语言只覆盖会影响 authority 的边界：
+
+\[
+\begin{aligned}
+e ::=~& ctx(c,m,d)
+  \mid call(t,args)
+  \mid mcp(s,t,args)
+  \mid read(o)
+  \mid write(o) \\
+  & \mid exec(p,args)
+  \mid send(sink,msg)
+  \mid spawn(a,K)
+  \mid approve(u,a)
+  \mid lease(\kappa).
+\end{aligned}
+\]
+
+每个事件带有两类 provenance：
+
+\[
+prov(e)=\langle prov_D(e), prov_C(e) \rangle ,
+\]
+
+其中 \(prov_D\) 表示数据依赖，\(prov_C\) 表示控制依赖。\sys 只在 protected decisions 上约束 \(prov_C\)，例如 tool selection、sink selection、approval scope、policy update 和 delegation target。这样可以表达同一段 PDF text 可以作为 issue body 的 data dependency，却不能作为 GitHub repository 参数的 control dependency。
+
+每个 context cell \(c\) 具有标签：
+
+\[
+\ell(c)=\langle origin, integrity, confidentiality, purpose, time, endorsements\rangle .
+\]
+
+标签进一步映射到 context authority：
+
+\[
+auth(c) \subseteq Modes \times Decisions .
+\]
+
+例如，PDF text 可以拥有 \((parameterize, spreadsheet\_cells)\) 和 \((summarize, issue\_body)\)，但不拥有 \((authorize, capability\_request)\) 或 \((sink\_select, github\_repo)\)。实现可以将 \(Modes\) 做成偏序或命名集合；论文中的性质只要求 checker 能判断某个 context 是否被授权影响某个 decision class。
+
+Intent-carrying lease 的抽象形式为：
+
+\[
+\kappa =
+\langle holder, op, obj, args, I, influence, flow, temporal, budget, expiry, delegation\rangle .
+\]
+
+其中 \(I\) 是当前 intent certificate，\(influence\) 约束 control/data provenance，\(flow\) 约束 confidentiality 到 sink 的流向，\(temporal\) 和 \(budget\) 约束事件顺序与调用次数，\(delegation\) 约束可传递给 subagent 的能力集合。
+
+Checker judgment 写作：
+
+\[
+\Gamma; I; K; \sigma \vdash e \Rightarrow \sigma' ,
+\]
+
+其中 \(\Gamma\) 是全局策略，\(I\) 是 intent certificate，\(K\) 是 active leases，\(\sigma\) 是 runtime state。事件被接受当且仅当存在 \(\kappa \in K\) 使得以下条件同时成立：operation 匹配；object 和 arguments 满足 lease predicate；event purpose 可由 \(I\) 推导；\(prov_C(e)\) 中的每个 context 都拥有影响该 decision class 所需的 authority；\(prov_D(e)\) 满足 flow policy；temporal guard 和 budget 尚未过期；delegated leases 不宽于 parent leases。
+
+由此得到三个安全性质：
+
+\paragraph{Property 1: No Unauthorized Influence.}
+对任意 accepted trace \(\tau\)，如果事件 \(e \in \tau\) 属于 protected decision class \(d\)，则对所有 \(c \in prov_C(e)\)，都有 \((mode_d,d) \in auth(c)\)。换言之，未被授权影响 \(d\) 的 context 不能成为该决策的控制依赖。
+
+\paragraph{Property 2: Intent-Bounded Authority.}
+对任意 accepted high-impact event \(e\)，存在 active lease \(\kappa\)，且 \(\kappa\) 的 intent predicate 可由 trusted user input、explicit object/sink selection、administrator policy 或 fresh approval 推导。系统不会仅凭 Skill identity、MCP server identity 或工具描述铸造 high-impact authority。
+
+\paragraph{Property 3: Delegation Monotonicity.}
+对任意 accepted delegation event \(spawn(a,K_c)\)，child capability set \(K_c\) 是 parent active capability set 的子集或更窄 attenuation。除非 trusted issuer 基于新的 intent certificate 创建 fresh lease，subagent、Skill、MCP tool 或 script 都不能扩大自身权限。
+
+这些性质是 trace-level safety properties。它们依赖于两个工程前提：runtime 必须把 protected decisions 接入 checker，并且 provenance tracker 必须保守地标记事件控制依赖。若某个 OS-level side effect 没有经过任何 adapter，\sys 无法单独观察它；这正是 sandbox 或 ActPlane-style backend 仍然有价值的原因。
 
 \section{实现}
 
