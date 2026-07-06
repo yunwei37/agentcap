@@ -72,27 +72,43 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 \section{系统设计}
 
-\sys 的输入是当前任务、可用扩展和运行时上下文。输出是一组 proof-carrying capability leases，以及一个 enforcement plan。系统可以分成四层：intent certificates、context authority labels、effect IR 与 lease checker。
+\sys 的设计目标是把“模型想做什么”和“系统允许什么”分开。LLM 可以读取任务、扩展说明和上下文，并提出 plan、effects 和 candidate leases；但它不能铸造最终权限。最终 authority 只来自 trusted intent certificate，并由 deterministic checker 根据 context provenance 和 global policy 验证。
+
+系统的数据流分成五步。首先，trusted issuer 将用户请求、显式对象选择、sink 选择、管理员策略和 fresh approval canonicalize 成 intent certificate。其次，context labeler 为用户输入、文档、Skill instructions、MCP metadata、tool results、script outputs 和 subagent summaries 标注 origin、integrity、confidentiality 和 influence modes。第三，LLM-assisted compiler 从扩展元数据、tool schemas、local scripts 和当前 plan 中生成 security-relevant effect IR，并提出短期 leases。第四，checker 验证每个 lease 和事件是否满足 intent derivation、argument constraints、control/data provenance、flow、temporal、budget 和 delegation rules。最后，runtime adapters 将通过的 leases lowering 到 context construction、tool/MCP invocation、本地执行和 subagent delegation 边界。
+
+这个结构把 \sys 和普通 tool allowlist 区分开来。Allowlist 只决定哪个对象可见；\sys 还决定哪些 context source 可以影响哪个 protected decision。即使某个工具和参数在对象层面都匹配，checker 仍会拒绝 control provenance 来自无权影响该 decision class 的 context。
 
 \subsection{Intent Certificates}
 
 Intent certificate 是结构化安全对象，而不是 prompt 中的一段自然语言。它记录用户目标、选择的对象、允许的 sinks、禁止的 sinks、approval tokens 和 expiry。对于 PDF 处理任务，certificate 会命名选中的 PDF 路径、输出目录、唯一授权的 GitHub repository、禁止任意网络访问的约束，以及创建 issue 所需的 fresh approval。LLM 可以提出 certificate fields，但 trusted parser、UI、administrator policy 或 approval step 必须 canonicalize 这些字段。Certificate 是后续 capability derivation 的根。
 
+Certificate 的粒度决定后续 leases 的最大 authority。若用户只选择了两个 PDF，后续 file-read leases 只能覆盖这些对象或它们的安全派生物；若用户只确认了一个 GitHub repository，repo selection 就不能由 PDF text、Skill instruction 或 MCP result 改写。模糊字段不会被解释为宽权限；系统要么将其保守地标记为 unknown，要么要求 fresh approval。
+
 \subsection{Context Authority}
 
 每个 context cell 都带 provenance label，记录 origin、integrity、confidentiality、purpose、time 和 endorsements。\sys 的关键增加是为 context source 指定 influence modes。PDF text 可以被允许 quote、summarize 或 parameterize spreadsheet cells，但禁止 plan、delegate 或 authorize。Signed Skill instructions 可以在其 declared workflow scope 内 instruct extraction procedure，但不能为自己请求额外工具。MCP tool results 和 annotations 必须按照 server trust 处理；MCP specification 已经提醒 tool behavior annotations 不能默认可信~\cite{mcp-spec}，\sys 将这一原则变成 deterministic provenance rule。
+
+Influence modes 总是相对于 decision class 解释。一个 source 可以被允许影响 output content，却不能影响 recipient、repository、network destination、approval scope 或 delegated capability set。这种 decision-specific authority 是 \sys 的核心：它允许系统保留有用的数据流，同时切断同一 context 对 authority-bearing fields 的控制流。
 
 \subsection{Effect IR and Leases}
 
 Agent plan 被编译成安全相关 effect graph。IR 不追求表达完整程序语义，而是捕捉会影响 authority 的事件：context use、tool call、MCP call、file read/write、subprocess execution、network connection、approval request 和 subagent delegation。每个 effect 记录 data provenance 和 control provenance。这个区分是 \sys 的关键：不可信 PDF bytes 可以是 output data 的 data dependency，但不应是 sink selection 的 control dependency。
 
-Lease 绑定 operation、object、arguments、intent、influence、flow、temporal、budget、expiry 和 delegation。一个 PDF extraction lease 可以允许脚本读取两个选中文件并写入输出目录，但禁止网络、secrets 和额外 subprocess；GitHub issue lease 可以允许一次 \texttt{create\_issue(repo=org/repo-x)}，但要求 repo control provenance 只能来自 trusted user intent。
+Lease 绑定 operation、object、arguments、intent、influence、flow、temporal、budget、expiry 和 delegation。一个 PDF extraction lease 可以允许脚本读取两个选中文件并写入输出目录，但禁止网络、secrets 和额外 subprocess；GitHub issue lease 可以允许一次 \texttt{create\_issue(repo=org/repo-x)}，但要求 repo control provenance 只能来自 trusted user intent。Lease solving 的目标不是全局证明所有可能 plan 的最小权限，而是在给定 effect plan、extension catalog 和 global policy 下生成风险更低、可检查、可衰减的 authority set。
 
 \subsection{Compiler and Checker}
 
 \sys 使用 LLM-assisted 但 checker-verified 的 pipeline。Compiler frontend 总结 Skill metadata、MCP schemas、local scripts、observed traces 和 policy；推导 plan 与 security-relevant effects；并为当前 run 提出 candidate leases。Frontend 不在 TCB 内。Deterministic checker 验证每个 lease 是否满足 global policy、intent certificate、provenance constraints、flow rules、temporal guards、budgets 和 delegation monotonicity。
 
-Checker 的安全性质是刻意保守的。它不证明模型永远不会受提示注入影响，也不证明所有 agent 决策都被完整观察；它只保证被接入 checker 的 protected events 必须满足 lease、intent 和 provenance 约束。下一节给出这一性质的形式化接口。
+Compiler 的输出必须携带 proof object，说明每个 protected field 来自哪些 intent fields、哪些 context sources 可以作为 data/control dependency、哪些 sources 被排除、以及 lease 在什么 temporal state 和 budget 下有效。Checker 不信任 proof 的自然语言解释，只检查其中的结构化 predicates。若 proof 缺失、argument predicate 过宽、control provenance 不明、或 lease 试图把 parent 不具备的 authority 委托给 child，checker 返回结构化 denial。
+
+Denial 是 runtime refinement 的输入，而不是 authority escape hatch。LLM 可以根据 denial reason 重新规划，例如选择更窄的 sink、补充 read-only proof probe、或请求用户 fresh approval；但新 proposal 仍要经过同一个 checker。这一设计使 recovery 可以改善 utility，而不会把失败路径变成 broad permission fallback。
+
+\subsection{Runtime Lowering}
+
+Accepted leases 被分发到多个 enforcement boundaries。Context constructor 决定哪些 labeled context 可以进入 trusted instruction、untrusted data 或 policy feedback 区域。Tool gateway 只暴露 active leases 覆盖的 tools，并在调用前验证 arguments 和 control provenance。MCP broker 将 server-level access 收窄为 method-level leases，并把 server metadata 与 tool results 标为 server-dependent context。Execution sandbox 将 file、process、network 和 secrets constraints 下发到底层环境。Delegation monitor 确保 subagent 只接收 parent lease 的 attenuation。
+
+这些 adapters 不需要共享同一种底层 sandbox；它们共享的是 lease language 和 checker verdict。若某个 boundary 尚未接入 adapter，\sys 不声称覆盖该 side effect。这个限制保留了 OS-level monitor 的价值，也使本文的贡献保持在 policy synthesis and checking，而不是新的 syscall monitor。
 
 \section{形式化模型}
 
