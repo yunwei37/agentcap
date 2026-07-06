@@ -1,0 +1,52 @@
+{
+  "analysis": "blinded expert-oracle lease sample manifest",
+  "git_status": "?? scripts/build_expert_oracle_manifest.py\n?? tests/test_build_expert_oracle_manifest.py",
+  "input_digests": [
+    {
+      "bytes": 748566,
+      "path": "results/injecagent/R019/case_exposure.csv",
+      "sha256": "47da8f08e634f149cbe66dd12d3298d7bf879f64c12df734136bf2fee3555b6b"
+    },
+    {
+      "bytes": 744448,
+      "path": "results/injecagent/R019/admitted_attacks.csv",
+      "sha256": "e2d14076752b6282b8e2f59f21ea90ccb9b8116ab65bdddec08a599944dcc912"
+    },
+    {
+      "bytes": 1969811,
+      "path": "results/mcptox/R020/event_exposure.csv",
+      "sha256": "2fbd4d0a9d7040d909289b249e9f6c5cc984a8c31d372f23690ba74c49276660"
+    },
+    {
+      "bytes": 3399581,
+      "path": "results/mcptox/R020/admitted_events.csv",
+      "sha256": "40c895ebd8fa4ee0b2282638734b397a2fec120f8669af3e976e2ad5f24c3854"
+    },
+    {
+      "bytes": 3035614,
+      "path": "results/tau2/R022/task_exposure.csv",
+      "sha256": "a3ad3c23e1a6cc7306c3048d323d7f86bb2788b4686bcc95671865a10fbfac90"
+    }
+  ],
+  "machine": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "next_step": "Collect at least two independent expert labels per sample, adjudicate disagreements, then score IntentCap and policy baselines against the adjudicated expert oracle.",
+  "no_dataset_sync": true,
+  "notes": [
+    "This manifest is an E2 labeling input, not an expert-labeled result.",
+    "Labelers must write leases before inspecting IntentCap oracle profiles or baseline scores.",
+    "The script reads only saved local R019/R020/R022 artifacts and does not run models or tools."
+  ],
+  "project_head": "60a9592d2ce3f58d771ee6a1557d5b75cc078ea4",
+  "run_id": "R199",
+  "samples_by_benchmark": {
+    "InjecAgent": 8,
+    "MCPTox": 8,
+    "tau2-bench / tau3-bench": 8
+  },
+  "samples_by_workload_family": {
+    "mcp_tool_poisoning": 8,
+    "stateful_utility_task": 8,
+    "tool_response_injection": 8
+  },
+  "samples_total": 24
+}
