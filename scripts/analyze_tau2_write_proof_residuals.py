@@ -639,7 +639,7 @@ def executed_tool_result_contexts_for_value(
     for row in action_rows:
         if not truthy(row.get("executed", "")):
             continue
-        for decoded in decode_nested_json_values(str(row.get("tool_result_preview", ""))):
+        for decoded in decode_nested_json_values(tool_result_evidence(row)):
             for context in json_contexts_containing_value(decoded, value):
                 text = json.dumps(context, sort_keys=True, default=str)
                 if text not in contexts:
@@ -652,11 +652,15 @@ def context_tools_for_value(value: Any, action_rows: list[dict[str, str]]) -> se
     for row in action_rows:
         if not truthy(row.get("executed", "")):
             continue
-        for decoded in decode_nested_json_values(str(row.get("tool_result_preview", ""))):
+        for decoded in decode_nested_json_values(tool_result_evidence(row)):
             if json_contains_value(decoded, value):
                 tools.add(str(row.get("model_tool", "")))
                 break
     return tools
+
+
+def tool_result_evidence(row: dict[str, str]) -> str:
+    return str(row.get("tool_result_evidence") or row.get("tool_result_preview") or "")
 
 
 def decode_nested_json_values(text: str) -> list[Any]:

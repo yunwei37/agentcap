@@ -1,0 +1,29 @@
+{
+  "blocked_write_events": [],
+  "compiler_run_dirs": [
+    "results/eval/R074",
+    "results/eval/R077"
+  ],
+  "dataset_sync": false,
+  "high_impact_write_value_proof_blocks": 0,
+  "machine": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "model_or_tool_execution": false,
+  "not_ready_blocker_counts": {
+    "tool_not_active_or_not_compiled": 1
+  },
+  "not_ready_csv": "results/eval/R189/not_yet_candidate_ready_residuals.csv",
+  "not_ready_db_feasible_residuals": 1,
+  "project_git_commit": "3626a2bd0560165e9bcaa0e20dd18a068ce2961e",
+  "recovery_plan_csv": "results/eval/R189/candidate_generation_repair_map.csv",
+  "repair_execution_csv": "results/eval/R188/repair_map_candidate_execution.csv",
+  "repeated_or_consumed_state_residuals": 1,
+  "repeated_state_events": [
+    "retail:3:3_3"
+  ],
+  "run_id": "R191",
+  "source_run_dir": "results/eval/R187",
+  "source_run_id": "R187",
+  "write_next_target_counts": {},
+  "write_rows_with_alias_gap_tokens": 0,
+  "write_rows_with_list_argument_context_gap": 0
+}

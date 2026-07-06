@@ -1,0 +1,31 @@
+{
+  "accounting_class_counts": {
+    "idempotent_read_already_observed": 1
+  },
+  "adjusted_db_feasible_missing_after_idempotent_read_credit": 8,
+  "analysis": "saved tau2 repeated-state accounting audit",
+  "creditable_event_ids": [
+    "retail:3:3_3"
+  ],
+  "current_db_feasible_missing_before_accounting": 9,
+  "dataset_sync": false,
+  "git_status": "## main...origin/main\n?? results/eval/R185/",
+  "idempotent_same_call_creditable": 1,
+  "input_repeated_state_residuals": 1,
+  "machine": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "missing_actionability_csv": "results/eval/R181/remaining_missing_actionability.csv",
+  "model_or_tool_execution": false,
+  "non_idempotent_same_call_creditable": 0,
+  "notes": [
+    "Only read-only get_* tools are credited when the same tool arguments already executed in the same task.",
+    "This is adjusted residual accounting, not a change to official tau2 tool-oracle scoring.",
+    "Write operations and exact candidates that were not executed receive no accounting credit."
+  ],
+  "official_tau2_score_changed": false,
+  "planner_residual_event_ids": [],
+  "planner_selection_residuals": 0,
+  "project_git_commit": "3626a2bd0560165e9bcaa0e20dd18a068ce2961e",
+  "repeated_residual_csv": "results/eval/R183/repeated_consumed_residuals.csv",
+  "run_id": "R186",
+  "source_run_id": "R180"
+}

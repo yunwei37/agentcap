@@ -1,0 +1,37 @@
+{
+  "analysis": "saved local-Qwen tau2 compiler-lease recall gap classification",
+  "executed_reference_actions": 52,
+  "git_status": "## main...origin/main\n M scripts/analyze_tau2_write_proof_residuals.py\n M scripts/run_tau2_local_llm_task_gateway.py\n M tests/test_run_tau2_local_llm_task_gateway.py\n?? results/eval/R185/\n?? results/eval/R186/\n?? results/eval/R187/",
+  "missing_gap_class_counts": {
+    "tool_not_visible_arg_evidence": 1,
+    "tool_visible_arg_evidence_not_called": 5,
+    "tool_visible_no_arg_evidence": 3
+  },
+  "missing_reference_actions": 9,
+  "missing_with_all_arg_evidence": 6,
+  "missing_with_any_arg_evidence": 6,
+  "missing_with_complete_compiler_hint": 0,
+  "missing_with_tool_visible": 8,
+  "no_dataset_sync": true,
+  "notes": [
+    "This analysis reads existing R187 local tau2 task-gateway artifacts only.",
+    "It does not run models, execute tools, clone benchmarks, sync datasets, or inspect hidden benchmark task files.",
+    "Argument evidence means the exact reference argument leaf values appeared in saved prompt task text or prior gateway-result previews.",
+    "Tool visibility means the saved step prompt exposed the tool under the current active compiler leases.",
+    "A complete compiler hint means an active compiler lease yielded the exact tool and arguments as a prompt hint."
+  ],
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "3626a2bd0560165e9bcaa0e20dd18a068ce2961e",
+  "python": "3.12.3",
+  "reference_actions": 61,
+  "run_dir": "results/eval/R187",
+  "run_id": "R188_recall",
+  "script_sha256": "629159b9313e261c6fd720c1033b11c35ee8b33f0b4132359285e78deedfe3fc",
+  "source_run": "R187",
+  "task_gap_category_counts": {
+    "no_missing_references": 8,
+    "tool_visible_arg_evidence_not_called": 3
+  },
+  "tasks": 11,
+  "tool_oracle_pass_tasks": 0
+}

@@ -158,6 +158,7 @@ ACTION_ROW_FIELDS = [
     "executed",
     "tool_error",
     "tool_result_preview",
+    "tool_result_evidence",
 ]
 USER_SIMULATOR_ROW_FIELDS = [
     "domain",
@@ -170,6 +171,7 @@ USER_SIMULATOR_ROW_FIELDS = [
     "executed",
     "tool_error",
     "tool_result_preview",
+    "tool_result_evidence",
 ]
 UNSUPPORTED_ROW_FIELDS = ["domain", "task_id", "reason"]
 TOOL_EXPOSURE_MODES = ("all", "leased")
@@ -2086,6 +2088,11 @@ def execute_model_calls(
             if record.get("executed")
             else ""
         )
+        result_evidence = (
+            _evidence_json(record.get("result"))
+            if record.get("executed")
+            else ""
+        )
 
         action_rows.append(
             {
@@ -2127,6 +2134,7 @@ def execute_model_calls(
                 "executed": bool(record.get("executed")),
                 "tool_error": bool(record.get("error")),
                 "tool_result_preview": result_preview,
+                "tool_result_evidence": result_evidence,
             }
         )
         if not bool(decision.get("allowed")):
@@ -2494,9 +2502,9 @@ def _value_is_grounded_in_executed_tool_results(
     action_rows: list[dict[str, Any]],
 ) -> bool:
     evidence = "\n".join(
-        str(row.get("tool_result_preview", ""))
+        _tool_result_evidence(row)
         for row in action_rows
-        if row.get("executed") and row.get("tool_result_preview")
+        if row.get("executed") and _tool_result_evidence(row)
     )
     return _value_is_grounded(value, evidence)
 
@@ -3789,7 +3797,7 @@ def _executed_tool_result_contexts_for_value(
     for row in action_rows:
         if not row.get("executed"):
             continue
-        for decoded in _decode_nested_json_values(str(row.get("tool_result_preview", ""))):
+        for decoded in _decode_nested_json_values(_tool_result_evidence(row)):
             for context in _json_contexts_containing_value(decoded, value):
                 text = json.dumps(context, sort_keys=True, default=_json_default)
                 if text not in contexts:
@@ -3844,7 +3852,7 @@ def _executed_tool_result_local_contexts_for_value(
     for row in action_rows:
         if not row.get("executed"):
             continue
-        for decoded in _decode_nested_json_values(str(row.get("tool_result_preview", ""))):
+        for decoded in _decode_nested_json_values(_tool_result_evidence(row)):
             for context in _json_local_contexts_containing_value(decoded, value):
                 text = json.dumps(context, sort_keys=True, default=_json_default)
                 if text not in contexts:
@@ -3865,7 +3873,7 @@ def _executed_tool_result_text_windows_for_value(
     for row in action_rows:
         if not row.get("executed"):
             continue
-        preview = str(row.get("tool_result_preview", ""))
+        preview = _tool_result_evidence(row)
         start = preview.find(value_text)
         while start >= 0:
             left = max(0, start - radius)
@@ -3912,6 +3920,7 @@ def _json_local_contexts_containing_value(node: Any, target: Any) -> list[Any]:
             if child == target:
                 return [node]
         contexts: list[Any] = []
+        contexts.extend(_json_parent_scoped_variant_contexts(node, target))
         for child in node.values():
             contexts.extend(_json_local_contexts_containing_value(child, target))
         return contexts
@@ -3927,6 +3936,26 @@ def _json_local_contexts_containing_value(node: Any, target: Any) -> list[Any]:
         return contexts
 
     return []
+
+
+def _json_parent_scoped_variant_contexts(node: dict[str, Any], target: Any) -> list[Any]:
+    variants = node.get("variants")
+    if not isinstance(variants, dict):
+        return []
+    parent_context = {
+        key: value
+        for key, value in node.items()
+        if key != "variants" and not isinstance(value, (dict, list))
+    }
+    contexts: list[Any] = []
+    for variant_id, variant in variants.items():
+        if not isinstance(variant, dict) or not _json_contains_value(variant, target):
+            continue
+        context = dict(parent_context)
+        context["variant_id"] = str(variant_id)
+        context["variant"] = variant
+        contexts.append(context)
+    return contexts
 
 
 def _json_contains_value(node: Any, target: Any) -> bool:
@@ -4075,6 +4104,10 @@ def _json_payload(payload: dict[str, Any], *, compact: bool) -> str:
             default=_json_default,
         )
     return json.dumps(payload, indent=2, sort_keys=True, default=_json_default)
+
+
+def _tool_result_evidence(row: dict[str, Any]) -> str:
+    return str(row.get("tool_result_evidence") or row.get("tool_result_preview") or "")
 
 
 def _should_attempt_feedback(
@@ -5090,6 +5123,7 @@ def execute_unlocked_reference_user_actions(
                 "executed": True,
                 "tool_error": bool(getattr(tool_message, "error", False)),
                 "tool_result_preview": _preview_json(tool_message, limit=1600),
+                "tool_result_evidence": _evidence_json(tool_message),
             }
         )
 
@@ -5211,6 +5245,12 @@ def _preview_json(value: Any, *, limit: int = 1200) -> str:
     if len(text) <= limit:
         return text
     return text[: max(0, limit - 3)] + "..."
+
+
+def _evidence_json(value: Any) -> str:
+    if value is None or value == "":
+        return ""
+    return json.dumps(value, sort_keys=True, default=_json_default)
 
 
 def _command_text() -> str:

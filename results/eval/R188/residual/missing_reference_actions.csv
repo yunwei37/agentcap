@@ -1,0 +1,10 @@
+source_run_id,domain,task_id,reference_index,event_id,tool,args_json,visibility,grounded_keys,hidden_keys
+R187,retail,2,1,retail:2:2_1,get_product_details,"{""product_id"": ""6086499569""}",hidden,,product_id
+R187,retail,2,2,retail:2:2_3,get_product_details,"{""product_id"": ""9523456873""}",hidden,,product_id
+R187,retail,2,10,retail:2:2_11,return_delivered_order_items,"{""item_ids"": [""4602305039"", ""4202497723"", ""9408160950""], ""order_id"": ""#W2378156"", ""payment_method_id"": ""credit_card_9513926""}",hidden,,item_ids|order_id|payment_method_id
+R187,retail,3,1,retail:3:3_1,get_product_details,"{""product_id"": ""6086499569""}",hidden,,product_id
+R187,retail,3,2,retail:3:3_3,get_product_details,"{""product_id"": ""9523456873""}",hidden,,product_id
+R187,retail,3,3,retail:3:3_4,get_user_details,"{""user_id"": ""yusuf_rossi_9620""}",hidden,,user_id
+R187,retail,4,1,retail:4:4_1,get_product_details,"{""product_id"": ""6086499569""}",hidden,,product_id
+R187,retail,4,2,retail:4:4_3,get_product_details,"{""product_id"": ""9523456873""}",hidden,,product_id
+R187,retail,4,3,retail:4:4_4,get_user_details,"{""user_id"": ""yusuf_rossi_9620""}",hidden,,user_id

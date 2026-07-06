@@ -1437,6 +1437,114 @@ def test_runtime_value_proof_allows_retail_item_list_with_structured_option_cont
     }
 
 
+def test_runtime_value_proof_uses_full_evidence_when_prompt_preview_is_truncated():
+    trace = {
+        "metadata": {
+            "runtime_bindable_compiler_leases": [
+                {
+                    "id": "template:modify-items",
+                    "tool": "modify_pending_order_items",
+                    "object": "tau2.retail.assistant.modify_pending_order_items",
+                    "static_args": {},
+                    "runtime_args": [
+                        "item_ids",
+                        "new_item_ids",
+                        "order_id",
+                        "payment_method_id",
+                    ],
+                    "allowed_arg_keys": [
+                        "item_ids",
+                        "new_item_ids",
+                        "order_id",
+                        "payment_method_id",
+                    ],
+                    "intent_evidence": (
+                        "User wants to modify pending small tshirt items to "
+                        "purple, polyester, v-neck."
+                    ),
+                    "tool_type": "write",
+                    "proof_required": True,
+                }
+            ]
+        }
+    }
+    order = {
+        "order_id": "#W4776164",
+        "items": [
+            {
+                "name": "T-Shirt",
+                "item_id": "8349118980",
+                "options": {
+                    "color": "blue",
+                    "size": "S",
+                    "material": "cotton",
+                    "style": "v-neck",
+                },
+            }
+        ],
+        "payment_history": [{"payment_method_id": "credit_card_9513926"}],
+    }
+    product = {
+        "name": "T-Shirt",
+        "variants": {
+            "9647292434": {
+                "item_id": "9647292434",
+                "options": {
+                    "color": "purple",
+                    "size": "S",
+                    "material": "polyester",
+                    "style": "v-neck",
+                },
+                "available": True,
+            },
+            **{
+                f"dummy_{index}": {
+                    "item_id": f"dummy_{index}",
+                    "options": {"color": "black", "size": "XL"},
+                }
+                for index in range(200)
+            },
+        },
+    }
+    product_message = {"content": json.dumps(product)}
+    truncated_preview = runner._preview_json(product_message, limit=1600)
+    assert truncated_preview.endswith("...")
+    assert "9647292434" in truncated_preview
+
+    action_rows = [
+        {
+            "executed": True,
+            "tool_result_preview": runner._preview_json({"content": json.dumps(order)}, limit=1600),
+        },
+        {
+            "executed": True,
+            "tool_result_preview": truncated_preview,
+            "tool_result_evidence": runner._evidence_json(product_message),
+        },
+    ]
+
+    binding = runner.build_runtime_bound_compiler_lease(
+        trace=trace,
+        event={
+            "object": "tau2.retail.assistant.modify_pending_order_items",
+            "args": {
+                "item_ids": ["8349118980"],
+                "new_item_ids": ["9647292434"],
+                "order_id": "#W4776164",
+                "payment_method_id": "credit_card_9513926",
+            },
+        },
+        domain="retail",
+        task_id="3",
+        index=0,
+        action_rows=action_rows,
+        require_value_proof=True,
+    )
+
+    assert binding["attempted"] is True
+    assert binding["reason"] == "runtime evidence value-proof bound"
+
+
 def test_runtime_value_proof_blocks_retail_item_list_without_new_option_context():
     trace = {
         "metadata": {
