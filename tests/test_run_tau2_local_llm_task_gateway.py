@@ -20,6 +20,20 @@ def test_parse_model_json_extracts_fenced_actions():
     assert calls == [{"tool": "create_task", "arguments": {"user_id": "u", "title": "t"}}]
 
 
+def test_parse_model_json_prefers_action_envelope_after_thought_json():
+    parsed = runner.parse_model_json(
+        '<think>Use {"user_id":"u"} as the argument.</think>\n'
+        '```json\n'
+        '{"actions":[{"tool":"get_user_details","arguments":{"user_id":"u"}}],'
+        '"final_response":""}\n'
+        '```'
+    )
+
+    calls = runner.normalize_model_calls(parsed)
+
+    assert calls == [{"tool": "get_user_details", "arguments": {"user_id": "u"}}]
+
+
 def test_bind_model_call_adds_event_id_only_for_exact_reference_match():
     action = ReferenceAction(
         event_id="mock:t:create_1",

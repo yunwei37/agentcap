@@ -4832,6 +4832,7 @@ def build_tool_registry(
 def parse_model_json(text: str) -> dict[str, Any] | None:
     cleaned = re.sub(r"```(?:json)?", "", text).replace("```", "")
     decoder = json.JSONDecoder()
+    candidates: list[dict[str, Any]] = []
     for index, char in enumerate(cleaned):
         if char != "{":
             continue
@@ -4840,8 +4841,11 @@ def parse_model_json(text: str) -> dict[str, Any] | None:
         except json.JSONDecodeError:
             continue
         if isinstance(value, dict):
+            candidates.append(value)
+    for value in candidates:
+        if isinstance(value.get("actions"), list) or "tool" in value or "name" in value:
             return value
-    return None
+    return candidates[0] if candidates else None
 
 
 def normalize_model_calls(parsed: dict[str, Any] | None) -> list[dict[str, Any]]:
