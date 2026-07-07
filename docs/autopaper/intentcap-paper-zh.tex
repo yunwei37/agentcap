@@ -74,6 +74,8 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 本文把 tool selection、sink selection、approval scope、capability request、policy update 和 delegation target 视为 protected decisions。一个 guard 如果只检查最终 tool name 或 repo argument，会漏掉 untrusted context 对 approval scope、fresh authority request 或 delegated capability set 的控制。因此，本文要保护的对象不是“某个字符串能否进入 prompt”，而是“某个 context source 是否被授权影响某类未来决策”。
 
+这些 decision classes 定义了后续 threat model、lease language 和 evaluation oracle 的共同边界。
+
 \section{威胁模型与目标}
 
 \sys 面向可扩展 agent runtime。Agent 可以读取外部文档、加载 Skills、连接 MCP servers、运行本地脚本、调用工具，并将部分任务委托给 subagents。攻击者可以控制部分输入 context，例如 PDF、网页、邮件、issue comment、MCP tool result、Skill instruction、script output 或 subagent summary。攻击目标是让 agent 超出用户当前意图：读取无关私有文件、向错误 sink 发送数据、创建错误 repository 的 issue、请求更宽 approval、修改策略、跳过检查，或将权限委托给恶意组件。
@@ -428,7 +430,7 @@ SkillGuard 和 SkillScope 直接面向 Agent Skills 的权限、行为规范和 
 
 \section{结论}
 
-LLM agent extensions 改变了权限系统需要保护的对象。文档、工具结果和扩展说明不只携带数据，也可能影响 tool selection、sink selection、approval scope、capability request 和 delegation target。\sys 将这种影响权表示为 intent-derived、provenance-gated、可消耗、可过期、可衰减的 leases，并用 deterministic checker 把 LLM proposals 保持在 TCB 之外。在已建模边界内，\sys 的核心结论是把“context 可以影响什么未来决策”变成可检查、可消耗、可审计的授权状态；E1--E4 决定这一机制最终能支撑多强的端到端安全、utility 和 least-privilege claim。
+LLM agent extensions 改变了权限系统需要保护的对象。文档、工具结果和扩展说明不只携带数据，也可能影响 tool selection、sink selection、approval scope、capability request 和 delegation target。\sys 将这种影响权表示为 intent-derived、provenance-gated、可消耗、可过期、可衰减的 leases，并用 deterministic checker 把 LLM proposals 保持在 TCB 之外。E1--E4 决定这一机制最终能支撑多强的端到端安全、utility 和 least-privilege claim；在已建模边界内，\sys 的核心结论是把“context 可以影响什么未来决策”变成可检查、可消耗、可审计的授权状态。
 
 \bibliographystyle{plain}
 \bibliography{intentcap-paper-zh}
