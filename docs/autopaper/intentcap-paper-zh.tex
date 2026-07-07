@@ -78,7 +78,7 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 \sys 面向可扩展 agent runtime。Agent 可以读取外部文档、加载 Skills、连接 MCP servers、运行本地脚本、调用工具，并将部分任务委托给 subagents。攻击者可以控制部分输入 context，例如 PDF、网页、邮件、issue comment、MCP tool result、Skill instruction、script output 或 subagent summary。攻击目标是让 agent 超出用户当前意图：读取无关私有文件、向错误 sink 发送数据、创建错误 repository 的 issue、请求更宽 approval、修改策略、跳过检查，或将权限委托给恶意组件。
 
-我们不假设 LLM 会可靠遵守安全指令；不信任外部文档、工具结果、MCP annotations 或 unsigned Skill instructions；也不假设静态分析能完美理解任意脚本。\sys 依赖的 TCB 包括 intent certificate issuer、deterministic checker、provenance tracker、audit log 和 enforcement adapters。OS sandbox 或 ActPlane-style monitor 可以作为执行后端，但不是本文的核心贡献；\sys 关注的是上游 policy synthesis 和 context-authority checking。
+我们不假设 LLM 会可靠遵守安全指令；不信任外部文档、工具结果、MCP annotations 或 unsigned Skill instructions；也不假设静态分析能完美理解任意脚本。\sys 依赖的 TCB 包括 intent certificate issuer、deterministic checker、provenance tracker、audit log 和已经接入的 enforcement adapters。这个 TCB statement 是 per-boundary 的：没有接入 adapter 的 side effect 不在安全性质覆盖范围内。OS sandbox 或 ActPlane-style monitor 可以作为执行后端，但不是本文的核心贡献；\sys 关注的是上游 policy synthesis 和 context-authority checking。
 
 设计目标包括四个可测试目标，每个目标都映射到贡献和评估 gate：
 
@@ -166,7 +166,7 @@ Denial 是 runtime refinement 的输入，而不是 authority escape hatch。LLM
 
 单一 tool gateway 不足以表达 \sys 的安全边界，因为 protected decision 可能发生在工具调用之前的 context construction、计划生成和 approval request 中，也可能发生在调用之后的 delegation 或 runtime binding 中。Accepted leases 因此被 lowering 到多个 design contracts。Context constructor 决定哪些 labeled context 可以进入 trusted instruction、untrusted data 或 policy feedback 区域。Tool gateway 只暴露 active leases 覆盖的 tools，并在调用前验证 arguments 和 control provenance。MCP broker 将 server-level access 收窄为 method-level leases。Execution sandbox 将 file、process、network 和 secrets constraints 下发到底层环境。Delegation monitor 确保 subagent 只接收 parent lease 的 attenuation。
 
-这些 adapters 不需要共享同一种底层 sandbox；它们共享的是 lease language 和 checker verdict。若某个 boundary 尚未接入 adapter，\sys 不声称覆盖该 side effect。这个限制保留了 OS-level monitor 的价值，也使本文的贡献保持在 policy synthesis and checking，而不是新的 syscall monitor。
+这些 adapters 是设计层 contracts，不需要共享同一种底层 sandbox；它们共享的是 lease language 和 checker verdict。第~\ref{sec:implementation} 节只报告当前 prototype 实例化的边界，而不是声称所有 contracts 都已有生产级实现。若某个 boundary 尚未接入 adapter，\sys 不声称覆盖该 side effect。这个限制保留了 OS-level monitor 的价值，也使本文的贡献保持在 policy synthesis and checking，而不是新的 syscall monitor。
 
 \section{形式化模型}
 \label{sec:formal}
@@ -315,7 +315,7 @@ Checker judgment is:
 \section{实现}
 \label{sec:implementation}
 
-我们的 prototype 是一个 Python-based agent authorization harness。它的目标不是替换生产级 MCP server、agent runtime 或 OS sandbox，而是验证三件事：lease language 是否足以表达 intent/context authority，deterministic checker 是否能在统一 event model 上执行这些约束，以及这些约束能否被 lowering 到 trace replay、live callable gateway 和 benchmark-derived workflows。
+我们的 prototype 是一个 Python-based agent authorization harness。它的目标不是替换生产级 MCP server、agent runtime 或 OS sandbox，也不是声称设计中的每个 lowering contract 都已完整工程化；它验证三件事：lease language 是否足以表达 intent/context authority，deterministic checker 是否能在统一 event model 上执行这些约束，以及这些约束能否被 lowering 到 trace replay、live callable gateway 和 benchmark-derived workflows。
 
 \subsection{Checker Core}
 Checker core 位于 \texttt{src/intentcap/}，实现 context labels、effect events、leases、checker state 和 proof objects。当前 checker 支持 exact、prefix、suffix 和 one-of argument predicates，支持 lease matching、holder scoping、control/data provenance checks、context-label influence-mode checks、temporal prerequisites、per-lease invocation budgets、proof-carrying intent/approval derivation，以及 delegated capability attenuation。这个 core 是本文的主要 TCB：LLM 输出、Skill 描述、MCP annotations 和 tool results 只能产生 candidate effects 或 candidate leases，不能绕过 checker 直接获得 authority。
@@ -360,7 +360,7 @@ E3 隔离 \sys 的核心机制是否真的是 context influence capability，而
 
 关键指标是 protected decisions 中 unauthorized context control 的接受率，以及每个 denial 是否只能由 lease semantics、temporal guards、budget、delegation 或 proof constraints 解释。成功条件是 ablations 或 access-control baselines 接受完整 \sys 拒绝的 protected-decision violations，并且 residual cases 不能被最强 provenance/taint baseline 完全解释。若最强 baseline 已解释所有 denials，论文必须放弃“新的 security boundary”表述，转而主张 \sys 是一种 proof-carrying lease compiler/checker organization。
 
-为避免 baseline 只停留在名称层面，E3 将每个对照实现为明确的 checker variant。Object ACL 只维护 operation/object/argument predicates；taint/IFC-style baseline 维护 label 和 flow constraints，但不维护 lease consumption 或 delegation partial order；action-provenance baseline 检查 observed action 的 intent/provenance alignment，但不允许 consumed lease state 影响后续授权；stateful policy baseline 加入 temporal/budget state，但不区分 protected-decision influence modes；完整 \sys 同时维护 trusted mint provenance、per-lease consumption/expiration、decision-specific influence modes 和 parent-child capability partial order。
+为避免 baseline 只停留在名称层面，E3 将每个对照实现为明确的 checker variant。若无法复现某个完整系统，论文必须把它写成 over-the-same-event-schema 的 semantic variant，而不是声称复现原系统。Object ACL 只维护 operation/object/argument predicates；taint/IFC-style baseline 维护 label 和 flow constraints，但不维护 lease consumption 或 delegation partial order；action-provenance baseline 检查 observed action 的 intent/provenance alignment，但不允许 consumed lease state 影响后续授权；stateful policy baseline 加入 temporal/budget state，但不区分 protected-decision influence modes；完整 \sys 同时维护 trusted mint provenance、per-lease consumption/expiration、decision-specific influence modes 和 parent-child capability partial order。
 
 \subsection{E4: Compiler, Checker, and Recovery Practicality}
 
