@@ -45,10 +45,10 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 本文贡献如下：
 
-\begin{enumerate}[leftmargin=*]
-  \item 我们提出一个 stateful run-time lease calculus，将 protected decision authority 表示为 intent-derived lease，并定义 mint、check、consume、expire、attenuate 和 no-amplification transitions。
-  \item 我们实现一个 proof-carrying compiler/checker/runtime prototype，使 LLM 生成的计划和权限提议保持在 TCB 之外，并把通过的 leases lowering 到 context、tool、MCP、本地执行和 delegation 边界。
-  \item 我们给出 trace-level safety properties，并通过实证评估隔离 lifecycle state、no-amplification 和 delegation attenuation 何时拒绝 ACL、action-provenance 和 IFC-style baselines 会接受的攻击，同时报告当前 utility/recovery 边界。
+\begin{enumerate}[leftmargin=*,label=\textbf{C\arabic*.}]
+  \item \textbf{Model.} 一个面向 agent protected decisions 的 stateful intent-carrying lease model。它将 future decision authority 绑定到 intent、context influence modes，以及 mint、check、consume、expire、attenuate 和 no-amplification 六类状态转移（第~\ref{sec:formal} 节）。
+  \item \textbf{System.} 一个 proof-carrying compiler/checker/runtime prototype，把不可信 LLM proposals 转换为可检查 leases，并在 context、tool、MCP、本地执行和 delegation 边界执行（第~\ref{sec:design}--\ref{sec:implementation} 节）。
+  \item \textbf{Evidence.} 一个四实验评估设计，分别验证 security+utility、lease quality、mechanism ablation 和 compiler/recovery practicality，并用明确的 claim gates 限定最终结论（第~\ref{sec:evaluation} 节）。
 \end{enumerate}
 
 \section{威胁模型与目标}
@@ -57,19 +57,19 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 我们不假设 LLM 会可靠遵守安全指令；不信任外部文档、工具结果、MCP annotations 或 unsigned Skill instructions；也不假设静态分析能完美理解任意脚本。\sys 依赖的 TCB 包括 intent certificate issuer、deterministic checker、provenance tracker、audit log 和 enforcement adapters。OS sandbox 或 ActPlane-style monitor 可以作为执行后端，但不是本文的核心贡献；\sys 关注的是上游 policy synthesis 和 context-authority checking。
 
-设计目标包括：
+设计目标包括四个可测试目标，每个目标都映射到贡献和评估 gate：
 
-\begin{itemize}[leftmargin=*]
-  \item 将 high-impact authority 绑定到当前用户意图、显式选择、管理员策略或 fresh approval。
-  \item 区分 data dependency 和 control dependency，允许不可信 context 作为数据使用，同时阻止其影响 protected decisions。
-  \item 将权限铸造成短期、可衰减、可审计的 leases，而不是安装期或 server 级别的 ambient permission。
-  \item 让 LLM 只提出计划和 lease 候选，不让其决定最终授权。
-  \item 将同一 lease language lowering 到 context、tool、MCP、本地执行和 delegation 边界。
-\end{itemize}
+\begin{enumerate}[leftmargin=*,label=\textbf{G\arabic*.}]
+  \item \textbf{Intent-bounded authority.} High-impact authority 必须来自当前用户意图、显式对象/目标选择、管理员策略或 fresh approval；该目标由 C1 建模，并由 E1/E2 检验。
+  \item \textbf{Context influence separation.} 系统必须区分 data dependency 和 control dependency，允许不可信 context 作为数据使用，同时阻止其影响 protected decisions；该目标由 C1/C2 支撑，并由 E1/E3 检验。
+  \item \textbf{Stateful least-privilege lifecycle.} 权限必须是短期、可消耗、可过期、可衰减、不可由不可信 context 自扩张的 run-time leases，而不是安装期或 server 级别 ambient permission；该目标由 C1/C2 支撑，并由 E2/E3 检验。
+  \item \textbf{Untrusted compiler with deterministic recovery.} LLM 只能提出 plan 和 lease 候选；checker 决定授权，并把 accepted leases lowering 到 context、tool、MCP、本地执行和 delegation 边界。被拒绝的 proposal 只能通过 structured denial、重新规划或 fresh approval 恢复；该目标由 C2 支撑，并由 E4 检验。
+\end{enumerate}
 
 非目标同样重要。\sys 不声称解决 prompt injection，不声称自动 compiler 永远正确，不替代 sandbox，也不保证所有 agent 决策都能被完整追踪。它的安全性质只覆盖已建模的 decision classes 和已接入的 enforcement boundaries。
 
 \section{系统设计}
+\label{sec:design}
 
 \sys 的设计目标是把“模型想做什么”和“系统允许什么”分开。LLM 可以读取任务、扩展说明和上下文，并提出 plan、effects 和 candidate leases；但它不能铸造最终权限。最终 authority 只来自 trusted intent certificate，并由 deterministic checker 根据 context provenance 和 global policy 验证。
 
@@ -110,6 +110,7 @@ Accepted leases 被分发到多个 enforcement boundaries。Context constructor 
 这些 adapters 不需要共享同一种底层 sandbox；它们共享的是 lease language 和 checker verdict。若某个 boundary 尚未接入 adapter，\sys 不声称覆盖该 side effect。这个限制保留了 OS-level monitor 的价值，也使本文的贡献保持在 policy synthesis and checking，而不是新的 syscall monitor。
 
 \section{形式化模型}
+\label{sec:formal}
 
 \sys 的形式化目标不是为任意自然语言推理建模，而是为上一节 checker pipeline 的输入和输出提供可检查语义。Compiler、gateway 和 runtime adapters 负责把模型计划、工具调用、MCP 调用、本地执行和 delegation 转换成安全相关事件；checker 只对这些事件、active leases、intent certificate 和 provenance labels 做确定性判断。因此，模型刻意不讨论 LLM 内部是否“理解”指令，而是讨论一个被 instrumentation 暴露出来的 authority-bearing event 是否应被接受。
 
@@ -251,6 +252,7 @@ Checker judgment 写作：
 这些性质是 trace-level safety properties。它们依赖于两个工程前提：runtime 必须把 protected decisions 接入 checker，并且 provenance tracker 必须保守地标记事件控制依赖。若某个 OS-level side effect 没有经过任何 adapter，\sys 无法单独观察它；这正是 sandbox 或 ActPlane-style backend 仍然有价值的原因。
 
 \section{实现}
+\label{sec:implementation}
 
 我们的 prototype 是一个 Python-based agent authorization harness。它的目标不是替换生产级 MCP server、agent runtime 或 OS sandbox，而是验证三件事：lease language 是否足以表达 intent/context authority，deterministic checker 是否能在统一 event model 上执行这些约束，以及这些约束能否被 lowering 到 trace replay、live callable gateway 和 benchmark-derived workflows。
 
@@ -267,8 +269,9 @@ Prototype 还包含 local llama.cpp/Qwen frontend，用来模拟不可信 lease 
 当前 artifact 已经实现 checker/gateway、live local callable boundary、benchmark-derived replay adapters、local Qwen/llama.cpp compiler probes、runtime binding、structured value proof、read/write activation、expert-oracle labeling/scoring/audit pipeline，以及 E1 security/utility wrapper matrices。这些实现足以支撑机制性 claim：在已建模 traces 上，\sys 能拒绝 unauthorized context-to-decision influence；run-time exact leases 可以缩小 object/tool authority surface；checker 可以阻止 LLM-proposed broad/runtime authority 直接进入执行路径。它还不能单独支撑更强的端到端 claim：full MCP broker、生产级 execution sandbox、fresh user-simulator loop、独立 human expert-oracle replication 和 benchmark-scale utility/recovery evaluation 仍是评估完成前的 open items。
 
 \section{评估设计}
+\label{sec:evaluation}
 
-本文评估围绕四个可证伪问题组织。Run IDs、pilot probes 和 residual analyses 只作为这些问题的证据来源，不作为论文主实验编号。评估的共同原则是固定底层模型、任务顺序、工具描述和 prompt budget，尽量只改变授权层；当某个 baseline 只有 trace-level 或概念性复现时，结果必须标记为 partial comparison，不能写成完整数值胜利。所有 high-impact denials 使用 protected-decision oracle 判定：若某个 protected decision 的 control provenance 来自缺少相应 influence mode 的 context source，则该事件应被拒绝。
+本文评估围绕四个可证伪问题组织。每个实验都按 hypothesis、baselines、metrics、success gate 和 current evidence gap 解读；Run IDs、pilot probes 和 residual analyses 只作为这些问题的证据来源，不作为论文主实验编号。评估的共同原则是固定底层模型、任务顺序、工具描述和 prompt budget，尽量只改变授权层；当某个 baseline 只有 trace-level 或概念性复现时，结果必须标记为 partial comparison，不能写成完整数值胜利。所有 high-impact denials 使用 protected-decision oracle 判定：若某个 protected decision 的 control provenance 来自缺少相应 influence mode 的 context source，则该事件应被拒绝。
 
 \subsection{E1: End-to-End Security and Utility}
 
@@ -286,11 +289,11 @@ E1 检验 \sys 是否在真实 agent workflows 中降低攻击成功率，同时
 
 \subsection{E2: Lease Quality and Authority Reduction}
 
-E2 检验 \sys 生成的 run-time leases 是否比 static extension/server policies 更接近 least privilege。实验单位不是单个工具调用，而是一个 run 在完成任务时暴露的 authority surface。样本来自 security traces、MCP poisoning、stateful utility tasks 和 Skill-style workflows。理想 oracle 是 blinded expert leases：专家在不看 \sys 输出的情况下写 minimal leases，经 adjudication 后形成 reference policy。当前第一版结果使用 24 个 Codex-adjudicated labels 作为 project-author oracle；所有 labels 通过 schema validation，且没有 placeholder、missing sample 或 ambiguous sample。我们还加入了一个复现审计：逐条检查 InjecAgent、MCPTox 和 tau2/tau3 labels 的 operation、object、argument predicate、budget、forbidden authority、provenance constraints，以及 policy-distance scoring invariants。审计结果是 24/24 samples 通过、0 failed checks、0 missing/extra labels。这个结果可作为 E2 的第一版 audited evidence，但强 expert-oracle claim 仍需独立 human reviewer 复核。
+E2 检验 \sys 生成的 run-time leases 是否比 static extension/server policies 更接近 least privilege。实验单位不是单个工具调用，而是一个 run 在完成任务时暴露的 authority surface。样本来自 security traces、MCP poisoning、stateful utility tasks 和 Skill-style workflows。目标方法是 blinded expert leases：专家在不看 \sys 输出的情况下写 minimal leases，经 adjudication 后形成 reference policy。当前第一版结果只能称为 author-adjudicated oracle with machine audit：它使用 24 个 Codex-adjudicated labels 作为 project-author oracle；所有 labels 通过 schema validation，且没有 placeholder、missing sample 或 ambiguous sample。我们还加入了一个复现审计：逐条检查 InjecAgent、MCPTox 和 tau2/tau3 labels 的 operation、object、argument predicate、budget、forbidden authority、provenance constraints，以及 policy-distance scoring invariants。审计结果是 24/24 samples 通过、0 failed checks、0 missing/extra labels。这个结果可作为 E2 的第一版 audited evidence，但强 expert-oracle claim 仍需独立 human reviewer 复核。
 
 这里不能直接把现有 trace 标注当作 expert lease oracle。Benchmark 标注通常说明攻击是否成功、reference action 是否应该出现、或模型是否调用了某个工具；它们很少标注最小授权对象本身，例如 context source 可影响的 decision class、argument predicate 的最小范围、temporal/budget guards、delegation bounds 或 approval scope。因此现有标注适合 E1/E3 的安全与 utility 判断，但 E2 的 least-privilege claim 仍需要独立 lease 标注。
 
-比较对象包括 domain/global ACL、exact-tool ACL、MCP server allowlist、Skill manifest-style policy、Progent/PCAS/AgentSpec-style policy 和 \sys。指标包括 risk-weighted authority score、exposed tools/methods/sinks/paths/arguments、context-influence breadth、delegation breadth 和 oracle distance。在第一版 E2 scoring 中，三类 \sys policy family 的 oracle distance 均为 0，而所有非 \sys family 都有非零 distance：最近的 task/exact-tool policies 仍有 authority 或 provenance mismatch，global/server/catalog policies 的距离更大。机器审计确认 IntentCap rows 保持 zero-distance，所有 non-IntentCap rows 保持 positive-distance。成功条件是独立复核后 \sys 仍在保持授权 data use 的同时降低 authority breadth 和 oracle distance；若 symbolic policy baselines 同样窄，则论文应把 least-privilege claim 收窄为 proof-carrying checker operationalization。
+比较对象包括 domain/global ACL、exact-tool ACL、MCP server allowlist、Skill manifest-style policy、Progent/PCAS/AgentSpec-style policy 和 \sys。指标包括 risk-weighted authority score、exposed tools/methods/sinks/paths/arguments、context-influence breadth、delegation breadth 和 oracle distance。在 author-adjudicated E2 scoring 中，三类 \sys policy family 的 oracle distance 均为 0，而所有非 \sys family 都有非零 distance：最近的 task/exact-tool policies 仍有 authority 或 provenance mismatch，global/server/catalog policies 的距离更大。机器审计确认 IntentCap rows 保持 zero-distance，所有 non-IntentCap rows 保持 positive-distance。成功条件是独立复核后 \sys 仍在保持授权 data use 的同时降低 authority breadth 和 oracle distance；若 symbolic policy baselines 同样窄，则论文应把 least-privilege claim 收窄为 proof-carrying checker operationalization。
 
 \subsection{E3: Context-Influence Mechanism Ablation}
 
