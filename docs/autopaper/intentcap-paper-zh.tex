@@ -29,7 +29,7 @@ LLM agents 正在从固定工具调用器演变为可扩展的执行环境，可
 
 LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 API、插件接口或系统调用与宿主交互，因此权限系统可以围绕文件、网络、进程和工具调用来定义。现代 agent extension 的行为则由用户请求、系统策略、扩展说明、外部文档、工具结果和中间总结共同塑造。
 
-这种执行过程打破了 data 和 authority 的传统边界。Agent runtime 会把 trusted instructions、用户请求、扩展说明和 untrusted documents/tool results 放进相邻的模型上下文；模型再输出 plan、tool arguments、approval request 或 delegation decision；下游 guard 往往只看到最终操作，而看不到哪个 context 控制了安全相关字段。于是，一个 PDF 或网页虽然在类型上只是输入数据，却可能成为选择工具、选择 sink、扩大 approval scope、跳过检查步骤或委托权限的控制信号。本文称这一问题为 context privilege：context 获得了影响 protected decisions 的权力，而不仅是携带可被引用或总结的信息。
+这种执行过程打破了 data 和 authority 的传统边界。Agent runtime 会把 trusted instructions、用户请求、扩展说明和 untrusted documents/tool results 放进相邻的模型上下文；模型再输出 plan、tool arguments、approval request 或 delegation decision。下游 guard 往往只看到最终操作，而看不到哪个 context 控制了安全相关字段。于是，一个 PDF 或网页虽然在类型上只是输入数据，却可能成为选择工具、选择 sink、扩大 approval scope、跳过检查步骤或委托权限的控制信号。本文称这一问题为 context privilege：context 获得了影响 protected decisions 的权力，而不仅是携带可被引用或总结的信息。
 
 一个文档处理工作流展示了这个问题的具体形状。用户可能希望 agent 从选中的 PDF 提取表格、保存 XLSX，并在指定 GitHub repository 中创建 issue；PDF 内容应影响输出数据和 summary，但不应影响 repository selection、approval scope 或 delegation target。第~\ref{sec:motivation} 节用这一例子展开完整 trace。
 
@@ -96,7 +96,9 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 \sys 的设计目标是把“模型想做什么”和“系统允许什么”分开。LLM 可以读取任务、扩展说明和上下文，并提出 plan、effects 和 candidate leases；但它不能铸造最终权限。最终 authority 只来自 trusted intent certificate，并由 deterministic checker 根据 context provenance 和 global policy 验证。
 
-系统的数据流分成五步。首先，trusted issuer 将用户请求、显式对象选择、sink 选择、管理员策略和 fresh approval canonicalize 成 intent certificate。其次，context labeler 为用户输入、文档、Skill instructions、MCP metadata、tool results、script outputs 和 subagent summaries 标注 origin、integrity、confidentiality 和 influence modes。第三，LLM-assisted compiler 从扩展元数据、tool schemas、local scripts 和当前 plan 中生成 security-relevant effect IR，并提出短期 leases。第四，checker 验证每个 lease 和事件是否满足 intent derivation、argument constraints、control/data provenance、flow、temporal、budget 和 delegation rules。最后，runtime adapters 将通过的 leases lowering 到 context construction、tool/MCP invocation、本地执行和 subagent delegation 边界。
+系统的数据流分成五步。首先，trusted issuer 将用户请求、显式对象选择、sink 选择、管理员策略和 fresh approval canonicalize 成 intent certificate。其次，context labeler 为用户输入、文档、Skill instructions、MCP metadata、tool results、script outputs 和 subagent summaries 标注 origin、integrity、confidentiality 和 influence modes。
+
+第三，LLM-assisted compiler 从扩展元数据、tool schemas、local scripts 和当前 plan 中生成 security-relevant effect IR，并提出短期 leases。第四，checker 验证每个 lease 和事件是否满足 intent derivation、argument constraints、control/data provenance、flow、temporal、budget 和 delegation rules。最后，runtime adapters 将通过的 leases lowering 到 context construction、tool/MCP invocation、本地执行和 subagent delegation 边界。
 
 \begin{figure}[t]
 \centering
@@ -297,7 +299,7 @@ Checker judgment is:
 \Gamma; I; K; \sigma \vdash e \Rightarrow \sigma' ,
 \]
 
-其中 \(\Gamma\) 是全局策略，\(I\) 是 intent certificate，\(K\) 是 active leases，\(\sigma\) 是 runtime state。事件被接受当且仅当存在 \(\kappa \in K\) 使得以下条件同时成立：operation 匹配；object 和 arguments 满足 lease predicate；event purpose 可由 \(I\) 推导；\(prov_C(e)\) 中的每个 context 都拥有影响该 decision class 所需的 authority；\(prov_D(e)\) 满足 flow policy；temporal guard 和 budget 尚未过期；delegated leases 不宽于 parent leases。对于 \(request(\kappa,reason)\) 和 \(policy\_update(patch)\)，checker 将其作为 protected decisions 处理：它们自身不能 mint authority，除非 trusted issuer 随后产生独立 \(lease(\kappa)\) event；其 control provenance 也必须拥有 \((authorize, capability\_request)\) 或 \((authorize, policy\_update)\)。
+其中 \(\Gamma\) 是全局策略，\(I\) 是 intent certificate，\(K\) 是 active leases，\(\sigma\) 是 runtime state。事件被接受当且仅当存在 \(\kappa \in K\) 使得所有条件同时成立。Operation 必须匹配；object 和 arguments 必须满足 lease predicate；event purpose 必须可由 \(I\) 推导；\(prov_C(e)\) 中的每个 context 都必须拥有影响该 decision class 所需的 authority；\(prov_D(e)\) 必须满足 flow policy；temporal guard 和 budget 必须尚未过期；delegated leases 必须不宽于 parent leases。对于 \(request(\kappa,reason)\) 和 \(policy\_update(patch)\)，checker 将其作为 protected decisions 处理。它们自身不能 mint authority，除非 trusted issuer 随后产生独立 \(lease(\kappa)\) event；其 control provenance 也必须拥有 \((authorize, capability\_request)\) 或 \((authorize, policy\_update)\)。
 
 一个 trace 被接受，表示其中每个 protected event 都按上述 judgment 顺序通过 checker，并且每个通过事件对 \(\sigma\) 的更新会消耗预算、推进 temporal state、记录 provenance，并更新 active leases。下面三个性质是这一 checker semantics 的直接安全后果；它们不是关于任意 prompt 的全局声明，而是关于 accepted traces 的 trace-level properties。
 
@@ -331,12 +333,16 @@ Prototype 还包含 local llama.cpp/Qwen frontend，用来模拟不可信 lease 
 对于 tau2/tau3-style stateful workflows，runtime binding 会从已经执行的 tool-result evidence 中铸造 exact one-shot leases，并重新检查参数值是否出现在当前可见 task/tool-result context 中。High-impact write candidates 还必须满足 structured value proof：例如列表参数需要逐项绑定到结构化上下文，不能从原始文本窗口或 sibling objects 中借用 authority。
 
 \subsection{Implemented Surface}
-Prototype 已经实现 checker/gateway、live local callable boundary、benchmark-derived replay adapters、local Qwen/llama.cpp compiler probes、runtime binding、structured value proof、read/write activation、expert-oracle labeling/scoring/audit pipeline，以及 E1 security/utility wrapper matrices。这些实现足以支撑机制性 claim：在已建模 traces 上，\sys 能拒绝 unauthorized context-to-decision influence；run-time exact leases 可以缩小 object/tool authority surface；checker 可以阻止 LLM-proposed broad/runtime authority 直接进入执行路径。它还不能单独支撑更强的端到端 claim：full MCP broker、生产级 execution sandbox、fresh user-simulator loop、独立 human expert-oracle replication 和 benchmark-scale utility/recovery evaluation 仍是评估完成前的 open items。
+Prototype 已经实现 checker/gateway、live local callable boundary、benchmark-derived replay adapters、local Qwen/llama.cpp compiler probes、runtime binding、structured value proof、read/write activation、expert-oracle labeling/scoring/audit pipeline，以及 E1 security/utility wrapper matrices。
+
+这些实现足以支撑机制性 claim：在已建模 traces 上，\sys 能拒绝 unauthorized context-to-decision influence；run-time exact leases 可以缩小 object/tool authority surface；checker 可以阻止 LLM-proposed broad/runtime authority 直接进入执行路径。它还不能单独支撑更强的端到端 claim：full MCP broker、生产级 execution sandbox、fresh user-simulator loop、独立 human expert-oracle replication 和 benchmark-scale utility/recovery evaluation 仍是评估完成前的 open items。
 
 \section{评估}
 \label{sec:evaluation}
 
-本文评估围绕四个可证伪问题组织。每个实验都按 hypothesis、baselines、metrics、success gate 和 interpretation boundary 解读；Run IDs、pilot probes 和 residual analyses 只作为这些问题的证据来源，不作为论文主实验编号。评估的共同原则是固定底层模型、任务顺序、工具描述和 prompt budget，尽量只改变授权层；当某个 baseline 只有 trace-level 或概念性复现时，结果必须标记为 partial comparison，不能写成完整数值胜利。所有 high-impact denials 使用 protected-decision oracle 判定：若某个 protected decision 的 control provenance 来自缺少相应 influence mode 的 context source，则该事件应被拒绝。
+本文评估围绕四个可证伪问题组织。每个实验都按 hypothesis、baselines、metrics、success gate 和 interpretation boundary 解读。Run IDs、pilot probes 和 residual analyses 只作为这些问题的证据来源，不作为论文主实验编号。
+
+评估的共同原则是固定底层模型、任务顺序、工具描述和 prompt budget，尽量只改变授权层。当某个 baseline 只有 trace-level 或概念性复现时，结果必须标记为 partial comparison，不能写成完整数值胜利。所有 high-impact denials 使用 protected-decision oracle 判定：若某个 protected decision 的 control provenance 来自缺少相应 influence mode 的 context source，则该事件应被拒绝。
 
 \subsection{E1: End-to-End Security and Utility}
 
@@ -360,7 +366,7 @@ E3 隔离 \sys 的核心机制是否真的是 context influence capability，而
 
 关键指标是 protected decisions 中 unauthorized context control 的接受率，以及每个 denial 是否只能由 lease semantics、temporal guards、budget、delegation 或 proof constraints 解释。成功条件是 ablations 或 access-control baselines 接受 full-mechanism \sys checker 拒绝的 protected-decision violations，并且 residual cases 不能被最强 provenance/taint baseline 完全解释。若最强 baseline 已解释所有 denials，论文必须放弃“新的 security boundary”表述，转而主张 \sys 是一种 proof-carrying lease compiler/checker organization。
 
-为避免 baseline 只停留在名称层面，E3 将每个对照实现为明确的 checker variant。若无法复现某个完整系统，论文必须把它写成 over-the-same-event-schema 的 semantic variant，而不是声称复现原系统。Object ACL 只维护 operation/object/argument predicates；taint/IFC-style baseline 维护 label 和 flow constraints，但不维护 lease consumption 或 delegation partial order；action-provenance baseline 检查 observed action 的 intent/provenance alignment，但不允许 consumed lease state 影响后续授权；stateful policy baseline 加入 temporal/budget state，但不区分 protected-decision influence modes；完整 \sys 同时维护 trusted mint provenance、per-lease consumption/expiration、decision-specific influence modes 和 parent-child capability partial order。
+为避免 baseline 只停留在名称层面，E3 将每个对照实现为明确的 checker variant。若无法复现某个完整系统，论文必须把它写成 over-the-same-event-schema 的 semantic variant，而不是声称复现原系统。Object ACL 只维护 operation/object/argument predicates。Taint/IFC-style baseline 维护 label 和 flow constraints，但不维护 lease consumption 或 delegation partial order。Action-provenance baseline 检查 observed action 的 intent/provenance alignment，但不允许 consumed lease state 影响后续授权。Stateful policy baseline 加入 temporal/budget state，但不区分 protected-decision influence modes。Full-mechanism \sys checker 同时维护 trusted mint provenance、per-lease consumption/expiration、decision-specific influence modes 和 parent-child capability partial order。
 
 \subsection{E4: Compiler, Checker, and Recovery Practicality}
 
@@ -400,7 +406,9 @@ Author-adjudicated E2 audit & 24/24 lease labels pass schema, sample, and policy
 Full-paper claims 需要三个闭环。第一，utility 不能只依赖固定 slices、reference-action accounting、saved proposal replay、saved-online trajectory comparison、局部 recovery 或 bounded activation；这些证据能说明机制边界和 failure modes，但不能替代 fresh model/user-simulator loop。第二，least-privilege 需要 independent expert-oracle replication；author-adjudicated labels、policy-distance scoring 和机器审计可以作为 pilot evidence，但不应被表述为双专家盲标结论。第三，context-influence residual 需要在 benchmark-derived 或 model-loop setting 中与强 provenance/taint baselines 对比复现；否则 \sys 只能主张 lease lifecycle organization，而不能主张新的安全边界。
 
 \subsection{Claim Selection}
-论文最终应按实验结果选择 claim 强度。如果 E1 同时显示低 attack success 和可接受 utility，\sys 可以主张端到端安全收益；如果 E1 的 utility 不足，则应把 \sys 写成 safety enforcement layer，并把 planner/recovery 作为 open engineering gap。如果 E2 的 expert-oracle scoring 显示 leases 明显更窄，才能主张 least-privilege synthesis；否则只能主张 proof-carrying checker operationalization。如果 E3 的 ablation 显示普通 ACL、provenance 或 IFC baselines 接受完整 \sys 拒绝的 protected-decision violations，才能强调 context influence capability 是新的安全边界。若 E4 不能提升 task-correct executions 或 reward，则 recovery 只能作为 diagnostic/refinement mechanism，而不是 utility-preservation result。
+论文最终应按实验结果选择 claim 强度。如果 E1 同时显示低 attack success 和可接受 utility，\sys 可以主张端到端安全收益。如果 E1 的 utility 不足，则应把 \sys 写成 safety enforcement layer，并把 planner/recovery 作为 open engineering gap。
+
+如果 E2 的 expert-oracle scoring 显示 leases 明显更窄，才能主张 least-privilege synthesis；否则只能主张 proof-carrying checker operationalization。如果 E3 的 ablation 显示普通 ACL、provenance 或 IFC baselines 接受 full-mechanism \sys checker 拒绝的 protected-decision violations，才能强调 context influence capability 是新的安全边界。若 E4 不能提升 task-correct executions 或 reward，则 recovery 只能作为 diagnostic/refinement mechanism，而不是 utility-preservation result。
 
 \section{相关工作}
 
