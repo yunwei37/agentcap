@@ -10,7 +10,7 @@
   "claim_supported": "On saved local-Qwen proposals, exact IntentCap leases preserve exact accepted reference calls while rejecting off-reference proposals that tool-only wrappers admit.",
   "deduplicated_model_calls": 58,
   "duplicate_rows_removed": 0,
-  "git_status": "?? scripts/build_e1_saved_model_wrapper_replay.py\n?? tests/test_build_e1_saved_model_wrapper_replay.py",
+  "git_status": "",
   "input_digests": [
     {
       "bytes": 17872,
@@ -46,7 +46,7 @@
     "task_reference_tool_acl",
     "broad_proposed_tool_acl"
   ],
-  "project_head": "4e0f6713ab753597afc0badc88c048aef336bd60",
+  "project_head": "7b403ac2eea2d4db6968013e12addf874be9cd18",
   "replay_rows": 232,
   "run_id": "R206E1M",
   "saved_exact_proposals": 11,
