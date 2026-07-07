@@ -34,6 +34,13 @@ def test_parse_model_json_prefers_action_envelope_after_thought_json():
     assert calls == [{"tool": "get_user_details", "arguments": {"user_id": "u"}}]
 
 
+def test_filter_raw_tasks_keeps_default_and_selected_order():
+    raw_tasks = [{"id": "0"}, {"id": "1"}, {"id": "2"}]
+
+    assert runner.filter_raw_tasks(raw_tasks, ()) == raw_tasks
+    assert runner.filter_raw_tasks(raw_tasks, ("2", "0")) == [{"id": "0"}, {"id": "2"}]
+
+
 def test_bind_model_call_adds_event_id_only_for_exact_reference_match():
     action = ReferenceAction(
         event_id="mock:t:create_1",

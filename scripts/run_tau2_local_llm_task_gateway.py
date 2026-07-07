@@ -273,6 +273,17 @@ def main() -> int:
     parser.add_argument("--run-id", default="R031")
     parser.add_argument("--domains", nargs="*", default=["mock"])
     parser.add_argument("--max-tasks-per-domain", type=int, default=6)
+    parser.add_argument(
+        "--task-id",
+        dest="task_ids",
+        action="append",
+        default=None,
+        help=(
+            "Restrict execution to one task id. May be repeated. Filtering is "
+            "applied after --max-tasks-per-domain so shards can preserve the "
+            "same fixed prefix slice as the full run."
+        ),
+    )
     parser.add_argument("--llama-bin", type=Path, default=DEFAULT_LLAMA_BIN)
     parser.add_argument("--model", type=Path, default=DEFAULT_MODEL)
     parser.add_argument("--n-predict", type=int, default=512)
@@ -555,6 +566,7 @@ def main() -> int:
         run_id=args.run_id,
         domains=tuple(args.domains),
         max_tasks_per_domain=args.max_tasks_per_domain,
+        selected_task_ids=tuple(args.task_ids or ()),
         llama_bin=args.llama_bin,
         model=args.model,
         n_predict=args.n_predict,
@@ -611,6 +623,7 @@ def run_experiment(
     run_id: str = "R031",
     domains: tuple[str, ...] = ("mock",),
     max_tasks_per_domain: int | None = 6,
+    selected_task_ids: tuple[str, ...] = (),
     llama_bin: Path = DEFAULT_LLAMA_BIN,
     model: Path = DEFAULT_MODEL,
     n_predict: int = 512,
@@ -834,6 +847,7 @@ def run_experiment(
         raw_tasks = _load_json_list(data_dir / "tasks.json")
         if max_tasks_per_domain is not None:
             raw_tasks = raw_tasks[:max_tasks_per_domain]
+        raw_tasks = filter_raw_tasks(raw_tasks, selected_task_ids)
         for raw_task in raw_tasks:
             task_id = str(raw_task.get("id", ""))
             criteria = raw_task.get("evaluation_criteria") or {}
@@ -943,6 +957,7 @@ def run_experiment(
         gpu_layers=gpu_layers,
         timeout_seconds=timeout_seconds,
         max_tasks_per_domain=max_tasks_per_domain,
+        selected_task_ids=selected_task_ids,
         feedback_rounds=feedback_rounds,
         lease_source=lease_source,
         compiler_run_dir=compiler_run_dirs,
@@ -4870,6 +4885,15 @@ def normalize_model_calls(parsed: dict[str, Any] | None) -> list[dict[str, Any]]
     return calls
 
 
+def filter_raw_tasks(
+    raw_tasks: list[dict[str, Any]], selected_task_ids: tuple[str, ...]
+) -> list[dict[str, Any]]:
+    if not selected_task_ids:
+        return list(raw_tasks)
+    selected = {str(task_id) for task_id in selected_task_ids}
+    return [task for task in raw_tasks if str(task.get("id", "")) in selected]
+
+
 def summarize(
     *,
     run_id: str,
@@ -4891,6 +4915,7 @@ def summarize(
     tool_exposure: str,
     stepwise_max_steps: int,
     stepwise_empty_retries: int,
+    selected_task_ids: tuple[str, ...] = (),
     stepwise_state_grounded_arg_hints: bool = False,
     stepwise_compiler_lease_hints: bool = False,
     stepwise_runtime_evidence_lease_hints: bool = False,
@@ -4951,6 +4976,10 @@ def summarize(
     if feedback_rounds > 0:
         notes.append(
             "Feedback prompts include blocked calls and gateway reasons but still do not reveal evaluation_criteria.actions."
+        )
+    if selected_task_ids:
+        notes.append(
+            "Task-id filtering is used only to shard the same fixed local tau2 prefix slice into shorter executable runs."
         )
     if tool_exposure == "leased":
         source_label = (
@@ -5050,6 +5079,7 @@ def summarize(
         "dry_run": dry_run,
         "domains_requested": list(domains),
         "max_tasks_per_domain": max_tasks_per_domain,
+        "selected_task_ids": list(selected_task_ids),
         "feedback_rounds": feedback_rounds,
         "lease_source": lease_source,
         "compiler_run_dir": " | ".join(str(path) for path in compiler_run_dirs),
