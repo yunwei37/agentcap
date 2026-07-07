@@ -1,6 +1,6 @@
 {
   "analysis": "E1 saved-online local-Qwen trajectory wrapper comparison",
-  "git_status": "?? scripts/build_e1_online_trajectory_wrapper_matrix.py\n?? tests/test_build_e1_online_trajectory_wrapper_matrix.py",
+  "git_status": "",
   "headline": "Leased IntentCap tool exposure changes saved online model trajectories: it removes wrong/hallucinated tool proposals in the R034/R036 pair and increases exact executions, but it does not improve tool-oracle task success in this small fixed slice.",
   "input_digests": [
     {
@@ -70,7 +70,7 @@
     "leased_minus_all_tool_oracle_pass_tasks": -1,
     "leased_minus_all_wrong_or_hallucinated_tool_calls": -11
   },
-  "project_head": "708004221ff8534a7d0e6e95f27d0aa0b9f192e0",
+  "project_head": "24cc8d5d760b728b666db1ae42c2553fdb93ed7f",
   "run_id": "R208E1T",
   "run_rows": 2,
   "source_runs": [
