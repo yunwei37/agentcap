@@ -1,0 +1,15 @@
+run_id,trajectory_family,domain,task_id,tool_exposure,tool_schema_count,model_calls,exact_executed_calls,off_reference_calls,same_tool_wrong_args_calls,wrong_or_hallucinated_tool_calls,gateway_allowed,gateway_blocked,executed_calls,tool_error_calls,bound_reference_calls,all_reference_actions_executed,action_reward,env_reward,tool_oracle_pass
+R034,all_tools_exact_gateway,airline,1,all,,3,0,3,3,0,0,3,0,0,0,False,0.0,1.0,False
+R034,all_tools_exact_gateway,airline,2,all,,2,0,2,0,2,0,2,0,0,0,False,0.0,1.0,False
+R034,all_tools_exact_gateway,retail,0,all,,3,0,3,1,2,0,3,0,0,0,False,0.0,0.0,False
+R034,all_tools_exact_gateway,retail,1,all,,3,0,3,1,2,0,3,0,0,0,False,0.0,0.0,False
+R034,all_tools_exact_gateway,retail,2,all,,3,0,3,3,0,0,3,0,0,0,False,0.0,0.0,False
+R034,all_tools_exact_gateway,telecom,[mobile_data_issue]user_abroad_roaming_disabled_on[PERSONA:Easy],all,,3,1,2,0,2,1,2,1,0,1,True,1.0,1.0,True
+R034,all_tools_exact_gateway,telecom,[mobile_data_issue]user_abroad_roaming_disabled_off[PERSONA:Hard],all,,3,0,3,0,3,0,3,0,0,0,False,0.0,0.0,False
+R036,intentcap_leased_tools_exact_gateway,airline,1,leased,2,1,1,0,0,0,1,0,1,0,1,False,0.0,1.0,False
+R036,intentcap_leased_tools_exact_gateway,airline,2,leased,2,1,1,0,0,0,1,0,1,0,1,False,0.0,1.0,False
+R036,intentcap_leased_tools_exact_gateway,retail,0,leased,4,3,1,2,2,0,1,2,1,0,1,False,0.0,0.0,False
+R036,intentcap_leased_tools_exact_gateway,retail,1,leased,4,3,1,2,2,0,1,2,1,0,1,False,0.0,0.0,False
+R036,intentcap_leased_tools_exact_gateway,retail,2,leased,5,3,1,2,2,0,1,2,1,0,1,False,0.0,0.0,False
+R036,intentcap_leased_tools_exact_gateway,telecom,[mobile_data_issue]user_abroad_roaming_disabled_on[PERSONA:Easy],leased,1,0,0,0,0,0,0,0,0,0,0,False,0.0,0.0,False
+R036,intentcap_leased_tools_exact_gateway,telecom,[mobile_data_issue]user_abroad_roaming_disabled_off[PERSONA:Hard],leased,1,1,1,0,0,0,1,0,1,0,1,True,0.0,0.0,False

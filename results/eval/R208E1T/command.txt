@@ -1,0 +1,1 @@
+PYTHONPATH=.:src python scripts/build_e1_online_trajectory_wrapper_matrix.py --run-id R208E1T --output-dir results/eval/R208E1T

@@ -1,0 +1,90 @@
+{
+  "analysis": "E1 saved-online local-Qwen trajectory wrapper comparison",
+  "git_status": "?? scripts/build_e1_online_trajectory_wrapper_matrix.py\n?? tests/test_build_e1_online_trajectory_wrapper_matrix.py",
+  "headline": "Leased IntentCap tool exposure changes saved online model trajectories: it removes wrong/hallucinated tool proposals in the R034/R036 pair and increases exact executions, but it does not improve tool-oracle task success in this small fixed slice.",
+  "input_digests": [
+    {
+      "bytes": 254,
+      "path": "results/eval/R034/command.txt",
+      "sha256": "48889b44ee8f010386370032ff5402dd9e0cd63e534397ee7e18942902ef7e4e"
+    },
+    {
+      "bytes": 3622,
+      "path": "results/eval/R034/task_gateway_summary.json",
+      "sha256": "e77a26aa09c67bde243ab420d60afb8be31d7b300e56887c6403463efca6c547"
+    },
+    {
+      "bytes": 5306,
+      "path": "results/eval/R034/task_results.csv",
+      "sha256": "73dbffd03a7df95cc9034bed52a4b45994bcccb5e5f58c3615403b7caad7c8fd"
+    },
+    {
+      "bytes": 6658,
+      "path": "results/eval/R034/action_results.csv",
+      "sha256": "1a1c8bd0e468a435aa21302a5359f0232418d1b63825c518b725dddaca20d98c"
+    },
+    {
+      "bytes": 277,
+      "path": "results/eval/R036/command.txt",
+      "sha256": "0f865f4b84bd31a6c4e7f923145d033e3c7c78a2eca7bca90bef46ddca217481"
+    },
+    {
+      "bytes": 3795,
+      "path": "results/eval/R036/task_gateway_summary.json",
+      "sha256": "1b705b63a37e035faffc358efd5eba645002c09801f79e3f0dce088e5f632a28"
+    },
+    {
+      "bytes": 4262,
+      "path": "results/eval/R036/task_results.csv",
+      "sha256": "fc581f4eaaf012a0c889c3e8cbda01464568ea308fadc0568a10ef3095199d8d"
+    },
+    {
+      "bytes": 7625,
+      "path": "results/eval/R036/action_results.csv",
+      "sha256": "eb14c0a4f0a2b61cb36e3634db6c48691fc7ea85416f8beb258b7854ebdfd605"
+    },
+    {
+      "bytes": 17872,
+      "path": "results/eval/R035/model_call_mismatches.csv",
+      "sha256": "19fba3d5fde635ac9bdbbf4794c5dc5aef5ee939f9b21fa0d447b85f0521e2b6"
+    },
+    {
+      "bytes": 5042,
+      "path": "results/eval/R038/model_call_mismatches.csv",
+      "sha256": "47f9a2434b31360877d47081d66956f50f7b85cb2cb62628265b99194add201d"
+    }
+  ],
+  "limitations": [
+    "This matrix compares saved online local-Qwen trajectories rather than rerunning a fresh model.",
+    "The primary R034/R036 pair is a small fixed tau2 slice with exact reference-action leases.",
+    "It isolates tool exposure effects on proposals and gateway outcomes, not full non-oracle utility."
+  ],
+  "machine": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "no_dataset_sync": true,
+  "not_a_fresh_online_run": true,
+  "not_benchmark_scale": true,
+  "primary_pair_delta": {
+    "leased_minus_all_action_reward_pass_tasks": -1,
+    "leased_minus_all_exact_executed_calls": 5,
+    "leased_minus_all_gateway_blocked_calls": -13,
+    "leased_minus_all_tool_oracle_pass_tasks": -1,
+    "leased_minus_all_wrong_or_hallucinated_tool_calls": -11
+  },
+  "project_head": "708004221ff8534a7d0e6e95f27d0aa0b9f192e0",
+  "run_id": "R208E1T",
+  "run_rows": 2,
+  "source_runs": [
+    "R034",
+    "R036"
+  ],
+  "task_count_per_run": {
+    "R034": 7,
+    "R036": 7
+  },
+  "task_rows": 14,
+  "trajectory_families": [
+    "all_tools_exact_gateway",
+    "intentcap_leased_tools_exact_gateway"
+  ],
+  "uses_saved_online_model_trajectories": true
+}
