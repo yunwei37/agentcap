@@ -1,125 +1,334 @@
+% VERIFIED: 2026-07-07
+% REAL: yes
+% PDF: not available
+% ABSTRACT: The MCP 2025-06-18 specification defines protocol roles,
+%   tool metadata, tool results, and security guidance for hosts and clients.
+% USED_FOR: Supports the claim that MCP tool annotations/behavior metadata
+%   should be treated as untrusted unless from trusted servers.
 @misc{mcp-spec,
   author = {{Model Context Protocol}},
-  title = {Model Context Protocol Specification},
+  title = {{Model Context Protocol} Specification, 2025-06-18},
   year = {2025},
-  note = {Specification and tool security guidance}
+  howpublished = {\url{https://modelcontextprotocol.io/specification/2025-06-18}},
+  note = {Accessed: 2026-07-07}
 }
 
-@misc{eim-bpftime,
-  author = {Zheng, Yusheng and others},
+% VERIFIED: 2026-07-07
+% REAL: yes
+% PDF: docs/reference/2024-debenedetti-agentdojo.pdf
+% ABSTRACT: AgentDojo is a dynamic benchmark for evaluating prompt-injection
+%   attacks and defenses in tool-using agents over untrusted data.
+% USED_FOR: Evaluation substrate for document/tool-result injection workflows.
+@inproceedings{agentdojo,
+  author = {Debenedetti, Edoardo and Zhang, Jie and Balunovi{\'c}, Mislav and Beurer-Kellner, Luca and Fischer, Marc and Tram\`{e}r, Florian},
+  title = {{AgentDojo}: A Dynamic Environment to Evaluate Prompt Injection Attacks and Defenses for {LLM} Agents},
+  booktitle = {Advances in Neural Information Processing Systems 37, Datasets and Benchmarks Track},
+  year = {2024},
+  url = {https://openreview.net/forum?id=m1YYAQjO3w}
+}
+
+% VERIFIED: 2026-07-07
+% REAL: yes
+% PDF: docs/reference/2024-zhan-injecagent.pdf
+% ABSTRACT: InjecAgent benchmarks indirect prompt injection in tool-integrated
+%   LLM agents with test cases spanning user tools, attacker tools, harm, and exfiltration.
+% USED_FOR: Evaluation substrate for indirect prompt-injection traces.
+@inproceedings{injecagent,
+  author = {Zhan, Qiusi and Liang, Zhixiang and Ying, Zifan and Kang, Daniel},
+  title = {{InjecAgent}: Benchmarking Indirect Prompt Injections in Tool-Integrated Large Language Model Agents},
+  booktitle = {Findings of the Association for Computational Linguistics: ACL 2024},
+  year = {2024},
+  url = {https://aclanthology.org/2024.findings-acl.624/}
+}
+
+% VERIFIED: 2026-07-07
+% REAL: yes
+% PDF: docs/reference/2025-wang-mcptox.pdf
+% ABSTRACT: MCPTox evaluates MCP tool poisoning attacks where malicious
+%   instructions are embedded in tool metadata rather than returned tool output.
+% USED_FOR: Evaluation substrate for MCP metadata/tool-description poisoning.
+@inproceedings{mcptox,
+  author = {Wang, Zhiqiang and Gao, Yichao and Wang, Yanting and Liu, Suyuan and Sun, Haifeng and Cheng, Haoran and Shi, Guanquan and Du, Haohua and Li, Xiang-Yang},
+  title = {{MCPTox}: A Benchmark for Tool Poisoning Attack on Real-World {MCP} Servers},
+  booktitle = {Proceedings of the Fortieth AAAI Conference on Artificial Intelligence},
+  series = {AAAI '26},
+  year = {2026},
+  url = {https://ojs.aaai.org/index.php/AAAI/article/view/40895}
+}
+
+% VERIFIED: 2026-07-07
+% REAL: yes
+% PDF: docs/reference/2025-tau2-bench.pdf
+% ABSTRACT: tau2-bench evaluates conversational agents in dual-control
+%   environments where both the agent and user can use tools over shared state.
+% USED_FOR: Evaluation substrate for stateful utility and user-simulator workflows.
+@misc{tau2bench,
+  author = {Barres, Victor and Dong, Honghua and Ray, Soham and Si, Xujie and Narasimhan, Karthik},
+  title = {{$\tau^2$}-Bench: Evaluating Conversational Agents in a Dual-Control Environment},
+  howpublished = {arXiv preprint arXiv:2506.07982},
+  year = {2025},
+  doi = {10.48550/arXiv.2506.07982},
+  url = {https://arxiv.org/abs/2506.07982}
+}
+
+% VERIFIED: 2026-07-07
+% REAL: yes
+% PDF: docs/reference/2025-zheng-eim-bpftime.pdf
+% ABSTRACT: Introduces the Extension Interface Model and bpftime for safer,
+%   efficient userspace application extension through resource/capability abstractions.
+% USED_FOR: Contrasts IntentCap's decision/intent-centered authorization model
+%   with application-extension resource and capability models.
+@inproceedings{eim-bpftime,
+  author = {Zheng, Yusheng and Yu, Tong and Yang, Yiwei and Hu, Yanpeng and Lai, Xiaozheng and Williams, Dan and Quinn, Andi},
   title = {Extending Applications Safely and Efficiently},
+  booktitle = {Proceedings of the 19th USENIX Symposium on Operating Systems Design and Implementation},
+  series = {OSDI '25},
   year = {2025},
-  note = {OSDI paper on EIM and bpftime}
+  publisher = {USENIX Association},
+  url = {https://www.usenix.org/conference/osdi25/presentation/zheng-yusheng}
 }
 
+% VERIFIED: 2026-07-07
+% REAL: yes
+% PDF: docs/reference/2026-zheng-actplane.pdf
+% ABSTRACT: ActPlane enforces agent-harness policies at the OS level using an
+%   IFC-style DSL and eBPF-backed monitoring for indirect file/process/network effects.
+% USED_FOR: Positions OS-level policy enforcement as a possible backend rather
+%   than IntentCap's conceptual center.
 @misc{actplane,
-  author = {{ActPlane authors}},
-  title = {ActPlane: Programmable OS-Level Policy Enforcement for LLM Agents},
+  author = {Zheng, Yusheng and Wu, Tianyuan and Fu, Quanzhi and Yu, Tong and Mao, Wenan and Ma, Tao and Williams, Dan and Wang, Wei and Quinn, Andi},
+  title = {{ActPlane}: Programmable {OS}-Level Policy Enforcement for Agent Harnesses},
+  howpublished = {arXiv preprint arXiv:2606.25189},
   year = {2026},
-  note = {Agent policy enforcement with OS-level monitoring}
+  doi = {10.48550/arXiv.2606.25189},
+  url = {https://arxiv.org/abs/2606.25189}
 }
 
+% VERIFIED: 2026-07-07
+% REAL: yes
+% PDF: docs/reference/2025-debenedetti-camel.pdf
+% ABSTRACT: CaMeL protects LLM agents from prompt injection by extracting trusted
+%   control/data flows and enforcing capabilities so untrusted data cannot steer program flow.
+% USED_FOR: Closest control/data-flow and capability-based prompt-injection defense.
 @misc{camel,
-  author = {Debenedetti, Edoardo and others},
-  title = {CaMeL: Defeating Prompt Injections by Design},
+  author = {Debenedetti, Edoardo and Shumailov, Ilia and Fan, Tianqi and Hayes, Jamie and Carlini, Nicholas and Fabian, Daniel and Kern, Christoph and Shi, Chongyang and Terzis, Andreas and Tram\`{e}r, Florian},
+  title = {Defeating Prompt Injections by Design},
+  howpublished = {arXiv preprint arXiv:2503.18813},
   year = {2025},
-  note = {Control/data-flow and capability-based defense for LLM agents}
+  doi = {10.48550/arXiv.2503.18813},
+  url = {https://arxiv.org/abs/2503.18813}
 }
 
+% VERIFIED: 2026-07-07
+% REAL: yes
+% PDF: docs/reference/2025-kim-prompt-flow-integrity.pdf
+% ABSTRACT: PFI identifies untrusted data, enforces least privilege, and validates
+%   unsafe flows to prevent privilege escalation in LLM agents.
+% USED_FOR: Related work on privilege escalation and unsafe prompt/data-flow validation.
 @misc{prompt-flow-integrity,
-  author = {Kim, Hyunwoo and others},
-  title = {Prompt Flow Integrity},
+  author = {Kim, Juhee and Choi, Woohyuk and Lee, Byoungyoung},
+  title = {Prompt Flow Integrity to Prevent Privilege Escalation in {LLM} Agents},
+  howpublished = {arXiv preprint arXiv:2503.15547},
   year = {2025},
-  note = {Flow-integrity defense for LLM agents}
+  doi = {10.48550/arXiv.2503.15547},
+  url = {https://arxiv.org/abs/2503.15547}
 }
 
+% VERIFIED: 2026-07-07
+% REAL: yes
+% PDF: docs/reference/2025-costa-fides-ifc.pdf
+% ABSTRACT: FIDES formalizes information-flow control for AI agents and builds
+%   a planner that tracks confidentiality/integrity labels with deterministic policies.
+% USED_FOR: IFC baseline for agent prompt-injection defenses and formal flow constraints.
 @misc{fides,
-  author = {Costa, Manuel and others},
-  title = {FIDES: Securing AI Agents with Information-Flow Control},
+  author = {Costa, Manuel and K{\"o}pf, Boris and Kolluri, Aashish and Paverd, Andrew and Russinovich, Mark and Salem, Ahmed and Tople, Shruti and Wutschitz, Lukas and Zanella-B{\'e}guelin, Santiago},
+  title = {Securing {AI} Agents with Information-Flow Control},
+  howpublished = {arXiv preprint arXiv:2505.23643},
   year = {2025},
-  note = {Information-flow control for AI agents}
+  doi = {10.48550/arXiv.2505.23643},
+  url = {https://arxiv.org/abs/2505.23643}
 }
 
+% VERIFIED: 2026-07-07
+% REAL: yes
+% PDF: docs/reference/2025-zhong-rtbas.pdf
+% ABSTRACT: RTBAS adapts IFC to tool-based agent systems, using dependency
+%   screeners to prevent prompt injection and private-data leakage with limited utility loss.
+% USED_FOR: IFC-style dependency-screening baseline for tool-based LLM agents.
 @misc{rtbas,
-  author = {Zhong, Ziyang and others},
-  title = {Robust Tool-Based Agent Systems},
+  author = {Zhong, Peter Yong and Chen, Siyuan and Wang, Ruiqi and McCall, McKenna and Titzer, Ben L. and Miller, Heather and Gibbons, Phillip B.},
+  title = {{RTBAS}: Defending {LLM} Agents Against Prompt Injection and Privacy Leakage},
+  howpublished = {arXiv preprint arXiv:2502.08966},
   year = {2025},
-  note = {Dependency-screening defense for tool-based agents}
+  doi = {10.48550/arXiv.2502.08966},
+  url = {https://arxiv.org/abs/2502.08966}
 }
 
+% VERIFIED: 2026-07-07
+% REAL: yes
+% PDF: docs/reference/2026-cai-neurotaint.pdf
+% ABSTRACT: NeuroTaint audits LLM-agent execution traces for semantic,
+%   causal, and persistent taint propagation from untrusted sources to privileged sinks.
+% USED_FOR: Closest semantic/causal taint-tracking baseline for context influence.
 @misc{neurotaint,
-  author = {Cai, Tianyu and others},
-  title = {NeuroTaint: Redefining Taint Tracking for LLM Agents},
+  author = {Cai, Yuandao and Tang, Wensheng and Wen, Cheng and Qin, Shengchao},
+  title = {Ghost in the Agent: Redefining Information Flow Tracking for {LLM} Agents},
+  howpublished = {arXiv preprint arXiv:2604.23374},
   year = {2026},
-  note = {Semantic and causal taint tracking for agent workflows}
+  doi = {10.48550/arXiv.2604.23374},
+  url = {https://arxiv.org/abs/2604.23374}
 }
 
+% VERIFIED: 2026-07-07
+% REAL: yes
+% PDF: docs/reference/2026-wang-authgraph.pdf
+% ABSTRACT: AuthGraph compares an authorization graph derived from clean user
+%   intent against execution provenance to detect tool and parameter-source deviations.
+% USED_FOR: Closest intent/provenance authorization baseline at parameter-source level.
 @misc{authgraph,
-  author = {Wang, Zhen and others},
-  title = {AuthGraph: Aligning Provenance with Authorization for LLM Agents},
+  author = {Wang, Peiran and Li, Ying and Tian, Yuan},
+  title = {Aligning Provenance with Authorization: A Dual-Graph Defense for {LLM} Agents},
+  howpublished = {arXiv preprint arXiv:2605.26497},
   year = {2026},
-  note = {Authorization graph and execution-provenance comparison}
+  doi = {10.48550/arXiv.2605.26497},
+  url = {https://arxiv.org/abs/2605.26497}
 }
 
+% VERIFIED: 2026-07-07
+% REAL: yes
+% PDF: docs/reference/2026-fan-pact-granularity-mismatch.pdf
+% ABSTRACT: PACT assigns semantic roles to tool arguments, tracks cross-step
+%   argument provenance, and checks authority-bearing arguments against role contracts.
+% USED_FOR: Closest argument-level provenance and capability-contract baseline.
 @misc{pact,
-  author = {Fan, Yang and others},
-  title = {PACT: The Granularity Mismatch in Agent Security},
+  author = {Fan, Linfeng and Li, Ziwei and Tian, Yuan and Wang, Yichen and Li, Rongsheng and Wang, Xiong},
+  title = {The Granularity Mismatch in Agent Security: Argument-Level Provenance Solves Enforcement and Isolates the {LLM} Reasoning Bottleneck},
+  howpublished = {arXiv preprint arXiv:2605.11039},
   year = {2026},
-  note = {Argument-level provenance capability contracts}
+  doi = {10.48550/arXiv.2605.11039},
+  url = {https://arxiv.org/abs/2605.11039}
 }
 
+% VERIFIED: 2026-07-07
+% REAL: yes
+% PDF: docs/reference/2026-qin-airguard.pdf
+% ABSTRACT: AIRGuard enforces action-time authority control, distinguishing
+%   untrusted resources that may inform reasoning from trusted sources that authorize side effects.
+% USED_FOR: Closest runtime authority-control baseline and motivation for authority confusion.
 @misc{airguard,
-  author = {Qin, Yujia and others},
-  title = {AIRGuard: Runtime Authority Control for LLM Agents},
+  author = {Qin, Suliu and Zhuang, Haomin and Zhou, Yujun and Han, Yufei and Zhang, Xiangliang},
+  title = {{AIRGuard}: Guarding Agent Actions with Runtime Authority Control},
+  howpublished = {arXiv preprint arXiv:2605.28914},
   year = {2026},
-  note = {Action-time authority control for agents}
+  doi = {10.48550/arXiv.2605.28914},
+  url = {https://arxiv.org/abs/2605.28914}
 }
 
+% VERIFIED: 2026-07-07
+% REAL: yes
+% PDF: docs/reference/2025-shi-progent.pdf
+% ABSTRACT: Progent represents privilege as symbolic rules over tool names and
+%   arguments, checks calls deterministically, and uses SMT checks for policy updates.
+% USED_FOR: Deterministic privilege-control DSL baseline for tool-use LLM agents.
 @misc{progent,
-  author = {Shi, Weiyan and others},
-  title = {Progent: Programmable Privilege Control for LLM Agents},
+  author = {Shi, Tianneng and He, Jingxuan and Wang, Zhun and Li, Hongwei and Wu, Linyu and Guo, Wenbo and Song, Dawn},
+  title = {{Progent}: Securing {AI} Agents with Privilege Control},
+  howpublished = {arXiv preprint arXiv:2504.11703},
   year = {2025},
-  note = {Fine-grained programmable privilege-control DSL}
+  doi = {10.48550/arXiv.2504.11703},
+  url = {https://arxiv.org/abs/2504.11703}
 }
 
+% VERIFIED: 2026-07-07
+% REAL: yes
+% PDF: docs/reference/2026-palumbo-pcas-policy-compiler.pdf
+% ABSTRACT: FORGE/PCAS enforces policies for agentic systems using a Datalog
+%   policy substrate, dependency graph, reference monitor, and aspect weaving.
+% USED_FOR: Policy compiler/reference-monitor baseline with causal provenance and stateful policies.
 @misc{pcas,
-  author = {Palumbo, Marco and others},
-  title = {PCAS: A Policy Compiler for Agentic Systems},
+  author = {Palumbo, Nils and Choudhary, Sarthak and Choi, Jihye and Amir, Guy and Chalasani, Prasad and Jha, Somesh},
+  title = {Formal Policy Enforcement for Real-World Agentic Systems},
+  howpublished = {arXiv preprint arXiv:2602.16708},
   year = {2026},
-  note = {Policy compiler for secure agentic systems}
+  doi = {10.48550/arXiv.2602.16708},
+  url = {https://arxiv.org/abs/2602.16708}
 }
 
+% VERIFIED: 2026-07-07
+% REAL: yes
+% PDF: docs/reference/2025-wang-agentspec.pdf
+% ABSTRACT: AgentSpec is a lightweight DSL for specifying and enforcing runtime
+%   constraints for LLM agents across code, embodied, and autonomous-driving domains.
+% USED_FOR: Runtime DSL and policy-enforcement baseline for agent safety constraints.
 @misc{agentspec,
-  author = {Wang, Tong and others},
-  title = {AgentSpec: Customizable Runtime Enforcement for Safe and Reliable LLM Agents},
+  author = {Wang, Haoyu and Poskitt, Christopher M. and Sun, Jun},
+  title = {{AgentSpec}: Customizable Runtime Enforcement for Safe and Reliable {LLM} Agents},
+  howpublished = {arXiv preprint arXiv:2503.18666},
   year = {2025},
-  note = {Runtime DSL for agent enforcement}
+  doi = {10.48550/arXiv.2503.18666},
+  url = {https://arxiv.org/abs/2503.18666}
 }
 
+% VERIFIED: 2026-07-07
+% REAL: yes
+% PDF: docs/reference/2026-luo-agentguard-abac.pdf
+% ABSTRACT: AgentGuard provides an ABAC framework for tool-use LLM agents,
+%   with client-server integration, policy specification, runtime inspection, and auditing.
+% USED_FOR: Attribute-based access-control baseline for tool-use agent enforcement.
 @misc{agentguard,
-  author = {Luo, Yifei and others},
-  title = {AgentGuard: Attribute-Based Access Control for Tool-Use LLM Agents},
+  author = {Luo, Jiaqi and Peng, Songyang and Dai, Jiarun and Chen, Zhile and Shen, Zhuoxiang and Hong, Geng and Pan, Xudong and Zhang, Yuan and Yang, Min},
+  title = {{AgentGuard}: An Attribute-Based Access Control Framework for Tool-Use {LLM}-Based Agent},
+  howpublished = {arXiv preprint arXiv:2605.28071},
   year = {2026},
-  note = {ABAC framework for tool-use agents}
+  doi = {10.48550/arXiv.2605.28071},
+  url = {https://arxiv.org/abs/2605.28071}
 }
 
-@misc{agentbound,
-  author = {Buhler, Christopher and others},
-  title = {AgentBound: Access Control for MCP Server Execution},
-  year = {2025},
-  note = {MCP access-control and policy enforcement}
+% VERIFIED: 2026-07-07
+% REAL: yes
+% PDF: docs/reference/2025-buhler-agentbound-mcp-execution.pdf
+% ABSTRACT: AgentBound secures MCP server execution with declarative access-control
+%   policies and an enforcement engine that contains malicious server behavior.
+% USED_FOR: Closest MCP server access-control and policy-enforcement baseline.
+@inproceedings{agentbound,
+  author = {B{\"u}hler, Christoph and Biagiola, Matteo and Di Grazia, Luca and Salvaneschi, Guido},
+  title = {{AgentBound}: Securing Execution Boundaries of {AI} Agents},
+  booktitle = {Proceedings of the 34th ACM Joint European Software Engineering Conference and Symposium on the Foundations of Software Engineering},
+  series = {FSE '26},
+  year = {2026},
+  articleno = {FSE096},
+  numpages = {24},
+  publisher = {ACM},
+  doi = {10.1145/3808103},
+  url = {https://arxiv.org/abs/2510.21236}
 }
 
+% VERIFIED: 2026-07-07
+% REAL: yes
+% PDF: docs/reference/2026-pan-skillguard.pdf
+% ABSTRACT: SkillGuard treats Skills as permission-bearing artifacts and jointly
+%   governs context influence and action side effects through manifests and runtime access control.
+% USED_FOR: Closest skill-centric permission framework and same-claim-risk comparison.
 @misc{skillguard,
-  author = {{SkillGuard authors}},
-  title = {SkillGuard: A Permission Framework for Agent Skills},
+  author = {Pan, Shidong and Sun, Xiaoyu and Zhang, Tianyi and Liao, Dianshu and Si, Meixue and Xing, Zhenchang},
+  title = {{SkillGuard}: A Permission Framework for Agent Skills},
+  howpublished = {arXiv preprint arXiv:2606.03024},
   year = {2026},
-  note = {Skill-centric permission framework for agent skills}
+  doi = {10.48550/arXiv.2606.03024},
+  url = {https://arxiv.org/abs/2606.03024}
 }
 
+% VERIFIED: 2026-07-07
+% REAL: yes
+% PDF: docs/reference/2026-skillscope.pdf
+% ABSTRACT: SkillScope performs graph-based analysis of Agent Skills to detect
+%   and constrain task-conditioned over-privileged actions while preserving legitimate completion.
+% USED_FOR: Skill least-privilege and task-conditioned over-privilege baseline.
 @misc{skillscope,
-  author = {{SkillScope authors}},
-  title = {SkillScope: Least-Privilege Enforcement for Agent Skills},
+  author = {Wu, Jiangrong and Nan, Yuhong and Lin, Yixi and Wang, Huaijin and Xiao, Yuming and Wang, Shuai and Zheng, Zibin},
+  title = {{SkillScope}: Toward Fine-Grained Least-Privilege Enforcement for Agent Skills},
+  howpublished = {arXiv preprint arXiv:2605.05868},
   year = {2026},
-  note = {Graph-based Skill least-privilege framework}
+  doi = {10.48550/arXiv.2605.05868},
+  url = {https://arxiv.org/abs/2605.05868}
 }

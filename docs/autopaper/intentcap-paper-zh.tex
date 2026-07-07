@@ -55,7 +55,7 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 \subsection{Agent Extensions}
 
-现代 agent runtime 通常不只暴露一个固定工具集合。Skills 将任务说明、参考资料和可选脚本打包为可复用工作流；MCP servers 将工具 schema、资源和 prompts 暴露给 agent；本地脚本和 shell 执行提供文件转换和项目操作能力；subagents 则把上下文和部分权限交给另一个模型或执行单元。因而，agent extension 同时包含自然语言指令、结构化 tool metadata、外部数据和可执行代码。
+现代 agent runtime 通常不只暴露一个固定工具集合。Skills 将任务说明、参考资料和可选脚本打包为可复用工作流；MCP servers 将工具 schema、资源和 prompts 暴露给 agent；本地脚本和 shell 执行提供文件转换和项目操作能力；subagents 则把上下文和部分权限交给另一个模型或执行单元~\cite{skillguard,skillscope,mcp-spec}。因而，agent extension 同时包含自然语言指令、结构化 tool metadata、外部数据和可执行代码。
 
 \subsection{Authority and Provenance}
 
@@ -325,14 +325,14 @@ Checker judgment is:
 Checker core 位于 \texttt{src/intentcap/}，实现 context labels、effect events、leases、checker state 和 proof objects。当前 checker 支持 exact、prefix、suffix 和 one-of argument predicates，支持 lease matching、holder scoping、control/data provenance checks、context-label influence-mode checks、temporal prerequisites、per-lease invocation budgets、proof-carrying intent/approval derivation，以及 delegated capability attenuation。这个 core 是本文的主要 TCB：LLM 输出、Skill 描述、MCP annotations 和 tool results 只能产生 candidate effects 或 candidate leases，不能绕过 checker 直接获得 authority。
 
 \subsection{Trace and Live Gateways}
-\texttt{TraceGateway} 用同一个 checker replay benchmark-derived traces，并把每个事件记录为 execute/block decision。它用于把 AgentDojo、MCPTox、InjecAgent 和 tau2/tau3 reference artifacts 转换成统一的 protected-decision events，从而比较不同 policy variants 的 false accept、authority breadth 和 oracle distance。
+\texttt{TraceGateway} 用同一个 checker replay benchmark-derived traces，并把每个事件记录为 execute/block decision。它用于把 AgentDojo、MCPTox、InjecAgent 和 tau2-bench reference artifacts 转换成统一的 protected-decision events~\cite{agentdojo,mcptox,injecagent,tau2bench}，从而比较不同 policy variants 的 false accept、authority breadth 和 oracle distance。
 
 \texttt{LiveToolGateway} 包裹本地 Python callables：只有 checker 接受的 event 才会真正调用注册函数；被拒绝的事件在 side effect 发生前停止。这一区分很重要：trace replay 提供大规模 policy evidence，live gateway 验证同一 lease semantics 可以保护真实 callable boundary。
 
 \subsection{Compiler Probes and Runtime Binding}
 Prototype 还包含 local llama.cpp/Qwen frontend，用来模拟不可信 lease compiler 和 action proposer。模型可以根据 task text、tool schemas、已有 tool-result previews 或 checker feedback 生成 candidate leases/actions；系统只把通过 checker 的结果交给 gateway。
 
-对于 tau2/tau3-style stateful workflows，runtime binding 会从已经执行的 tool-result evidence 中铸造 exact one-shot leases，并重新检查参数值是否出现在当前可见 task/tool-result context 中。High-impact write candidates 还必须满足 structured value proof：例如列表参数需要逐项绑定到结构化上下文，不能从原始文本窗口或 sibling objects 中借用 authority。
+对于 tau2-bench-style stateful workflows，runtime binding 会从已经执行的 tool-result evidence 中铸造 exact one-shot leases，并重新检查参数值是否出现在当前可见 task/tool-result context 中~\cite{tau2bench}。High-impact write candidates 还必须满足 structured value proof：例如列表参数需要逐项绑定到结构化上下文，不能从原始文本窗口或 sibling objects 中借用 authority。
 
 \subsection{Implemented Surface}
 Prototype 已经实现 checker/gateway、live local callable boundary、benchmark-derived replay adapters、local Qwen/llama.cpp compiler probes、runtime binding、structured value proof、read/write activation、expert-oracle labeling/scoring/audit pipeline，以及 E1 security/utility wrapper matrices。
@@ -348,7 +348,7 @@ Prototype 已经实现 checker/gateway、live local callable boundary、benchmar
 
 \subsection{E1: End-to-End Security and Utility}
 
-E1 检验 \sys 是否在真实 agent workflows 中降低攻击成功率，同时不把 benign task progress 降到不可用。Primary comparison 是同一模型和同一任务集下的 vanilla agent、static ACL、exact-tool ACL、MCP/server allowlist、tool-call guard、OS/sandbox-only wrapper 和 evaluated \sys configuration。Workloads 覆盖 AgentDojo/InjecAgent-style document or tool-result injection、MCPTox-style MCP poisoning，以及 tau2/tau3 或 MCP utility slices。
+E1 检验 \sys 是否在真实 agent workflows 中降低攻击成功率，同时不把 benign task progress 降到不可用。Primary comparison 是同一模型和同一任务集下的 vanilla agent、static ACL、exact-tool ACL、MCP/server allowlist、tool-call guard、OS/sandbox-only wrapper 和 evaluated \sys configuration。Workloads 覆盖 AgentDojo/InjecAgent-style document or tool-result injection、MCPTox-style MCP poisoning，以及 tau2-bench-style 或 MCP utility slices~\cite{agentdojo,injecagent,mcptox,tau2bench}。
 
 主要指标是 attack success、wrong-sink rate、data exfiltration、approval/delegation violations、benign completion、false denial、recovery rate 和 tool errors。Oracle 来自 benchmark security/utility checks 与 \sys protected-decision labels。成功条件是：\sys 相比 access-control baselines 明显降低危险动作，并且 utility loss 有界、可由 denial/recovery 日志解释；若 utility 大幅下降，论文只能主张 \sys 是安全 enforcement layer；若攻击仍通过，则必须定位到缺失的 provenance 或 enforcement boundary。
 
