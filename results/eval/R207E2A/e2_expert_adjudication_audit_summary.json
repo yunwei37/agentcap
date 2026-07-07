@@ -10,7 +10,7 @@
   "failed_global_checks": [],
   "failed_samples": [],
   "failed_samples_count": 0,
-  "git_status": "?? scripts/audit_e2_expert_adjudication.py\n?? tests/test_audit_e2_expert_adjudication.py",
+  "git_status": "",
   "input_digests": [
     {
       "bytes": 18378,
@@ -183,7 +183,7 @@
       "passed": true
     }
   ],
-  "project_head": "8d93de118b6396473b22d7c8eb7a3cf6aee3c7ca",
+  "project_head": "aac0433364ebf34908eeae16b3b39e5e0fae83bb",
   "run_id": "R207E2A",
   "samples_audited": 24,
   "samples_by_benchmark": {
