@@ -105,7 +105,7 @@ Denial 是 runtime refinement 的输入，而不是 authority escape hatch。LLM
 
 \subsection{Runtime Lowering}
 
-Accepted leases 被分发到多个 enforcement boundaries。Context constructor 决定哪些 labeled context 可以进入 trusted instruction、untrusted data 或 policy feedback 区域。Tool gateway 只暴露 active leases 覆盖的 tools，并在调用前验证 arguments 和 control provenance。MCP broker 将 server-level access 收窄为 method-level leases，并把 server metadata 与 tool results 标为 server-dependent context。Execution sandbox 将 file、process、network 和 secrets constraints 下发到底层环境。Delegation monitor 确保 subagent 只接收 parent lease 的 attenuation。
+Accepted leases 的 lowering 分成设计 contract 和已实现 adapter 两层。Contract 层规定 context constructor 应决定哪些 labeled context 可以进入 trusted instruction、untrusted data 或 policy feedback 区域；tool gateway 应只暴露 active leases 覆盖的 tools，并在调用前验证 arguments 和 control provenance；MCP broker 应将 server-level access 收窄为 method-level leases；execution sandbox 应将 file、process、network 和 secrets constraints 下发到底层环境；delegation monitor 应确保 subagent 只接收 parent lease 的 attenuation。Prototype 当前完整实现 checker verdict、trace replay gateway 和 live local callable gateway，并用 benchmark-derived MCP/delegation events 验证同一 lease semantics；full MCP broker 和生产级 sandbox 是后续 enforcement backend，而不是本文已完成的核心 artifact。
 
 这些 adapters 不需要共享同一种底层 sandbox；它们共享的是 lease language 和 checker verdict。若某个 boundary 尚未接入 adapter，\sys 不声称覆盖该 side effect。这个限制保留了 OS-level monitor 的价值，也使本文的贡献保持在 policy synthesis and checking，而不是新的 syscall monitor。
 
@@ -170,7 +170,7 @@ Intent-carrying lease 的抽象形式为：
 
 其中 \(I\) 是当前 intent certificate，\(influence\) 约束 control/data provenance，\(flow\) 约束 confidentiality 到 sink 的流向，\(temporal\) 和 \(budget\) 约束事件顺序与调用次数，\(delegation\) 约束可传递给 subagent 的能力集合。
 
-Lease lifecycle 是 \sys 与静态 policy rule 或单次 action provenance check 的主要区别。Lease 是 future protected decision 的有状态授权对象，而不只是具体 operation 的 permission：它表达某个 context source 在 intent \(I\) 下可以影响 decision class \(d\)，直到某个状态转移使其被消耗、过期或衰减。Runtime state \(\sigma\) 至少包含 active/exhausted lease set、consumption counters、temporal automata、mint proof records 和 parent-child delegation relation。Checker 将 lease 作为有状态对象处理，而不是把它当作一组静态 predicates：
+Lease lifecycle 是 \sys 与静态 policy rule 或单次 action provenance check 的主要区别。Lease 是 future protected decision 的有状态授权对象，而不只是具体 operation 的 permission：它表达某个 context source 在 intent \(I\) 下可以影响 decision class \(d\)，直到某个状态转移使其被消耗、过期或衰减。Runtime state \(\sigma\) 至少包含 active/exhausted lease table、per-lease consumption counters、temporal automata state、mint proof records 和 parent-child delegation graph；实现中的 checker state schema 直接保存这些字段，并在每个 accepted event 后原子更新。Checker 将 lease 作为有状态对象处理，而不是把它当作一组静态 predicates：
 
 \begin{itemize}[leftmargin=*]
   \item \textbf{Mint.} 只有 trusted issuer 可以通过 \(lease(\kappa)\) 事件把新 lease 加入 \(K\)。Mint rule 要求 \(\kappa.intent\) 可由 \(I\) 中的 trusted user input、explicit object/sink selection、administrator policy 或 fresh approval 推导；untrusted context 不能成为 mint 或 widening 的 control dependency。
