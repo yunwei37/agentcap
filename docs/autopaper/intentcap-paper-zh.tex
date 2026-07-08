@@ -29,7 +29,7 @@ LLM agents 正在从固定工具调用器演变为可扩展执行环境，可以
 \sys 的核心观点是：agent authorization 的单位不应是 tool permission、context label 或已发生的 action，而应是会选择工具、选择 sink、扩大 approval 或委托权限的受保护转移（protected-decision transition）。
 \sys 将这种转移表示为短期 lease。Lease 绑定当前用户意图、来自 agent/instruction/tool/env 四类授权输入的结构化证明，以及 provenance、预算、过期和委托约束，并由 deterministic checker 在副作用或权限转移前原子验证。
 在保存的安全 trace 上，\sys 对 3,746 个危险 protected events 产生 0 个误接受。
-在 tau2/tau3 的良性动作重放中，\sys 覆盖 3,813/3,813 个 reference actions，并通过 2,554/2,556 个适用的 tool-oracle checks。
+在 tau2-style 良性动作重放中，\sys 覆盖 3,813/3,813 个 reference actions，并通过 2,554/2,556 个适用的 tool-oracle checks。
 在本地环境实验中，\sys 执行 4 个授权副作用，阻止 6 个违规事件，并在副作用发生前阻止 4 个 Qwen3.6 提出的 unsafe calls。
 \end{abstract}
 
@@ -49,7 +49,7 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 为实现这个授权单位，\sys 使用 intent-carrying capability lease 绑定 operation、object、arguments、intent derivation、control/data provenance、temporal state、budget 和 delegation。Lease 的证明来自四类输入：agent context、instruction context、tool context 和 env context。Lease table、budget counters 和 consumption state 属于 checker state \(\sigma\)，而不是 env context。
 
-\sys 的实现包含一个 LLM-assisted compiler 和一个 deterministic checker。LLM 提出 plans 和 candidate leases，checker 根据 intent certificates、context labels、effect IR 和 global policy 验证这些 proposal。Runtime adapters 将通过的 leases 落到 context construction、tool/MCP gateways、本地环境执行和 delegation 边界。在保存的安全 trace 上，\sys 对 3,746 个危险 protected events 产生 0 个误接受。在 tau2/tau3 的良性动作重放中，\sys 覆盖 3,813/3,813 个 reference actions，并通过 2,554/2,556 个适用的 tool-oracle checks。在本地环境实验中，\sys 在副作用发生前阻止 6 个 scripted violations 和 4 个 Qwen3.6 unsafe calls。
+\sys 的实现包含一个 LLM-assisted compiler 和一个 deterministic checker。LLM 提出 plans 和 candidate leases，checker 根据 intent certificates、context labels、effect IR 和 global policy 验证这些 proposal。Runtime adapters 将通过的 leases 落到 context construction、tool/MCP gateways、本地环境执行和 delegation 边界。在保存的安全 trace 上，\sys 对 3,746 个危险 protected events 产生 0 个误接受。在 tau2-style 良性动作重放中，\sys 覆盖 3,813/3,813 个 reference actions，并通过 2,554/2,556 个适用的 tool-oracle checks。在本地环境实验中，\sys 在副作用发生前阻止 6 个 scripted violations 和 4 个 Qwen3.6 unsafe calls。
 
 本文贡献如下：
 
@@ -775,7 +775,7 @@ SkillGuard 和 SkillScope 直接面向 Agent Skills 的权限、行为规范和 
 
 \section{结论}
 
-LLM agent extensions 改变了权限系统需要保护的对象。文档、工具结果和扩展说明不只携带数据，也可能影响 tool selection、sink selection、approval scope、capability request 和 delegation target。\sys 将这种影响权表示为 intent-derived、provenance-gated、可消耗、可过期、可衰减的 leases，并用 deterministic checker 把 LLM proposals 保持在 TCB 之外。在保存的安全 trace 上，\sys 对 3,746 个危险 protected events 产生 0 个误接受。在 tau2/tau3 的良性动作重放中，\sys 覆盖 3,813/3,813 个 reference actions，并通过 2,554/2,556 个适用的 tool-oracle checks。在本地环境实验中，\sys 在副作用发生前阻止 6 个违规副作用和 4 个 Qwen3.6 unsafe calls。这些结果表明，在已建模并接入 checker 的边界内，context influence 可以作为可检查、可消耗、可审计的授权状态来管理。
+LLM agent extensions 改变了权限系统需要保护的对象。文档、工具结果和扩展说明不只携带数据，也可能影响 tool selection、sink selection、approval scope、capability request 和 delegation target。\sys 将这种影响权表示为 intent-derived、provenance-gated、可消耗、可过期、可衰减的 leases，并用 deterministic checker 把 LLM proposals 保持在 TCB 之外。在保存的安全 trace 上，\sys 对 3,746 个危险 protected events 产生 0 个误接受。在 tau2-style 良性动作重放中，\sys 覆盖 3,813/3,813 个 reference actions，并通过 2,554/2,556 个适用的 tool-oracle checks。在本地环境实验中，\sys 在副作用发生前阻止 6 个违规副作用和 4 个 Qwen3.6 unsafe calls。这些结果表明，在已建模并接入 checker 的边界内，context influence 可以作为可检查、可消耗、可审计的授权状态来管理。
 
 \bibliographystyle{plain}
 \bibliography{intentcap-paper-zh}
