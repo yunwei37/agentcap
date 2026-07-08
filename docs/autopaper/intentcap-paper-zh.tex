@@ -37,13 +37,13 @@ LLM agents 正在从固定工具调用器演变为可扩展执行环境，可以
 
 LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 API、插件接口或系统调用与宿主交互，因此权限系统可以围绕文件、网络、进程和工具调用来定义。现代 agent extension 的行为则由用户请求、系统策略、扩展说明、外部文档、工具结果和中间总结共同塑造，尤其是在 Skills、MCP servers 和 agent tool ecosystems 中~\cite{skillguard,skillscope,mcp-spec}。
 
-然而，agent extension 打破了 data 和 authority 的传统边界。一个失败轨迹可以说明这个缺口。用户只要求从两个 PDF 提取表格，并在 \texttt{org/repo-x} 创建一个 summary issue，系统因此只应铸造一个 one-shot issue lease。随后，其中一个 PDF 的隐藏文本诱导 agent 请求完整 GitHub 授权范围，把可写 issue authority 委托给 summarizer subagent，在 lease 被消耗后复用同一权限，甚至建议更新 policy 以信任该 workflow。最终出现的 \texttt{create\_issue(repo=org/repo-x)} 参数仍然等于用户指定的 repository，所以普通 tool/argument guard 可能放行。此时，损害不是 repo 字符串错误，而是 authority lifecycle 已经被扩大、转移、复用或改写。参数合法不代表权限状态合法。
+然而，agent extension 打破了 data 和 authority 的传统边界。一个失败轨迹可以说明这个缺口。用户只要求从两个 PDF 提取表格，并在 \texttt{org/repo-x} 创建一个 summary issue，系统因此只应铸造一个 one-shot issue lease。随后，其中一个 PDF 的隐藏文本诱导 agent 请求完整 GitHub 授权范围，把可写 issue authority 委托给 summarizer subagent，在 lease 被消耗后复用同一权限，甚至建议更新 policy 以信任该 workflow。最终出现的 \texttt{create\_issue(repo=org/repo-x)} 参数仍然等于用户指定的 repository，所以普通 tool/argument guard 可能放行。此时，损害不是 repo 字符串错误，而是 authority lifecycle 已经被扩大、转移、复用或改写。后续步骤可能读取或写入用户未授权的 repository，把提取数据带到未授权 sink，或把 future runs 的 policy 改坏。参数合法不代表权限状态合法。
 
-根因不是不可信文本进入 prompt 本身，而是 agent runtime 把用户意图、扩展说明、tool metadata、工具结果和运行时输出放进同一个 planning channel。下游 guard 多数在 action materialized 之后才检查 tool、arguments 或 resource。于是，一个对输出内容而言安全的输入，可能对控制决策而言并不安全。PDF text 可以安全地填充 spreadsheet cells，却不应选择 sink、扩大 approval scope 或创建 delegation。本文称这一问题为 context privilege，因为 context 获得了影响 authority-bearing decisions 的权力，而不仅是携带可被引用或总结的信息。
+根因不是不可信文本进入 prompt 本身，而是两个结构性错配。第一是 \textbf{issuer collapse}: agent runtime 把用户意图、Skill/manual instructions、tool metadata、工具结果和运行时输出放进同一个 planning channel，使一类 context 可以替另一类 context 补齐 authority field。Wrong sink 和 approval widening 属于这种错配。第二是 \textbf{authority-state split}: 下游 guard 多数在 action materialized 后才检查 tool、arguments 或 resource，而 lease consumption、expiry、delegation 和 mint provenance 分散在不同状态中。Stale reuse 和 over-delegation 属于这种错配。于是，一个对输出内容而言安全的输入，可能对控制决策而言并不安全。PDF text 可以安全地填充 spreadsheet cells，却不应选择 sink、扩大 approval scope 或创建 delegation。本文称这一问题为 context privilege，因为 context 获得了影响 authority-bearing decisions 的权力，而不仅是携带可被引用或总结的信息。
 
-这个根因要求系统在 problem statement 层面区分四类授权输入。Agent context 证明“为什么做”和“哪个对象或 sink 被用户授权”。Instruction/Skill/manual context 证明“按什么过程做”。Tool/MCP/cmd context 证明“通过哪个接口、凭证、binary 和 sandbox contract 做”。Env/runtime context 证明“本次执行中实际观察到了什么值、文件、输出和资源状态”。后三类不能合并成一个 generic context：把 env 合并进 tool 或 instruction，会让 tool result、script output、PDF text 和 subagent summary 获得本不具备的接口权威或过程权威；把 tool metadata 合并进 agent，又会让 server description 变成用户授权。
+这个根因要求系统区分四类 proof boundary。以本地 PDF extraction 为例，agent context 证明用户选中了哪些 PDF 和哪个 GitHub sink，instruction/Skill/manual context 证明 extraction workflow，tool/MCP/cmd context 证明 binary、schema、credential scope 和 sandbox contract，env/runtime context 证明本次运行实际看到的路径、stdout、tool result 和文件状态。后三类不能合并成一个 generic context。把 env 合并进 tool 或 instruction，会让 tool result、script output、PDF text 和 subagent summary 获得本不具备的接口权威或过程权威。把 tool metadata 合并进 agent，又会让 server description 变成用户授权。第~\ref{sec:design} 节给出完整 taxonomy 和形式化规则。
 
-现有防线分别覆盖了这个问题的一部分。Tool guards、argument validators 和 action-time authority controls 可以拒绝错误对象或非法参数~\cite{authgraph,pact,airguard}。Static allowlists 和 server-level policies 可以限制可见工具。Human approval gates 可以重新引入用户确认。OS sandbox 或 monitor 可以约束文件、网络和进程 side effects~\cite{actplane}。Provenance、taint 和 IFC-style defenses 可以表达部分 flow policy~\cite{camel,prompt-flow-integrity,fides,rtbas,neurotaint}。这些机制是必要的，但剩余缺口在于它们通常不把 future decision authority 表示为可消耗、可过期、可委托的授权状态。这个状态的有效性同时依赖 intent derivation、allowed control provenance、temporal state、budget 和 delegation bounds。
+现有防线分别覆盖了这个问题的一部分。Tool guards、argument validators 和 action-time authority controls 可以拒绝错误对象或非法参数~\cite{authgraph,pact,airguard}。Static allowlists 和 server-level policies 可以限制可见工具。Human approval gates 可以重新引入用户确认。OS sandbox 或 monitor 可以约束文件、网络和进程 side effects~\cite{actplane}。Provenance、taint 和 IFC-style defenses 可以表达部分 flow policy~\cite{camel,prompt-flow-integrity,fides,rtbas,neurotaint}。这些机制是必要的，但本文比较的是默认 authorization object，而不是声称这些系统无法额外编码类似规则。若一个 policy DSL 要等价支持 \sys，它必须显式加入 issuer-owned fields、结构化 proof object，以及原子更新的 lease consumption、expiry 和 delegation state。\sys 的贡献是把这组约束作为 agent protected-decision 的统一授权对象。
 
 最接近的 provenance/action-authority systems 已经能问“这个参数或动作是否来自可信来源”。\sys 要回答的是更窄但更状态化的问题：当参数合法、provenance 可信时，提交证明的 issuer class 是否拥有该 authority field，相关 lease 是否仍然 active，预算是否已消耗，child delegation 是否仍然窄于 parent。换言之，trusted provenance 仍然不充分；每个 authority field 必须有 owner issuer，并且 owner proof、provenance、budget、expiry 和 delegation 必须在同一次 protected-decision transition 中被原子检查和更新。
 
@@ -53,7 +53,7 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 为实现这个授权单位，\sys 使用 intent-carrying capability lease 绑定 operation、object、arguments、intent derivation、control/data provenance、temporal state、budget 和 delegation。Lease 的证明来自四类输入：agent context、instruction context、tool context 和 env context。Lease table、budget counters 和 consumption state 属于 checker state \(\sigma\)，而不是 env context。
 
-\sys 的实现包含一个 LLM-assisted compiler 和一个 deterministic checker。LLM 提出 plans 和 candidate leases，checker 根据 intent certificates、context labels、effect IR 和 global policy 验证这些 proposal。Runtime adapters 将通过的 leases 落到 context construction、tool/MCP gateways、本地环境执行和 delegation 边界。在 same-event protected-event replay 上，\sys 对 3,746 个危险 protected events 产生 0 个误接受。在 tau2-style reference-action proxy 中，\sys 覆盖 3,813/3,813 个 reference actions，并通过 2,554/2,556 个适用的 tool-oracle checks。在 isolated local env gateway 中，\sys 在副作用发生前阻止 6 个 scripted violations 和 4 个 Qwen3.6 unsafe calls。
+\sys 的实现包含一个 LLM-assisted compiler 和一个 deterministic checker。LLM 提出 plans 和 candidate leases，checker 根据 intent certificates、context labels、effect IR 和 global policy 验证这些 proposal。Runtime adapters 将通过的 leases 落到 context construction、tool/MCP gateways、本地环境执行和 delegation 边界。当前证据支持的是 instrumented protected-decision boundaries 上的 safety 和 enforceability，不声称完整 production agent runtime、production ActPlane integration 或 benchmark-scale end-to-end utility。在 same-event protected-event replay 上，\sys 对 3,746 个危险 protected events 产生 0 个误接受。在 tau2-style reference-action proxy 中，\sys 覆盖 3,813/3,813 个 reference actions，并通过 2,554/2,556 个适用的 tool-oracle checks。在 isolated local env gateway 中，\sys 在副作用发生前阻止 6 个 scripted violations 和 4 个 Qwen3.6 unsafe calls。
 
 本文贡献如下：
 
@@ -71,7 +71,7 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 \subsection{Authority and Provenance}
 
-传统权限系统主要围绕 subject、object 和 operation 建模，例如进程是否能读取文件、调用 API 或连接网络。Agent 场景还需要记录 provenance，因为同一个 tool call 的参数可能来自用户选择、扩展说明、工具结果或不可信文档。已有 provenance、taint 和 IFC-style 系统说明不可信输入不应自由流向高影响输出~\cite{camel,prompt-flow-integrity,fides,rtbas,neurotaint}，但它们通常把核心对象放在 observed action 或 data flow 上，而不是把未来 protected decision 本身作为可消耗、可衰减的授权对象。
+传统权限系统主要围绕 subject、object 和 operation 建模，例如进程是否能读取文件、调用 API 或连接网络。Agent 场景还需要记录 provenance，因为同一个 tool call 的参数可能来自用户选择、扩展说明、工具结果或不可信文档。已有 provenance、taint 和 IFC-style 系统说明不可信输入不应自由流向高影响输出~\cite{camel,prompt-flow-integrity,fides,rtbas,neurotaint}，但它们通常把核心对象放在 observed action 或 data flow 上，而不是把未来 protected decision 本身作为可消耗、可衰减的授权对象。本文中的 protected decision 指会选择、扩大、消耗或转移 authority 的字段级决策，例如 sink selection、approval scope、capability request 或 delegation target。
 
 \subsection{Motivating Workflow}
 \label{sec:motivation}
@@ -79,6 +79,8 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 本文使用一个文档处理工作流贯穿设计和评估。用户要求 agent 从两个选中的 PDF 中提取表格，保存 XLSX，并在指定 GitHub repository 中创建一个 issue。PDF text 可以影响表格单元格和 issue body，但不应影响 repository selection、approval scope、capability request 或 delegation target。这个例子把普通 data use 和 authority-bearing decision 分开，使问题不依赖某一种具体工具或 sandbox。
 
 如果其中一个 PDF 包含隐藏指令要求 agent 请求 full GitHub access、加载另一个 Skill，或把 issue authority 交给 subagent，普通 argument check 只能看到最终调用是否仍然使用合法 repo。它无法表达 PDF text 不能成为 approval scope、fresh capability request 或 delegated capability set 的控制来源。\sys 的 running example 因此不是一个错误参数问题，而是一个 context-to-decision influence 问题。
+
+即使没有恶意输入，同一个 Skill、MCP server 或 command 在不同 run 中也需要不同 authority。PDF Skill 用于本地 XLSX 转换时不需要网络或 GitHub issue lease；同一 Skill 用于生成 issue summary 时需要一次性 GitHub sink authority，但仍不应选择 repository。若权限只能在安装期、server 级别或静态 allowlist 中给出，系统通常只能在 union permission、频繁 broad approval 和 false denial 之间折中。这是一个运维和可用性问题，而不只是 prompt injection 问题。
 
 \begin{table}[t]
 \centering
@@ -833,7 +835,7 @@ Local-Qwen trajectory slice & agent/tool/env & In a matched 18-task local-Qwen p
 \label{tab:closest-abstractions}
 \begin{tabular}{p{0.16\linewidth}p{0.08\linewidth}p{0.13\linewidth}p{0.10\linewidth}p{0.12\linewidth}p{0.10\linewidth}p{0.13\linewidth}}
 \toprule
-Work & Root & Object & Lease lifecycle & No promotion & Delegation & Lowering \\
+Work & Default root & Default object & Lifecycle & Promotion rule & Delegation & Lowering \\
 \midrule
 CaMeL / IFC & partial & flow & no & partial & no & tool/runtime \\
 AuthGraph & yes & action graph & no & partial & no & action \\
