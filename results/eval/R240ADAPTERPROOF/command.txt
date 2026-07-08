@@ -1,0 +1,1 @@
+PYTHONPATH=src /usr/bin/python3 scripts/analyze_adapter_proof_completeness.py --output-dir results/eval/R240ADAPTERPROOF --run-id R240ADAPTERPROOF
