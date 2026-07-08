@@ -22,7 +22,7 @@
 \maketitle
 
 \begin{abstract}
-LLM agents 正在从固定工具调用器演变为可扩展的执行环境，可以加载 Skills、连接 MCP servers、运行本地脚本，并将任务委托给 subagents。现有权限机制通常约束扩展能调用哪些工具、访问哪些文件或连接哪些网络端点，但它们很少约束不可信 context 能否影响未来的 tool selection、sink selection、approval scope 或 delegation target。本文提出 \sys，一种面向 agent protected decisions 的 intent-carrying capability model。它把 authority 定义为 agent context、instruction context、tool context 和 env context 的可检查交集，而不是附着在任一组件上的静态 permission。每个 future decision authority 都表示为短期、可消耗、可衰减的 lease，绑定 trusted intent certificate、context influence modes、control/data provenance、temporal state 和 delegation bounds。LLM 只提出 plan 和 candidate leases，deterministic checker 负责验证 proof-carrying leases，并通过 trace replay、live callable gateway 和 benchmark-derived adapters 验证同一语义可以落到 agent boundaries。Prototype evidence 支持一个保守结论：在已建模边界内，\sys 可以执行 trace-level intent/provenance/lease invariants；最终端到端 utility、least-privilege 和 novelty statement 的强度由四个主实验决定。
+LLM agents 正在从固定工具调用器演变为可扩展的执行环境，可以加载 Skills、连接 MCP servers、运行本地脚本，并将任务委托给 subagents。现有权限机制通常约束扩展能调用哪些工具、访问哪些文件或连接哪些网络端点，但它们很少约束不可信 context 能否影响未来的 tool selection、sink selection、approval scope 或 delegation target。本文提出 \sys，一种面向 agent protected decisions 的 intent-carrying capability model。它把 authority 定义为 agent context、instruction context、tool context 和 env context 的可检查交集，而不是附着在任一组件上的静态 permission。每个 future decision authority 都表示为短期、可消耗、可衰减的 lease，绑定 trusted intent certificate、context influence modes、control/data provenance、temporal state 和 delegation bounds。LLM 只提出 plan 和 candidate leases，deterministic checker 负责验证 proof-carrying leases，并通过 trace replay、live callable gateway、benchmark-derived adapters 和本地 env pre-side-effect probe 验证同一语义可以落到 agent boundaries。Prototype evidence 支持一个保守结论：在已建模边界内，\sys 可以执行 intent/provenance/lease invariants，并在接入的本地边界上阻止未授权 side effects；最终端到端 utility、least-privilege 和 novelty statement 的强度由四个主实验决定。
 \end{abstract}
 
 \section{引言}
@@ -47,7 +47,7 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 \begin{enumerate}[leftmargin=*,label=\textbf{C\arabic*.}]
   \item \textbf{Model.} 一个面向 agent protected decisions 的 stateful intent-carrying lease model。它将 future decision authority 绑定到 intent、context influence modes，以及 mint、check、consume、expire、attenuate 和 no-amplification 六类状态转移（第~\ref{sec:formal} 节）。
-  \item \textbf{System.} 一个 four-input authorization transaction API，把 agent context、instruction context、tool context 和 env context 的字段绑定到同一个可原子检查和消耗的 lease transition。Prototype 已实现 deterministic checker、trace replay、本地 callable gateway、runtime binding、structured value proof 和 benchmark-derived adapters；ActPlane-style/full sandbox 是 env adapter 的 lowering target，而不是当前完整实现（第~\ref{sec:design}--\ref{sec:implementation} 节）。
+  \item \textbf{System.} 一个 four-input authorization transaction API，把 agent context、instruction context、tool context 和 env context 的字段绑定到同一个可原子检查和消耗的 lease transition。Prototype 已实现 deterministic checker、trace replay、本地 callable gateway、runtime binding、structured value proof、benchmark-derived adapters 和本地 env pre-side-effect probe；ActPlane-style/full sandbox 仍是 env adapter 的生产级 lowering target，而不是当前完整实现（第~\ref{sec:design}--\ref{sec:implementation} 节）。
   \item \textbf{Evidence.} 一个当前 prototype evidence boundary 和四个最终主实验。已有 pilot 结果显示 checker 可以在 saved traces 与本地 Qwen/llama.cpp callable gateway 中执行 intent/provenance/lease invariants；最终版本必须用 E1--E4 的定量结果替换当前边界说明，否则只主张 safety enforcement layer（第~\ref{sec:evaluation} 节）。
 \end{enumerate}
 
@@ -89,7 +89,7 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
   \item \textbf{Context influence separation.} 系统必须区分 data dependency 和 control dependency，允许不可信 context 作为数据使用，同时阻止其影响 protected decisions；该目标由 C1/C2 支撑，并由 E1/E3 检验。
   \item \textbf{Stateful least-privilege lifecycle.} 权限必须是短期、可消耗、可过期、可衰减、不可由不可信 context 自扩张的 run-time leases，而不是安装期或 server 级别 ambient permission；该目标由 C1/C2 支撑，并由 E2/E3 检验。
   \item \textbf{Untrusted compiler with deterministic recovery.} LLM 只能提出 plan 和 lease 候选；checker 决定授权。被拒绝的 proposal 只能通过 structured denial、重新规划或 fresh approval 恢复，而不能 fallback 到 broad permission；该目标由 C2 支撑，并由 E4 检验。
-  \item \textbf{Multi-boundary lowering.} 同一 lease semantics 必须能 lowering 到 context construction、tool/MCP invocation、本地执行环境和 delegation boundary。当前 prototype 完整覆盖 checker、trace replay、本地 callable gateway 和 benchmark-derived adapter；本地 script/file/process/network side effects 需要 sandbox 或 ActPlane-style env backend 来覆盖；该目标由 C2 支撑，并由 E1/E3/E4 的系统实验检验。
+  \item \textbf{Multi-boundary lowering.} 同一 lease semantics 必须能 lowering 到 context construction、tool/MCP invocation、本地执行环境和 delegation boundary。当前 prototype 完整覆盖 checker、trace replay、本地 callable gateway、benchmark-derived adapter 和隔离目录中的本地 env pre-side-effect probe；生产级 script/file/process/network enforcement 仍需要 sandbox 或 ActPlane-style env backend；该目标由 C2 支撑，并由 E1/E3/E4 的系统实验检验。
 \end{enumerate}
 
 非目标同样重要。\sys 不声称解决 prompt injection，不声称自动 compiler 永远正确，不替代 sandbox，也不保证所有 agent 决策都能被完整追踪。它的安全性质只覆盖已建模的 decision classes 和已接入的 enforcement boundaries。
@@ -461,7 +461,7 @@ Checker core 位于 \texttt{src/intentcap/}，实现 context labels、effect eve
 
 \subsection{Adapter Surface}
 
-表~\ref{tab:adapter-surface} 区分当前 prototype 已实现的 adapter、trace-level adapter 和设计层 lowering target。这个表是为了避免把 \sys 写成已经完整替换 production MCP broker 或 OS sandbox。当前 artifact 的实证重点是 checker semantics、gateway boundary、runtime binding、benchmark-derived protected-decision events 和一个 representative env side-effect event suite；ActPlane-style monitor 是 env adapter 的可选后端。
+表~\ref{tab:adapter-surface} 区分当前 prototype 已实现的 adapter、trace-level adapter 和设计层 lowering target。这个表是为了避免把 \sys 写成已经完整替换 production MCP broker 或 OS sandbox。当前 artifact 的实证重点是 checker semantics、gateway boundary、runtime binding、benchmark-derived protected-decision events 和一个隔离目录中的本地 env pre-side-effect probe；ActPlane-style monitor 是 env adapter 的可选生产后端。
 
 \begin{table}[t]
 \centering
@@ -476,7 +476,7 @@ Adapter & Inputs & Events / block point & Status & ActPlane relation \\
 Agent & intent, approvals, workflow/delegation state & lease mint, approval, spawn & trace-level + runtime state & not applicable \\
 Instruction & system, user, Skill/manual, MCP prompt labels & ctx.use, prompt-section placement & trace-level classifier contract & not applicable \\
 Tool & tool schemas, MCP methods, local callable registry & call/mcp before callable execution & implemented gateway & broker-level complement \\
-Env & cwd/files/results/script outputs/resources & read/write/exec/net evidence and sandbox policy & trace-level side-effect suite + design target & optional backend \\
+Env & cwd/files/results/script outputs/resources & read/write/exec/net evidence and sandbox policy & implemented local pre-side-effect probe + design target & optional OS backend \\
 Delegation & parent lease set, child context/caps & subagent.spawn before handoff & checker implemented, trace-level workloads & not applicable \\
 \bottomrule
 \end{tabular}
@@ -493,7 +493,7 @@ Prototype 还包含 local llama.cpp/Qwen frontend，用来模拟不可信 lease 
 对于 tau2-bench-style stateful workflows，runtime binding 会从已经执行的 tool-result evidence 中铸造 exact one-shot leases，并重新检查参数值是否出现在当前可见 task/tool-result context 中~\cite{tau2bench}。High-impact write candidates 还必须满足 structured value proof：例如列表参数需要逐项绑定到结构化上下文，不能从原始文本窗口或 sibling objects 中借用 authority。
 
 \subsection{Implemented Surface}
-Prototype 已经实现 checker/gateway、live local callable boundary、benchmark-derived replay adapters、local Qwen/llama.cpp compiler probes、runtime binding、structured value proof、read/write activation、expert-oracle labeling/scoring/audit pipeline，以及 E1 security/utility wrapper matrices。
+Prototype 已经实现 checker/gateway、live local callable boundary、benchmark-derived replay adapters、local Qwen/llama.cpp compiler probes、runtime binding、structured value proof、read/write activation、expert-oracle labeling/scoring/audit pipeline、E1 security/utility wrapper matrices，以及一个本地 env backend probe。该 probe 在隔离目录中真实执行 Python script、file read/write 和 context-use handlers，并在 side effect handler 之前调用 checker；被拒绝的 exec/read/write/net/ctx events 不会进入本地 side-effect handler。它不是生产级 OS sandbox，但比 trace replay 更接近 env adapter 的系统边界。
 
 这些实现足以支撑机制性 claim：在已建模 traces 上，\sys 能拒绝 unauthorized context-to-decision influence；run-time exact leases 可以缩小 object/tool authority surface；checker 可以阻止 LLM-proposed broad/runtime authority 直接进入执行路径。它还不能单独支撑更强的端到端 claim：full MCP broker、生产级 execution sandbox、fresh user-simulator loop、独立 human expert-oracle replication 和 benchmark-scale utility/recovery evaluation 仍是剩余评估要求。
 
@@ -558,7 +558,7 @@ Same-event wrapper matrix & tool/env & \sys accepts 0 dangerous events on 3,746 
 Reference-action proxy & agent/tool/env & \sys covers 3,813/3,813 benign reference actions and passes 2,554/2,556 applicable tool-oracle tasks & Whether a live model completes tasks under narrow leases \\
 Saved local-Qwen replay & agent/tool/env & \sys keeps 11/11 exact proposals and rejects 47/47 off-reference proposals; object-only wrappers accept many of them & Replanning, approval burden, and full task success \\
 Residual workflow suite & inst., tool, env, delegation & Full checker rejects lifecycle and promotion-like residuals that closest labelers accept & Needs benchmark-derived/model-loop lift \\
-Env side-effect suite & env/tool/inst. & On 10 local script/file/network events, full checker preserves 4 authorized side effects and rejects 6 violations; object-only false-accepts 4 and no-provenance full-event candidates false-accept 6 & Trace-level ActPlane-style event surface only; no production sandbox backend yet \\
+Env side-effect suite & env/tool/inst. & On 10 local script/file/network events, full checker preserves 4 authorized effects and rejects 6 violations; the real local probe executes 4 IntentCap-authorized effects, blocks 6 before side effects, executes 0 unsafe effects, while object-only executes 8 effects including 4 unsafe effects and modifies the isolated secret file & Isolated local backend only; no production sandbox or kernel-level ActPlane monitor yet \\
 Author-adjudicated E2 audit & agent/tool/env; partial instruction & 24/24 lease labels pass schema, sample, and policy-distance invariant checks & Independent blinded expert-oracle replication and broader Skill/local-command cases \\
 Fresh local-Qwen online slice & agent/tool/env & On the same 11 tau2 tasks, all-tool exposure raises visible schemas from 4.27 to 14.73 on average but does not improve action reward or exact sequence match; it adds 3 gateway blocks, 2 off-lease blocks, and 1 missing-value-proof block & Still a small utility slice; needs matched broader online security/utility runs and recovery metrics \\
 \bottomrule
