@@ -7,7 +7,7 @@ Completeness: partial
 
 ## Current Authority-Input Model
 
-IntentCap now treats capability synthesis as a join over four authority-input classes, not as extraction from one prompt context and not as a three-way split between agent/tool/environment.
+IntentCap now treats capability synthesis as a pre-effect multi-issuer commit over four authority-input classes, not as extraction from one prompt context and not as a three-way split between agent/tool/environment. The four classes are issuer-owned proof projections for one protected-decision transition; they are not component names or ABAC namespaces.
 
 | Class | Issuer boundary | What it can prove | What it must not prove |
 |---|---|---|---|
@@ -17,6 +17,8 @@ IntentCap now treats capability synthesis as a join over four authority-input cl
 | Env context | runtime observer, filesystem/process monitor, tool gateway, local backend | concrete values, cwd/files/resources, tool results, script outputs, runtime evidence | instruction promotion, authority minting, sink/tool/approval widening, policy update |
 
 The four-class split is necessary because each class owns different authority fields. Collapsing instruction into agent turns Skill/manual procedure into user approval. Collapsing tool into env lets tool results and tool definitions share authority, losing schema and credential-scope provenance. Collapsing env into tool lets runtime text or document content inherit interface trust. The checker therefore applies a no-substitution rule: if a protected decision requires field `f`, the submitted proof must come from `owner(f)`, and another class cannot fill it even when the value string matches.
+
+Checker state is separate from env context. Env context can prove observed paths, stdout, tool results, file state, and other runtime evidence. Active leases, budget counters, expiry state, consumption records, and the delegation graph live in checker state `sigma`, and they are consumed or updated atomically with `check_and_consume`.
 
 The same rule must survive lowering. An env/OS monitor policy that only contains path, syscall, or command predicates is not equivalent to IntentCap. The lowered policy also needs the context labels and influence predicates that say which agent, instruction, tool, and env fields authorized the side effect.
 
@@ -54,7 +56,7 @@ Source addendum R197: bounded write activation is now implemented and tested in 
 Source addendum R198: the post-activation residual audit is now explicit. R198 runs only saved-artifact analyzers over R197 and earlier audit CSVs. It reports that the remaining R197 residual has 7 DB-feasible missing references: 3 candidate-selection/planning gaps and 4 runtime-candidate-generation gaps. Conservative duplicate-read accounting credits 5 already-observed read-only calls, leaving 2 adjusted DB-feasible misses. Tool-activation audit finds 0 remaining activation gaps and 0 write/high-impact activation blockers. The new post-activation delta audit shows why utility did not improve: relative to R187, R197 gained the proof-complete write `retail:2:2_11` but lost planner-selected read references `retail:3:3_6` and `retail:3:3_8`. The next design lever is therefore planner-confirmed candidate generation and reward/env recovery, not more activation proof or replay.
 
 ## Top-Conference Artifact Boundary
-IntentCap should be designed and described as an authorization compiler/checker for agent decisions, not as an extension interface model or an OS monitor. The protected object is an authority-bearing decision: tool choice, sink selection, approval scope, delegation, policy update, local execution target, or high-impact argument binding. Resources and syscalls are enforcement targets, but not the conceptual center.
+IntentCap should be designed and described as an authorization compiler/checker for agent decisions, not as an extension interface model or an OS monitor. The protected object is a pre-effect authority-state transition: tool choice, sink selection, approval scope, delegation, policy update, local execution target, or high-impact argument binding. Resources and syscalls are enforcement targets, but not the conceptual center.
 
 The defensible novelty is narrower than "agent permissions." IntentCap's artifact boundary is:
 
@@ -63,7 +65,7 @@ The defensible novelty is narrower than "agent permissions." IntentCap's artifac
 3. Effect IR that separates data provenance from control provenance.
 4. Proof-carrying leases that bind operations, arguments, provenance, flow, temporal state, budget, and delegation.
 5. A deterministic checker that accepts or rejects LLM-proposed leases/events.
-6. Enforcement adapters that lower accepted leases to context/tool/MCP/process/network/delegation boundaries.
+6. A protected-transition API and adapter contract that forces authority-changing boundaries to submit issuer-owned field proofs before side effects, prompt placement, or handoff.
 
 EIM/bpftime remains related work for extension-resource models, and ActPlane remains a possible enforcement backend. R218 should be described as a lowering-target validation, not as evidence that IntentCap is an OS monitor. The main comparison should be against AuthGraph/PACT/ARGUS/AIRGuard-style provenance-authority and decision-auditing defenses, ClawGuard-style runtime rule enforcement, Agent-Sentry-style behavior bounding, CaMeL/PFI/FIDES/RTBAS/NeuroTaint-style flow or taint defenses, AgentSecBench/formal contextual-security framing, Progent/PCAS/AgentSpec/AgentGuard/AgentGuardian/AgentBound policy and access-control systems, VIGIL/SkillGuard/SkillScope Skill policies, Task Shield/DRIFT, static tool/server allowlists, model-internal authorization, and LLM-only policy generation.
 
