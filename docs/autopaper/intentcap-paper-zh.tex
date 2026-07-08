@@ -23,10 +23,11 @@
 
 \begin{abstract}
 LLM agents 正在从固定工具调用器演变为可扩展执行环境，可以加载 Skills、连接 MCP servers、运行本地脚本，并将任务委托给 subagents。
-现有权限机制主要约束工具、文件和网络端点，却很少约束不可信 context 能否影响未来的 tool selection、sink selection、approval scope 或 delegation target。
-\sys 的核心观点是：agent authorization 的单位不应是 tool permission、context label 或已发生的 action，而应是由当前用户意图铸造、会改变未来 authority state 的 protected-decision transition（受保护的权限状态转移）。
-\sys 将这种 transition 表示为短期 lease，把 agent、instruction、tool 和 env 四类 issuer-typed required fields 与 control/data provenance、temporal state、budget 和 delegation bounds 绑定。
-一个 deterministic checker 在副作用或权限转移前原子验证 lease，并把通过的 lease lowering 到 tool/MCP gateway、本地 env adapter、instruction placement 和 delegation boundary。
+这些 extensions 不只执行操作，也让文档、工具结果和扩展说明影响未来的 tool selection、sink selection、approval scope 和 delegation target。
+现有权限机制主要约束工具、文件和网络端点，难以表达哪个 context 被允许控制一次 authority-bearing decision。
+结果是 agent 可能发出参数看似合法的调用，却已经通过不可信 context 扩大 approval、复用一次性权限或错误委托 authority。
+\sys 的核心观点是：agent authorization 的单位不应是 tool permission、context label 或已发生的 action，而应是由当前用户意图铸造、会改变未来 authority state 的 protected-decision transition。
+\sys 将这种 transition 表示为短期 lease，把 agent、instruction、tool 和 env 四类 issuer-typed required fields 与 control/data provenance、temporal state、budget 和 delegation bounds 绑定，并由 deterministic checker 在副作用或权限转移前原子验证。
 Prototype evaluation shows that \sys produces 0 dangerous accepts on 3,746 protected events, preserves all 3,813 benign reference actions in a proxy replay, executes 4 authorized side effects and blocks 6 violations in a 10-event local env suite, and blocks 4 unsafe calls proposed by Qwen3.6 before side effects occur.
 \end{abstract}
 
@@ -34,23 +35,19 @@ Prototype evaluation shows that \sys produces 0 dangerous accepts on 3,746 prote
 
 LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 API、插件接口或系统调用与宿主交互，因此权限系统可以围绕文件、网络、进程和工具调用来定义。现代 agent extension 的行为则由用户请求、系统策略、扩展说明、外部文档、工具结果和中间总结共同塑造。
 
-这种执行过程打破了 data 和 authority 的传统边界。考虑一个具体 failure trace：用户只要求从两个 PDF 提取表格，并在 \texttt{org/repo-x} 创建一个 summary issue；其中一个 PDF 的隐藏文本诱导 agent 请求 full GitHub approval，再把一次性 issue authority 委托给一个 summarizer subagent，并在 approval 被消耗后复用同一权限。最终出现的 \texttt{create\_issue(repo=org/repo-x)} 参数仍然等于用户指定的 repository，所以普通 tool/argument guard 可能放行。可是实际事故已经发生：凭证范围被扩大，权限被转移，审计日志也无法回答“哪一个可信 intent 授权了这次扩权”。
+然而，agent extension 打破了 data 和 authority 的传统边界。考虑一个具体 failure trace：用户只要求从两个 PDF 提取表格，并在 \texttt{org/repo-x} 创建一个 summary issue；其中一个 PDF 的隐藏文本诱导 agent 请求 full GitHub approval，再把一次性 issue authority 委托给一个 summarizer subagent，并在 approval 被消耗后复用同一权限。最终出现的 \texttt{create\_issue(repo=org/repo-x)} 参数仍然等于用户指定的 repository，所以普通 tool/argument guard 可能放行，但凭证范围已经被扩大、权限已经被转移。
 
-根因不是不可信文本进入 prompt 本身，而是 agent runtime 把用户意图、扩展说明、tool metadata、工具结果和运行时输出放进同一个 planning channel；下游 guard 多数在 action materialized 之后才检查 tool、arguments 或 resource。于是，一个对输出内容而言安全的输入，可能对控制决策而言并不安全：PDF text 可以安全地填充 spreadsheet cells，却不应选择 sink、扩大 approval scope 或创建 delegation。本文称这一问题为 context privilege：context 获得了影响 authority-bearing decisions 的权力，而不仅是携带可被引用或总结的信息。
-
-这个问题也说明为什么 agent authorization 不能把所有 context 合并成一个信任等级。Skill/manual text 可以指导 workflow，但不能替代用户 intent；MCP/tool metadata 可以描述接口和 credential scope，但不能授权 sink；script output 和 tool result 可以提供 runtime evidence，但不能升级成 instruction 或 approval reason。粗粒度地折叠这些来源会让过程建议、接口描述和环境观测互相补权，导致 overbroad permission、approval fatigue，或因无法表达合法 runtime evidence 而产生不必要的 false denial。
-
-本文把任何会 create、select、widen、spend 或 transfer authority 的模型可见选择称为 protected decision，包括 tool selection、sink selection、approval scope、policy/capability request 和 delegation target。这个定义让问题从“工具能不能调用”转为“哪个 context 能不能控制一次权限状态转移”。
+根因不是不可信文本进入 prompt 本身，而是 agent runtime 把用户意图、扩展说明、tool metadata、工具结果和运行时输出放进同一个 planning channel。下游 guard 多数在 action materialized 之后才检查 tool、arguments 或 resource。于是，一个对输出内容而言安全的输入，可能对控制决策而言并不安全：PDF text 可以安全地填充 spreadsheet cells，却不应选择 sink、扩大 approval scope 或创建 delegation。本文称这一问题为 context privilege：context 获得了影响 authority-bearing decisions 的权力，而不仅是携带可被引用或总结的信息。
 
 现有防线分别覆盖了这个问题的一部分。Tool guards 和 argument validators 可以拒绝错误对象或非法参数；static allowlists 和 server-level policies 可以限制可见工具；human approval gates 可以重新引入用户确认；OS sandbox 或 monitor 可以约束文件、网络和进程 side effects；provenance、taint 和 IFC-style defenses 可以表达部分 flow policy。这些机制是必要的，但 residual gap 在于：它们通常不把 future decision authority 表示为一个可消耗、可过期、可委托的 transaction object，其有效性同时依赖 intent derivation、allowed control provenance、temporal state、budget 和 delegation bounds。
 
-\sys 从这一差异出发，但不把“检查 action provenance 是否可信”作为 novelty claim。本文的可检验观点更窄也更强：agent least privilege 的授权单位不应是 tool、resource、context source 或已发生的 action，而应是一次由 intent 铸造、会改变未来 authority state 的 protected-decision transition。
+\sys 从这一差异出发，但不把“检查 action provenance 是否可信”作为 novelty claim。本文的可检验观点更窄也更强：agent least privilege 的授权单位不应是 tool、resource、context source 或已发生的 action，而应是一次由 intent 铸造、会改变未来 authority state 的 protected-decision transition。换言之，问题从“工具能不能调用”转为“哪个 context 能不能控制一次权限状态转移”。
 
-这个观点带来一个技术挑战：系统必须在同一个状态转移中同时检查字段来源、控制 provenance、lease 消耗、过期和 delegation。缺少 typed fields 会接受 cross-plane promotion；缺少 consume/expire 会接受 stale reuse；缺少 attenuation 会接受 over-delegation；缺少 control proof 会把 untrusted data 当作 authority。
+Realizing this view requires separating the sources that prove different authority fields. Skill/manual text can guide workflow but cannot replace user intent; MCP/tool metadata can describe interface and credential scope but cannot authorize sink; script output and tool result can provide runtime evidence but cannot become instruction or approval reason. A checker must therefore validate field ownership, control provenance, lease consumption, expiry, and delegation in the same transition. Missing any of these checks admits cross-plane promotion, stale reuse, over-delegation, or untrusted data being treated as authority.
 
-\sys 用 intent-carrying capability leases 表达这一生命周期。Lease 是短期、可消耗、可衰减的授权对象，绑定 holder、operation、object、arguments、intent derivation、control/data provenance、flow、temporal state、budget 和 delegation。Lease 的 authority fields 来自四类 agent-specific context：agent context 给出当前 intent 与 workflow state，instruction context 给出可被当作过程指导的文本，tool context 给出接口和 side-effect surface，env context 给出运行时对象、结果和资源事实。Lease table、budget counter 和 consumption state 属于 checker state \(\sigma\)，而不是 env context。
+\sys expresses this lifecycle with intent-carrying capability leases. A lease is a short-lived, consumable, attenuable authorization object that binds operation, object, arguments, intent derivation, control/data provenance, temporal state, budget, and delegation. Its authority fields come from four issuer-typed context classes: agent context, instruction context, tool context, and env context. Lease table, budget counters, and consumption state live in checker state \(\sigma\), not in env context.
 
-系统实现采用 LLM-assisted compiler 与 deterministic checker 的结构。LLM 只提出 plan 和 candidate leases；checker 根据 intent certificate、context labels、effect IR 和 global policy 验证 proof-carrying leases；runtime adapters 再将 leases lowering 到 context constructor、tool gateway、MCP broker、本地执行 sandbox 和 delegation monitor。一个 high-impact event 只有在两个条件同时成立时才允许执行：它必须由当前 intent certificate 推导出来，并且它的 control provenance 必须来自被授权影响对应 decision class 的 context source。
+\sys implements this model with an LLM-assisted compiler and a deterministic checker. The LLM proposes plans and candidate leases; the checker validates them against intent certificates, context labels, effect IR, and global policy; runtime adapters lower accepted leases to context construction, tool/MCP gateways, local env execution, and delegation boundaries. Prototype evaluation shows that \sys produces 0 dangerous accepts on 3,746 protected events, preserves 3,813/3,813 benign reference actions in proxy replay, executes 4 authorized side effects and blocks 6 violations in a local env suite, and blocks 4 unsafe Qwen3.6-proposed calls before side effects occur.
 
 本文贡献如下：
 
