@@ -28,7 +28,8 @@ LLM agents 正在从固定工具调用器演变为可扩展执行环境，可以
 结果是 agent 可能发出参数看似合法的调用，却已经通过不可信 context 扩大 approval、复用一次性权限或错误委托 authority。
 \sys 的核心观点是：agent authorization 的单位不应是 tool permission、context label 或已发生的 action，而应是由当前用户意图铸造、会改变未来 authority state 的 protected-decision transition。
 \sys 将这种 transition 表示为短期 lease，把 agent、instruction、tool 和 env 四类 issuer-typed required fields 与 control/data provenance、temporal state、budget 和 delegation bounds 绑定，并由 deterministic checker 在副作用或权限转移前原子验证。
-Prototype evaluation shows that, on saved security traces, \sys admits 0/3,746 dangerous protected events; on a tau2/tau3 reference-action proxy, it covers 3,813/3,813 benign assistant actions and passes 2,554/2,556 applicable replay oracles.
+On saved security traces, \sys admits 0/3,746 dangerous protected events.
+On a tau2/tau3 reference-action proxy, it covers 3,813/3,813 benign assistant actions and passes 2,554/2,556 applicable replay oracles.
 In local env probes, it executes 4 authorized side effects, blocks 6 violations, and blocks 4 unsafe Qwen3.6-proposed calls before side effects occur.
 \end{abstract}
 
@@ -36,19 +37,19 @@ In local env probes, it executes 4 authorized side effects, blocks 6 violations,
 
 LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 API、插件接口或系统调用与宿主交互，因此权限系统可以围绕文件、网络、进程和工具调用来定义。现代 agent extension 的行为则由用户请求、系统策略、扩展说明、外部文档、工具结果和中间总结共同塑造。
 
-然而，agent extension 打破了 data 和 authority 的传统边界。考虑一个具体 failure trace：用户只要求从两个 PDF 提取表格，并在 \texttt{org/repo-x} 创建一个 summary issue；其中一个 PDF 的隐藏文本诱导 agent 请求 full GitHub approval，再把一次性 issue authority 委托给一个 summarizer subagent，并在 approval 被消耗后复用同一权限。最终出现的 \texttt{create\_issue(repo=org/repo-x)} 参数仍然等于用户指定的 repository，所以普通 tool/argument guard 可能放行，但凭证范围已经被扩大、权限已经被转移。
+然而，agent extension 打破了 data 和 authority 的传统边界。一个 failure trace 可以说明这个 gap。用户只要求从两个 PDF 提取表格，并在 \texttt{org/repo-x} 创建一个 summary issue。随后，其中一个 PDF 的隐藏文本诱导 agent 请求 full GitHub approval，把一次性 issue authority 委托给 summarizer subagent，并在 approval 被消耗后复用同一权限。最终出现的 \texttt{create\_issue(repo=org/repo-x)} 参数仍然等于用户指定的 repository，所以普通 tool/argument guard 可能放行。此时，凭证范围已经被扩大，权限也已经被转移。
 
-根因不是不可信文本进入 prompt 本身，而是 agent runtime 把用户意图、扩展说明、tool metadata、工具结果和运行时输出放进同一个 planning channel。下游 guard 多数在 action materialized 之后才检查 tool、arguments 或 resource。于是，一个对输出内容而言安全的输入，可能对控制决策而言并不安全：PDF text 可以安全地填充 spreadsheet cells，却不应选择 sink、扩大 approval scope 或创建 delegation。本文称这一问题为 context privilege：context 获得了影响 authority-bearing decisions 的权力，而不仅是携带可被引用或总结的信息。
+根因不是不可信文本进入 prompt 本身，而是 agent runtime 把用户意图、扩展说明、tool metadata、工具结果和运行时输出放进同一个 planning channel。下游 guard 多数在 action materialized 之后才检查 tool、arguments 或 resource。于是，一个对输出内容而言安全的输入，可能对控制决策而言并不安全。PDF text 可以安全地填充 spreadsheet cells，却不应选择 sink、扩大 approval scope 或创建 delegation。本文称这一问题为 context privilege，因为 context 获得了影响 authority-bearing decisions 的权力，而不仅是携带可被引用或总结的信息。
 
-现有防线分别覆盖了这个问题的一部分。Tool guards 和 argument validators 可以拒绝错误对象或非法参数；static allowlists 和 server-level policies 可以限制可见工具；human approval gates 可以重新引入用户确认；OS sandbox 或 monitor 可以约束文件、网络和进程 side effects；provenance、taint 和 IFC-style defenses 可以表达部分 flow policy。这些机制是必要的，但 residual gap 在于：它们通常不把 future decision authority 表示为一个可消耗、可过期、可委托的 transaction object，其有效性同时依赖 intent derivation、allowed control provenance、temporal state、budget 和 delegation bounds。
+现有防线分别覆盖了这个问题的一部分。Tool guards 和 argument validators 可以拒绝错误对象或非法参数。Static allowlists 和 server-level policies 可以限制可见工具，human approval gates 可以重新引入用户确认，OS sandbox 或 monitor 可以约束文件、网络和进程 side effects。Provenance、taint 和 IFC-style defenses 可以表达部分 flow policy。这些机制是必要的，但 residual gap 在于它们通常不把 future decision authority 表示为一个可消耗、可过期、可委托的 transaction object。这个 object 的有效性同时依赖 intent derivation、allowed control provenance、temporal state、budget 和 delegation bounds。
 
-\sys 从这一差异出发，但不把“检查 action provenance 是否可信”作为 novelty claim。本文的可检验观点更窄也更强：agent least privilege 的授权单位不应是 tool、resource、context source 或已发生的 action，而应是一次由 intent 铸造、会改变未来 authority state 的 protected-decision transition。换言之，问题从“工具能不能调用”转为“哪个 context 能不能控制一次权限状态转移”。
+\sys 从这一差异出发，但不把“检查 action provenance 是否可信”作为 novelty claim。本文的可检验观点更窄也更强。Agent least privilege 的授权单位不应是 tool、resource、context source 或已发生的 action，而应是一次由 intent 铸造、会改变未来 authority state 的 protected-decision transition。换言之，问题从“工具能不能调用”转为“哪个 context 能不能控制一次权限状态转移”。
 
-Realizing this view requires separating the sources that prove different authority fields. Skill/manual text can guide workflow but cannot replace user intent; MCP/tool metadata can describe interface and credential scope but cannot authorize sink; script output and tool result can provide runtime evidence but cannot become instruction or approval reason. A checker must therefore validate field ownership, control provenance, lease consumption, expiry, and delegation in the same transition. Missing any of these checks admits cross-plane promotion, stale reuse, over-delegation, or untrusted data being treated as authority.
+Realizing this view requires separating the sources that prove different authority fields. Skill/manual text can guide workflow, but it cannot replace user intent. MCP/tool metadata can describe interface and credential scope, but it cannot authorize a sink. Script output and tool result can provide runtime evidence, but they cannot become instruction or approval reason. A checker must therefore validate field ownership, control provenance, lease consumption, expiry, and delegation in the same transition. Missing any of these checks admits cross-plane promotion, stale reuse, over-delegation, or untrusted data being treated as authority.
 
 \sys expresses this lifecycle with intent-carrying capability leases. A lease is a short-lived, consumable, attenuable authorization object that binds operation, object, arguments, intent derivation, control/data provenance, temporal state, budget, and delegation. Its authority fields come from four issuer-typed context classes: agent context, instruction context, tool context, and env context. Lease table, budget counters, and consumption state live in checker state \(\sigma\), not in env context.
 
-\sys implements this model with an LLM-assisted compiler and a deterministic checker. The LLM proposes plans and candidate leases; the checker validates them against intent certificates, context labels, effect IR, and global policy; runtime adapters lower accepted leases to context construction, tool/MCP gateways, local env execution, and delegation boundaries. Prototype evaluation shows that, on saved security traces, \sys admits 0/3,746 dangerous protected events; on a tau2/tau3 reference-action proxy, it covers 3,813/3,813 benign assistant actions and passes 2,554/2,556 applicable replay oracles; in local env probes, it blocks 6 scripted violations and 4 Qwen3.6 unsafe calls before side effects occur.
+\sys implements this model with an LLM-assisted compiler and a deterministic checker. The LLM proposes plans and candidate leases. The checker validates them against intent certificates, context labels, effect IR, and global policy. Runtime adapters lower accepted leases to context construction, tool/MCP gateways, local env execution, and delegation boundaries. On saved security traces, \sys admits 0/3,746 dangerous protected events. On a tau2/tau3 reference-action proxy, it covers 3,813/3,813 benign assistant actions and passes 2,554/2,556 applicable replay oracles. In local env probes, it blocks 6 scripted violations and 4 Qwen3.6 unsafe calls before side effects occur.
 
 本文贡献如下：
 
@@ -62,7 +63,7 @@ Realizing this view requires separating the sources that prove different authori
 
 \subsection{Agent Extensions}
 
-现代 agent runtime 通常不只暴露一个固定工具集合。Skills 将任务说明、参考资料和可选脚本打包为可复用工作流；MCP servers 将工具 schema、资源和 prompts 暴露给 agent；本地脚本和 shell 执行提供文件转换和项目操作能力；subagents 则把上下文和部分权限交给另一个模型或执行单元~\cite{skillguard,skillscope,mcp-spec}。因而，agent extension 同时包含自然语言指令、结构化 tool metadata、外部数据和可执行代码。
+现代 agent runtime 通常不只暴露一个固定工具集合。Skills 将任务说明、参考资料和可选脚本打包为可复用工作流。MCP servers 将工具 schema、资源和 prompts 暴露给 agent。本地脚本和 shell 执行提供文件转换和项目操作能力，subagents 则把上下文和部分权限交给另一个模型或执行单元~\cite{skillguard,skillscope,mcp-spec}。因而，agent extension 同时包含自然语言指令、结构化 tool metadata、外部数据和可执行代码。
 
 \subsection{Authority and Provenance}
 
@@ -95,7 +96,7 @@ Script/tool output & observed values, runtime evidence & instruction promotion, 
 
 \subsection{Protected-Decision Transitions}
 
-本文的主术语是 protected-decision transition：一次会 create、select、widen、spend 或 transfer authority 的可观察状态转移。Tool selection、sink selection、approval scope、capability request、policy update 和 delegation target 都属于这类 transition；实现中把它们编码为 protected events。一个 guard 如果只检查最终 tool name 或 repo argument，会漏掉 untrusted context 对 approval scope、fresh authority request、policy patch 或 delegated capability set 的控制。因此，本文要保护的对象不是“某个字符串能否进入 prompt”，而是“某个 context source 是否被授权影响某类未来决策”。
+Protected-decision transition 指一次会 create、select、widen、spend 或 transfer authority 的可观察状态转移。Tool selection、sink selection、approval scope、capability request、policy update 和 delegation target 都属于这类 transition。实现中把这些 transition 编码为 protected events。一个 guard 如果只检查最终 tool name 或 repo argument，会漏掉 untrusted context 对 approval scope、fresh authority request、policy patch 或 delegated capability set 的控制。因此，本文要保护的对象不是“某个字符串能否进入 prompt”，而是“某个 context source 是否被授权影响某类未来决策”。
 
 三个术语在后文保持固定含义。Decision class 是受保护字段的类型，例如 sink selection、approval scope 或 delegation target。Protected event 是 instrumentation 在 runtime 看到的具体事件，例如一次 MCP 调用、approval request 或 subagent spawn。Protected-decision transition 是 checker 对 protected event 执行的原子状态更新，包括 proof check、lease consumption、temporal update 和 delegation-state update。这些 decision classes 定义了后续 threat model、lease language 和 evaluation oracle 的共同边界。
 
@@ -112,7 +113,7 @@ Script/tool output & observed values, runtime evidence & instruction promotion, 
 
 \subsection{System Overview}
 
-\sys 的设计目标是把“模型想做什么”和“系统允许什么”分开。LLM 可以读取任务、扩展说明和上下文，并提出 plan、effects 和 candidate leases；但它不能铸造最终权限。最终 authority 只来自 trusted intent certificate，并由 deterministic checker 根据 context provenance 和 global policy 验证。
+\sys 的设计目标是把“模型想做什么”和“系统允许什么”分开。LLM 可以读取任务、扩展说明和上下文，并提出 plan、effects 和 candidate leases，但它不能铸造最终权限。最终 authority 只来自 trusted intent certificate，并由 deterministic checker 根据 context provenance 和 global policy 验证。
 
 图~\ref{fig:architecture} 展示了五个组件的边界。Trusted issuer 将用户请求、显式对象选择、sink 选择、管理员策略和 fresh approval canonicalize 成 intent certificate。Context labeler 为用户输入、文档、Skill instructions、MCP metadata、tool results、script outputs 和 subagent summaries 标注 origin、integrity、confidentiality 和 influence modes。
 
@@ -193,13 +194,17 @@ G4 & C2 & E4 / E1,E3 & adapter calls checker before side effect or authority tra
 
 \subsection{Authority Inputs}
 
-\sys 的 capability synthesis 不是从单一 prompt context 中抽取权限，而是从四类 issuer-typed fields 中求解 lease。表~\ref{tab:authority-inputs} 把它们定义为系统接口，而不是单纯分类。四类 plane 的划分准则是：issuer 是否不同、可伪造面是否不同、能证明的 authority field 是否不同、adapter 观测点是否不同；只有四项都相同时，两个来源才可以合并。这里的 agent context 不是模型隐藏状态，而是 trusted issuer 维护的 task intent、approval 和 workflow state；instruction context 是可被当作过程指导的 policy/Skill/manual 文本；tool context 是接口、凭证和 sandbox contract；env context 是运行时观测到的对象、值、结果和资源事实。这个边界是 agent-specific 的：同一段文本如果来自 \texttt{SKILL.md}，可能在 workflow scope 内成为 instruction context；如果来自 PDF、tool result 或 script output，即使内容像指令，也仍是低完整性的 env context，不能自动升级为 instruction。
+\sys 的 capability synthesis 不是从单一 prompt context 中抽取权限，而是从四类 issuer-typed fields 中求解 lease。表~\ref{tab:authority-inputs} 把它们定义为系统接口，而不是单纯分类。两个来源只有在 issuer、可伪造面、可证明的 authority field 和 adapter 观测点都相同时才可以合并。
 
-这四类不能合并成三类。Agent plane 的 issuer 是 trusted UI/approval state，能证明“为什么做”和“哪个对象或 sink 被用户授权”；instruction plane 的 issuer 是 system/developer policy 或被 endorsement 的 Skill/manual source，能证明“按什么过程做”；tool plane 的 issuer 是 trusted registry、MCP broker 或 local command registry，能证明“通过哪个接口、凭证和 sandbox contract 做”；env plane 的 issuer 是 runtime observer 或 monitor，能证明“哪些对象、值和结果在本次执行中存在”。把 instruction 并入 agent 会错误地把 Skill/manual 中的过程建议提升为用户意图或 approval；把 tool 并入 env 会丢失 schema、credential scope 和 declared side effect 这些接口约束，使工具结果和工具定义共享同一 authority class；把 env 并入 tool 则会让 runtime observations、script outputs 和文档内容获得本不具备的接口可信度。
+Agent context 不是模型隐藏状态，而是 trusted issuer 维护的 task intent、approval 和 workflow state。Instruction context 是可被当作过程指导的 policy/Skill/manual 文本。Tool context 是接口、凭证和 sandbox contract。Env context 是运行时观测到的对象、值、结果和资源事实。这个边界是 agent-specific 的。同一段文本如果来自 \texttt{SKILL.md}，可能在 workflow scope 内成为 instruction context；如果来自 PDF、tool result 或 script output，即使内容像指令，也仍是低完整性的 env context，不能自动升级为 instruction。
 
-这也不是普通 ABAC attribute grouping。ABAC 问的是一组 attributes 是否满足 policy rule；\sys 问的是四个独立签发的 authority planes 是否共同授权一次 authority-state transition，并且禁止一个 plane 替另一个 plane 补齐缺失字段。若 sink selection 缺少 agent-plane authorization，tool metadata 不能补上；若 local exec 缺少 tool-plane binary/schema，instruction 不能补上；若 approval request 缺少 fresh issuer token，env evidence 不能补上。
+这四类不能合并成三类。Agent plane 的 issuer 是 trusted UI/approval state，能证明“为什么做”和“哪个对象或 sink 被用户授权”。Instruction plane 的 issuer 是 system/developer policy 或被 endorsement 的 Skill/manual source，能证明“按什么过程做”。Tool plane 的 issuer 是 trusted registry、MCP broker 或 local command registry，能证明“通过哪个接口、凭证和 sandbox contract 做”。Env plane 的 issuer 是 runtime observer 或 monitor，能证明“哪些对象、值和结果在本次执行中存在”。
 
-每个 plane 都有独立 issuer 和不可由其他 plane 伪造的字段。Agent plane 的不可伪造字段是 trusted issuer canonicalize 的 goal、authorized objects/sinks 和 approval tokens；instruction plane 的不可伪造字段是 policy/Skill/manual 的 workflow scope；tool plane 的不可伪造字段是 registry 或 MCP broker 认可的 schema、credential scope、binary descriptor 和 sandbox contract；env plane 的不可伪造字段是 runtime observer 记录的路径存在性、concrete values、tool results 和 script outputs。E3 的 collapse baselines 必须分别测试这些字段被其他 plane 补齐时的 false accept。
+错误合并会产生不同的 false authority path。把 instruction 并入 agent 会把 Skill/manual 中的过程建议提升为用户意图或 approval。把 tool 并入 env 会丢失 schema、credential scope 和 declared side effect 这些接口约束，使工具结果和工具定义共享同一 authority class。把 env 并入 tool 则会让 runtime observations、script outputs 和文档内容获得本不具备的接口可信度。
+
+这也不是普通 ABAC attribute grouping。ABAC 问的是一组 attributes 是否满足 policy rule。\sys 问的是四个独立签发的 authority planes 是否共同授权一次 authority-state transition，并且禁止一个 plane 替另一个 plane 补齐缺失字段。若 sink selection 缺少 agent-plane authorization，tool metadata 不能补上。若 local exec 缺少 tool-plane binary/schema，instruction 不能补上。若 approval request 缺少 fresh issuer token，env evidence 不能补上。
+
+每个 plane 都有独立 issuer 和不可由其他 plane 伪造的字段。Agent plane 的不可伪造字段是 trusted issuer canonicalize 的 goal、authorized objects/sinks 和 approval tokens。Instruction plane 的不可伪造字段是 policy/Skill/manual 的 workflow scope。Tool plane 的不可伪造字段是 registry 或 MCP broker 认可的 schema、credential scope、binary descriptor 和 sandbox contract。Env plane 的不可伪造字段是 runtime observer 记录的路径存在性、concrete values、tool results 和 script outputs。E3 的 collapse baselines 必须分别测试这些字段被其他 plane 补齐时的 false accept。
 
 \begin{table}[t]
 \centering
@@ -236,39 +241,47 @@ Env & runtime observer, filesystem/process monitor, tool gateway & cwd, runtime 
 \end{tabular}
 \end{table}
 
-实际 capability 必须由相关 protected fields 与全局策略共同决定；未被某个 decision class 要求的 plane 可以为空，但被要求的 field 必须从自己的 owner plane 取证：
+实际 capability 必须由相关 protected fields 与全局策略共同决定。未被某个 decision class 要求的 plane 可以为空，但被要求的 field 必须从自己的 owner plane 取证：
 
 \[
 K = Solve_\Gamma(C_{agent}, C_{inst}, C_{tool}, C_{env}) .
 \]
 
-纯 approval event、纯 context-use event 和本地 evidence probe 可能只需要其中几类字段。关键规则是：对某个 protected decision 所需的字段，checker 必须从该字段指定的 plane 读取，不能由其他 plane 代填。Agent context 可以授权“处理这两个用户选中的 PDF 并在 org/repo-x 创建一个 issue”，但不能指定 PDF Skill 的脚本路径；instruction context 可以指导 extraction workflow，但不能选择 GitHub sink 或扩大 approval scope；tool context 可以说明 \texttt{github.create\_issue} 的参数结构和 credential scope，但不能把任意 repo 变成授权 sink；env context 可以证明某个路径、参数值、PDF text 或 observed result 在运行时存在，但不能把存在性变成用户选择或 retroactively mint broader authority。Raw user text itself is not a fifth plane: trusted issuer partitions it into agent-owned intent fields and instruction-owned workflow preferences. 被 canonicalize 成 goal、object、sink 或 approval 的部分进入 agent context；描述 workflow preference 或 formatting preference 的部分进入 instruction context，即使它来自用户，也不能单独授权 sink、approval 或 delegation。Lease 的作用是把这些 required fields 固定为一个可检查、可消耗、可衰减的 transition object。
+纯 approval event、纯 context-use event 和本地 evidence probe 可能只需要其中几类字段。关键规则是：对某个 protected decision 所需的字段，checker 必须从该字段指定的 plane 读取，不能由其他 plane 代填。
+
+Agent context 可以授权“处理这两个用户选中的 PDF 并在 org/repo-x 创建一个 issue”，但不能指定 PDF Skill 的脚本路径。Instruction context 可以指导 extraction workflow，但不能选择 GitHub sink 或扩大 approval scope。Tool context 可以说明 \texttt{github.create\_issue} 的参数结构和 credential scope，但不能把任意 repo 变成授权 sink。Env context 可以证明某个路径、参数值、PDF text 或 observed result 在运行时存在，但不能把存在性变成用户选择或 retroactively mint broader authority。
+
+Raw user text itself is not a fifth plane. Trusted issuer partitions it into agent-owned intent fields and instruction-owned workflow preferences. 被 canonicalize 成 goal、object、sink 或 approval 的部分进入 agent context。描述 workflow preference 或 formatting preference 的部分进入 instruction context。即使 instruction preference 来自用户，它也不能单独授权 sink、approval 或 delegation。Lease 的作用是把这些 required fields 固定为一个可检查、可消耗、可衰减的 transition object。
 
 \subsection{Intent Certificates}
 
 Intent certificate 是结构化安全对象，而不是 prompt 中的一段自然语言。它记录用户目标、选择的对象、允许的 sinks、禁止的 sinks、approval tokens 和 expiry。对于 PDF 处理任务，certificate 会命名选中的 PDF 路径、输出目录、唯一授权的 GitHub repository、禁止任意网络访问的约束，以及创建 issue 所需的 fresh approval。LLM 可以提出 certificate fields，但 trusted parser、UI、administrator policy 或 approval step 必须 canonicalize 这些字段。Certificate 是后续 capability derivation 的根。
 
-Certificate 的粒度决定后续 leases 的最大 authority。若用户只选择了两个 PDF，后续 file-read leases 只能覆盖这些对象或它们的安全派生物；若用户只确认了一个 GitHub repository，repo selection 就不能由 PDF text、Skill instruction 或 MCP result 改写。模糊字段不会被解释为宽权限；系统要么将其保守地标记为 unknown，要么要求 fresh approval。
+Certificate 的粒度决定后续 leases 的最大 authority。若用户只选择了两个 PDF，后续 file-read leases 只能覆盖这些对象或它们的安全派生物。若用户只确认了一个 GitHub repository，repo selection 就不能由 PDF text、Skill instruction 或 MCP result 改写。模糊字段不会被解释为宽权限。系统要么将其保守地标记为 unknown，要么要求 fresh approval。
 
 \subsection{Context Authority}
 
 每个 context cell 都带 provenance label，记录 origin、integrity、confidentiality、purpose、time 和 endorsements。\sys 的关键增加是为 context source 指定 influence modes。PDF text 可以被允许 quote、summarize 或 parameterize spreadsheet cells，但禁止 plan、delegate 或 authorize。Signed Skill instructions 可以在其 declared workflow scope 内 instruct extraction procedure，但不能为自己请求额外工具。MCP tool results 和 annotations 必须按照 server trust 处理；MCP specification 已经提醒 tool behavior annotations 不能默认可信~\cite{mcp-spec}，\sys 将这一原则变成 deterministic provenance rule。
 
-Influence modes 总是相对于 decision class 解释。一个 source 可以被允许影响 output content，却不能影响 recipient、repository、network destination、approval scope 或 delegated capability set。这不是给 taint label 增加一个 policy 维度，而是规定某个 context 是否有权参与一次 authority-state transition。PDF text 可以流向 issue body 和 spreadsheet cells；普通 IFC 可以表达这条数据流是否允许。但 \sys 还要求 repository field 的 issuer 是 agent plane、approval scope 的 control proof 不含 PDF provenance、并且对应 one-shot lease 尚未被消耗。只有当 influence authority 与 intent derivation、budget、expiry 和 delegation bounds 绑定在同一 lease 上时，checker 才能防止 context 在一个字段上被允许、又在另一个生命周期状态中被复用为授权依据。这种 decision-specific authority 是 \sys 的核心：它允许系统保留有用的数据流，同时切断同一 context 对 authority-bearing fields 的控制流。
+Influence authority 是 decision-specific 的。一个 source 可以被允许影响 output content，却不能影响 recipient、repository、network destination、approval scope 或 delegated capability set。这不是给 taint label 增加一个 policy 维度，而是规定某个 context 是否有权参与一次 authority-state transition。
 
-实现中，abstract influence modes 会被 lowering 成 concrete decision modes。表述上，influence mode 指抽象能力，decision class 指被影响字段，decision mode 指 adapter 提交给 checker 的事件字段。Quote、summarize 和 parameterize 对应 output body、spreadsheet cells 或 issue body 的数据使用；plan 和 instruct 对应 tool selection 与 workflow-step choice；authorize 对应 sink selection、approval scope、capability request 和 policy update；delegate 对应 delegation target 和 child capability set。这个 mapping 使论文中的 lattice 与实验 trace 中的 \texttt{mode} 字段一致，同时避免把所有 modes 都解释成同一种 taint level。
+PDF text 可以流向 issue body 和 spreadsheet cells。普通 IFC 可以表达这条数据流是否允许。\sys 还要求 repository field 的 issuer 是 agent plane，approval scope 的 control proof 不含 PDF provenance，并且对应 one-shot lease 尚未被消耗。只有当 influence authority 与 intent derivation、budget、expiry 和 delegation bounds 绑定在同一 lease 上时，checker 才能防止 context 在一个字段上被允许、又在另一个生命周期状态中被复用为授权依据。这种 decision-specific authority 是 \sys 的核心：它允许系统保留有用的数据流，同时切断同一 context 对 authority-bearing fields 的控制流。
+
+实现中，abstract influence modes 会被 lowering 成 concrete decision modes。表述上，influence mode 指抽象能力，decision class 指被影响字段，decision mode 指 adapter 提交给 checker 的事件字段。Quote、summarize 和 parameterize 对应 output body、spreadsheet cells 或 issue body 的数据使用。Plan 和 instruct 对应 tool selection 与 workflow-step choice。Authorize 对应 sink selection、approval scope、capability request 和 policy update。Delegate 对应 delegation target 和 child capability set。这个 mapping 使论文中的 lattice 与实验 trace 中的 \texttt{mode} 字段一致，同时避免把所有 modes 都解释成同一种 taint level。
 
 \subsection{Effect IR and Leases}
 
 Agent plan 被编译成安全相关 effect graph。IR 不追求表达完整程序语义，而是捕捉会影响 authority 的事件：context use、tool call、MCP call、file read/write、subprocess execution、network connection、approval request 和 subagent delegation。每个 effect 记录 data provenance 和 control provenance。这个区分是 \sys 的关键：不可信 PDF bytes 可以是 output data 的 data dependency，但不应是 sink selection 的 control dependency。
 
-Control provenance 不是声称系统能读出 LLM 内部注意力，而是一个 protected-field proof policy。对于 sink、approval scope、capability request、delegation set、policy patch、local executable、network destination 和 high-impact arguments，runtime adapter 必须提交结构化来源证明：字段来自 trusted intent certificate、fresh approval、tool schema、runtime evidence，或某个 explicit context cell。若字段由模型自由生成、缺少结构化 proof，或来源不能被 adapter 归因，checker 保守地把该字段的 control provenance 近似为当前 prompt 中所有可见、可能影响该字段的 non-policy context；只要其中存在缺少所需 influence mode 的 context，就 fail closed。普通 output body 或 spreadsheet cell 可以带 data provenance；authority-bearing fields 必须带 control proof。这一策略会带来 utility cost，因此 E1/E4 把 false denial、proof completeness 和 benchmark-scale recovery 与 same-event safety 分开报告，而不是假设 provenance always precise。
+Control provenance 不是声称系统能读出 LLM 内部注意力，而是一个 protected-field proof policy。对于 sink、approval scope、capability request、delegation set、policy patch、local executable、network destination 和 high-impact arguments，runtime adapter 必须提交结构化来源证明。字段可以来自 trusted intent certificate、fresh approval、tool schema、runtime evidence，或某个 explicit context cell。
 
-Lease 绑定 operation、object、arguments、intent、influence、flow、temporal、budget、expiry 和 delegation。一个 PDF extraction lease 可以允许脚本读取两个选中文件并写入输出目录，但禁止网络、secrets 和额外 subprocess；GitHub issue lease 可以允许一次 \texttt{create\_issue(repo=org/repo-x)}，但要求 repo control provenance 只能来自 trusted user intent。Lease solving 的目标不是全局证明所有可能 plan 的最小权限，而是在给定 effect plan、extension catalog 和 global policy 下生成风险更低、可检查、可衰减的 authority set。
+若字段由模型自由生成、缺少结构化 proof，或来源不能被 adapter 归因，checker 会保守处理。它把该字段的 control provenance 近似为当前 prompt 中所有可见、可能影响该字段的 non-policy context。只要其中存在缺少所需 influence mode 的 context，checker 就 fail closed。普通 output body 或 spreadsheet cell 可以带 data provenance。Authority-bearing fields 必须带 control proof。这一策略会带来 utility cost，因此 E1/E4 把 false denial、proof completeness 和 benchmark-scale recovery 与 same-event safety 分开报告，而不是假设 provenance always precise。
+
+Lease 绑定 operation、object、arguments、intent、influence、flow、temporal、budget、expiry 和 delegation。一个 PDF extraction lease 可以允许脚本读取两个选中文件并写入输出目录，但禁止网络、secrets 和额外 subprocess。GitHub issue lease 可以允许一次 \texttt{create\_issue(repo=org/repo-x)}，但要求 repo control provenance 只能来自 trusted user intent。Lease solving 的目标不是全局证明所有可能 plan 的最小权限，而是在给定 effect plan、extension catalog 和 global policy 下生成风险更低、可检查、可衰减的 authority set。
 
 \subsection{Compiler and Checker}
 
-\sys 使用 LLM-assisted 但 checker-verified 的 pipeline。Compiler frontend 总结 Skill metadata、MCP schemas、local scripts、observed traces 和 policy；推导 plan 与 security-relevant effects；并为当前 run 提出 candidate leases。Frontend 不在 TCB 内。Deterministic checker 验证每个 lease 是否满足 global policy、intent certificate、provenance constraints、flow rules、temporal guards、budgets 和 delegation monotonicity。
+\sys 使用 LLM-assisted 但 checker-verified 的 pipeline。Compiler frontend 总结 Skill metadata、MCP schemas、local scripts、observed traces 和 policy。它推导 plan 与 security-relevant effects，并为当前 run 提出 candidate leases。Frontend 不在 TCB 内。Deterministic checker 验证每个 lease 是否满足 global policy、intent certificate、provenance constraints、flow rules、temporal guards、budgets 和 delegation monotonicity。
 
 Compiler 的输出必须携带 proof object，说明每个 protected field 来自哪些 intent fields、哪些 context sources 可以作为 data/control dependency、哪些 sources 被排除、以及 lease 在什么 temporal state 和 budget 下有效。Checker 不信任 proof 的自然语言解释，只检查其中的结构化 predicates。若 proof 缺失、argument predicate 过宽、control provenance 不明、或 lease 试图把 parent 不具备的 authority 委托给 child，checker 返回结构化 denial。
 
@@ -539,7 +552,9 @@ Checker judgment is:
 \Gamma; I; K; \sigma \vdash e \Rightarrow \sigma' ,
 \]
 
-其中 \(\Gamma\) 是全局策略，\(I\) 是 intent certificate，\(K\) 是 active leases，\(\sigma\) 是 runtime state。事件被接受当且仅当存在 \(\kappa \in K\) 使得所有条件同时成立。Operation 必须匹配；object 和 arguments 必须满足 lease predicate；event purpose 必须可由 \(I\) 推导；\(prov_C(e)\) 中的每个 context 都必须拥有影响该 decision class 所需的 authority；\(prov_D(e)\) 必须满足 flow policy；temporal guard 和 budget 必须尚未过期；delegated leases 必须不宽于 parent leases。对于 \(request(\kappa,reason)\) 和 \(policy\_update(patch)\)，checker 将其作为 protected decisions 处理。它们自身不能 mint authority，除非 trusted issuer 随后产生独立 \(lease(\kappa)\) event；其 control provenance 也必须拥有 \((authorize, capability\_request)\) 或 \((authorize, policy\_update)\)。
+其中 \(\Gamma\) 是全局策略，\(I\) 是 intent certificate，\(K\) 是 active leases，\(\sigma\) 是 runtime state。事件被接受当且仅当存在 \(\kappa \in K\) 使得七个条件同时成立：\(1\) operation 匹配，\(2\) object 和 arguments 满足 lease predicate，\(3\) event purpose 可由 \(I\) 推导，\(4\) \(prov_C(e)\) 中的每个 context 都拥有影响该 decision class 所需的 authority，\(5\) \(prov_D(e)\) 满足 flow policy，\(6\) temporal guard 和 budget 尚未过期，\(7\) delegated leases 不宽于 parent leases。
+
+对于 \(request(\kappa,reason)\) 和 \(policy\_update(patch)\)，checker 将其作为 protected decisions 处理。它们自身不能 mint authority，除非 trusted issuer 随后产生独立 \(lease(\kappa)\) event。它们的 control provenance 也必须拥有 \((authorize, capability\_request)\) 或 \((authorize, policy\_update)\)。
 
 \subsection{Safety Properties}
 一个 trace 被接受，表示其中每个 protected event 都按上述 judgment 顺序通过 checker，并且每个通过事件对 \(\sigma\) 的更新会消耗预算、推进 temporal state、记录 provenance，并更新 active leases。下面四个性质是这一 checker semantics 的直接安全后果；它们不是关于任意 prompt 的全局声明，而是关于 accepted traces over instrumented protected-decision events with adapter-supplied control-provenance proofs 的 trace-level properties。
@@ -556,7 +571,7 @@ Checker judgment is:
 \section{实现}
 \label{sec:implementation}
 
-我们的 prototype 是一个 Python-based agent authorization harness。它的目标不是替换生产级 MCP server、agent runtime 或 OS sandbox，也不是声称设计中的每个 lowering contract 都已完整工程化；它验证三件事：lease language 是否足以表达 intent/context authority，deterministic checker 是否能在统一 event model 上执行这些约束，以及这些约束能否被 lowering 到 trace replay、live callable gateway 和 benchmark-derived workflows。
+我们的 prototype 是一个 Python-based agent authorization harness。它不替换生产级 MCP server、agent runtime 或 OS sandbox，也不声称设计中的每个 lowering contract 都已完整工程化。它验证三件事：lease language 是否足以表达 intent/context authority，deterministic checker 是否能在统一 event model 上执行这些约束，以及这些约束能否被 lowering 到 trace replay、live callable gateway 和 benchmark-derived workflows。
 
 \subsection{Checker Core}
 Checker core 位于 \texttt{src/intentcap/}，实现 context labels、effect events、leases、checker state 和 proof objects。当前 checker 支持 exact、prefix、suffix 和 one-of argument predicates，支持 lease matching、holder scoping、control/data provenance checks、context-label influence-mode checks、temporal prerequisites、per-lease invocation budgets、proof-carrying intent/approval derivation，以及 delegated capability attenuation。这个 core 是本文的主要 TCB：LLM 输出、Skill 描述、MCP annotations 和 tool results 只能产生 candidate effects 或 candidate leases，不能绕过 checker 直接获得 authority。
@@ -638,7 +653,7 @@ E1 asks whether the checker blocks protected-event violations without ruling out
 
 The prototype result is conservative on safety: \sys accepts 0 dangerous events in the 3,746-event matrix, while object/tool ACL wrappers accept many protected-decision violations because they do not distinguish context influence authority. On the benign proxy, \sys covers 3,813/3,813 reference actions and passes 2,554/2,556 applicable tool-oracle tasks.
 
-This evidence supports protected-event safety and reference-action feasibility. It does not prove that a live agent completes every task under narrow leases. A matched 18-task local-Qwen slice shows the current utility boundary: all-tool exposure raises visible schemas from 2.61 to 14.72 on average and model calls from 62 to 74, while action-reward remains 8/18 and tool-oracle remains 0/18. We therefore treat live utility, approval burden, and benchmark-scale recovery as separate claims rather than deriving them from same-event safety.
+The replay results support protected-event safety and reference-action feasibility. They do not prove that a live agent completes every task under narrow leases. A matched 18-task local-Qwen slice shows the current utility boundary: all-tool exposure raises visible schemas from 2.61 to 14.72 on average and model calls from 62 to 74, while action-reward remains 8/18 and tool-oracle remains 0/18. We therefore treat live utility, approval burden, and benchmark-scale recovery as separate claims rather than deriving them from same-event safety.
 
 \subsection{E2: Lease Audit and Authority Reduction}
 
@@ -672,7 +687,9 @@ In the Qwen3.6 adversarial model loop over the same 10 events, the model returns
 本节限定 prototype evaluation 的解释范围。\sys 的核心 claim 是一个可执行的 protected-decision authorization unit，而不是完整替代 sandbox、MCP broker、human approval UX 或所有 agent planning logic。我们因此把 trace replay、oracle replay 和局部 compiler/model-loop probes 的证据边界显式报告。
 
 \subsection{Prototype Evidence}
-Prototype evidence 支撑一个保守的 system claim：\sys 可以作为 agent decision authorization layer，把 LLM-generated plans/leases 放在 TCB 之外，并在 checker-enforced boundaries 内拒绝违反 intent、argument、provenance、temporal、budget 或 delegation constraints 的事件。Saved benchmark traces 和 live callable gateway 证明同一 checker semantics 可以作用于 replay events 与真实本地调用边界；local Qwen/llama.cpp probes 证明模型输出可以作为 untrusted compiler input，由 checker 拒绝 broad/runtime authority、missing-proof writes 和 env-context 诱导的 side-effect calls；runtime binding 与 structured value proof 证明短期 exact leases 可以从已执行的 tool-result evidence 中安全铸造，而不是从模型自由文本中直接产生。
+Prototype evidence 支撑一个保守的 system claim：\sys 可以作为 agent decision authorization layer，把 LLM-generated plans/leases 放在 TCB 之外，并在 checker-enforced boundaries 内拒绝违反 intent、argument、provenance、temporal、budget 或 delegation constraints 的事件。
+
+Saved benchmark traces 和 live callable gateway 说明，同一 checker semantics 可以作用于 replay events 与真实本地调用边界。Local Qwen/llama.cpp probes 说明，模型输出可以作为 untrusted compiler input，由 checker 拒绝 broad/runtime authority、missing-proof writes 和 env-context 诱导的 side-effect calls。Runtime binding 与 structured value proof 说明，短期 exact leases 可以从已执行的 tool-result evidence 中安全铸造，而不是从模型自由文本中直接产生。
 
 表~\ref{tab:current-evidence} 汇总 prototype evaluation 的证据和适用范围。
 
@@ -742,14 +759,14 @@ CaMeL、Prompt Flow Integrity、FIDES、RTBAS 和 NeuroTaint 等工作从 contro
 本文把差异放在授权对象的粒度和生命周期上：这些系统主要检查 observed action、argument 或 side effect 是否与 intent/provenance 对齐；\sys 额外把未来决策权限表示为短期 lease，显式记录 authority 如何由 intent mint、如何在 protected decision 前被 check/consume、如何按 temporal/budget guard 缩小、如何在 delegation 中 attenuation，以及如何 lowering 到 Skills、MCP tools、本地执行和 subagents。关键不是单独发明 provenance label、taint tracking 或 attenuable capability，而是把 trusted mint provenance、per-lease consumption/expiration、protected-decision influence modes、no context-class promotion 和 parent-child capability partial order 绑定为同一个 authority transition。Provenance label 是 checker 的输入，lease 是可被铸造、消耗和委托的授权对象，也是每次 protected decision 更新 authority state 的原子单位。
 
 \subsection{Agent Policy Languages and Access Control}
-Progent、PCAS、AgentSpec、AgentGuard 和 AgentBound 等工作提供 programmable privilege control、policy compilation、runtime DSL、ABAC 或 MCP access-control enforcement~\cite{progent,pcas,agentspec,agentguard,agentbound}。这些系统回答“某个工具、参数、server 或 action 是否被 policy 允许”。\sys 与它们的关系是互补和竞争并存：它同样需要确定性 checker，但 policy object 不是静态工具规则或 server policy，而是从当前 run 的 intent 和 context provenance 推导出的短期 leases。Our evaluation compares these policy families through authority breadth, oracle-distance audit, and controlled protected-decision residuals.
+Progent、PCAS、AgentSpec、AgentGuard 和 AgentBound 等工作提供 programmable privilege control、policy compilation、runtime DSL、ABAC 或 MCP access-control enforcement~\cite{progent,pcas,agentspec,agentguard,agentbound}。这些系统回答“某个工具、参数、server 或 action 是否被 policy 允许”。\sys 与它们的关系是互补和竞争并存：它同样需要确定性 checker，但 policy object 不是静态工具规则或 server policy，而是从当前 run 的 intent 和 context provenance 推导出的短期 leases。因此，评估通过 authority breadth、oracle-distance audit 和 controlled protected-decision residuals 比较这些 policy families。
 
 \subsection{Skill and MCP Permission Frameworks}
 SkillGuard 和 SkillScope 直接面向 Agent Skills 的权限、行为规范和 least-privilege enforcement~\cite{skillguard,skillscope}；MCP 规范也强调 tool metadata 和 behavior annotations 不能默认被当作可信事实~\cite{mcp-spec}。这些工作说明 Skill/MCP ecosystem 已经需要权限边界；本文不把 \sys 定位为第一个 agent permission system。\sys 的范围是 run-centric 和 cross-extension 的：一个 lease 可以同时约束 Skill instruction 对 workflow 的影响、MCP result 对后续 sink 的影响、本地脚本的 file/network authority，以及 subagent 获得的 attenuated capability set。与 package-level manifest 或 server-level grant 不同，\sys 的 authority root 是当前 intent certificate；同一个 Skill 或 MCP server 在不同 run 中会得到不同、可消耗、不可自扩张的 leases。这个定位把 \sys 放在 Skill/MCP permissions 之上，作为一个 intent-derived lease compiler/checker，而不是替代 Skill/MCP 的包级权限系统。
 
 \section{结论}
 
-LLM agent extensions 改变了权限系统需要保护的对象。文档、工具结果和扩展说明不只携带数据，也可能影响 tool selection、sink selection、approval scope、capability request 和 delegation target。\sys 将这种影响权表示为 intent-derived、provenance-gated、可消耗、可过期、可衰减的 leases，并用 deterministic checker 把 LLM proposals 保持在 TCB 之外。Prototype evaluation 在 saved security traces 上产生 0/3,746 dangerous protected-event accepts；在 tau2/tau3 reference-action proxy 中覆盖 3,813/3,813 benign assistant actions，并通过 2,554/2,556 applicable replay oracles；在 local env probes 中阻止 6 个违规副作用和 4 个 Qwen3.6 unsafe calls before side effects。在已建模边界内，\sys 的核心结论是把“context 可以影响什么未来决策”变成可检查、可消耗、可审计的授权状态，并要求每个 protected field 都由自己的 issuer plane 证明。
+LLM agent extensions 改变了权限系统需要保护的对象。文档、工具结果和扩展说明不只携带数据，也可能影响 tool selection、sink selection、approval scope、capability request 和 delegation target。\sys 将这种影响权表示为 intent-derived、provenance-gated、可消耗、可过期、可衰减的 leases，并用 deterministic checker 把 LLM proposals 保持在 TCB 之外。Prototype evaluation 在 saved security traces 上产生 0/3,746 dangerous protected-event accepts。在 tau2/tau3 reference-action proxy 中，\sys 覆盖 3,813/3,813 benign assistant actions，并通过 2,554/2,556 applicable replay oracles。在 local env probes 中，\sys 阻止 6 个违规副作用和 4 个 Qwen3.6 unsafe calls before side effects。在已建模边界内，\sys 的核心结论是把“context 可以影响什么未来决策”变成可检查、可消耗、可审计的授权状态，并要求每个 protected field 都由自己的 issuer plane 证明。
 
 \bibliographystyle{plain}
 \bibliography{intentcap-paper-zh}
