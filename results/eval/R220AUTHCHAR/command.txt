@@ -1,0 +1,1 @@
+PYTHONPATH=.:src /usr/bin/python3 scripts/characterize_authority_inputs.py --run-id R220AUTHCHAR --output-dir results/eval/R220AUTHCHAR
