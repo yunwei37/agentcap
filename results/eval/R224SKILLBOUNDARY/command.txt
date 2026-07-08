@@ -1,0 +1,1 @@
+PYTHONPATH=src:. /usr/bin/python scripts/run_skill_instruction_boundary_probe.py

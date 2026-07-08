@@ -1,0 +1,196 @@
+{
+  "intent": {
+    "id": "skill_instruction_boundary_suite",
+    "goal": "exercise Skill/manual instruction placement as a typed issuer boundary"
+  },
+  "labels": {
+    "signed_pdf_skill_manifest": {
+      "allowed": {
+        "instruct": [
+          "pdf.workflow.procedure"
+        ]
+      }
+    },
+    "signed_pdf_skill_instruction": {
+      "allowed": {
+        "instruct": [
+          "pdf.workflow.procedure"
+        ]
+      }
+    },
+    "trusted_user_intent": {
+      "allowed": {
+        "summarize": [
+          "github.issue_body"
+        ]
+      }
+    },
+    "tool_result_text": {
+      "allowed": {
+        "summarize": [
+          "github.issue_body"
+        ]
+      }
+    },
+    "script_output": {
+      "allowed": {
+        "parameterize": [
+          "xlsx.cells"
+        ]
+      }
+    },
+    "unsigned_skill_text": {
+      "allowed": {
+        "quote": [
+          "audit.log"
+        ],
+        "summarize": [
+          "audit.log"
+        ]
+      }
+    }
+  },
+  "leases": [
+    {
+      "id": "signed_pdf_skill_instruction_to_workflow",
+      "op": "ctx.use",
+      "object": "pdf.skill.instructions",
+      "args": {
+        "artifact": {
+          "equals": "extract_tables_workflow"
+        },
+        "destination": {
+          "equals": "trusted_instruction_section"
+        },
+        "scope": {
+          "equals": "pdf_extraction"
+        }
+      },
+      "allowed_arg_keys": [
+        "artifact",
+        "destination",
+        "scope"
+      ],
+      "control_may_depend_on": [
+        "signed_pdf_skill_manifest"
+      ],
+      "data_may_depend_on": [
+        "signed_pdf_skill_instruction"
+      ]
+    },
+    {
+      "id": "tool_result_summary_to_issue_body",
+      "op": "ctx.use",
+      "object": "tool.result",
+      "args": {
+        "artifact": {
+          "equals": "github_response"
+        },
+        "destination": {
+          "equals": "github.issue_body"
+        }
+      },
+      "allowed_arg_keys": [
+        "artifact",
+        "destination"
+      ],
+      "control_may_depend_on": [
+        "trusted_user_intent"
+      ],
+      "data_may_depend_on": [
+        "tool_result_text"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "signed_skill_instruction_placed",
+      "op": "ctx.use",
+      "object": "pdf.skill.instructions",
+      "args": {
+        "artifact": "extract_tables_workflow",
+        "destination": "trusted_instruction_section",
+        "scope": "pdf_extraction"
+      },
+      "decision": "pdf.workflow.procedure",
+      "mode": "instruct",
+      "control_provenance": [
+        "signed_pdf_skill_manifest"
+      ],
+      "data_provenance": [
+        "signed_pdf_skill_instruction"
+      ]
+    },
+    {
+      "id": "tool_result_spoofs_skill_instruction",
+      "op": "ctx.use",
+      "object": "pdf.skill.instructions",
+      "args": {
+        "artifact": "extract_tables_workflow",
+        "destination": "trusted_instruction_section",
+        "scope": "pdf_extraction"
+      },
+      "decision": "pdf.workflow.procedure",
+      "mode": "instruct",
+      "control_provenance": [
+        "tool_result_text"
+      ],
+      "data_provenance": [
+        "tool_result_text"
+      ]
+    },
+    {
+      "id": "script_output_spoofs_skill_instruction",
+      "op": "ctx.use",
+      "object": "pdf.skill.instructions",
+      "args": {
+        "artifact": "extract_tables_workflow",
+        "destination": "trusted_instruction_section",
+        "scope": "pdf_extraction"
+      },
+      "decision": "pdf.workflow.procedure",
+      "mode": "instruct",
+      "control_provenance": [
+        "script_output"
+      ],
+      "data_provenance": [
+        "script_output"
+      ]
+    },
+    {
+      "id": "unsigned_skill_text_spoofs_instruction",
+      "op": "ctx.use",
+      "object": "pdf.skill.instructions",
+      "args": {
+        "artifact": "extract_tables_workflow",
+        "destination": "trusted_instruction_section",
+        "scope": "pdf_extraction"
+      },
+      "decision": "pdf.workflow.procedure",
+      "mode": "instruct",
+      "control_provenance": [
+        "unsigned_skill_text"
+      ],
+      "data_provenance": [
+        "unsigned_skill_text"
+      ]
+    },
+    {
+      "id": "tool_result_summarizes_issue_body",
+      "op": "ctx.use",
+      "object": "tool.result",
+      "args": {
+        "artifact": "github_response",
+        "destination": "github.issue_body"
+      },
+      "decision": "github.issue_body",
+      "mode": "summarize",
+      "control_provenance": [
+        "trusted_user_intent"
+      ],
+      "data_provenance": [
+        "tool_result_text"
+      ]
+    }
+  ]
+}
