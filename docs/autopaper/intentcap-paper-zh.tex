@@ -144,6 +144,8 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 \sys 的 capability synthesis 不是从单一 prompt context 中抽取权限，而是同时读取四类 context。表~\ref{tab:authority-inputs} 把它们定义为系统接口，而不是单纯分类。每类 context 都有自己的 issuer、可影响的 decision classes、禁止影响的 authority fields 和 runtime adapter。这个边界是 agent-specific 的：同一段文本如果来自 \texttt{SKILL.md}，可能在 workflow scope 内成为 instruction context；如果来自 PDF、tool result 或 script output，即使内容像指令，也仍是低完整性的 env context，不能自动升级为 instruction。
 
+这四类不能合并成三类。把 instruction 并入 agent 会错误地把 Skill/manual 中的过程建议提升为用户意图或 approval；把 tool 并入 env 会丢失 schema、credential scope 和 declared side effect 这些接口约束，使工具结果和工具定义共享同一 authority class；把 env 并入 tool 则会让 runtime observations、script outputs 和文档内容获得本不具备的接口可信度。\sys 因此把四类 context 作为 lease synthesis 的四个独立输入面：agent context 负责“为什么做”，instruction context 负责“按什么过程做”，tool context 负责“通过哪个接口做”，env context 负责“用哪些观测对象和值做”。Capability 只有在这四个输入面的字段同时匹配时才被 mint。
+
 \begin{table}[t]
 \centering
 \scriptsize
@@ -278,6 +280,19 @@ Intent-carrying lease 的抽象形式为：
 \]
 
 其中 \(C_{agent}\) 包含 intent certificate、approvals、plan stage、agent role 和 parent authority；\(C_{inst}\) 包含 system/developer/user instructions、Skill/manual workflow text、MCP prompts 和 trust endorsements；\(C_{tool}\) 包含 MCP/tool schemas、server identity、credential scope、command/script execution descriptors 和 sandbox contracts；\(C_{env}\) 包含 selected objects、cwd/filesystem state、concrete arguments、observed results、runtime evidence、resource availability 和当前 lease consumption state。
+
+Checker 以四个 projection functions 读取这些输入面：
+
+\[
+\begin{aligned}
+intent(e) &\leftarrow \pi_{agent}(C_{agent}),\\
+procedure(e) &\leftarrow \pi_{inst}(C_{inst}),\\
+interface(e) &\leftarrow \pi_{tool}(C_{tool}),\\
+evidence(e) &\leftarrow \pi_{env}(C_{env}) .
+\end{aligned}
+\]
+
+一个 protected event \(e\) 只有在四个 projection 与同一个 lease \(\kappa\) 的 predicates 一致时才被接受。若任一 field 缺失，checker 不能从其他 context class 中补齐：例如 instruction 不能补齐 authorized sink，tool schema 不能补齐 user intent，env evidence 不能补齐 approval token。这个四输入形式化使 \sys 的系统贡献不只是 MCP/tool-call guard，而是一个跨 Skill instruction、tool interface、runtime environment 和 agent workflow state 的统一 authorization transaction。
 
 Context class 不是普通 attribute。Checker 还维护一个 no-promotion invariant。令 \(class(c)\in\{agent,inst,tool,env\}\)，令 \(endorse_q(c)\) 表示 trusted issuer 明确把 \(c\) endorsement 为 class \(q\)。若没有 endorsement，则：
 
@@ -516,12 +531,13 @@ Reference-action proxy & agent/tool/env & \sys covers 3,813/3,813 benign referen
 Saved local-Qwen replay & agent/tool/env & \sys keeps 11/11 exact proposals and rejects 47/47 off-reference proposals; object-only wrappers accept many of them & Replanning, approval burden, and full task success \\
 Residual workflow suite & inst., tool, env, delegation & Full checker rejects lifecycle and promotion-like residuals that closest labelers accept & Needs benchmark-derived/model-loop lift \\
 Author-adjudicated E2 audit & agent/tool/env; partial instruction & 24/24 lease labels pass schema, sample, and policy-distance invariant checks & Independent blinded expert-oracle replication and broader Skill/local-command cases \\
+Fresh local-Qwen online slice & agent/tool/env & On the same 11 tau2 tasks, all-tool exposure raises visible schemas from 4.27 to 14.73 on average but does not improve action reward or exact sequence match; it adds 3 gateway blocks, 2 off-lease blocks, and 1 missing-value-proof block & Still a small utility slice; needs matched broader online security/utility runs and recovery metrics \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Claim Boundaries}
-完整论文的主张需要三个闭环。第一，utility 不能只依赖固定 slices、reference-action accounting、saved proposal replay、saved-online trajectory comparison、局部 recovery 或 bounded activation；这些证据能说明机制边界和 failure modes，但不能替代 fresh model/user-simulator loop。第二，least-privilege 需要 independent expert-oracle replication；author-adjudicated labels、policy-distance scoring 和机器审计可以作为 pilot evidence，但不应被表述为双专家盲标结论。第三，context-influence residual 需要在 benchmark-derived 或 model-loop setting 中与强 provenance/taint baselines 对比复现；否则 \sys 更适合主张 lease lifecycle organization，而不宜强调新的安全边界。
+完整论文的主张需要三个闭环。第一，utility 不能只依赖固定 slices、reference-action accounting、saved proposal replay、saved-online trajectory comparison、局部 recovery 或 bounded activation；这些证据能说明机制边界和 failure modes，但不能替代 fresh model/user-simulator loop。R197/R209 的本地 Qwen 对照是第一步 fresh online evidence：它显示暴露更多工具不会自动提高 utility，并会增加 checker 处理的越权/缺证事件；但它还太小，不能单独支撑端到端结论。第二，least-privilege 需要 independent expert-oracle replication；author-adjudicated labels、policy-distance scoring 和机器审计可以作为 pilot evidence，但不应被表述为双专家盲标结论。第三，context-influence residual 需要在 benchmark-derived 或 model-loop setting 中与强 provenance/taint baselines 对比复现；否则 \sys 更适合主张 lease lifecycle organization，而不宜强调新的安全边界。
 
 \subsection{Claim Selection}
 论文最终应按实验结果选择 claim 强度。如果 E1 同时显示低 attack success 和可接受 utility，\sys 可以主张端到端安全收益。如果 E1 的 utility 不足，则应把 \sys 写成 safety enforcement layer，并把 planner/recovery 作为未解决的工程限制。
