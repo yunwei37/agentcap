@@ -59,7 +59,7 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 \begin{enumerate}[leftmargin=*,label=\textbf{C\arabic*.}]
   \item \textbf{Model.} 一个 issuer-typed protected-decision lease model，将 agent 授权单位定义为由 intent 铸造、带 no-substitution rule、可原子消费/过期且可衰减委托的受保护转移（第~\ref{sec:formal} 节）。
-  \item \textbf{System.} 一个以 checker 为中心的状态转移 API 和 adapter contract，支持 \texttt{mint}、\texttt{check\_and\_consume}、\texttt{attenuate} 和 \texttt{expire}；当前原型完整实现 checker、tool/live callable gateway 和本地 env pre-side-effect gateway，并以 trace-level semantics 覆盖 instruction/delegation，以 ActPlane-style policy target 展示 env lowering（第~\ref{sec:design}--\ref{sec:implementation} 节）。
+  \item \textbf{System.} 一个以 checker 为中心的状态转移 API 和 adapter contract，要求 agent、instruction、tool 和 env adapters 在副作用或 authority transfer 前提交各自 owned fields；当前原型完整实现 checker、tool/live callable gateway 和本地 env pre-side-effect gateway，并以 trace-level semantics 覆盖 instruction/delegation，以 ActPlane-style policy target 展示 env lowering（第~\ref{sec:design}--\ref{sec:implementation} 节）。
   \item \textbf{Evaluation.} 一个围绕四个核心问题组织的原型评估，覆盖 protected-event safety、reference-action feasibility、lease audit、机制消融和本地环境副作用阻断（第~\ref{sec:evaluation}--\ref{sec:evidence-status} 节）。
 \end{enumerate}
 
@@ -202,7 +202,9 @@ G4 & C2 & E4 / E1,E3 & adapter calls checker before side effect or authority tra
 
 Agent context 不是模型隐藏状态，而是 trusted issuer 维护的 task intent、approval 和 workflow state。Instruction context 是可被当作过程指导的 policy/Skill/manual 文本。Tool context 是接口、凭证和 sandbox contract。Env context 是运行时观测到的对象、值、结果和资源事实。这四类输入的边界是 agent-specific 的。同一段文本如果来自被 endorsement 的 \texttt{SKILL.md} 或手册，可能在 workflow scope 内成为 instruction context；如果来自普通 PDF、网页、tool result、script output 或 subagent summary，即使内容像指令，也仍是低完整性的 env context，不能自动升级为 instruction。Command-line tools 同时涉及 tool context 和 env context：binary、argv schema 和 sandbox profile 属于 tool context；实际 cwd、输入文件、stdout/stderr 和文件系统变化属于 env context。
 
-这四类不能合并成三类。Agent 输入的 issuer 是 trusted UI/approval state，能证明“为什么做”和“哪个对象或 sink 被用户授权”。Instruction 输入的 issuer 是 system/developer policy 或被 endorsement 的 Skill/manual source，能证明“按什么过程做”。Tool 输入的 issuer 是 trusted registry、MCP broker 或 local command registry，能证明“通过哪个接口、凭证和 sandbox contract 做”。Env 输入的 issuer 是 runtime observer 或 monitor，能证明“哪些对象、值和结果在本次执行中存在”。
+这四类不能合并成三类。三类说法通常把 agent intent、instruction procedure 和 tool interface 作为上层语义来源，这对解释工作流足够，但对执行授权不够。Checker 需要第四类 env/runtime issuer，因为很多 protected transitions 依赖的事实不是 intent、procedure 或 interface，而是本次运行中实际观察到的路径、stdout、tool result、文件状态、资源状态和 side-effect evidence。若没有这类 issuer，系统只能二选一：要么相信模型把 runtime facts 正确复述进 prompt，要么让 tool/instruction metadata 替 runtime observer 证明事实。两者都会破坏 proof boundary。
+
+因此，本文把四类定义为 proof-carrying system interfaces，而不是自然语言来源分类。Agent 输入的 issuer 是 trusted UI/approval state，能证明“为什么做”和“哪个对象或 sink 被用户授权”。Instruction 输入的 issuer 是 system/developer policy 或被 endorsement 的 Skill/manual source，能证明“按什么过程做”。Tool 输入的 issuer 是 trusted registry、MCP broker 或 local command registry，能证明“通过哪个接口、凭证和 sandbox contract 做”。Env 输入的 issuer 是 runtime observer 或 monitor，能证明“哪些对象、值和结果在本次执行中存在”。Env issuer 不能授权目标或流程，但它是本地执行、ActPlane-style lowering 和 tool-result-bound leases 的必要证明来源。
 
 错误合并会产生不同的 false authority path。把 instruction 并入 agent 会把 Skill/manual 中的过程建议提升为用户意图或 approval。把 tool 并入 env 会丢失 schema、credential scope 和 declared side effect 这些接口约束，使工具结果和工具定义共享同一 authority class。把 env 并入 tool 则会让 runtime observations、script outputs 和文档内容获得本不具备的接口可信度。
 
@@ -387,7 +389,7 @@ Intent-carrying lease 的抽象形式为：
 
 其中 \(C_{agent}\) 包含 intent certificate、authorized object/sink selections、approvals、plan stage、agent role 和 parent authority。\(C_{inst}\) 包含 system/developer/user instructions、Skill/manual workflow text、MCP prompts 和 trust endorsements。\(C_{tool}\) 包含 MCP/tool schemas、server identity、credential scope、command/script execution descriptors 和 sandbox contracts。\(C_{env}\) 包含 runtime object existence、cwd/filesystem state、concrete arguments、observed results、runtime evidence 和 resource availability。Active/exhausted lease table、per-lease counters 和 delegation graph 属于 checker state \(\sigma\)，不属于任何可由环境输出填充的 context class。
 
-Checker 以四个 projection functions 读取这些输入类：
+Checker 以四个 projection functions 读取这些输入类。这里的 projection 不是 parser convenience，而是 proof boundary：每个 projection 只返回该 issuer class 拥有的 fields。
 
 \[
 \begin{aligned}
@@ -399,6 +401,21 @@ evidence(e) &\leftarrow \pi_{env}(C_{env}) .
 \]
 
 一个 protected event \(e\) 只有在 \(Req(d)\) 要求的 projections 与同一个 lease \(\kappa\) 的 predicates 一致时才被接受。未被 \(Req(d)\) 要求的输入类可以为空，但 required field 不能从其他 context class 中补齐。例如 instruction 不能补齐 authorized sink，tool schema 不能补齐 user intent，env evidence 不能补齐 approval token。这个 typed field rule 使 \sys 不只是 MCP/tool-call guard，而是跨 Skill instruction、tool interface、runtime environment 和 agent workflow state 的统一 checker transition。
+
+更具体地，令 \(\Phi(e,d)\) 是事件 \(e\) 对 decision class \(d\) 提交的 field-proof set。每个证明项的形状为
+
+\[
+\phi=\langle f, issuer, value, source, prov\rangle .
+\]
+
+Checker 接受 \(e\) 的必要条件是：
+
+\[
+\forall f\in Req(d),\exists \phi\in\Phi(e,d):
+\phi.f=f \land \phi.issuer=owner(f) \land match_\Gamma(\phi.value,\kappa.f).
+\]
+
+这个条件故意不是“存在一组可信 attributes 满足 policy”。它要求每个 required field 都由自己的 issuer class 证明，并且证明值与同一个 active lease 的 predicate 匹配。Env proof 可以证明某个 \texttt{/tmp/out.xlsx} 确实由本次脚本生成；它不能证明该路径是用户授权 output directory。Tool proof 可以证明 \texttt{pdftotext} 的 argv schema；它不能证明当前 PDF 是用户选择对象。Instruction proof 可以证明 Skill workflow 允许调用 extraction step；它不能证明 GitHub sink 或 approval scope。
 
 不同 protected decision 对四类 context 的需求不同。令
 
