@@ -35,13 +35,13 @@ LLM agents 正在从固定工具调用器演变为可扩展执行环境，可以
 
 \section{引言}
 
-LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 API、插件接口或系统调用与宿主交互，因此权限系统可以围绕文件、网络、进程和工具调用来定义。现代 agent extension 的行为则由用户请求、系统策略、扩展说明、外部文档、工具结果和中间总结共同塑造。
+LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 API、插件接口或系统调用与宿主交互，因此权限系统可以围绕文件、网络、进程和工具调用来定义。现代 agent extension 的行为则由用户请求、系统策略、扩展说明、外部文档、工具结果和中间总结共同塑造，尤其是在 Skills、MCP servers 和 agent tool ecosystems 中~\cite{skillguard,skillscope,mcp-spec}。
 
 然而，agent extension 打破了 data 和 authority 的传统边界。一个失败轨迹可以说明这个缺口。用户只要求从两个 PDF 提取表格，并在 \texttt{org/repo-x} 创建一个 summary issue。随后，其中一个 PDF 的隐藏文本诱导 agent 请求完整 GitHub 授权范围，把一次性 issue authority 委托给 summarizer subagent，并在 approval 被消耗后复用同一权限。最终出现的 \texttt{create\_issue(repo=org/repo-x)} 参数仍然等于用户指定的 repository，所以普通 tool/argument guard 可能放行。此时，凭证范围已经被扩大，权限也已经被转移。
 
 根因不是不可信文本进入 prompt 本身，而是 agent runtime 把用户意图、扩展说明、tool metadata、工具结果和运行时输出放进同一个 planning channel。下游 guard 多数在 action materialized 之后才检查 tool、arguments 或 resource。于是，一个对输出内容而言安全的输入，可能对控制决策而言并不安全。PDF text 可以安全地填充 spreadsheet cells，却不应选择 sink、扩大 approval scope 或创建 delegation。本文称这一问题为 context privilege，因为 context 获得了影响 authority-bearing decisions 的权力，而不仅是携带可被引用或总结的信息。
 
-现有防线分别覆盖了这个问题的一部分。Tool guards 和 argument validators 可以拒绝错误对象或非法参数。Static allowlists 和 server-level policies 可以限制可见工具，human approval gates 可以重新引入用户确认，OS sandbox 或 monitor 可以约束文件、网络和进程 side effects。Provenance、taint 和 IFC-style defenses 可以表达部分 flow policy。这些机制是必要的，但剩余缺口在于它们通常不把 future decision authority 表示为可消耗、可过期、可委托的授权状态。这个状态的有效性同时依赖 intent derivation、allowed control provenance、temporal state、budget 和 delegation bounds。
+现有防线分别覆盖了这个问题的一部分。Tool guards、argument validators 和 action-time authority controls 可以拒绝错误对象或非法参数~\cite{authgraph,pact,airguard}。Static allowlists 和 server-level policies 可以限制可见工具。Human approval gates 可以重新引入用户确认。OS sandbox 或 monitor 可以约束文件、网络和进程 side effects~\cite{actplane}。Provenance、taint 和 IFC-style defenses 可以表达部分 flow policy~\cite{camel,prompt-flow-integrity,fides,rtbas,neurotaint}。这些机制是必要的，但剩余缺口在于它们通常不把 future decision authority 表示为可消耗、可过期、可委托的授权状态。这个状态的有效性同时依赖 intent derivation、allowed control provenance、temporal state、budget 和 delegation bounds。
 
 \sys 从这一差异出发。本文的贡献在于把 future decision authority 作为可消耗、可过期、可委托的授权状态，而不是只检查已发生 action 的 provenance。Agent least privilege 的授权单位不应是 tool、resource、context source 或已发生的 action，而应是一次由 intent 铸造、会改变未来 authority state 的受保护转移。换言之，问题从“工具能不能调用”转为“哪个 context 能不能控制一次权限状态转移”。
 
@@ -67,7 +67,7 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 \subsection{Authority and Provenance}
 
-传统权限系统主要围绕 subject、object 和 operation 建模，例如进程是否能读取文件、调用 API 或连接网络。Agent 场景还需要记录 provenance，因为同一个 tool call 的参数可能来自用户选择、扩展说明、工具结果或不可信文档。已有 provenance、taint 和 IFC-style 系统说明不可信输入不应自由流向高影响输出，但它们通常把核心对象放在 observed action 或 data flow 上，而不是把未来 protected decision 本身作为可消耗、可衰减的授权对象。
+传统权限系统主要围绕 subject、object 和 operation 建模，例如进程是否能读取文件、调用 API 或连接网络。Agent 场景还需要记录 provenance，因为同一个 tool call 的参数可能来自用户选择、扩展说明、工具结果或不可信文档。已有 provenance、taint 和 IFC-style 系统说明不可信输入不应自由流向高影响输出~\cite{camel,prompt-flow-integrity,fides,rtbas,neurotaint}，但它们通常把核心对象放在 observed action 或 data flow 上，而不是把未来 protected decision 本身作为可消耗、可衰减的授权对象。
 
 \subsection{Motivating Workflow}
 \label{sec:motivation}
