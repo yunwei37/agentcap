@@ -22,7 +22,10 @@
 \maketitle
 
 \begin{abstract}
-LLM agents 正在从固定工具调用器演变为可扩展执行环境，可以加载 Skills、连接 MCP servers、运行本地脚本，并将任务委托给 subagents；现有权限机制约束工具、文件和网络端点，却很少约束不可信 context 能否影响未来的 tool selection、sink selection、approval scope 或 delegation target。本文的核心 insight 是：agent authorization 的单位不应是 tool permission、context label 或已发生的 action，而应是由当前用户意图铸造、会改变未来 authority state 的 protected-decision transition（受保护的权限状态转移）。\sys 将这种 transition 表示为短期 lease，把 agent、instruction、tool 和 env 四类 issuer-typed required fields 与 control/data provenance、temporal state、budget 和 delegation bounds 绑定，并由 deterministic checker 在副作用或权限转移前原子验证。当前稿呈现设计、形式化和 pilot evidence：在已建模边界内，\sys 拒绝 ACL-style wrappers 会放行的 protected-decision violations，阻止本地 env model-loop 中的 unsafe side effects，并在 local-Qwen 对照中分离 authority surface 与 reward/oracle success；完整端到端 utility、recovery 和独立 expert-oracle 结论仍由 E1--E4 主实验闭环决定。
+LLM agents 正在从固定工具调用器演变为可扩展执行环境，可以加载 Skills、连接 MCP servers、运行本地脚本，并将任务委托给 subagents；现有权限机制约束工具、文件和网络端点，却很少约束不可信 context 能否影响未来的 tool selection、sink selection、approval scope 或 delegation target。
+本文的核心 insight 是：agent authorization 的单位不应是 tool permission、context label 或已发生的 action，而应是由当前用户意图铸造、会改变未来 authority state 的 protected-decision transition（受保护的权限状态转移）。
+\sys 将这种 transition 表示为短期 lease，把 agent、instruction、tool 和 env 四类 issuer-typed required fields 与 control/data provenance、temporal state、budget 和 delegation bounds 绑定，并由 deterministic checker 在副作用或权限转移前原子验证。
+当前稿呈现设计、形式化和 pilot evidence：在已建模边界内，\sys 拒绝 ACL-style wrappers 会放行的 protected-decision violations，阻止本地 env model-loop 中的 unsafe side effects，并在 local-Qwen 对照中分离 authority surface 与 reward/oracle success；完整端到端 utility、recovery 和独立 expert-oracle 结论仍由 E1--E4 主实验闭环决定。
 \end{abstract}
 
 \section{引言}
@@ -50,7 +53,7 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 \begin{enumerate}[leftmargin=*,label=\textbf{C\arabic*.}]
   \item \textbf{Model.} 一个 stateful protected-decision lease model，将 agent 授权单位定义为 intent-minted、issuer-typed、可消耗且可衰减的 authority-state transition（第~\ref{sec:formal} 节）。
   \item \textbf{System.} 一个 checker-centered transaction API with prototype adapters，实现 \texttt{mint}、\texttt{check\_and\_consume}、\texttt{attenuate} 和 \texttt{expire}，包含已实现的 tool/MCP 与 local-env gateways，以及 trace-level instruction/delegation adapter contracts（第~\ref{sec:design}--\ref{sec:implementation} 节）。
-  \item \textbf{Evaluation protocol and pilot evidence.} For this extended abstract, 一个可证伪 evaluation protocol with pilot evidence，把当前 claim 与 full-paper security、least-privilege 和 utility/recovery claims 分开；具体 pilot 数字和未闭环条件在第~\ref{sec:evaluation}--\ref{sec:evidence-status} 节单独报告。
+  \item \textbf{Evaluation protocol and pilot evidence.} For this extended abstract, 一个可证伪 evaluation protocol with pilot evidence，把当前 claim 与 full-paper security、least-privilege 和 utility/recovery claims 分开；full-paper version 应将该贡献替换为完成后的 workload characterization 和 evaluation results。
 \end{enumerate}
 
 \section{背景}
@@ -607,7 +610,7 @@ E2 检验 \sys 生成的 run-time leases 是否比 static extension/server polic
 
 这里不能直接把现有 trace 标注当作 expert lease oracle。Benchmark 标注通常说明攻击是否成功、reference action 是否应该出现、或模型是否调用了某个工具；它们很少标注最小授权对象本身，例如 context source 可影响的 decision class、argument predicate 的最小范围、temporal/budget guards、delegation bounds 或 approval scope。因此现有标注适合 E1/E3 的安全与 utility 判断，但 E2 的 least-privilege claim 仍需要独立 lease 标注。
 
-比较对象包括 domain/global ACL、exact-tool ACL、MCP server allowlist、Skill manifest-style policy、Progent/PCAS/AgentSpec-style policy 和 \sys。指标包括 risk-weighted authority score、exposed tools/methods/sinks/paths/arguments、context-influence breadth、delegation breadth 和 oracle distance。成功条件是独立复核后 \sys 仍在保持授权 data use 的同时降低 authority breadth 和 oracle distance；若 symbolic policy baselines 同样窄，则论文应把 least-privilege claim 收窄为 proof-carrying checker operationalization。
+比较对象包括 domain/global ACL、exact-tool ACL、MCP server allowlist、Skill manifest-style policy、Progent/PCAS/AgentSpec-style policy 和 \sys。Expert labeling rubric 必须覆盖 minimal object scope、allowed influence modes、argument predicates、budget/expiry、delegation bounds 和 approval scope；adjudication 后再计算 risk-weighted authority score、context-influence breadth、delegation breadth 和 oracle distance。成功条件是独立复核后 \sys 仍在保持授权 data use 的同时降低 authority breadth 和 oracle distance；若 symbolic policy baselines 同样窄，则论文应把 least-privilege claim 收窄为 proof-carrying checker operationalization。
 
 \subsection{E3: Context-Influence Mechanism Ablation}
 
@@ -625,9 +628,9 @@ E3 隔离 \sys 的核心机制是否真的是 context influence capability，而
 
 \subsection{E4: Transaction API and Recovery Practicality}
 
-E4 检验 transaction API 在多边界 adapter 和 denial/recovery loop 中是否可用。Primary outcome 是：context placement、tool/MCP invocation、本地 env side effect 和 delegation handoff 是否都在 side effect 或 authority transfer 前调用同一个 checker，并保持 invalid accepted \(=0\)、dangerous execute \(=0\)。Secondary outcomes 是 LLM-assisted compiler/recovery 的实用性：LLM 生成 candidate plans/leases，checker 拒绝 broad/runtime policies 或 missing-proof writes，runtime 返回 structured denial，planner 再生成更窄的替代动作。比较对象包括 LLM-only accept、checker strict、checker+feedback、proof-only/rank-only/filter-only variants 和 checker+CEGAR planner。
+E4 检验 transaction API 在多边界 adapter 和 denial/recovery loop 中是否可用。它有两个 primary outcomes：第一，context placement、tool/MCP invocation、本地 env side effect 和 delegation handoff 是否都在 side effect 或 authority transfer 前调用同一个 checker，并保持 invalid accepted \(=0\)、dangerous execute \(=0\)；第二，denial feedback 是否能在不激活 broad authority 的条件下恢复有效任务进展。Secondary outcomes 是 LLM-assisted compiler/recovery 的细分行为：LLM 生成 candidate plans/leases，checker 拒绝 broad/runtime policies 或 missing-proof writes，runtime 返回 structured denial，planner 再生成更窄的替代动作。比较对象包括 LLM-only accept、checker strict、checker+feedback、proof-only/rank-only/filter-only variants 和 checker+CEGAR planner。
 
-主要指标是 valid recovery without broad authority or dangerous execute。Secondary metrics 包括 invalid leases accepted、valid leases rejected、broad/runtime proposals rejected、broad approval avoided、provenance-proof completeness、tool errors 和 benchmark task reward。Proof completeness 需要区分 precise structured proof、conservative prompt-wide proof 和 missing proof，并把它们分别关联到 accepted actions、false denials 和 successful recoveries。成功条件不是简单增加 executed calls，而是在不激活 broad/runtime authority、零 dangerous execute、零 tool error 的前提下，提高 task-correct executions 或 reward，并减少不必要的 broad approval。若 recovery 仍停滞，论文应把 utility claim 收窄为 bounded safety/proof completeness，并将 planner/candidate generation 明确列为 prototype limitation。
+Secondary metrics 包括 invalid leases accepted、valid leases rejected、broad/runtime proposals rejected、broad approval avoided、provenance-proof completeness、tool errors 和 benchmark task reward。Proof completeness 需要区分 precise structured proof、conservative prompt-wide proof 和 missing proof，并把它们分别关联到 accepted actions、false denials 和 successful recoveries。成功条件不是简单增加 executed calls，而是在不激活 broad/runtime authority、零 dangerous execute、零 tool error 的前提下，提高 task-correct executions 或 reward，并减少不必要的 broad approval。若 recovery 仍停滞，论文应把 utility claim 收窄为 bounded safety/proof completeness，并将 planner/candidate generation 明确列为 prototype limitation。
 
 \section{讨论与局限}
 \label{sec:evidence-status}
@@ -691,6 +694,8 @@ ActPlane & policy & OS event & policy dep. & no & no & OS \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+表~\ref{tab:closest-abstractions} 比较的是 abstraction coverage，而不是实现成熟度。CaMeL/IFC-style work 的核心对象是 flow 或 dependency，不是可消耗的 protected-decision lease。AuthGraph、PACT 和 AIRGuard 更接近 action-time authority/provenance control，但其主要对象仍是 action graph、argument role 或 action guard，而不是 future authority-state transition。SkillGuard/SkillScope 以 Skill package permission 为中心，不能自然表达同一 Skill 在两个 user intents 下获得不同、可消耗的 run-time leases。Progent、PCAS 和 AgentSpec 可以编码丰富 policy，但若要表达本文语义，需要显式采用 issuer-typed fields 和统一 check-and-consume lifecycle。ActPlane 提供 OS-level enforcement substrate，但 policy object 和 context-authority decision 仍来自上层。
 
 \subsection{应用扩展隔离与底层 Enforcement}
 传统扩展系统和 sandbox 关注扩展代码能访问哪些宿主资源。EIM/bpftime 将应用扩展表示为 host resources 和 capabilities，并强调安全、高效的 userspace extension execution~\cite{eim-bpftime}。ActPlane 将 agent policy lowering 到 OS-level enforcement，以覆盖 tool interception 看不到的 file、process 和 network side effects~\cite{actplane}。这些机制适合作为 \sys 的 enforcement backend 或系统对照，但它们不决定 policy 的来源。\sys 的问题在更上层：某个 tool choice、sink selection、approval scope 或 delegation decision 是否由当前用户 intent 授权，并且是否被不可信 context 非法影响。
