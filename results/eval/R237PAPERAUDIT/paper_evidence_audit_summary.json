@@ -102,7 +102,7 @@
     "Some source artifacts still use historical field names such as dangerous_accepted; the paper-facing terminology is unsafe accept/execution."
   ],
   "paper": "docs/autopaper/intentcap-paper-zh.tex",
-  "project_head": "f3b582dc8b0b97dba049233b38036787b381e03b",
+  "project_head": "371cfcb32d8cb9d0b85d6024e41053a3cd33028d",
   "python": "3.12.3",
   "run_id": "R237PAPERAUDIT"
 }
