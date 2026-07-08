@@ -5,7 +5,7 @@
   "checker_allowed": 24,
   "checker_blocked": 48,
   "events": 72,
-  "git_status": "## main...origin/main\n?? scripts/build_e3_benchmark_residual_lift.py\n?? tests/test_build_e3_benchmark_residual_lift.py",
+  "git_status": "## main...origin/main",
   "input_trace_sha256": "8c173778d1478b5be77bbdf9247181432035481ddeb12fafc1e825aa52f823fe",
   "labels": 25,
   "leases": 72,
@@ -17,7 +17,7 @@
   "observed_authentic_tool_objects": 241,
   "output_dir": "results/eval/R219E3LIFT",
   "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
-  "project_head": "856344831562f12230ae6fcd6ab5fd9b32a536bd",
+  "project_head": "19da9c5ceb4bc7616b49844cd9a21073d9c39a44",
   "python": "3.12.3",
   "residual_after_closest_baselines": 48,
   "residual_after_closest_by_scenario": {
