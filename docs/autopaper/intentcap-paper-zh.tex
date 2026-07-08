@@ -27,7 +27,7 @@ LLM agents 正在从固定工具调用器演变为可扩展执行环境，可以
 \sys 的核心观点是：agent authorization 的单位不应是 tool permission、context label 或已发生的 action，而应是由当前用户意图铸造、会改变未来 authority state 的 protected-decision transition（受保护的权限状态转移）。
 \sys 将这种 transition 表示为短期 lease，把 agent、instruction、tool 和 env 四类 issuer-typed required fields 与 control/data provenance、temporal state、budget 和 delegation bounds 绑定。
 一个 deterministic checker 在副作用或权限转移前原子验证 lease，并把通过的 lease lowering 到 tool/MCP gateway、本地 env adapter、instruction placement 和 delegation boundary。
-Prototype evaluation shows that \sys produces 0 dangerous accepts on 3,746 protected events, executes 4 authorized side effects and blocks 6 violations in a 10-event local env suite, and blocks 4 unsafe calls proposed by Qwen3.6 in an adversarial model loop before side effects occur.
+Prototype evaluation shows that \sys produces 0 dangerous accepts on 3,746 protected events, preserves all 3,813 benign reference actions in a proxy replay, executes 4 authorized side effects and blocks 6 violations in a 10-event local env suite, and blocks 4 unsafe calls proposed by Qwen3.6 before side effects occur.
 \end{abstract}
 
 \section{引言}
@@ -56,8 +56,8 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 \begin{enumerate}[leftmargin=*,label=\textbf{C\arabic*.}]
   \item \textbf{Model.} 一个 stateful protected-decision lease model，将 agent 授权单位定义为 intent-minted、issuer-typed、可消耗且可衰减的 authority-state transition（第~\ref{sec:formal} 节）。
-  \item \textbf{System.} 一个 checker-centered transaction API with cross-boundary adapters，实现 \texttt{mint}、\texttt{check\_and\_consume}、\texttt{attenuate} 和 \texttt{expire}，包含已实现的 tool/MCP 与 local-env gateways、trace-level instruction/delegation adapter contracts，以及可 lowering 到 ActPlane-style OS monitor 的 env-side contract（第~\ref{sec:design}--\ref{sec:implementation} 节）。
-  \item \textbf{Evaluation.} 一个覆盖 benchmark-derived traces、local env side effects 和 local Qwen model-loop probes 的 prototype evaluation，报告 protected-event safety、reference-action feasibility、lease-label audit、mechanism residual suites 和 authority-surface/utility slice（第~\ref{sec:evaluation}--\ref{sec:evidence-status} 节）。
+  \item \textbf{System.} 一个 checker-centered transaction API，实现 \texttt{mint}、\texttt{check\_and\_consume}、\texttt{attenuate} 和 \texttt{expire}，包含已实现的 tool/MCP 与 local-env gateways、trace-level instruction/delegation adapter contracts，以及可 lowering 到 ActPlane-style OS monitor 的 env-side contract（第~\ref{sec:design}--\ref{sec:implementation} 节）。
+  \item \textbf{Prototype evidence and evaluation methodology.} 一个覆盖 benchmark-derived traces、local env side effects 和 local Qwen model-loop probes 的 prototype evaluation，报告 protected-event safety、reference-action feasibility、author-adjudicated lease audit、mechanism residual suites 和 authority-surface/utility slice（第~\ref{sec:evaluation}--\ref{sec:evidence-status} 节）。
 \end{enumerate}
 
 \section{背景与动机}
@@ -292,6 +292,8 @@ Denial 是 runtime refinement 的输入，而不是 authority escape hatch。LLM
 \label{sec:formal}
 
 \sys 的形式化目标不是为任意自然语言推理建模，而是为上一节 checker pipeline 的输入和输出提供可检查语义。Compiler、gateway 和 runtime adapters 负责把模型计划、工具调用、MCP 调用、本地执行和 delegation 转换成安全相关事件；checker 只对这些事件、active leases、intent certificate 和 provenance labels 做确定性判断。因此，模型刻意不讨论 LLM 内部是否“理解”指令，而是讨论一个被 instrumentation 暴露出来的 authority-bearing event 是否应被接受。
+
+模型围绕三个 invariant 展开。第一，\textbf{no substitution}: 每个 protected field 必须由自己的 issuer plane 证明，其他 plane 不能代填。第二，\textbf{atomic check/consume}: protected event 的 predicate、provenance、budget、temporal 和 delegation state 必须在同一次 transition 中检查并更新。第三，\textbf{no promotion}: env/tool/instruction context 不能仅凭自然语言内容升级为更高 authority class，除非 trusted issuer 产生显式 endorsement 或 fresh lease mint event。
 
 一个 agent execution 被表示为事件 trace：
 
@@ -602,71 +604,67 @@ Prototype 不是生产级 OS sandbox，也没有完整替换 production MCP brok
 \section{评估}
 \label{sec:evaluation}
 
-评估围绕四个问题组织。E1 测量 \sys 在端到端 agent workflows 中是否降低攻击成功率并保留 utility。E2 测量 run-time leases 是否比 static extension/server policies 更接近 least privilege。E3 是机制性 ablation，检验没有 four-plane no-promotion 和 check-and-consume lifecycle 的替代机制是否接受 full checker 拒绝的 protected-decision violations。E4 测量 transaction API 是否覆盖关键 adapter boundary，并观察 denial feedback 能否恢复有效任务进展。
+Prototype evaluation 围绕四个问题组织。E1 测量同一 protected-event schema 上的 safety 和 reference-action feasibility。E2 测量 author-adjudicated lease labels 是否满足 least-privilege audit invariants。E3 测量 full checker 与 object/action、IFC/provenance 和 split-state composite guards 在 controlled residual suites 上的机制差异。E4 测量 transaction API 是否在本地 env side-effect 和 Qwen3.6 model-loop probes 中阻止 unsafe calls before side effects。
 
-所有实验固定底层模型、任务顺序、工具描述和 prompt budget，尽量只改变授权层。High-impact denials 使用同一个 protected-decision oracle 判定：若某个 protected decision 的 control provenance 来自缺少相应 influence mode 的 context source，则该事件应被拒绝。第~\ref{sec:evidence-status} 节单独报告 prototype evidence 和 scope，避免把 pilot probes 混写成完整 benchmark result。
+所有实验固定底层模型、任务顺序、工具描述和 prompt budget，尽量只改变授权层。High-impact denials 使用同一个 protected-decision oracle 判定：若某个 protected decision 的 control provenance 来自缺少相应 influence mode 的 context source，则该事件应被拒绝。表~\ref{tab:evaluation-matrix} 给出四个实验的 claim alignment。
 
 \subsection{Evaluation Methodology}
 
-Workloads 覆盖 AgentDojo、MCPTox、InjecAgent、tau2-style stateful tasks、Skill/manual injection、本地 command/script side effects 和 delegation workflows~\cite{agentdojo,mcptox,injecagent,tau2bench}。这些 workloads 分别覆盖 agent context、instruction context、tool context 和 env context，而不是只测试 MCP/tool-call 参数。
+Workloads 来自 saved AgentDojo、MCPTox、InjecAgent、tau2-style stateful artifacts、Skill/manual injection、本地 command/script side-effect suites 和 delegation workflows~\cite{agentdojo,mcptox,injecagent,tau2bench}。这些 workloads 分别覆盖 agent context、instruction context、tool context 和 env context，而不是只测试 MCP/tool-call 参数。
 
-Baselines 包括 vanilla agent、static ACL、exact-tool ACL、MCP/server allowlist、Skill manifest-style policy、tool-call guard、OS/sandbox-only wrapper、IFC/taint labeler、action-provenance labeler 和 strongest split-state composite policy。当某个 baseline 只有 trace-level 或概念性复现时，我们把结果标记为 over-the-same-event-schema comparison。Oracle sources 包括 benchmark security/utility labels、protected-decision labels、lease adjudication 和 provenance-proof completeness records。
+Baselines 包括 vanilla/all-tool exposure、static ACL、exact-tool ACL、MCP/server allowlist、Skill manifest-style policy、tool-call guard、OS/sandbox-only wrapper、IFC/taint labeler、action-provenance labeler 和 split-state composite policy。当某个 baseline 只有 trace-level 或概念性复现时，我们把结果标记为 over-the-same-event-schema comparison。Oracle sources 包括 benchmark security/utility labels、protected-decision labels、author-adjudicated lease labels 和 provenance-proof completeness records。
 
 \begin{table}[t]
 \centering
 \scriptsize
 \setlength{\tabcolsep}{2pt}
-\caption{Evaluation matrix. 每个实验对应一个主 claim，而不是把运行编号作为论文结构。}
+\caption{Evaluation matrix. Each experiment maps a prototype workload set to a bounded claim.}
 \label{tab:evaluation-matrix}
 \begin{tabular}{p{0.10\linewidth}p{0.27\linewidth}p{0.25\linewidth}p{0.18\linewidth}p{0.14\linewidth}}
 \toprule
 Exp. & Workloads & Baselines & Primary metric & Claim \\
 \midrule
-E1 & AgentDojo, MCPTox, InjecAgent, tau2-style, Skill/env/delegation tasks & vanilla, static/exact ACL, MCP allowlist, tool guard, sandbox-only & attack success and bounded utility & end-to-end safety/utility \\
-E2 & author-adjudicated and expert lease tasks across four context planes & domain/global ACL, exact ACL, server/manifest policy, \sys & risk-weighted oracle distance & least-privilege authority \\
-E3 & residual suites plus benchmark-derived protected decisions & object/action guard, IFC/provenance guard, split-state composite guard & unauthorized influence accepted & mechanism necessity \\
-E4 & tool/MCP, env side-effect, delegation, and denial/recovery loops & LLM-only, strict checker, checker+feedback, CEGAR planner & dangerous execute and recovery & transaction API practicality \\
+E1 & saved benchmark-derived traces and reference actions & object/tool ACLs, exact-tool wrappers, \sys & dangerous accept, reference coverage & protected-event safety \\
+E2 & 24 author-adjudicated lease labels across context planes & schema/sample/policy-distance audits & invariant pass rate & lease-audit feasibility \\
+E3 & residual workflow-policy suites and benchmark-derived protected decisions & object/action guard, IFC/provenance guard, split-state composite guard & unauthorized influence accepted & mechanism necessity \\
+E4 & local env side-effect suite and Qwen3.6 adversarial model loop & object-only wrapper, \sys checker & unsafe side effects executed & transaction API practicality \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{E1: End-to-End Security and Utility}
+\subsection{E1: Protected-Event Safety and Utility Proxy}
 
-E1 的问题是：在相同模型和相同任务集下，\sys 是否降低 attacker-controlled context 导致的 wrong-sink、approval widening、delegation mismatch 和 unauthorized side effects。Primary comparison 是 vanilla agent、static ACL、exact-tool ACL、MCP/server allowlist、tool-call guard、OS/sandbox-only wrapper 和 evaluated \sys configuration。
+E1 asks whether the checker blocks protected-event violations without ruling out benign reference behavior. The setup replays 3,746 benchmark-derived protected events through \sys and same-event wrappers. It also evaluates a reference-action proxy over 3,813 benign reference actions and 2,556 applicable tool-oracle tasks.
 
-Primary outcome 是 bounded-utility setting 下的 attack success rate。Secondary outcomes 包括 wrong-sink rate、approval/delegation violations、approval-scope breadth、benign completion、false denial/recovery rate 和 provenance-proof completeness。Proof completeness 报告 protected fields 中有多少带 precise structured proof、多少退化为 prompt-wide conservative proof，以及这种退化造成多少 false denial 或 recovery turn。
+The prototype result is conservative on safety: \sys accepts 0 dangerous events in the 3,746-event matrix, while object/tool ACL wrappers accept many protected-decision violations because they do not distinguish context influence authority. On the benign proxy, \sys covers 3,813/3,813 reference actions and passes 2,554/2,556 applicable tool-oracle tasks.
 
-E1 同时报告安全收益和 utility cost。若 \sys 降低危险动作但 benign completion 下降，结论限定为 safety enforcement layer。若攻击仍通过，错误归因到缺失的 provenance source、decision class 或 enforcement boundary，而不是归因于模型“没有遵守提示”。
+This evidence supports protected-event safety and reference-action feasibility. It does not prove that a live agent completes every task under narrow leases. A matched 18-task local-Qwen slice shows the current utility boundary: all-tool exposure raises visible schemas from 2.61 to 14.72 on average and model calls from 62 to 74, while action-reward remains 8/18 and tool-oracle remains 0/18. We therefore report live utility and recovery as separate from same-event safety.
 
-\subsection{E2: Lease Quality and Authority Reduction}
+\subsection{E2: Lease Audit and Authority Reduction}
 
-E2 的问题是：\sys 生成的 run-time leases 是否比 static extension/server policies 更接近 least privilege。实验单位不是单个工具调用，而是一个 run 在完成任务时暴露的 authority surface。样本同时覆盖 agent、instruction、tool 和 env context：stateful utility tasks 提供 agent intent/workflow leases；Skill-style workflows 提供 instruction leases；MCP poisoning 提供 tool/context authority leases；local command/script 或 document-processing workflows 提供 env/sandbox leases。
+E2 asks whether generated leases have the structure needed for least-privilege auditing. The current corpus contains 24 author-adjudicated lease labels spanning agent, tool, env, and partial instruction context. The audit checks schema validity, sampled label consistency, and policy-distance invariants over object scope, influence modes, argument predicates, budget/expiry, delegation bounds, and approval scope.
 
-这里不能直接把现有 trace 标注当作 expert lease oracle。Benchmark 标注通常说明攻击是否成功、reference action 是否应该出现、或模型是否调用了某个工具；它们很少标注最小授权对象本身，例如 context source 可影响的 decision class、argument predicate 的最小范围、temporal/budget guards、delegation bounds 或 approval scope。因此现有标注适合 E1/E3 的安全与 utility 判断，但 E2 的 least-privilege claim 仍需要独立 lease 标注。
+The audit passes 24/24 labels. This result shows that the lease representation can support structured authority-distance analysis and catches schema/sample/policy-distance mistakes in the current corpus.
 
-比较对象包括 domain/global ACL、exact-tool ACL、MCP server allowlist、Skill manifest-style policy、Progent/PCAS/AgentSpec-style policy 和 \sys。Lease rubric 覆盖 minimal object scope、allowed influence modes、argument predicates、budget/expiry、delegation bounds 和 approval scope；adjudication 后计算 risk-weighted authority score、context-influence breadth、delegation breadth 和 oracle distance。若 reference policy 只来自作者标注，结果标记为 author-adjudicated oracle；只有独立复核后的结果才支持 expert-oracle least-privilege claim。
+The claim is deliberately bounded. Because the labels are author-adjudicated rather than independently blinded, E2 supports an author-adjudicated lease-audit result, not an expert-oracle least-privilege conclusion. Independent adjudication is required before claiming that \sys is closer to an expert minimal policy than symbolic policy baselines.
 
 \subsection{E3: Context-Influence Mechanism Ablation}
 
-E3 的 central claim 是：统一的 protected-decision transaction 是必要的。没有这个 transaction，系统即使拥有 object predicates、provenance labels 或独立的 counters/delegation tables，仍会接受 full checker 拒绝的 cross-plane promotion、stale reuse 或 delegation mismatch。E3 不衡量 task utility；它在同一 protected-event schema 上比较 full-mechanism \sys checker 与三个核心对照。
+E3 asks whether the unified protected-decision transaction is doing real work. Without this transaction, a system can have object predicates, provenance labels, and independent counters, yet still accept cross-plane promotion, stale lease reuse, or delegation mismatch.
 
-Workload characterization 先统计 AgentDojo、MCPTox、InjecAgent 和 tau2-style traces 中 protected decisions 的类型、每类 decision 需要的 context planes，以及 observed/prompted violation 是否属于 wrong sink、approval widening、cross-plane promotion、stale lease reuse、delegation mismatch 或 policy update。该步骤区分 naturally occurring protected decisions 与 controlled residual suites。
+当前实验使用 concrete Skill、MCP、subagent 和 local-env workflow 的 controlled residual suites。三个对照族是 object/action guard、IFC/provenance guard 和 split-state composite guard。Residual cases 覆盖 context-class collapse、env/tool metadata misclassification、lifecycle reuse、over-delegation，以及 trusted tool metadata \(\rightarrow\) policy update。
 
-第一个对照是 object/action guard，只维护 operation、object 和 argument predicates。第二个对照是 IFC/provenance guard，维护 labels 和 flow constraints，但不维护 lease consumption 或 delegation partial order。第三个对照是 split-state composite guard，它拥有 stateful ABAC、taint labels、capability counters 和 delegation table，但没有统一的 \(check\_and\_consume\) transition，也不在同一次 transition 中绑定 issuer-typed required fields、control-provenance proof、lease consumption 和 delegation state。
+Full \sys rejects the residual lifecycle/no-promotion violations in these suites. Closest labelers accept cases where trusted tool metadata supplies policy authority or where generic provenance collapses agent/instruction/tool/env fields. The result supports the mechanism claim on controlled residual attacks: no-substitution, no-promotion, and atomic check/consume must be checked together.
 
-四类 context 的 collapse/misclassification cases 被纳入这些对照的 residual suites：合并型配置将 agent/instruction/tool/env 合并成 generic context；误分类配置允许 env output 或 tool metadata 在没有 endorsement 时升级为 instruction/agent context。Incremental lifecycle ablation 每次只加入 trusted mint、decision-specific influence、consumption/expiry、delegation partial order 和 no-promotion 的真子集，观察对照是否仍接受 full checker 拒绝的 residual violation。
-
-关键指标是 protected decisions 中 unauthorized context control 的接受率，以及每个 denial 是否由 lease semantics、temporal guards、budget、delegation 或 proof constraints 解释。若最强 baseline 在同一事件 schema 上加入等价的原子授权对象后解释所有 denials，我们把它归类为 semantic-equivalent baseline，并把结论限定为 proof-carrying lease compiler/checker organization。
-
-Prototype local workflow-policy sanity check 是 E3 的 controlled mechanism evidence。Benchmark-scale novelty evidence 还取决于 workload characterization 和 strongest composite baseline 的同 schema comparison。
+This is controlled mechanism evidence, not a benchmark-scale prevalence claim. Benchmark-scale prevalence requires workload characterization over AgentDojo, MCPTox, InjecAgent, and tau2-style traces showing how often naturally occurring protected decisions require the same four-plane and lifecycle checks.
 
 \subsection{E4: Transaction API and Recovery Practicality}
 
-E4 检验 transaction API 在多边界 adapter 和 denial/recovery loop 中是否可用。第一个 outcome 是 context placement、tool/MCP invocation、本地 env side effect 和 delegation handoff 是否都在 side effect 或 authority transfer 前调用同一个 checker，并保持 invalid accepted \(=0\)、dangerous execute \(=0\)。第二个 outcome 是 denial feedback 是否能在不激活 broad authority 的条件下恢复有效任务进展。
+E4 asks whether the transaction API blocks side effects at a real local boundary. The local env suite contains 10 script/file/network/context events. Full \sys preserves 4 authorized effects and rejects 6 violations before side-effect handlers run.
 
-E4 将 LLM-assisted compiler/recovery 拆成可解释的步骤：LLM 生成 candidate plans/leases，checker 拒绝 broad/runtime policies 或 missing-proof writes，runtime 返回 structured denial，planner 再生成更窄的替代动作。比较对象包括 LLM-only accept、checker strict、checker+feedback、proof-only/rank-only/filter-only variants 和 checker+CEGAR planner。
+The real local probe executes 4 \sys-authorized effects, blocks 6 before side effects, and executes 0 unsafe effects. The object-only wrapper executes 8 effects, including 4 unsafe effects, and modifies the isolated secret file. This validates the pre-side-effect gateway contract for local env events.
 
-Secondary metrics 包括 invalid leases accepted、valid leases rejected、broad/runtime proposals rejected、broad approval avoided、provenance-proof completeness、tool errors 和 benchmark task reward。Proof completeness 区分 precise structured proof、conservative prompt-wide proof 和 missing proof，并把它们关联到 accepted actions、false denials 和 successful recoveries。Recovery claim 只在不激活 broad/runtime authority、零 dangerous execute、零 tool error 的条件下解释。
+In the Qwen3.6 adversarial model loop over the same 10 events, the model returns 8 calls, including 4 unsafe calls. \sys executes only the 4 authorized calls and blocks all 4 unsafe calls before side effects. The object-only wrapper executes 7 calls, including 3 unsafe effects, and modifies the isolated secret file. This supports transaction API practicality for a local env adapter and an untrusted model proposer; it does not claim production sandbox replacement.
 
 \section{范围与局限}
 \label{sec:evidence-status}
@@ -703,9 +701,9 @@ Fresh local-Qwen online slice & agent/tool/env & In a matched 18-task local-Qwen
 \subsection{Limitations}
 Prototype evaluation supports the claim that protected-decision transitions can be formalized and enforced at instrumented boundaries. 它不单独证明所有 agent workloads 的完整 end-to-end security，也不证明 user experience 的 approval burden 已经最小化。
 
-更强的 security claim 以 E1 和 E3 为证据条件：benchmark-scale workflows 中 attack success、wrong-sink、approval widening、delegation mismatch 和 policy-update violations 显著下降，并且 workload characterization 显示这些 protected decisions 不是人工构造的孤例。Least-privilege claim 以 E2 的 independent expert-oracle replication 为证据条件；author-adjudicated labels、policy-distance scoring 和机器审计只支撑 pilot-level conclusion。Utility/recovery claim 以 E4 为证据条件：denial feedback 和 evidence-bound repair 在不激活 broad/runtime authority、零 dangerous execute 和零 tool error 的前提下提升 task-correct executions 或 reward。
+第一，当前 workloads 仍以 saved traces、reference-action proxies、controlled residual suites 和 local probes 为主。它们覆盖 agent/tool/env/instruction/delegation 边界，但不能替代更大规模的 online user-simulator evaluation。第二，E2 使用 author-adjudicated lease labels。它能检查 lease schema 和 authority-distance invariants，但不能替代 blinded independent expert replication。第三，本地 env backend 在隔离目录中验证 pre-side-effect blocking。它不是 production OS sandbox；ActPlane-style monitor 是 env adapter 的强化 backend，而不是本文已完整实现的 runtime。
 
-这一级别划分也约束负结果的写法。若 E1 utility 不足，\sys 只能主张 safety enforcement layer，而不是完整端到端 agent 安全；若 E2 oracle distance 不优于 symbolic policy baselines，least-privilege synthesis claim 应收窄为 proof-carrying checker operationalization；若 E3 的 strongest composite baseline 采用统一 lease API 后同样通过，结论应是该 baseline 实现了本文识别出的 transaction boundary，而不是被 \sys “击败”；若 E4 recovery 停滞，recovery 只能作为 diagnostic/refinement mechanism。
+这些限制不改变本文的机制性结论，但限定了外推范围。\sys 证明的是 instrumented protected-decision events 可以由 intent-derived, provenance-gated, consumable leases 管理；完整 workload utility、approval burden、independent expert-oracle least privilege 和 production sandbox integration 需要分别报告，而不能由当前 prototype numbers 自动推出。
 
 \section{相关工作}
 
