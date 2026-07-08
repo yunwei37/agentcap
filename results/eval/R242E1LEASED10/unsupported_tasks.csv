@@ -1,0 +1,8 @@
+domain,task_id,reason
+airline,0,no_assistant_reference_actions
+telecom,[mobile_data_issue]user_abroad_roaming_enabled_off[PERSONA:None],no_assistant_reference_actions
+telecom,[mobile_data_issue]data_mode_off[PERSONA:None],no_assistant_reference_actions
+telecom,[mobile_data_issue]data_saver_mode_on[PERSONA:Easy],no_assistant_reference_actions
+telecom,[mobile_data_issue]bad_network_preference[PERSONA:Hard],no_assistant_reference_actions
+telecom,[mobile_data_issue]bad_vpn[PERSONA:None],no_assistant_reference_actions
+telecom,[mobile_data_issue]airplane_mode_on|user_abroad_roaming_enabled_off[PERSONA:None],no_assistant_reference_actions
