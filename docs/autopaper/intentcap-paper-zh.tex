@@ -27,7 +27,7 @@ LLM agents 正在从固定工具调用器演变为可扩展执行环境，可以
 现有权限机制主要约束工具、文件和网络端点，难以表达哪个 context 被允许控制一次 authority-bearing decision。
 结果是 agent 可能发出参数看似合法的调用，却已经通过不可信 context 扩大 approval、复用一次性权限或错误委托 authority。
 \sys 将 agent authorization 的单位定义为 protected-decision lease，而不是 tool permission、context label 或已发生的 action。
-每个 lease 绑定当前用户意图、issuer-owned proof、provenance、预算、过期和委托约束，并由 deterministic checker 在副作用、prompt placement 或权限转移前原子验证。
+每个 lease 分别从 agent、instruction、tool 和 env 四类 issuer-owned context 中取证，绑定当前用户意图、provenance、预算、过期和委托约束，并由 deterministic checker 在副作用、prompt placement 或权限转移前原子验证。
 当前原型执行 tool/live-callable 和 local-env 边界，并用本地 probes 验证 context placement、delegation 和 Skill instruction placement。
 在 same-event protected-event replay 上，\sys 对 3,746 个危险 protected events 产生 0 个误接受，并在 tau2-style reference-action proxy 中覆盖 3,813/3,813 个 reference actions。
 在 38 个本地多边界 attempts 上，\sys 产生 0 个 unsafe effects/placements，并拒绝弱化 variants 会接受的 issuer-substitution、env side-effect 和 delegation violations。
@@ -41,7 +41,7 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 根因不是不可信文本进入 prompt 本身，而是两个结构性错配。第一是 \textbf{issuer collapse}: agent runtime 把用户意图、Skill/manual instructions、tool metadata、工具结果和运行时输出放进同一个 planning channel，使一类 context 可以替另一类 context 补齐 authority field。Wrong sink 和 approval widening 属于这种错配。第二是 \textbf{authority-state split}: 下游 guard 多数在 action materialized 后才检查 tool、arguments 或 resource，而 lease consumption、expiry、delegation 和 mint provenance 分散在不同状态中。Stale reuse 和 over-delegation 属于这种错配。于是，一个对输出内容而言安全的输入，可能对控制决策而言并不安全。PDF text 可以安全地填充 spreadsheet cells，却不应选择 sink、扩大 approval scope 或创建 delegation。本文称这一问题为 context privilege，因为 context 获得了影响 authority-bearing decisions 的权力，而不仅是携带可被引用或总结的信息。
 
-这个根因要求系统区分四类 proof boundary。以本地 PDF extraction 为例，agent context 证明用户选中了哪些 PDF 和哪个 GitHub sink，instruction/Skill/manual context 证明 extraction workflow，tool/MCP/cmd context 证明 binary、schema、credential scope 和 sandbox contract，env/runtime context 证明本次运行实际看到的路径、stdout、tool result 和文件状态。后三类不能合并成一个 generic context。把 env 合并进 tool 或 instruction，会让 tool result、script output、PDF text 和 subagent summary 获得本不具备的接口权威或过程权威。把 tool metadata 合并进 agent，又会让 server description 变成用户授权。第~\ref{sec:design} 节给出完整 taxonomy 和形式化规则。
+这个根因要求系统区分四类 proof boundary。以本地 PDF extraction 为例，agent context 证明用户选中了哪些 PDF 和哪个 GitHub sink，instruction/Skill/manual context 证明 extraction workflow，tool/MCP/cmd context 证明 binary、schema、credential scope 和 sandbox contract，env/runtime context 证明本次运行实际看到的路径、stdout、tool result 和文件状态。后三类不能合并成一个 generic context。把 env 合并进 tool 或 instruction，会让 tool result、script output、PDF text 和 subagent summary 获得本不具备的接口权威或过程权威。把 tool metadata 合并进 agent，又会让 server description 变成用户授权。四类划分不是 ontology claim，而是 checker interface claim：每类输入由不同 issuer 产生，拥有不同可证明字段，且在不同 runtime boundary 被观察。第~\ref{sec:design} 节给出完整 taxonomy 和形式化规则。
 
 现有防线分别覆盖了这个问题的一部分。Tool guards、argument validators 和 action-time authority controls 可以拒绝错误对象或非法参数~\cite{authgraph,pact,airguard}。Static allowlists 和 server-level policies 可以限制可见工具。Human approval gates 可以重新引入用户确认。OS sandbox 或 monitor 可以约束文件、网络和进程 side effects~\cite{actplane}。Provenance、taint 和 IFC-style defenses 可以表达部分 flow policy~\cite{camel,prompt-flow-integrity,fides,rtbas,neurotaint}。这些机制是必要的，但本文比较的是默认 authorization object，而不是声称这些系统无法额外编码类似规则。若一个 policy DSL 要等价支持 \sys，它必须显式加入 issuer-owned fields、结构化 proof object，以及原子更新的 lease consumption、expiry 和 delegation state。\sys 的贡献是把这组约束作为 agent protected-decision 的统一授权对象。
 
@@ -58,8 +58,8 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 因此，本文贡献限定在已 instrumented protected-decision boundaries 上的模型、系统接口和有界证据：
 
 \begin{enumerate}[leftmargin=*,label=\textbf{C\arabic*.}]
-  \item \textbf{Model.} 一个 issuer-owned atomic protected-decision lease model，定义 field owner、no-substitution typing rule 和原子 lifecycle transition（第~\ref{sec:formal} 节）。
-  \item \textbf{System.} 一个 checker-centered protected-transition API 和 adapter contract，要求 tool/MCP policy events、local-env side effects、context placement 和 delegation handoff 在 side effect、prompt placement 或 handoff 前提交同一种 issuer-owned proof（第~\ref{sec:design}--\ref{sec:implementation} 节）。
+  \item \textbf{Model.} 一个 issuer-owned atomic protected-decision lease model，定义 agent、instruction、tool 和 env 四类证明边界、field owner、no-substitution typing rule 和原子 lifecycle transition（第~\ref{sec:formal} 节）。
+  \item \textbf{System.} 一个 checker-centered protected-transition API 和 adapter contract，要求 tool/MCP policy events、local-env side effects、context placement 和 delegation handoff 在 side effect、prompt placement 或 handoff 前提交四类 issuer-owned proof（第~\ref{sec:design}--\ref{sec:implementation} 节）。
   \item \textbf{Evidence.} 一个有界评估，展示 same-event protected-decision safety、去掉 issuer ownership 或 atomic lifecycle 后的 controlled false accepts，以及本地多边界 pre-side-effect/placement/handoff enforcement；lease auditability 作为辅助证据报告（第~\ref{sec:evaluation}--\ref{sec:evidence-status} 节）。
 \end{enumerate}
 
@@ -209,6 +209,8 @@ G4 & C2 & E4 / E3 & unsafe side effects/placements/handoffs executed, and checke
 这四类不能按“文本长得像什么”合并。两个来源只有在 issuer、可伪造面、可证明的 authority field 和观测边界都相同时才可以合并。同一段文本如果来自被 endorsement 的 \texttt{SKILL.md} 或手册，可能在 workflow scope 内成为 instruction context；如果来自普通 PDF、网页、tool result、script output 或 subagent summary，即使内容像指令，也仍是 env context。Command-line tools 也不是第五类：binary、argv schema 和 sandbox profile 属于 tool context；实际 cwd、输入文件、stdout/stderr 和文件系统变化属于 env context。
 
 错误合并会产生不同的 false authority path。把 instruction 并入 agent 会把 Skill/manual 中的过程建议提升为用户意图或 approval。把 tool 并入 agent 会让 server/interface description 变成用户授权。把 env 并入 tool 会让 runtime observations、script outputs 和文档内容获得本不具备的接口可信度。把 tool 并入 env 又会丢失 schema、credential scope 和 declared side effect 这些接口约束。ABAC 问的是一组 attributes 是否满足 policy rule；\sys 问的是四类独立签发的 inputs 是否共同授权一次 authority-state transition，并且禁止一类输入替另一类输入补齐缺失字段。
+
+这也解释了为什么三类模型不够。若把 instruction 合并进 tool，Skill/manual 的过程文本会与 MCP schema、command binary 和 credential scope 共用同一证明通道，导致“如何做”可以替代“接口允许什么”。若把 env 合并进 tool，运行时结果、stdout 和文件状态会继承工具接口的静态可信度，导致“观察到了什么”可以替代“接口声明了什么”。若把 instruction 或 tool 合并进 agent，扩展说明或 server metadata 就可能替代用户选择、approval 或 delegation root。四类边界因此对应四个不可互相代填的证明问题：用户授权了什么，流程如何被允许执行，哪个接口可以被调用，以及本次运行实际观测到了什么。
 
 \begin{table}[t]
 \centering
@@ -407,6 +409,8 @@ evidence(e) &\leftarrow \pi_{env}(C_{env}) .
 \[
 \forall e,\sigma,\kappa.\quad Accept_h(e,\sigma,\kappa) \Rightarrow Accept(e,\sigma,\kappa).
 \]
+
+这给出一个可测试的最小性命题。若存在事件 \(e\)、状态 \(\sigma\)、lease \(\kappa\) 和折叠映射 \(h\)，使得 \(Accept_h(e,\sigma,\kappa)\) 成立但 \(Accept(e,\sigma,\kappa)\) 不成立，则被 \(h\) 合并的输入类不是等价 proof boundary。这样的反例不需要改变 tool name、argument value 或 prompt slot，只需要把同一个 field proof 的 issuer class 从合法 owner 换成被合并后的其他来源。换言之，四类模型的必要性不是由类别名称决定，而是由是否存在 class-substitution false accept 决定。
 
 E3 的 residual suites 和 R220/R224 的 authority-input evidence 就是在寻找该蕴含式的反例：同一 object、argument 或 prompt slot 保持不变，只替换 issuer class。若折叠后的 checker 接受而四类 checker 拒绝，说明被合并的两类拥有不同 authority fields，不能作为同一个 proof boundary。这个定义把“四类不是三类”的主张变成可测试的 false-accept 条件，而不是命名偏好。
 
