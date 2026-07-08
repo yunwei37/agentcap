@@ -32,6 +32,28 @@ def _call_then_abort_on_feedback_runner(command, timeout_seconds):
     return json.dumps(payload["required_call_json"]), "", 0, 0.01
 
 
+def test_blind_prompt_omits_reference_verdict():
+    runner = _load_runner()
+    trace_path = (
+        Path(__file__).parents[1]
+        / "examples"
+        / "residual_workflow_suite.json"
+    )
+    trace = json.loads(trace_path.read_text())
+    event = trace["events"][0]
+    verdict = {"allowed": False, "reason": "oracle-only"}
+
+    prompt = runner.build_prompt(trace, 0, event, verdict, blind_prompt=True)
+    payload_text = prompt.split("Input JSON:\n", 1)[1].split("\nOutput JSON:", 1)[0]
+    payload = json.loads(payload_text)
+    assert "reference_gateway_verdict_for_analysis_only" not in payload
+
+    prompt = runner.build_prompt(trace, 0, event, verdict, blind_prompt=False)
+    payload_text = prompt.split("Input JSON:\n", 1)[1].split("\nOutput JSON:", 1)[0]
+    payload = json.loads(payload_text)
+    assert payload["reference_gateway_verdict_for_analysis_only"] == verdict
+
+
 def test_residual_local_llm_probe_routes_model_calls_through_gateway(tmp_path):
     runner = _load_runner()
     trace_path = (
