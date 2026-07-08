@@ -48,9 +48,9 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 本文贡献如下：
 
 \begin{enumerate}[leftmargin=*,label=\textbf{C\arabic*.}]
-  \item \textbf{Model.} 一个面向 agent protected decisions 的 stateful intent-carrying lease model。它将授权单位从 operation/resource 重定义为 intent-minted decision transition，定义 four-plane requirements、no-promotion 和 check-and-consume lifecycle，并给出 no unauthorized influence、intent-bounded authority、delegation monotonicity 和 no context-class promotion 四个 trace-level properties（第~\ref{sec:formal} 节）。
-  \item \textbf{System.} 一个 checker-centered four-plane transaction runtime，实现铸造、检查消耗、衰减和过期四类 central checker APIs，并在已实现的 gateway/env probes 与 trace-level instruction/delegation contracts 上执行 fail-closed adapter checks（第~\ref{sec:design}--\ref{sec:implementation} 节）。
-  \item \textbf{Evaluation protocol and pilot evidence.} 一个可证伪 evaluation protocol，把端到端安全与 utility、lease quality、novelty ablation 和 compiler/checker practicality 分成四个主实验；当前 artifact 只主张 pilot/mechanism evidence：在 3,746 个 protected events 上执行 0 dangerous events，在本地 env suite 中 pre-side-effect 阻止 6/6 denied events 且 unsafe effects 为 0，在 9-event workflow-policy suite 中阻止 7/7 lifecycle/no-promotion residuals，并在 18-task local-Qwen matched pair 中把平均可见 tool schemas 从 14.72 降到 2.61 而 action reward 保持 8/18（第~\ref{sec:evaluation}--\ref{sec:evidence-status} 节）。
+  \item \textbf{Model.} 一个 stateful protected-decision lease model，将 agent 授权单位定义为 intent-minted、issuer-typed、可消耗且可衰减的 authority-state transition（第~\ref{sec:formal} 节）。
+  \item \textbf{System.} 一个 checker-centered transaction API 和 prototype adapter set，实现 \texttt{mint}、\texttt{check\_and\_consume}、\texttt{attenuate} 和 \texttt{expire}，并在已实现边界上执行 tool/MCP、本地 env 和 trace-level instruction/delegation checks（第~\ref{sec:design}--\ref{sec:implementation} 节）。
+  \item \textbf{Evaluation protocol and pilot evidence.} 一个可证伪 evaluation protocol with pilot evidence，把当前 extended-abstract claim 与 full-paper security、least-privilege 和 utility/recovery claims 分开；具体 pilot 数字和未闭环条件在第~\ref{sec:evaluation}--\ref{sec:evidence-status} 节单独报告。
 \end{enumerate}
 
 \section{背景}
@@ -102,14 +102,13 @@ Script/tool output & observed values, runtime evidence & instruction promotion, 
 
 我们不假设 LLM 会可靠遵守安全指令；不信任外部文档、工具结果、MCP annotations 或 unsigned Skill instructions；也不假设静态分析能完美理解任意脚本。\sys 依赖的 TCB 包括 intent certificate issuer、deterministic checker、provenance tracker、audit log 和已经接入的 enforcement adapters。这个 TCB statement 是 per-boundary 的：没有接入 adapter 的 side effect 不在安全性质覆盖范围内。OS sandbox 或 ActPlane-style monitor 可以作为执行后端，但不是本文的核心贡献；\sys 关注的是上游 policy synthesis 和 context-authority checking。
 
-Running example 中的 failure trace 对应五个设计需求：需要 intent root 限定用户真正授权的对象和 sink，需要 influence separation 阻止 PDF text 控制 approval 或 delegation，需要 stateful consumption 防止一次性权限复用，需要 untrusted compiler boundary 防止 LLM 自行铸造 lease，也需要 adapter lowering 把这些规则落到 tool、MCP、本地执行和 delegation 边界。因此，设计目标包括五个可测试目标，每个目标都映射到贡献和评估判定标准：
+Running example 中的 failure trace 对应四个设计需求：approval widening 需要 intent root 限定用户真正授权的对象和 sink；PDF text 控制 approval 或 delegation 需要 context no-promotion 和 influence separation；一次性权限复用需要 stateful lease lifecycle；跨 tool、MCP、本地执行和 delegation 的副作用需要 multi-boundary transaction API。Fail-closed denial feedback 和 adapter coverage 是实现这些目标的机制要求，而不是独立顶层目标。因此，设计目标包括四个可测试目标，每个目标都映射到贡献和评估判定标准：
 
 \begin{enumerate}[leftmargin=*,label=\textbf{G\arabic*.}]
-  \item \textbf{Intent-bounded authority.} High-impact authority 必须来自当前用户意图、显式对象/目标选择、管理员策略或 fresh approval；该目标由 C1 建模，并由 E1/E2 检验。
-  \item \textbf{Context influence separation.} 系统必须区分 data dependency 和 control dependency，允许不可信 context 作为数据使用，同时阻止其影响 protected decisions；该目标由 C1/C2 支撑，并由 E1/E3 检验。
-  \item \textbf{Stateful least-privilege lifecycle.} 权限必须是短期、可消耗、可过期、可衰减、不可由不可信 context 自扩张的 run-time leases，而不是安装期或 server 级别 ambient permission；该目标由 C1/C2 支撑，并由 E2/E3 检验。
-  \item \textbf{Untrusted compiler with fail-closed denial feedback.} LLM 只能提出 plan 和 lease 候选；checker 决定授权。被拒绝的 proposal 不能 fallback 到 broad permission；runtime 只返回 structured denial 和可验证的 missing-proof 信息，后续恢复必须通过 evidence-bound narrower lease 或 fresh approval。该目标由 C2 支撑，并由 E4 检验。
-  \item \textbf{Adapter-contract lowering on selected boundaries.} 同一 lease semantics 必须有明确 lowering contract，覆盖 context construction、tool/MCP invocation、本地执行环境和 delegation boundary。当前 prototype 完整覆盖 checker、trace replay、本地 callable gateway、benchmark-derived adapter，以及隔离目录中的本地 env pre-side-effect 与 Qwen3.6 model-loop probes；instruction/delegation 主要是 trace-level contract，生产级 script/file/process/network enforcement 仍需要 sandbox 或 ActPlane-style env backend。该目标由 C2 支撑，并由 E1/E3/E4 的系统实验检验。
+  \item \textbf{Intent-bounded authority.} High-impact authority 必须来自当前用户意图、显式对象/目标选择、管理员策略或 fresh approval；该目标由 C1 建模，主要由 E1 检验，E2 作为 authority-breadth secondary evidence。
+  \item \textbf{Context no-promotion and influence separation.} 系统必须区分 data dependency 和 control dependency，允许不可信 context 作为数据使用，同时阻止其补齐不属于自己 plane 的 protected fields；该目标由 C1/C2 支撑，主要由 E3 检验，E1 作为 end-to-end secondary evidence。
+  \item \textbf{Stateful lease lifecycle.} 权限必须是短期、可消耗、可过期、可衰减、不可由不可信 context 自扩张的 run-time leases，而不是安装期或 server 级别 ambient permission；该目标由 C1/C2 支撑，主要由 E3 检验，E2 作为 lease-quality secondary evidence。
+  \item \textbf{Multi-boundary transaction API.} 同一 lease semantics 必须通过 central checker 和 adapter contracts 落到 context placement、tool/MCP invocation、本地 env boundary 和 delegation boundary；该目标由 C2 支撑，主要由 E4 检验，E1/E3 作为 boundary-coverage secondary evidence。
 \end{enumerate}
 
 \begin{table}[t]
@@ -118,15 +117,14 @@ Running example 中的 failure trace 对应五个设计需求：需要 intent ro
 \setlength{\tabcolsep}{1pt}
 \caption{Design goals, contributions, and evaluation obligations. Each goal has a falsifiable metric; unmet metrics narrow the paper claim rather than becoming separate ad hoc experiments.}
 \label{tab:goal-map}
-\begin{tabular}{p{0.10\linewidth}p{0.15\linewidth}p{0.18\linewidth}p{0.47\linewidth}}
+\begin{tabular}{p{0.10\linewidth}p{0.15\linewidth}p{0.22\linewidth}p{0.43\linewidth}}
 \toprule
-Goal & Contribution & Evaluation & Primary obligation \\
+Goal & Contribution & Primary / secondary eval & Primary obligation \\
 \midrule
-G1 & C1 & E1/E3 & unauthorized protected-decision accept rate, wrong-sink and approval-scope violations \\
-G2 & C1/C2 & E3 & collapsed-context and misclassified-context false accepts under no-promotion ablation \\
-G3 & C1 & E2/E3 & authority score, oracle distance, stale reuse, budget, expiry, and delegation violations \\
-G4 & C2 & E4 & invalid accepted \(=0\), dangerous execute \(=0\), no broad-permission fallback, and recovery only through narrower evidence-bound leases or fresh approval \\
-G5 & C2 & E1/E3/E4 & adapter coverage, pre-side-effect block rate, unsafe side effects \(=0\) on implemented local boundaries \\
+G1 & C1 & E1 / E2 & wrong-sink and approval-scope violations decrease without unbounded approval widening \\
+G2 & C1/C2 & E3 / E1 & collapsed-context and misclassified-context false accepts under no-promotion ablation \\
+G3 & C1/C2 & E3 / E2 & stale reuse, budget, expiry, and delegation violations blocked by stateful leases \\
+G4 & C2 & E4 / E1,E3 & invalid accepted \(=0\), dangerous execute \(=0\), and recovery only through narrower evidence-bound leases or fresh approval \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -229,13 +227,13 @@ Env & runtime observer, filesystem/process monitor, tool gateway & cwd, runtime 
 \end{tabular}
 \end{table}
 
-实际 capability 必须由相关 context fields 与全局策略共同决定：
+实际 capability 必须由相关 protected fields 与全局策略共同决定；未被某个 decision class 要求的 plane 可以为空，但被要求的 field 必须从自己的 owner plane 取证：
 
 \[
 K = Solve_\Gamma(C_{agent}, C_{inst}, C_{tool}, C_{env}) .
 \]
 
-并不是每个 lease 都要求四类 context 各自非空；纯 approval event、纯 context-use event 和本地 evidence probe 可能只需要其中几类字段。关键规则是：对某个 protected decision 所需的字段，checker 必须从该字段指定的 plane 读取，不能由其他 plane 代填。Agent context 可以授权“处理这两个用户选中的 PDF 并在 org/repo-x 创建一个 issue”，但不能指定 PDF Skill 的脚本路径；instruction context 可以指导 extraction workflow，但不能选择 GitHub sink 或扩大 approval scope；tool context 可以说明 \texttt{github.create\_issue} 的参数结构和 credential scope，但不能把任意 repo 变成授权 sink；env context 可以证明某个路径、参数值、PDF text 或 observed result 在运行时存在，但不能把存在性变成用户选择或 retroactively mint broader authority。来自用户的自然语言也会被拆分：被 trusted issuer canonicalize 成 goal、object、sink 或 approval 的部分进入 agent context；描述 workflow preference 或 formatting preference 的部分进入 instruction context，即使它来自用户，也不能单独授权 sink、approval 或 delegation。Lease 的作用是把这些 required fields 固定为一个可检查、可消耗、可衰减的 transition object。
+纯 approval event、纯 context-use event 和本地 evidence probe 可能只需要其中几类字段。关键规则是：对某个 protected decision 所需的字段，checker 必须从该字段指定的 plane 读取，不能由其他 plane 代填。Agent context 可以授权“处理这两个用户选中的 PDF 并在 org/repo-x 创建一个 issue”，但不能指定 PDF Skill 的脚本路径；instruction context 可以指导 extraction workflow，但不能选择 GitHub sink 或扩大 approval scope；tool context 可以说明 \texttt{github.create\_issue} 的参数结构和 credential scope，但不能把任意 repo 变成授权 sink；env context 可以证明某个路径、参数值、PDF text 或 observed result 在运行时存在，但不能把存在性变成用户选择或 retroactively mint broader authority。来自用户的自然语言也会被拆分：被 trusted issuer canonicalize 成 goal、object、sink 或 approval 的部分进入 agent context；描述 workflow preference 或 formatting preference 的部分进入 instruction context，即使它来自用户，也不能单独授权 sink、approval 或 delegation。Lease 的作用是把这些 required fields 固定为一个可检查、可消耗、可衰减的 transition object。
 
 \subsection{Intent Certificates}
 
