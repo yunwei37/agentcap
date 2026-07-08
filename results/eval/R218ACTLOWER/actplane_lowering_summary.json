@@ -6,7 +6,7 @@
   "decision_mismatches": 0,
   "default_action": "deny",
   "events": 10,
-  "git_status": "## main...origin/main\n M docs/autopaper/intentcap-paper-zh.tex\n M docs/design.md\n M docs/evaluation.md\n M docs/implementation.md\n?? docs/tmp/2026-07-08-iter-refine-writing/round-13-actplane-lowering.md\n?? results/eval/R218ACTLOWER/\n?? scripts/lower_env_leases_actplane.py\n?? tests/test_lower_env_leases_actplane.py",
+  "git_status": "## main...origin/main",
   "input_trace_sha256": "a1d5fa355deb0a837e8d5848467bcfbb02697ddff9b94ca5fa4a48fb8e3fdccf",
   "lowered_rules": 4,
   "monitor_allowed": 4,
@@ -19,7 +19,7 @@
   ],
   "output_dir": "results/eval/R218ACTLOWER",
   "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
-  "project_head": "5fdc7c673ba1ac5835876f3294a1abee55c8ae0d",
+  "project_head": "334d86790063e9f0c63ef275edee5a521c182ab1",
   "python": "3.12.3",
   "rule_counts": {
     "context.use": 1,
