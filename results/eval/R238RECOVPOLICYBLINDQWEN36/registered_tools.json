@@ -1,0 +1,8 @@
+[
+  "/skills/pdf/extract_tables.py",
+  "agent.policy",
+  "calendar_summary_subagent",
+  "github.create_issue",
+  "github.issue_scope_approval",
+  "pdf.review.summary"
+]
