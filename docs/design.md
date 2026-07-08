@@ -9,6 +9,8 @@ Completeness: partial
 
 IntentCap now treats capability synthesis as a pre-effect multi-issuer commit over four authority-input classes, not as extraction from one prompt context and not as a three-way split between agent/tool/environment. The four classes are issuer-owned proof projections for one protected-decision transition; they are not component names or ABAC namespaces.
 
+The core systems claim is not predicate expressiveness. A sufficiently rich policy DSL can encode many of the same boolean checks. The claim is that an agent runtime needs a minimum commit interface: before any side effect, prompt authority placement, or handoff, the adapter must submit an authority-state transition record containing issuer-owned field proofs, provenance, the active lease, and checker state. The checker must accept and update budget/expiry/delegation state atomically. Without that single commit object, independent guards must separately prove that authority was not substituted, reused, widened, or delegated between boundaries.
+
 | Class | Issuer boundary | What it can prove | What it must not prove |
 |---|---|---|---|
 | Agent context | trusted UI, intent issuer, approval state | current goal, selected objects/sinks, approval tokens, workflow/delegation state | tool schema, binary path, runtime object existence |
@@ -17,6 +19,8 @@ IntentCap now treats capability synthesis as a pre-effect multi-issuer commit ov
 | Env context | runtime observer, filesystem/process monitor, tool gateway, local backend | concrete values, cwd/files/resources, tool results, script outputs, runtime evidence | instruction promotion, authority minting, sink/tool/approval widening, policy update |
 
 The four-class split is necessary because each class owns different authority fields. Collapsing instruction into agent turns Skill/manual procedure into user approval. Collapsing tool into env lets tool results and tool definitions share authority, losing schema and credential-scope provenance. Collapsing env into tool lets runtime text or document content inherit interface trust. The checker therefore applies a no-substitution rule: if a protected decision requires field `f`, the submitted proof must come from `owner(f)`, and another class cannot fill it even when the value string matches.
+
+Minimality contract: the four classes answer four non-substitutable proof questions in the currently instrumented boundaries: who authorized the run, what procedure is endorsed, what interface is callable, and what happened at runtime. They are not claimed as a universal ontology for every possible agent system. A merge is acceptable only if it preserves `Accept_h(e, sigma, kappa) => Accept(e, sigma, kappa)` for the protected decisions it covers.
 
 Checker state is separate from env context. Env context can prove observed paths, stdout, tool results, file state, and other runtime evidence. Active leases, budget counters, expiry state, consumption records, and the delegation graph live in checker state `sigma`, and they are consumed or updated atomically with `check_and_consume`.
 
