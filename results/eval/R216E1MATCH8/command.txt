@@ -1,0 +1,1 @@
+PYTHONPATH=src /usr/bin/python scripts/build_e1_matched_online_comparison.py --leased-dir results/eval/R214E1LEASED --all-tools-dir results/eval/R215E1ALL --output-dir results/eval/R216E1MATCH8 --run-id R216E1MATCH8

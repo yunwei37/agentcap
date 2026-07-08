@@ -289,6 +289,7 @@ def _summary(
 ) -> dict[str, Any]:
     left = leased["summary"]
     right = all_tools["summary"]
+    matched_tasks = len(task_rows)
     deltas = {
         "tool_schema_count_avg": right.get("tool_schema_count_avg", 0)
         - left.get("tool_schema_count_avg", 0),
@@ -315,15 +316,16 @@ def _summary(
         "all_tools_run_id": right.get("run_id"),
         "leased_dir": str(leased["run_dir"]),
         "all_tools_dir": str(all_tools["run_dir"]),
-        "matched_tasks": len(task_rows),
+        "matched_tasks": matched_tasks,
         "blocked_calls": len(blocked_rows),
         "leased": _summary_metrics(left),
         "all_tools": _summary_metrics(right),
         "delta_all_minus_leased": deltas,
         "claim_interpretation": (
-            "On this matched 11-task local-Qwen slice, exposing all tools increases "
+            f"On this matched {matched_tasks}-task local-Qwen slice, exposing all tools increases "
             "visible schemas and checker-visible blocks without improving action "
-            "reward, exact-sequence match, or tool-oracle pass tasks."
+            "reward or tool-oracle pass tasks; trajectory-level metrics should be "
+            "reported separately from reward/oracle success."
         ),
         "boundary": (
             "This is a consolidation of existing local runs, not a new model run, "
