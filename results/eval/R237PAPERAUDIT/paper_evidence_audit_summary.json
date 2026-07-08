@@ -2,14 +2,14 @@
   "analysis": "paper-facing evidence number audit",
   "audit_status": "ok",
   "checks_failed": 0,
-  "checks_passed": 51,
-  "checks_total": 51,
+  "checks_passed": 52,
+  "checks_total": 52,
   "failed_claims": [],
   "input_digests": [
     {
-      "bytes": 117536,
+      "bytes": 117684,
       "path": "docs/autopaper/intentcap-paper-zh.tex",
-      "sha256": "d8932e03567b3504f50bdd29a45227d4b2b025a21f0b45f6cc755567ceeb437b"
+      "sha256": "614a37883517a959bc56b779d8c574d8c0dc60d38548b9f2a7719b2d327e98cc"
     },
     {
       "bytes": 1437,
@@ -87,9 +87,9 @@
       "sha256": "f85f2ff0745a66ecee2812fab26bd32642bb7ffb3f6160cd946aac150ea032de"
     },
     {
-      "bytes": 2402,
-      "path": "results/eval/R236RECOVRESIDBLINDQWEN36/residual_llm_gateway_summary.json",
-      "sha256": "655a43b0f7fdb80e9b06e2d06b00805330409cf675a72e63778c8418369e0f7a"
+      "bytes": 2411,
+      "path": "results/eval/R238RECOVPOLICYBLINDQWEN36/residual_llm_gateway_summary.json",
+      "sha256": "14a8919e432bff85b4b01d46db6a152bfd4d60fa9addb1d28c3ad8ee95689b7f"
     }
   ],
   "machine": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
@@ -102,7 +102,7 @@
     "Some source artifacts still use historical field names such as dangerous_accepted; the paper-facing terminology is unsafe accept/execution."
   ],
   "paper": "docs/autopaper/intentcap-paper-zh.tex",
-  "project_head": "9e3676eff2c347cddfc102671863fa8aa2d4023f",
+  "project_head": "06dbb76131c891a35cfac5306aa35b4d13b56f6a",
   "python": "3.12.3",
   "run_id": "R237PAPERAUDIT"
 }
