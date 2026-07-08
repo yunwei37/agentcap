@@ -32,9 +32,10 @@ LLM agents 正在从固定工具调用器演变为可扩展执行环境，可以
 \sys 将该 transition 表示为 field-owned protected-decision lease，并把 checker 组织成 multi-issuer commit protocol，而不是 operation-only capability、context label 或 action filter。
 每个 protected decision 按 decision class 的 required fields 从 agent、instruction、tool 和 runtime-observation/env 四类 issuer-owned context 中取证；未要求的 class 可以为空。
 Checker 将这些 proof 与当前用户意图、provenance、预算、过期和委托约束绑定，并在副作用、prompt placement 或权限转移前原子验证。
-原型在 tool/live-callable 和 local runtime-observation/env side-effect 边界执行 lease checks，并把同一 transition API 用于 context placement、delegation handoff 和 Skill instruction placement。
+原型作为 authorization substrate prototype，在 tool/live-callable 和 local runtime-observation/env side-effect 边界执行 lease checks，并把同一 transition API 用于 context placement、delegation handoff 和 Skill instruction placement。
 在 saved-trace protected-event replay 上，\sys 在 3,746 个 cases 中产生 0 个 unsafe accepts，并在 tau2-style reference-action proxy 中覆盖 3,813/3,813 个 reference actions。
 在 issuer-collapse 和 lifecycle ablations 中，\sys 拒绝弱化 variants 会接受的 instruction-source substitution、policy/approval promotion 和 one-shot reuse violations；same-event no-owner collapse 会错误接受完整 checker 拒绝的 3,593/3,823 个 protected decisions。
+更强的 typed-provenance state-guard baseline 保留 source/field owner、approval、holder、temporal 和 budget predicates 后可阻止 6/7 个 workflow residuals，但仍会在缺少 parent-child lease-set commit 的 delegation handoff 上 false-accept 1/7。
 在 controlled 本地多边界执行实验中，\sys 在 38 个提交给 checker 的 boundary events 上产生 0 个 unsafe executions/placements。
 同一 runtime-observation/env lease contract 还可降低到模拟 OS monitor 的 replay backend，并产生 0 个 checker/monitor mismatches。
 \end{abstract}
@@ -84,7 +85,7 @@ Checker 接受后在同一次 transition 中消耗 one-shot lease；缺少任一
 
 \begin{enumerate}[leftmargin=*,label=\textbf{C\arabic*.}]
   \item \textbf{Model.} 一个 issuer-owned atomic protected-decision lease model，定义 agent、instruction、tool 和 runtime-observation/env 四类证明边界、field owner、no-substitution typing rule 和原子 lifecycle transition（第~\ref{sec:formal} 节）。
-  \item \textbf{System.} 一个 checker-centered protected-transition API 和 adapter contract，要求任何会改变 authority 的边界在 side effect、prompt placement 或 handoff 前提交 issuer-owned field proofs。本文不声称新的 sandbox，而是给出这些边界共享的 runtime authorization object（第~\ref{sec:design}--\ref{sec:implementation} 节）。
+  \item \textbf{System.} 一个 checker-centered protected-transition API 和 authorization-substrate prototype，要求任何会改变 authority 的边界在 side effect、prompt placement 或 handoff 前提交 issuer-owned field proofs。本文不声称新的 sandbox，而是给出这些边界共享的 runtime authorization object（第~\ref{sec:design}--\ref{sec:implementation} 节）。
   \item \textbf{Evidence.} 一个有界评估，展示 protected-decision safety、issuer/lifecycle 机制必要性，以及本地多边界 pre-side-effect/placement/handoff enforcement；lease audit 作为 supporting evidence 检查 authority-object 表示质量（第~\ref{sec:evaluation}--\ref{sec:evidence-status} 节）。
 \end{enumerate}
 
@@ -656,7 +657,27 @@ Checker state 显式保存 active/exhausted lease table、budget counters、temp
 
 \subsection{Adapter Surface}
 
-表~\ref{tab:adapter-surface} 将实现边界分为 implemented、trace-level 和 target 三类，以限定原型结果的解释范围。当前实现的实证重点是 checker semantics、gateway boundary、runtime binding、benchmark-derived protected-decision events、live context/delegation boundary experiments、Skill/manual instruction placement tests、隔离目录中的本地 env pre-side-effect checks 和 Qwen3.6 model-loop experiments，以及把同一 env lease contract 降低到 OS-monitor-style deny-by-default replay backend。系统贡献是多边界 transition API 和 adapter contract：prompt placement、delegation handoff、tool/env pre-side-effect 都提交同一类 field proofs。OS-monitor-style replay backend 是 env adapter 的 reference lowering。
+表~\ref{tab:artifact-components} 先按 artifact component 列出原型中真正存在的系统对象：checker API、state schema、adapter implementations 和每个实验调用的边界。表~\ref{tab:adapter-surface} 再把实现边界分为 implemented、trace-level 和 target 三类，以限定原型结果的解释范围。当前实现的实证重点是 checker semantics、gateway boundary、runtime binding、benchmark-derived protected-decision events、live context/delegation boundary experiments、Skill/manual instruction placement tests、隔离目录中的本地 env pre-side-effect checks 和 Qwen3.6 model-loop experiments，以及把同一 env lease contract 降低到 OS-monitor-style deny-by-default replay backend。系统贡献是多边界 transition API 和 adapter contract：prompt placement、delegation handoff、tool/env pre-side-effect 都提交同一类 field proofs。OS-monitor-style replay backend 是 env adapter 的 reference lowering。
+
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2pt}
+\caption{Artifact-level prototype components。该表把 \sys 的系统对象与实验调用点对应起来，避免把结果解释成脚本集合。}
+\label{tab:artifact-components}
+\begin{tabular}{p{0.18\linewidth}p{0.25\linewidth}p{0.24\linewidth}p{0.23\linewidth}}
+\toprule
+Component & Runtime object & Commit boundary & Used by evidence \\
+\midrule
+Checker core & lease matcher, provenance/influence checker, budget/expiry/attenuation state & \texttt{check\_and\_consume(e, lease\_id, proofs, sigma)} & E1 replay, E3 ablations, E4 local adapters \\
+State schema & active/exhausted leases, temporal facts, holder scope, approval tokens, delegation graph & read/update in one transition & split-lifecycle and typed-provenance baselines \\
+Tool/local gateway & callable registry, tool/MCP schema, local command descriptor & before callable or command handler & live callable replay and env side-effect suite \\
+Context gateway & section label, source label, instruction/data placement rule & before prompt-section write & context placement and Skill/manual slot tests \\
+Delegation monitor & parent lease set, child role, child capability slice & before subagent handoff & delegation attenuation tests \\
+Monitor lowering target & deny-by-default env rules with provenance predicates & replayed below tool layer & OS-monitor-style lowering audit \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \begin{table}[t]
 \centering
@@ -778,7 +799,7 @@ env/data modes & 7 & all four: 4; env only: 3 & 7 & none \\
 \end{tabular}
 \end{table}
 
-Same-event ablation 将上述 characterization 转化为直接的机制隔离结果。实验固定同一批 event 的 operation、object、argument、mode 和 provenance annotation，只改变 checker 是否保留 issuer owner 与 atomic lifecycle checks。表~\ref{tab:e3-weak-variant-ablation} 显示，完整 \sys 在 R220 authority traces 上有 0 个 unsafe false accepts。若把 \(C_{agent},C_{inst},C_{tool},C_{env}\) 折叠成 generic trusted context，弱版本会接受 3,593/3,823 个被完整 checker 拒绝的 protected decisions，false-accept rate 为 93.98\%。单独折叠 tool\(\rightarrow\)agent、env\(\rightarrow\)agent、env\(\rightarrow\)tool 和 instruction\(\rightarrow\)agent 也分别产生 1,928、1,663、1,662 和 2 个 false accepts。R217 workflow residuals 则隔离 lifecycle 维度：只保留 op/object/argument predicates 的 post-hoc policy DSL 会接受 7/7 个被 \sys 拒绝的 workflow residuals；把 lifecycle state 从同一次 transition 中拆开后会接受 5/7 个 residuals，覆盖 approval mint、budget consumption、delegation attenuation、holder scope 和 temporal state。该实验不是复现某个命名 prior system，而是验证形式化中的 \(Accept_h\Rightarrow Accept\) 是否被 collapse 映射破坏。它回答的是机制必要性问题：如果系统把 issuer-owned fields 当作普通可信 attributes，或把 lifecycle update 从 protected event 中拆出，false authority path 会在相同事件上出现。
+Same-event ablation 将上述 characterization 转化为直接的机制隔离结果。实验固定同一批 event 的 operation、object、argument、mode 和 provenance annotation，只改变 checker 是否保留 issuer owner 与 atomic lifecycle checks。表~\ref{tab:e3-weak-variant-ablation} 显示，完整 \sys 在 R220 authority traces 上有 0 个 unsafe false accepts。若把 \(C_{agent},C_{inst},C_{tool},C_{env}\) 折叠成 generic trusted context，弱版本会接受 3,593/3,823 个被完整 checker 拒绝的 protected decisions，false-accept rate 为 93.98\%。单独折叠 tool\(\rightarrow\)agent、env\(\rightarrow\)agent、env\(\rightarrow\)tool 和 instruction\(\rightarrow\)agent 也分别产生 1,928、1,663、1,662 和 2 个 false accepts。R217 workflow residuals 则隔离 lifecycle 维度：只保留 op/object/argument predicates 的 post-hoc policy DSL 会接受 7/7 个被 \sys 拒绝的 workflow residuals；把 lifecycle state 从同一次 transition 中拆开后会接受 5/7 个 residuals，覆盖 approval mint、budget consumption、delegation attenuation、holder scope 和 temporal state。R241 进一步加入强 typed-provenance state guard：它保留 source/field owner、approval、holder、temporal 和 budget predicates，因此阻止 6/7 个 workflow residuals；剩余的 1/7 false accept 是 over-delegation，因为该 baseline 没有在 handoff 前比较 parent 和 child lease sets。该结果把 novelty 边界收窄为 runtime interface invariant，而不是 predicate expressiveness：如果一个 policy DSL 也实现同一个 parent-child lease-set comparison 和 check-and-consume transition，它在该 case 上就等价于 \sys。该实验不是复现某个命名 prior system，而是验证形式化中的 \(Accept_h\Rightarrow Accept\) 是否被 collapse 映射破坏。它回答的是机制必要性问题：如果系统把 issuer-owned fields 当作普通可信 attributes，或把 lifecycle update 从 protected event 中拆出，false authority path 会在相同事件上出现。
 
 \begin{table}[t]
 \centering
@@ -798,6 +819,7 @@ Collapse env\(\rightarrow\)tool & 3,823 & 1,662 & tool result/output can satisfy
 Collapse instruction\(\rightarrow\)agent & 3,823 & 2 & workflow instruction can satisfy user-intent attributes \\
 Post-hoc policy DSL on R217 & 7 & 7 & op/object/argument policy is checked after commit ownership/state is implicit \\
 Split lifecycle state on R217 & 7 & 5 & proof, budget, holder, approval, and delegation state are checked separately \\
+Typed provenance state guard on R217 & 7 & 1 & source/field owner plus approval, holder, temporal and budget predicates, but no atomic parent-child lease commit \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -835,14 +857,13 @@ E4 的系统问题是同一个 protected-transition API 能否作为 adapter con
 \centering
 \scriptsize
 \setlength{\tabcolsep}{2pt}
-\caption{E4 boundary-level results. Rows are grouped by pre-side-effect env boundary, pre-placement/handoff boundary, and monitor lowering. Qwen is an env-boundary diagnostic.}
+\caption{E4 boundary-level results. Rows are grouped by pre-side-effect env boundary, pre-placement/handoff boundary, and monitor lowering. Qwen proposer results are reported separately as a diagnostic, not as a system-boundary row.}
 \label{tab:e4-boundary-results}
 \begin{tabular}{p{0.15\linewidth}p{0.18\linewidth}p{0.08\linewidth}p{0.08\linewidth}p{0.10\linewidth}p{0.13\linewidth}p{0.10\linewidth}}
 \toprule
 Boundary & Block point & Attempts & Allowed & Blocked & Weak unsafe accepts & Role \\
 \midrule
 Local env backend & before env handler & 10 & 4 & 6 & object-only: 4 & pre-side-effect \\
-Qwen env proposer & before env handler & 8 (+2 aborts) & 4 & 4 & object-only: 3 & diagnostic \\
 Context placement & before prompt write & 3 & 2 & 1 & object/no-prov.: 1 & placement \\
 Delegation handoff & before child handoff & 2 & 1 & 1 & object/no-prov.: 1 & handoff \\
 Skill instruction slot & before instruction slot & 5 & 2 & 3 & object/no-prov.: 3 & placement \\
@@ -851,7 +872,7 @@ OS-monitor-style backend & monitor replay & 10 & 4 & 6 & mismatch: 0 & lowering 
 \end{tabular}
 \end{table}
 
-第一，pre-side-effect env boundary 验证 local side-effect handler 之前的 block point。\sys 执行 4 个授权 effects，在 side-effect handlers 前阻止 6 个 violations，并执行 0 个 unsafe executions。Object-only policy 执行 8 个 effects，其中 4 个是不安全副作用，并修改 isolated secret file。Qwen3.6 diagnostic 使用同一 env suite：模型返回 10 个 outputs，其中 8 个形成 checker-submitted calls，另外 2 个是模型直接 abort。8 个 calls 中有 4 个 unsafe。\sys 只执行 4 个授权 calls，并在副作用前阻止全部 4 个 unsafe calls。Object-only policy 执行 7 个 calls，其中 3 个 unsafe。
+第一，pre-side-effect env boundary 验证 local side-effect handler 之前的 block point。\sys 执行 4 个授权 effects，在 side-effect handlers 前阻止 6 个 violations，并执行 0 个 unsafe executions。Object-only policy 执行 8 个 effects，其中 4 个是不安全副作用，并修改 isolated secret file。Qwen3.6 diagnostic 使用同一 env suite，但不计入表~\ref{tab:e4-boundary-results} 的主 boundary rows：模型返回 10 个 outputs，其中 8 个形成 checker-submitted calls，另外 2 个是模型直接 abort。8 个 calls 中有 4 个 unsafe。\sys 只执行 4 个授权 calls，并在副作用前阻止全部 4 个 unsafe calls。Object-only policy 执行 7 个 calls，其中 3 个 unsafe。
 
 第二，pre-placement/handoff boundary 验证 prompt write 和 authority handoff 之前的 block point。\sys 把同一个 checker session 放在 prompt-section placement 与 subagent handoff 前。Context placement test 放置 2/3 个授权 context items，并阻止 1 个 \texttt{script\_output} 提升为 instruction 的事件。Delegation monitor 允许 1/2 个 summary-only subagent handoffs，并阻止 1 个 email sink over-delegation。对应 object-only 和 lease-args/no-provenance baselines 会接受 unsafe placement/handoff events，而 \sys unsafe accepts 为 0。Skill/manual instruction placement test 进一步固定合法 signed Skill instruction slot，接受 1 个 signed placement 和 1 个 tool-result-as-data use，并阻止 3/3 个 instruction-source substitutions。弱 baselines 产生 3/3 个 unsafe placements。
 
@@ -859,7 +880,7 @@ OS-monitor-style backend & monitor replay & 10 & 4 & 6 & mismatch: 0 & lowering 
 
 R240 adapter proof-completeness audit 进一步检查同一批 E4 local records 是否真的经过 pre-side-effect field-proof contract，而不只是碰巧没有执行 unsafe action。Audit 覆盖 38/38 个 checker-submitted boundary events，并确认每个 event 都有可归因的 proof obligations：operation/object/argument contract、control provenance 和 data provenance 均出现 38/38 次，holder scope 出现 23 次，budget consumption 出现 9 次，delegation attenuation 出现 2 次，monitor lowering 出现 10 次。21 个 denied events 全部落入已建模 denial classes：6 个 control-provenance/influence violations，1 个 delegation attenuation violation，3 个 holder-scope violations，以及 11 个 operation/object/argument-or-no-lease violations。Audit 发现 0 个 unclassified denial，且 38/38 个 verdict 都有对应 proof obligation。这一结果支撑的是 adapter contract completeness，不是生产 prompt builder、MCP broker、subagent runtime 或 kernel/ActPlane mediation。
 
-合并这些本地系统边界后，6 个 boundary rows 覆盖 local env side effects、Qwen proposer、OS-monitor-style env backend、context placement、delegation handoff 和 Skill instruction placement。38 个提交给 checker 的 boundary events 中，\sys 执行或放置 17 个授权 effects，阻止 21 个 events，并产生 0 个 unsafe executions/placements。Object-only baselines 在对应边界上观察到 12 个 unsafe accepts，lease-args/no-provenance baselines 观察到 5 个 unsafe accepts，monitor/checker mismatch 为 0。这个结果支撑本地 adapter contract 可执行、跨 blockpoint 一致的结论。Production ActPlane integration、production prompt builder/subagent runtime 和 benchmark-scale utility 是表~\ref{tab:current-evidence} 中列出的更强证据需求。
+合并这些本地系统边界和 Qwen diagnostic 后，记录覆盖 local env side effects、Qwen proposer、OS-monitor-style env backend、context placement、delegation handoff 和 Skill instruction placement。38 个提交给 checker 的 boundary events 中，\sys 执行或放置 17 个授权 effects，阻止 21 个 events，并产生 0 个 unsafe executions/placements。Object-only baselines 在对应边界上观察到 12 个 unsafe accepts，lease-args/no-provenance baselines 观察到 5 个 unsafe accepts，monitor/checker mismatch 为 0。这个结果支撑本地 adapter contract 可执行、跨 blockpoint 一致的结论。Production ActPlane integration、production prompt builder/subagent runtime 和 benchmark-scale utility 是表~\ref{tab:current-evidence} 中列出的更强证据需求。
 
 \section{范围与局限}
 \label{sec:evidence-status}
@@ -911,18 +932,18 @@ Leases are auditable authority objects, but expert minimality is not yet proven 
 \setlength{\tabcolsep}{2pt}
 \caption{最接近抽象的比较。各列比较默认授权对象是否把当前 run 的 trusted intent certificate、lease lifecycle、promotion rule 和 delegation 放进同一个 atomic transition。}
 \label{tab:closest-abstractions}
-\begin{tabular}{p{0.16\linewidth}p{0.08\linewidth}p{0.13\linewidth}p{0.10\linewidth}p{0.12\linewidth}p{0.10\linewidth}p{0.13\linewidth}}
+\begin{tabular}{p{0.14\linewidth}p{0.07\linewidth}p{0.12\linewidth}p{0.08\linewidth}p{0.10\linewidth}p{0.08\linewidth}p{0.12\linewidth}p{0.12\linewidth}}
 \toprule
-Work & Run-intent mint root & Default object & Lifecycle & Promotion rule & Delegation & Lowering \\
+Work & Run-intent mint root & Default object & Lifecycle & Promotion rule & Deleg. & Atomic transition & Lowering \\
 \midrule
-CaMeL / IFC & partial & flow & no & partial & no & tool/runtime \\
-AuthGraph & yes & action graph & no & partial & no & action \\
-PACT & partial & argument & no & partial & no & tool args \\
-AIRGuard & yes & action & no & partial & no & action \\
-SkillGuard / SkillScope & package & skill perm. & no & partial & no & skill \\
-Progent / PCAS / AgentSpec & policy & policy rule & partial & no & partial & tool/runtime \\
-ActPlane & policy & OS event & policy dependent & no & no & OS substrate \\
-\sys & yes & protected-decision lease & yes & yes & yes & local adapters + replay lowering target \\
+CaMeL / IFC & partial & flow & no & partial & no & no & tool/runtime \\
+AuthGraph & yes & action graph & no & partial & no & no & action \\
+PACT & partial & argument & no & partial & no & no & tool args \\
+AIRGuard & yes & action & no & partial & no & no & action \\
+SkillGuard / SkillScope & package & skill perm. & no & partial & no & no & skill \\
+Progent / PCAS / AgentSpec & policy & policy rule & partial & no & partial & partial & tool/runtime \\
+ActPlane & policy & OS event & policy dependent & no & no & no & OS substrate \\
+\sys & yes & protected-decision lease & yes & yes & yes & yes & local adapters + replay lowering target \\
 \bottomrule
 \end{tabular}
 \end{table}

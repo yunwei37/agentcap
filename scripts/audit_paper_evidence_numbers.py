@@ -134,6 +134,8 @@ def _checks() -> list[dict[str, Any]]:
         _json("E3.weak.inst_agent", "2 个 false accepts", "results/eval/R239E3WEAKABL/e3_weak_variant_summary.json", "collapse_edge_false_accepts.instruction->agent", 2),
         _json("E3.weak.workflow_policy", "7/7 个被 \\sys 拒绝", "results/eval/R239E3WEAKABL/e3_weak_variant_summary.json", "workflow_policy_dsl_false_accepts", 7),
         _json("E3.weak.workflow_split", "5/7 个 residuals", "results/eval/R239E3WEAKABL/e3_weak_variant_summary.json", "workflow_split_lifecycle_false_accepts", 5),
+        _json("E3.typed.blocks", "6/7", "results/eval/R241E3TYPEDBASE/typed_provenance_baseline_summary.json", "typed_provenance_state_guard_blocks", 6),
+        _json("E3.typed.false_accepts", "1/7", "results/eval/R241E3TYPEDBASE/typed_provenance_baseline_summary.json", "typed_provenance_state_guard_false_accepts", 1),
         _json("E3.labels.samples", "48 个 sampled protected-decision labels", "results/eval/R221NATPD/natural_pd_labeling_summary.json", "samples", 48),
         _json("E3.labels.protected", "45 个样本", "results/eval/R221NATPD/natural_pd_labeling_summary.json", "protected_decision_labels", 45),
         _json("E3.labels.multi", "43 个需要多个 issuer classes", "results/eval/R221NATPD/natural_pd_labeling_summary.json", "samples_requiring_multiple_issuers", 43),

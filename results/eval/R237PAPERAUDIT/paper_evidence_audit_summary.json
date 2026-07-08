@@ -2,14 +2,14 @@
   "analysis": "paper-facing evidence number audit",
   "audit_status": "ok",
   "checks_failed": 0,
-  "checks_passed": 72,
-  "checks_total": 72,
+  "checks_passed": 74,
+  "checks_total": 74,
   "failed_claims": [],
   "input_digests": [
     {
-      "bytes": 131802,
+      "bytes": 134619,
       "path": "docs/autopaper/intentcap-paper-zh.tex",
-      "sha256": "8ad0cab50893c58271cf95d39f571465b6bbe0655be5197b51c20023526b5b0b"
+      "sha256": "321f15f35601845ff64146b0089505e3b8634b9f9ea652cec8ffa7d5fdb7238a"
     },
     {
       "bytes": 1437,
@@ -100,6 +100,11 @@
       "bytes": 3543,
       "path": "results/eval/R240ADAPTERPROOF/adapter_proof_completeness_summary.json",
       "sha256": "03be010be1b7727c770de0a55609e40d1c5f669a885e6ba215d921dae10c66da"
+    },
+    {
+      "bytes": 1793,
+      "path": "results/eval/R241E3TYPEDBASE/typed_provenance_baseline_summary.json",
+      "sha256": "d3efacee5f236cba0341575c6471a17c882f670d5b054b1029f38f68a9a4bb3f"
     }
   ],
   "machine": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
@@ -112,7 +117,7 @@
     "Some source artifacts still use historical field names such as dangerous_accepted; the paper-facing terminology is unsafe accept/execution."
   ],
   "paper": "docs/autopaper/intentcap-paper-zh.tex",
-  "project_head": "093bf3b9d4b1abc38a121d2361b36856136e20a2",
+  "project_head": "d1eb30ad1957e4919186bf26c0dd91fcfe8076d1",
   "python": "3.12.3",
   "run_id": "R237PAPERAUDIT"
 }
