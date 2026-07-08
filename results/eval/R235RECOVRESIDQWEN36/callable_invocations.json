@@ -1,0 +1,14 @@
+[
+  {
+    "args": {
+      "artifact": "review_complete"
+    },
+    "tool": "pdf.review.summary"
+  },
+  {
+    "args": {
+      "repo": "org/repo-workflow"
+    },
+    "tool": "github.create_issue"
+  }
+]
