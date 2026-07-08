@@ -150,7 +150,7 @@ def _checks() -> list[dict[str, Any]]:
         _json("E4.aggregate.unsafe", "0 个 unsafe executions/placements", "results/eval/R225MULTIBOUNDARY/multiboundary_system_summary.json", "unsafe_intentcap_effects_or_placements", 0),
         _json("E4.aggregate.object_baseline", "12 个 unsafe accepts", "results/eval/R225MULTIBOUNDARY/multiboundary_system_summary.json", "object_only_unsafe_accepts_observed", 12),
         _json("E4.aggregate.no_prov_baseline", "5 个 unsafe accepts", "results/eval/R225MULTIBOUNDARY/multiboundary_system_summary.json", "no_provenance_unsafe_accepts_observed", 5),
-        _json("Aux.labels.audit", "24/24 个 labels", "results/eval/R207E2A/e2_expert_adjudication_audit_summary.json", "samples_audited", 24),
+        _json("E2.labels.audit", "24/24 个 labels", "results/eval/R207E2A/e2_expert_adjudication_audit_summary.json", "samples_audited", 24),
         _json("Recovery.events", "9 个 policy-workflow counterexample events", "results/eval/R238RECOVPOLICYBLINDQWEN36/residual_llm_gateway_summary.json", "events", 9),
         _json("Recovery.initial_executes", "2 个合法 calls", "results/eval/R238RECOVPOLICYBLINDQWEN36/residual_llm_gateway_summary.json", "outcome_counts.correct_execute", 2),
         _json("Recovery.initial_aborts", "6 个正确 aborts", "results/eval/R238RECOVPOLICYBLINDQWEN36/residual_llm_gateway_summary.json", "outcome_counts.correct_abort", 6),
