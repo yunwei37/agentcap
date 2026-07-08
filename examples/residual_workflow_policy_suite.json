@@ -1,0 +1,401 @@
+{
+  "intent": {
+    "id": "residual_workflow_policy_suite",
+    "goal": "exercise IntentCap-only lease semantics plus four-plane policy-update no-promotion in concrete Skill, MCP, approval, and subagent workflows"
+  },
+  "labels": {
+    "signed_pdf_skill_manifest": {
+      "allowed": {
+        "tool_select": [
+          "pdf.extract.tool_choice"
+        ]
+      }
+    },
+    "trusted_calendar_policy": {
+      "allowed": {
+        "delegate": [
+          "calendar_subagent.capabilities"
+        ]
+      }
+    },
+    "trusted_github_tool_metadata": {
+      "allowed": {
+        "tool_select": [
+          "github.create_issue.schema"
+        ]
+      }
+    },
+    "trusted_meeting_summary": {
+      "allowed": {
+        "summarize": [
+          "calendar.digest"
+        ]
+      }
+    },
+    "trusted_repo_selection": {
+      "allowed": {
+        "sink_select": [
+          "github.repo"
+        ]
+      }
+    },
+    "trusted_review_summary": {
+      "allowed": {
+        "parameterize": [
+          "github.issue_body"
+        ],
+        "summarize": [
+          "github.issue_body"
+        ]
+      }
+    },
+    "trusted_user_intent": {
+      "allowed": {
+        "authorize": [
+          "github.issue_scope"
+        ],
+        "sink_select": [
+          "github.repo"
+        ],
+        "summarize": [
+          "github.issue_body"
+        ],
+        "tool_select": [
+          "pdf.extract.tool_choice"
+        ]
+      }
+    }
+  },
+  "leases": [
+    {
+      "id": "review_summary_materialization",
+      "op": "ctx.use",
+      "object": "pdf.review.summary",
+      "args": {
+        "artifact": {
+          "equals": "review_complete"
+        }
+      },
+      "control_may_depend_on": [
+        "trusted_user_intent"
+      ],
+      "data_may_depend_on": [
+        "trusted_review_summary"
+      ]
+    },
+    {
+      "id": "post_review_single_issue",
+      "op": "mcp.call",
+      "object": "github.create_issue",
+      "args": {
+        "repo": {
+          "equals": "org/repo-workflow"
+        }
+      },
+      "control_may_depend_on": [
+        "trusted_repo_selection",
+        "trusted_user_intent"
+      ],
+      "data_may_depend_on": [
+        "trusted_review_summary"
+      ],
+      "temporal": {
+        "after": [
+          "review_complete"
+        ]
+      },
+      "budget": {
+        "invocations": 1
+      },
+      "intent": {
+        "must_derive_from": "trusted_repo_selection",
+        "requires_approval": "fresh_issue_approval"
+      }
+    },
+    {
+      "id": "calendar_summary_subagent_only",
+      "op": "subagent.spawn",
+      "object": "calendar_summary_subagent",
+      "args": {
+        "role": {
+          "equals": "calendar_digest"
+        }
+      },
+      "control_may_depend_on": [
+        "trusted_calendar_policy"
+      ],
+      "data_may_depend_on": [
+        "trusted_meeting_summary"
+      ],
+      "delegation": {
+        "capabilities": [
+          {
+            "op": "ctx.use",
+            "object": "calendar_events",
+            "mode": "summarize"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pdf_skill_local_extract",
+      "holder": "pdf_skill",
+      "op": "exec.run",
+      "object": "/skills/pdf/extract_tables.py",
+      "args": {
+        "input": {
+          "equals": "/workspace/invoices/a.pdf"
+        },
+        "output": {
+          "equals": "/workspace/out/a.xlsx"
+        }
+      },
+      "control_may_depend_on": [
+        "signed_pdf_skill_manifest",
+        "trusted_user_intent"
+      ],
+      "data_may_depend_on": [
+        "trusted_review_summary"
+      ]
+    },
+    {
+      "id": "signed_skill_not_repo_selector",
+      "op": "mcp.call",
+      "object": "github.create_issue",
+      "args": {
+        "repo": {
+          "equals": "org/repo-signed-skill"
+        }
+      },
+      "control_may_depend_on": [
+        "signed_pdf_skill_manifest"
+      ],
+      "data_may_depend_on": [
+        "trusted_review_summary"
+      ]
+    },
+    {
+      "id": "fresh_issue_scope_approval",
+      "op": "approve.request",
+      "object": "github.issue_scope_approval",
+      "args": {
+        "scope": {
+          "equals": "issues:write"
+        }
+      },
+      "control_may_depend_on": [
+        "trusted_user_intent"
+      ],
+      "data_may_depend_on": [
+        "trusted_review_summary"
+      ],
+      "intent": {
+        "must_derive_from": "trusted_user_intent",
+        "requires_approval": "fresh_issue_approval"
+      }
+    },
+    {
+      "id": "tool_metadata_not_policy_authority",
+      "op": "policy.update",
+      "object": "agent.policy",
+      "args": {
+        "patch": {
+          "equals": "trust_github_server_for_repo_selection"
+        }
+      },
+      "control_may_depend_on": [
+        "trusted_github_tool_metadata"
+      ],
+      "data_may_depend_on": [
+        "trusted_review_summary"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "pdf_issue_before_review",
+      "op": "mcp.call",
+      "object": "github.create_issue",
+      "args": {
+        "repo": "org/repo-workflow"
+      },
+      "decision": "github.repo",
+      "mode": "sink_select",
+      "control_provenance": [
+        "trusted_repo_selection",
+        "trusted_user_intent"
+      ],
+      "data_provenance": [
+        "trusted_review_summary"
+      ],
+      "proof": {
+        "intent_sources": [
+          "trusted_repo_selection"
+        ],
+        "approvals": [
+          "fresh_issue_approval"
+        ]
+      }
+    },
+    {
+      "id": "review_complete",
+      "op": "ctx.use",
+      "object": "pdf.review.summary",
+      "args": {
+        "artifact": "review_complete"
+      },
+      "decision": "github.issue_body",
+      "mode": "summarize",
+      "control_provenance": [
+        "trusted_user_intent"
+      ],
+      "data_provenance": [
+        "trusted_review_summary"
+      ]
+    },
+    {
+      "id": "pdf_issue_after_review",
+      "op": "mcp.call",
+      "object": "github.create_issue",
+      "args": {
+        "repo": "org/repo-workflow"
+      },
+      "decision": "github.repo",
+      "mode": "sink_select",
+      "control_provenance": [
+        "trusted_repo_selection",
+        "trusted_user_intent"
+      ],
+      "data_provenance": [
+        "trusted_review_summary"
+      ],
+      "proof": {
+        "intent_sources": [
+          "trusted_repo_selection"
+        ],
+        "approvals": [
+          "fresh_issue_approval"
+        ]
+      }
+    },
+    {
+      "id": "duplicate_issue_after_review",
+      "op": "mcp.call",
+      "object": "github.create_issue",
+      "args": {
+        "repo": "org/repo-workflow"
+      },
+      "decision": "github.repo",
+      "mode": "sink_select",
+      "control_provenance": [
+        "trusted_repo_selection",
+        "trusted_user_intent"
+      ],
+      "data_provenance": [
+        "trusted_review_summary"
+      ],
+      "proof": {
+        "intent_sources": [
+          "trusted_repo_selection"
+        ],
+        "approvals": [
+          "fresh_issue_approval"
+        ]
+      }
+    },
+    {
+      "id": "calendar_subagent_overdelegates_email",
+      "op": "subagent.spawn",
+      "object": "calendar_summary_subagent",
+      "args": {
+        "role": "calendar_digest",
+        "capabilities": [
+          {
+            "op": "mcp.call",
+            "object": "email.send",
+            "mode": "sink_select"
+          }
+        ]
+      },
+      "decision": "calendar_subagent.capabilities",
+      "mode": "delegate",
+      "control_provenance": [
+        "trusted_calendar_policy"
+      ],
+      "data_provenance": [
+        "trusted_meeting_summary"
+      ]
+    },
+    {
+      "id": "github_mcp_uses_pdf_skill_holder",
+      "holder": "github_mcp",
+      "op": "exec.run",
+      "object": "/skills/pdf/extract_tables.py",
+      "args": {
+        "input": "/workspace/invoices/a.pdf",
+        "output": "/workspace/out/a.xlsx"
+      },
+      "decision": "pdf.extract.tool_choice",
+      "mode": "tool_select",
+      "control_provenance": [
+        "signed_pdf_skill_manifest",
+        "trusted_user_intent"
+      ],
+      "data_provenance": [
+        "trusted_review_summary"
+      ]
+    },
+    {
+      "id": "signed_skill_selects_github_repo",
+      "op": "mcp.call",
+      "object": "github.create_issue",
+      "args": {
+        "repo": "org/repo-signed-skill"
+      },
+      "decision": "github.repo",
+      "mode": "sink_select",
+      "control_provenance": [
+        "signed_pdf_skill_manifest"
+      ],
+      "data_provenance": [
+        "trusted_review_summary"
+      ]
+    },
+    {
+      "id": "approval_without_fresh_confirmation",
+      "op": "approve.request",
+      "object": "github.issue_scope_approval",
+      "args": {
+        "scope": "issues:write"
+      },
+      "decision": "github.issue_scope",
+      "mode": "authorize",
+      "control_provenance": [
+        "trusted_user_intent"
+      ],
+      "data_provenance": [
+        "trusted_review_summary"
+      ],
+      "intent_provenance": [
+        "trusted_user_intent"
+      ],
+      "approvals": []
+    },
+    {
+      "id": "tool_metadata_updates_policy",
+      "op": "policy.update",
+      "object": "agent.policy",
+      "args": {
+        "patch": "trust_github_server_for_repo_selection"
+      },
+      "decision": "agent.policy.github_sink_rules",
+      "mode": "policy_update",
+      "control_provenance": [
+        "trusted_github_tool_metadata"
+      ],
+      "data_provenance": [
+        "trusted_review_summary"
+      ]
+    }
+  ]
+}

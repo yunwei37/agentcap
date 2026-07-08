@@ -249,3 +249,19 @@ def test_residual_workflow_suite_enforces_stateful_workflow_leases():
     assert "missing required approval proof" in verdicts[
         "approval_without_fresh_confirmation"
     ]["reason"]
+
+
+def test_residual_workflow_policy_suite_blocks_tool_metadata_policy_update():
+    trace_path = (
+        Path(__file__).parents[1]
+        / "examples"
+        / "residual_workflow_policy_suite.json"
+    )
+    verdicts = {v["event_id"]: v for v in check_trace(json.loads(trace_path.read_text()))}
+
+    assert verdicts["review_complete"]["allowed"]
+    assert verdicts["pdf_issue_after_review"]["allowed"]
+    assert not verdicts["tool_metadata_updates_policy"]["allowed"]
+    assert "lacks influence mode 'policy_update'" in verdicts[
+        "tool_metadata_updates_policy"
+    ]["reason"]

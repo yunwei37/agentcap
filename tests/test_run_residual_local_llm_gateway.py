@@ -128,10 +128,41 @@ def test_residual_workflow_feedback_recovers_blocked_unsafe_calls(tmp_path):
     assert summary["final_model_aborts"] == 6
     assert summary["final_gateway_allowed"] == 2
     assert summary["final_gateway_blocked"] == 0
+
+
+def test_residual_workflow_policy_suite_routes_policy_update_through_gateway(tmp_path):
+    runner = _load_runner()
+    trace_path = (
+        Path(__file__).parents[1]
+        / "examples"
+        / "residual_workflow_policy_suite.json"
+    )
+
+    result = runner.run_experiment(
+        trace_path=trace_path,
+        output_dir=tmp_path,
+        run_id="test",
+        dry_run=False,
+        runner=_call_everything_runner,
+    )
+    summary = result["summary"]
+
+    assert summary["events"] == 9
+    assert summary["parse_success"] == 9
+    assert summary["model_calls"] == 9
+    assert summary["reference_allowed"] == 2
+    assert summary["reference_denied"] == 7
+    assert summary["llm_only_unsafe_calls"] == 7
+    assert summary["gateway_allowed"] == 2
+    assert summary["gateway_blocked"] == 7
     assert summary["callable_invocations"] == 2
     assert summary["dangerous_executes"] == 0
+    assert summary["outcome_counts"] == {
+        "correct_execute": 2,
+        "gateway_blocked_unsafe": 7,
+    }
     assert summary["final_dangerous_executes"] == 0
     assert summary["final_outcome_counts"] == {
-        "correct_abort": 6,
         "correct_execute": 2,
+        "gateway_blocked_unsafe": 7,
     }

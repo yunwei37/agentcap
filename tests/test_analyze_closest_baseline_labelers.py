@@ -228,3 +228,35 @@ def test_residual_workflow_suite_lifts_residuals_to_concrete_workflows():
         assert row["authgraph_pact_airguard_accept"] is True
         assert row["ifc_taint_accept"] is True
         assert row["policy_dsl_accept"] is True
+
+
+def test_residual_workflow_policy_suite_adds_policy_update_no_promotion_case():
+    trace_path = (
+        Path(__file__).parents[1]
+        / "examples"
+        / "residual_workflow_policy_suite.json"
+    )
+
+    result = analyzer.analyze(run_id="test", trace_paths=(trace_path,))
+    summary = result["summary"]
+
+    assert summary["events"] == 9
+    assert summary["checker_allowed"] == 2
+    assert summary["checker_denied"] == 7
+    assert summary["denied_residual_after_closest_baselines"] == 7
+    assert summary["residual_after_closest_baselines_by_mode"] == {
+        "authorize": 1,
+        "delegate": 1,
+        "policy_update": 1,
+        "sink_select": 3,
+        "tool_select": 1,
+    }
+
+    policy_rows = [
+        row for row in result["event_rows"] if row["event_id"] == "tool_metadata_updates_policy"
+    ]
+    assert len(policy_rows) == 1
+    assert policy_rows[0]["residual_after_closest_baselines"] is True
+    assert policy_rows[0]["authgraph_pact_airguard_accept"] is True
+    assert policy_rows[0]["ifc_taint_accept"] is True
+    assert policy_rows[0]["policy_dsl_accept"] is True
