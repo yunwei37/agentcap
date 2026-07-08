@@ -22,20 +22,22 @@
 \maketitle
 
 \begin{abstract}
-LLM agents 正在从固定工具调用器演变为可扩展的执行环境，可以加载 Skills、连接 MCP servers、运行本地脚本，并将任务委托给 subagents。现有权限机制通常约束扩展能调用哪些工具、访问哪些文件或连接哪些网络端点，但它们很少约束不可信 context 能否影响未来的 tool selection、sink selection、approval scope 或 delegation target。本文提出 \sys，一种面向 agent protected decisions 的 intent-carrying capability model。它把 authority 定义为 agent context、instruction context、tool context 和 env context 的可检查交集，而不是附着在任一组件上的静态 permission。每个 future decision authority 都表示为短期、可消耗、可衰减的 lease，绑定 trusted intent certificate、context influence modes、control/data provenance、temporal state 和 delegation bounds。LLM 只提出 plan 和 candidate leases，deterministic checker 负责验证 proof-carrying leases，并通过 trace replay、live callable gateway、benchmark-derived adapters、本地 env pre-side-effect probe 和 Qwen3.6/llama.cpp model-loop probe 验证同一语义可以落到 agent boundaries。Prototype evidence 支持一个保守结论：在已建模边界内，\sys 可以执行 intent/provenance/lease invariants，并在接入的本地边界上阻止未授权 side effects；最终端到端 utility、least-privilege 和 novelty statement 的强度由四个主实验决定。
+LLM agents 正在从固定工具调用器演变为可扩展的执行环境，可以加载 Skills、连接 MCP servers、运行本地脚本，并将任务委托给 subagents。现有权限机制通常约束扩展能调用哪些工具、访问哪些文件或连接哪些网络端点，但它们很少约束不可信 context 能否影响未来的 tool selection、sink selection、approval scope 或 delegation target。本文提出 \sys，一种面向 agent protected decisions 的 intent-carrying capability model。它把 authority 定义为 agent context、instruction context、tool context 和 env context 的可检查交集，而不是附着在任一组件上的静态 permission。每个 future decision authority 都表示为短期、可消耗、可衰减的 lease，绑定 trusted intent certificate、context influence modes、control/data provenance、temporal state 和 delegation bounds。LLM 只提出 plan 和 candidate leases，deterministic checker 负责验证 proof-carrying leases，并通过 trace replay、live callable gateway、benchmark-derived adapters、本地 env pre-side-effect probe 和 Qwen3.6/llama.cpp model-loop probe 验证同一语义可以落到 agent boundaries。当前 prototype evidence 显示，在已建模边界内，\sys 可以执行 intent/provenance/lease invariants，在 3,746 个 protected events 上拒绝 ACL-style wrappers 会放行的 dangerous decisions，在本地 env model-loop 中阻止 unsafe side effects，并在 18-task local-Qwen 对照中把 authority surface 与 reward/oracle success 分开度量。
 \end{abstract}
 
 \section{引言}
 
 LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 API、插件接口或系统调用与宿主交互，因此权限系统可以围绕文件、网络、进程和工具调用来定义。现代 agent extension 的行为则由用户请求、系统策略、扩展说明、外部文档、工具结果和中间总结共同塑造。
 
-这种执行过程打破了 data 和 authority 的传统边界。Agent runtime 用同一个 probabilistic planning channel 同时处理 trusted instructions、用户请求、扩展说明和 untrusted documents/tool results；模型再输出 plan、tool arguments、approval request 或 delegation decision。结构性根因不是不可信文本进入 prompt 本身，而是 authorization state 通常没有记录“在当前 intent 下，哪类 context 可以影响哪类未来决策”。下游 guard 往往只看到最终操作，而看不到哪个 context 控制了安全相关字段。于是，一个 PDF 或网页虽然在类型上只是输入数据，却可能成为选择工具、选择 sink、扩大 approval scope、跳过检查步骤或委托权限的控制信号。本文称这一问题为 context privilege：context 获得了影响 protected decisions 的权力，而不仅是携带可被引用或总结的信息。
+这种执行过程打破了 data 和 authority 的传统边界。一个失败的 agent run 不一定表现为最终参数明显违法。用户只要求在指定 repository 创建一个 issue，恶意 PDF 却可能先诱导 agent 请求 full GitHub approval、把一次性 issue authority 委托给 subagent，或在 approval 被消耗后再次复用相同权限。最终的 \texttt{create\_issue(repo=org/repo-x)} 参数可能仍然通过校验，但凭证范围已经扩大、权限已经被转移，审计日志也无法回答“是谁授权了这次扩权”。
 
-一个文档处理工作流展示了这个问题的具体形状。用户可能希望 agent 从选中的 PDF 提取表格、保存 XLSX，并在指定 GitHub repository 中创建 issue；PDF 内容应影响输出数据和 summary，但不应影响 repository selection、approval scope 或 delegation target。最终的 \texttt{create\_issue(repo=org/repo-x)} 调用可能通过参数校验，但同一 PDF 已经诱导 agent 请求 full GitHub approval 或把 issue authority 委托给 untrusted subagent。此时 final action 看似合法，authority path 却已经被不可信 context 改写。第~\ref{sec:motivation} 节用这一例子展开完整 trace。
+根因不是不可信文本进入 prompt 本身，而是 agent runtime 把用户意图、扩展说明、tool metadata、工具结果和运行时输出放进同一个 planning channel；下游 guard 多数在 action materialized 之后才检查 tool、arguments 或 resource。于是，一个对输出内容而言安全的输入，可能对控制决策而言并不安全：PDF text 可以安全地填充 spreadsheet cells，却不应选择 sink、扩大 approval scope 或创建 delegation。本文称这一问题为 context privilege：context 获得了影响 authority-bearing decisions 的权力，而不仅是携带可被引用或总结的信息。
 
-本文关注的 protected decisions 不是模型内部的任意语义判断，而是会 create、select、widen、spend 或 transfer authority 的生命周期事件，包括 tool selection、sink selection、approval scope、policy/capability request 和 delegation target。我们不声称追踪模型内部的任意语义影响。
+这个问题也说明为什么 agent authorization 不能把所有 context 合并成一个信任等级。Skill/manual text 可以指导 workflow，但不能替代用户 intent；MCP/tool metadata 可以描述接口和 credential scope，但不能授权 sink；script output 和 tool result 可以提供 runtime evidence，但不能升级成 instruction 或 approval reason。把这些来源折叠成三类或一类，会让过程建议、接口描述和环境观测互相补权，产生 overbroad permission、approval fatigue、false denial 和不可解释的 workflow breakage。
 
-现有防线分别覆盖了这个问题的一部分。Tool guards 和 argument validators 可以拒绝错误对象或非法参数；static allowlists 和 server-level policies 可以限制可见工具；human approval gates 可以让用户确认高影响操作；OS sandbox 或 monitor 可以约束文件、网络和进程 side effects。Provenance、taint 和 IFC-style defenses 还能拒绝部分已经显化的可疑 flow。这些机制是必要的，但它们通常不维护一个面向未来决策的、可消耗授权对象；该对象的有效性同时依赖 intent derivation、allowed control provenance、temporal state、budget 和 delegation bounds。
+本文关注的 protected decisions 是任何会 create、select、widen、spend 或 transfer authority 的模型可见选择，包括 tool selection、sink selection、approval scope、policy/capability request 和 delegation target。边界也随之明确：本文只保护被 instrumentation 暴露的 authority lifecycle events，不追踪模型内部的任意语义影响，也不覆盖尚未接入 adapter 的 OS-level side effects。
+
+现有防线分别覆盖了这个问题的一部分。Tool guards 和 argument validators 可以拒绝错误对象或非法参数；static allowlists 和 server-level policies 可以限制可见工具；human approval gates 可以重新引入用户确认；OS sandbox 或 monitor 可以约束文件、网络和进程 side effects；provenance、taint 和 IFC-style defenses 可以表达部分 flow policy。这些机制是必要的，但 residual gap 在于：它们通常不把 future decision authority 表示为一个可消耗、可过期、可委托的 transaction object，其有效性同时依赖 intent derivation、allowed control provenance、temporal state、budget 和 delegation bounds。
 
 \sys 从这一差异出发，但不把“检查 action provenance 是否可信”作为 novelty claim；这一方向已经被多种 agent provenance、IFC 和 intent-policy 系统探索。本文的核心观点更窄也更强：protected agent decisions 不应只被当作 materialized action 之后的检查事件，而应被建模为 authority-state transitions，其有效性取决于谁被允许影响这次 transition。\sys 的 lease 是这类 transition 的原子授权对象：它把 trusted mint provenance、decision-specific influence authority、consumption/expiration 和 delegation attenuation 绑定在同一个状态更新里。关键 invariant 不是 action 是否带有 provenance，而是 authority state 不能通过 untrusted provenance 被 mint、refresh、widen 或 delegate，即使最终 action arguments 单独看都合法。一个 high-impact event 只有在两个条件同时成立时才允许执行：它必须由当前 intent certificate 推导出来；并且它的 control provenance 必须来自被授权影响对应 decision class 的 context source。
 
@@ -48,7 +50,7 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 \begin{enumerate}[leftmargin=*,label=\textbf{C\arabic*.}]
   \item \textbf{Model.} 一个面向 agent protected decisions 的 stateful intent-carrying lease model。它将 future decision authority 绑定到 intent、context influence modes，以及 mint、check、consume、expire、attenuate 和 no-amplification 六类状态转移（第~\ref{sec:formal} 节）。
   \item \textbf{System.} 一个 four-input authorization transaction API，把 agent context、instruction context、tool context 和 env context 的字段绑定到同一个可原子检查和消耗的 lease transition。Prototype 已实现 deterministic checker、trace replay、本地 callable gateway、runtime binding、structured value proof、benchmark-derived adapters、本地 env pre-side-effect probe 和 Qwen3.6/llama.cpp action-proposer loop；ActPlane-style/full sandbox 仍是 env adapter 的生产级 lowering target，而不是当前完整实现（第~\ref{sec:design}--\ref{sec:implementation} 节）。
-  \item \textbf{Evidence.} 一个当前 prototype evidence boundary 和四个最终主实验。已有 pilot 结果显示 checker 可以在 saved traces 与本地 Qwen/llama.cpp callable gateway 中执行 intent/provenance/lease invariants；最终版本必须用 E1--E4 的定量结果替换当前边界说明，否则只主张 safety enforcement layer（第~\ref{sec:evaluation} 节）。
+  \item \textbf{Evidence.} 一个围绕 E1--E4 组织的评估框架和当前 prototype evidence boundary。已有结果显示 checker 可以在 saved traces、本地 Qwen/llama.cpp callable gateway 和隔离 env backend 中执行 intent/provenance/lease invariants；第~\ref{sec:evaluation} 节明确区分已支持的 mechanism claim 与仍需完整闭环的 utility、recovery 和 expert-oracle claims。
 \end{enumerate}
 
 \section{背景}
@@ -69,6 +71,24 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 本文使用一个文档处理工作流贯穿设计和评估。用户要求 agent 从两个选中的 PDF 中提取表格，保存 XLSX，并在指定 GitHub repository 中创建一个 issue。PDF text 可以影响表格单元格和 issue body，但不应影响 repository selection、approval scope、capability request 或 delegation target。这个例子把普通 data use 和 authority-bearing decision 分开，使问题不依赖某一种具体工具或 sandbox。
 
 如果其中一个 PDF 包含隐藏指令要求 agent 请求 full GitHub access、加载另一个 Skill，或把 issue authority 交给 subagent，普通 argument check 只能看到最终调用是否仍然使用合法 repo。它无法表达 PDF text 不能成为 approval scope、fresh capability request 或 delegated capability set 的控制来源。\sys 的 running example 因此不是一个错误参数问题，而是一个 context-to-decision influence 问题。
+
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\caption{Running example 中的 context influence boundary。同一 workflow 中，不同 context source 可以影响不同字段；错误地合并这些来源会把 data、procedure、interface 和 runtime evidence 升级为 authority。}
+\label{tab:motivation-context-boundary}
+\begin{tabular}{p{0.20\linewidth}p{0.26\linewidth}p{0.26\linewidth}p{0.20\linewidth}}
+\toprule
+Context source & Allowed influence & Forbidden influence & Bad consequence if collapsed \\
+\midrule
+PDF text & XLSX cells, issue body summary & repo, approval scope, delegated capability & wrong sink or broad GitHub approval \\
+Skill/manual text & extraction procedure within scope & authorized sink, fresh authority & package instruction becomes user intent \\
+Tool/MCP metadata & method schema, credential/interface constraints & user goal, destination authorization & server description grants its own sink \\
+Script/tool output & observed values, runtime evidence & instruction promotion, policy update & output text becomes new workflow policy \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Protected Decisions}
 
