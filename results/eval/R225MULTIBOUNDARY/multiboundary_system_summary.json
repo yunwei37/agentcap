@@ -1,0 +1,64 @@
+{
+  "analyzer_sha256": "791cb031dc172c9550d32996026b4db7ad4bb6a78bbc15d060f7b29b9768c46a",
+  "authorized_effects_or_placements": 17,
+  "blocked_attempts": 21,
+  "covered_boundaries": [
+    "env_local_side_effects",
+    "env_llm_model_loop",
+    "actplane_style_env_lowering",
+    "context_placement",
+    "delegation_handoff",
+    "skill_instruction_placement"
+  ],
+  "input_digests": [
+    {
+      "bytes": 1379,
+      "input_name": "actplane_lowering",
+      "path": "results/eval/R218ACTLOWER/actplane_lowering_summary.json",
+      "sha256": "0b95c14f28fdf50134f0d07c1f67dfd890b10acbc8cc0507c55049f8b5214659"
+    },
+    {
+      "bytes": 1114,
+      "input_name": "boundary_baselines",
+      "path": "results/eval/R223BOUNDARYBASE/boundary_baseline_summary.json",
+      "sha256": "961bc44f7519cfa910a0d91a8c2ea36bba88eb554daa54eb87544b6a85238255"
+    },
+    {
+      "bytes": 1095,
+      "input_name": "boundary_gateway",
+      "path": "results/eval/R222BOUNDARY/boundary_gateway_summary.json",
+      "sha256": "abd8a1dfef6a7d6ba494b75d7335ff28ab6c1b7f4e9d158d44afda52bc4812fa"
+    },
+    {
+      "bytes": 1593,
+      "input_name": "env_backend",
+      "path": "results/eval/R211ENVBACKEND/env_backend_summary.json",
+      "sha256": "bea514deb488da0818da80e8c3741836952f488bcccf49114fe84f69675565e9"
+    },
+    {
+      "bytes": 2231,
+      "input_name": "env_llm",
+      "path": "results/eval/R212ENVLLM/env_llm_backend_summary.json",
+      "sha256": "c6ba1ea23b5ea32527f6281f9f844ae4401c38441567f07dc3d6e9a4f8a6f45b"
+    },
+    {
+      "bytes": 1164,
+      "input_name": "skill_boundary",
+      "path": "results/eval/R224SKILLBOUNDARY/skill_instruction_boundary_summary.json",
+      "sha256": "f237a7d38331dc8e4ef329f17a8680047e1dbaca74fb7734f6384018209a5f66"
+    }
+  ],
+  "monitor_mismatches": 0,
+  "no_provenance_unsafe_accepts_observed": 5,
+  "notes": [
+    "This is a read-only consolidation of existing local result summaries.",
+    "It does not run models, execute side effects, or sync/download datasets.",
+    "Rows intentionally mix local live adapters and deterministic lowering targets; the scope_note field bounds each row.",
+    "The result supports a system-surface claim, not benchmark-scale utility or production ActPlane integration."
+  ],
+  "object_only_unsafe_accepts_observed": 12,
+  "run_id": "R225MULTIBOUNDARY",
+  "system_boundary_rows": 6,
+  "total_attempts": 38,
+  "unsafe_intentcap_effects_or_placements": 0
+}
