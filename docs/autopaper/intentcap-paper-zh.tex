@@ -31,6 +31,7 @@ LLM agents 正在从固定工具调用器演变为可扩展执行环境，可以
 换言之，agent 授权的最小对象不是已经发生的 tool call，而是即将改变 authority state 的 protected-decision transition；该转移必须由多个 issuer-owned fields 共同提交并原子消费。
 \sys 将该 transition 表示为 field-owned protected-decision lease，并把 checker 组织成 multi-issuer commit protocol，而不是 operation-only capability、context label 或 action filter。
 每个 protected decision 按 decision class 的 required fields 从 agent、instruction、tool 和 runtime-observation/env 四类 issuer-owned context 中取证；未要求的 class 可以为空。
+因此，capability 不是 Skill、MCP server、command 或 agent component 自身携带的属性，而是一次 protected transition 从四类 projections 与 checker state 中共同求解出的短期授权。
 Checker 将这些 proof 与当前用户意图、provenance、预算、过期和委托约束绑定，并在副作用、prompt placement 或权限转移前原子验证。
 原型作为 authorization substrate prototype，在 tool/live-callable 和 local runtime-observation/env side-effect 边界执行 lease checks，并把同一 transition API 用于 context placement、delegation handoff 和 Skill instruction placement。
 在 saved-trace protected-event replay 上，\sys 在 3,746 个 cases 中产生 0 个 unsafe accepts，并在 tau2-style reference-action proxy 中覆盖 3,813/3,813 个 reference actions。
@@ -281,13 +282,15 @@ Env & runtime observer, filesystem/process monitor, tool gateway & cwd, runtime 
 \end{tabular}
 \end{table}
 
-实际 capability 必须由相关 protected fields 与全局策略共同决定。令 \(C_q\) 表示 class \(q \in \{agent,inst,tool,env\}\) 的 proof set，四类 proof 的集合是互斥和 \(C=C_{agent}\uplus C_{inst}\uplus C_{tool}\uplus C_{env}\)。未被某个 decision class 要求的输入类可以为空，但被要求的 field 必须从自己的 owner class 取证：
+实际 capability 必须由相关 protected fields、当前 intent、checker lifecycle state 与全局策略共同决定。令 \(C_q\) 表示 class \(q \in \{agent,inst,tool,env\}\) 的 proof set，四类 proof 的集合是互斥和 \(C=C_{agent}\uplus C_{inst}\uplus C_{tool}\uplus C_{env}\)。未被某个 decision class 要求的输入类可以为空，但被要求的 field 必须从自己的 owner class 取证：
 
 \[
-K = Solve_\Gamma(C_{agent}, C_{inst}, C_{tool}, C_{env}) .
+K_d = Solve_\Gamma(I,\sigma,d,C_{agent}, C_{inst}, C_{tool}, C_{env}) .
 \]
 
-这里的 \(Solve\) 是合取约束而不是权限并集。Agent context 给出目标、对象和 sink 的上界。Instruction context 只能在该上界内约束过程。Tool context 只能暴露可调用接口、凭证范围和 sandbox contract。Env context 只能把本次运行实际观测到的值绑定到这些 lease predicates。任一 required field 缺失都会使 lease 不可铸造。相反，若把四类 context 做成 union authority，最强或最会写自然语言的一类输入就可能替其他类补齐字段。
+这里的 \(Solve\) 是合取约束而不是权限并集。\(I\) 给出当前 run 的 authority root，\(\sigma\) 给出 active/exhausted lease、budget、expiry 和 delegation graph，\(d\) 给出本次 protected decision 的 required fields。Agent context 给出目标、对象和 sink 的上界。Instruction context 只能在该上界内约束过程。Tool context 只能暴露可调用接口、凭证范围和 sandbox contract。Env context 只能把本次运行实际观测到的值绑定到这些 lease predicates。任一 required field 缺失都会使 lease 不可铸造。相反，若把四类 context 做成 union authority，最强或最会写自然语言的一类输入就可能替其他类补齐字段。
+
+这个定义也说明为什么“三类”不是稳定抽象。把 instruction 折进 agent 会让 workflow text 获得 user-owned sink、approval 或 delegation root。把 instruction 折进 tool 会把“过程如何被允许执行”和“接口声明了什么”放进同一证明通道。把 env 折进 tool 会让本次运行的 stdout、tool result 或文件状态继承静态 schema/credential trust。把 tool 折进 env 又会丢失 callable schema 和 sandbox contract 这类接口约束。任一三类划分都必须选择上述某个合并；若该合并产生 \(Accept_h\Rightarrow Accept\) 的反例，它就不是等价 proof boundary。
 
 纯 approval event、纯 context-use event 和本地 evidence event 可能只需要其中几类字段。关键规则是：对某个 protected decision 所需的字段，checker 必须从该字段指定的输入类读取，不能由其他输入类代填。例如，agent context 可以授权“处理这两个用户选中的 PDF 并在 \texttt{org/repo-x} 创建一个 issue”，但不能指定 PDF Skill 的脚本路径。Instruction context 可以指导 extraction workflow，但不能选择 GitHub sink。Tool context 可以说明 \texttt{github.create\_issue} 的参数结构和 credential scope，但不能把任意 repo 变成授权 sink。Env context 可以证明某个路径、参数值或 observed result 在运行时存在，但不能把存在性变成用户选择或 retroactively mint broader authority。
 
@@ -424,13 +427,13 @@ Intent-carrying lease 的抽象形式为：
 
 其中 \(I\) 是当前 intent certificate，\(influence\) 约束 control/data provenance，\(flow\) 约束 confidentiality 到 sink 的流向，\(temporal\) 和 \(budget\) 约束事件顺序与调用次数，\(delegation\) 约束可传递给 subagent 的能力集合。
 
-形式上，lease synthesis 可被看作从 per-decision issuer-typed fields 中求解可授权 lease：
+形式上，lease synthesis 可被看作从 per-decision issuer-typed fields、当前 intent 与 checker state 中求解可授权 lease：
 
 \[
-\kappa \in Solve_\Gamma(C_{agent}, C_{inst}, C_{tool}, C_{env}) .
+\kappa \in Solve_\Gamma(I,\sigma,d,C_{agent}, C_{inst}, C_{tool}, C_{env}) .
 \]
 
-其中 \(C_{agent}\) 包含 intent certificate、authorized object/sink selections、approvals、plan stage、agent role 和 parent authority。\(C_{inst}\) 包含 system/developer/user instructions、Skill/manual workflow text、MCP prompts 和 trust endorsements。\(C_{tool}\) 包含 MCP/tool schemas、server identity、credential scope、command/script execution descriptors 和 sandbox contracts。\(C_{env}\) 包含 runtime object existence、cwd/filesystem state、concrete arguments、observed results、runtime evidence 和 resource availability。Active/exhausted lease table、per-lease counters 和 delegation graph 属于 checker state \(\sigma\)，不属于任何可由环境输出填充的 context class。
+其中 \(I\) 是当前 intent certificate，\(d\) 是本次 protected decision class，\(\sigma\) 是 checker-owned lifecycle state。\(C_{agent}\) 包含 intent certificate、authorized object/sink selections、approvals、plan stage、agent role 和 parent authority。\(C_{inst}\) 包含 system/developer/user instructions、Skill/manual workflow text、MCP prompts 和 trust endorsements。\(C_{tool}\) 包含 MCP/tool schemas、server identity、credential scope、command/script execution descriptors 和 sandbox contracts。\(C_{env}\) 包含 runtime object existence、cwd/filesystem state、concrete arguments、observed results、runtime evidence 和 resource availability。Active/exhausted lease table、per-lease counters 和 delegation graph 属于 checker state \(\sigma\)，不属于任何可由环境输出填充的 context class。
 
 这四类不能自然合并成三类。两个 classes 只有在 issuer、可伪造面、可证明字段、观测边界和 lifecycle authority 完全相同时才可合并。Agent、instruction、tool 和 env 分别回答四个不可互换的证明问题：用户授权了什么，过程如何被允许约束，接口声明了什么，以及本次运行实际观察到了什么。若把 \(C_{inst}\) 合并进 \(C_{tool}\)，Skill/manual workflow text 就会和 callable schema、credential scope、binary descriptor 处在同一 issuer class，工具结果或 tool metadata 更容易被误解释为 procedure authority。若把 \(C_{inst}\) 合并进 \(C_{agent}\)，Skill instruction 就可能替用户选择 sink、扩大 approval scope 或 mint lease。若把 \(C_{env}\) 合并进 \(C_{tool}\)，runtime observation 会和静态接口描述混在一起，已执行 tool result、script output 或文件状态就可能替 schema 或 policy 补证明。四类划分的目的不是命名方便，而是让每个 authority field 只有一个可以签发它的 issuer boundary。
 
@@ -476,7 +479,7 @@ synth_\Gamma(d,\Phi,\sigma)=
 \forall e,\sigma,\kappa.\quad Accept_h(e,\sigma,\kappa) \Rightarrow Accept(e,\sigma,\kappa).
 \]
 
-这给出一个可测试的最小性命题。若存在事件 \(e\)、状态 \(\sigma\)、lease \(\kappa\) 和折叠映射 \(h\)，使得 \(Accept_h(e,\sigma,\kappa)\) 成立但 \(Accept(e,\sigma,\kappa)\) 不成立，则被 \(h\) 合并的输入类不是等价 proof boundary。这样的反例不需要改变 tool name、argument value 或 prompt slot，只需要把同一个 field proof 的 issuer class 从合法 owner 换成被合并后的其他来源。换言之，四类模型的必要性不是由类别名称决定，而是由是否存在 class-substitution false accept 决定。
+这给出一个可测试的最小性命题。若存在事件 \(e\)、状态 \(\sigma\)、lease \(\kappa\) 和折叠映射 \(h\)，使得 \(Accept_h(e,\sigma,\kappa)\) 成立但 \(Accept(e,\sigma,\kappa)\) 不成立，则被 \(h\) 合并的输入类不是等价 proof boundary。这样的反例不需要改变 tool name、argument value 或 prompt slot，只需要把同一个 field proof 的 issuer class 从合法 owner 换成被合并后的其他来源。换言之，四类模型的必要性不是由类别名称决定，而是由是否存在 class-substitution false accept 决定。本文不声称这四类是所有 agent 系统的唯一 ontology；它声称在本文覆盖的 Skill/manual、MCP/tool/cmd、runtime/env 和 delegation boundaries 中，任何把四类降为三类的实现都必须证明上述蕴含式，否则 E3 的 counterexample 就会给出 unsafe merge。
 
 E3 的 counterexample suites 和 authority-input characterization evidence 就是在寻找该蕴含式的反例：同一 object、argument 或 prompt slot 保持不变，只替换 issuer class。若折叠后的 checker 接受而四类 checker 拒绝，说明被合并的两类拥有不同 authority fields，不能作为同一个 proof boundary。这个定义把“四类不是三类”的主张变成可测试的 false-accept 条件，而不是命名偏好。
 
