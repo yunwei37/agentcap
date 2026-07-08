@@ -214,6 +214,10 @@ G4 & C2 & E4 / E3 & unsafe executions/placements, unsafe handoffs, and checker-m
 
 这也解释了为什么三类模型不够。若把 instruction 合并进 tool，Skill/manual 的过程文本会与 MCP schema、command binary 和 credential scope 共用同一证明通道，导致“如何做”可以替代“接口允许什么”。若把 env 合并进 tool，运行时结果、stdout 和文件状态会继承工具接口的静态可信度，导致“观察到了什么”可以替代“接口声明了什么”。若把 instruction 或 tool 合并进 agent，扩展说明或 server metadata 就可能替代用户选择、approval 或 delegation root。四类边界因此对应四个不可互相代填的证明问题：用户授权了什么，流程如何被允许执行，哪个接口可以被调用，以及本次运行实际观测到了什么。
 
+这四类也不是 component taxonomy。一个 Skill package 同时可能携带 instruction context（\texttt{SKILL.md} 和手册）、tool context（bundled script descriptor 和 argv schema）以及 env context（script stdout、生成文件和错误日志）。一个 MCP server 同时可能携带 tool context（schema、server identity 和 credential scope）以及 env context（tool result 和资源状态）。一个 agent run 同时持有 agent context（用户 intent、approval 和 delegation root）与 instruction context（用户给出的格式偏好或 workflow preference）。因此，\sys 不按“来源属于 Skill、MCP 还是 command”铸造 capability，而按每个 protected field 的 issuer owner 铸造 capability。实际 lease 是 agent、instruction、tool 和 env 四类 proof 对同一次 protected transition 的合取：少一类 required proof 就拒绝，任一类 proof 越权代填另一个 field 也拒绝。
+
+这种划分让 Skills、文档手册、tools 和 command-line utilities 的差异落在不同 proof fields 上。文档手册和 Skill instruction 的作用是约束过程和 prompt placement。MCP/tool/cmd metadata 的作用是约束可调用接口、参数 schema、credential scope 和 sandbox lowering。Runtime environment 的作用是证明本次执行确实观察到某个路径、stdout、tool result 或 side effect。Agent intent 的作用是给出目标、对象、sink、approval 和 delegation root。一个本地 command 因而不需要第五类 context：它的 binary/argv/sandbox profile 属于 tool context，而实际 cwd、输入文件、输出文件和 stderr 属于 env context。
+
 \begin{table}[t]
 \centering
 \scriptsize
@@ -415,7 +419,30 @@ evidence(e) &\leftarrow \pi_{env}(C_{env}) .
 \end{aligned}
 \]
 
+令 \(F=F_A\uplus F_I\uplus F_T\uplus F_E\) 表示 authority fields 的不相交并集，并令
+\[
+owner:F\rightarrow\{agent,inst,tool,env\}
+\]
+给出每个 field 的唯一签发者。代表性 field 如下：
+\begin{itemize}[leftmargin=*]
+  \item \(F_A\)：\(goal\)、\(authorized\_object\)、\(authorized\_sink\)、\(approval\_scope\)、\(delegation\_root\)。
+  \item \(F_I\)：\(workflow\_scope\)、\(procedure\_step\)、\(prompt\_section\)、\(formatting\_preference\)。
+  \item \(F_T\)：\(callable\)、\(schema\)、\(credential\_scope\)、\(binary\_descriptor\)、\(sandbox\_contract\)。
+  \item \(F_E\)：\(observed\_path\)、\(observed\_arg\)、\(tool\_result\)、\(stdout\)、\(file\_state\)、\(side\_effect\_evidence\)。
+\end{itemize}
+同一个自然语言片段可以被不同 adapter 观察到，但它能证明哪个 field 只由 \(owner(f)\) 和 endorsement state 决定。
+
 一个 protected event \(e\) 只有在 \(Req(d)\) 要求的 projections 与同一个 lease \(\kappa\) 的 predicates 一致时才被接受。未被 \(Req(d)\) 要求的输入类可以为空，但 required field 不能从其他 context class 中补齐。例如 instruction 不能补齐 authorized sink，tool schema 不能补齐 user intent，env evidence 不能补齐 approval token。这个 typed field rule 使 \sys 不只是 MCP/tool-call guard，而是跨 Skill instruction、tool interface、runtime environment 和 agent workflow state 的统一 checker transition。
+
+对应地，capability synthesis 可以写成一个 partial function，而不是最大权限选择：
+\[
+synth_\Gamma(d,\Phi,\sigma)=
+\begin{cases}
+\kappa & \text{if } \forall f\in Req(d).\; typed(\Phi(e,d),f,\kappa,\Gamma,\sigma)\\
+\bot & \text{otherwise.}
+\end{cases}
+\]
+其中 \(typed\) 同时检查 proof issuer、proof value、lease predicate、endorsement 和 lifecycle state。这个定义强调三点。第一，\(synth\) 不会把四类输入求并集后取最宽 authority。第二，缺失的 agent approval 不能由 instruction 或 tool metadata 自动补齐。第三，env observation 只能收窄或绑定已经授权的 predicate，例如把输出文件绑定到一个已授权 output prefix，而不能反向扩大 object set、sink set 或 approval scope。
 
 也可以把“四类是否可以合并”写成 soundness question。令 \(h:\{agent,inst,tool,env\}\rightarrow Q'\) 是一个把若干输入类折叠到更少类别的映射，\(Accept_h(e)\) 是 checker 在折叠后只检查 \(h(owner(f))\) 是否匹配时的接受判定。一次折叠是安全的，必须满足：
 
