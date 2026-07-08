@@ -23,7 +23,7 @@
 
 \begin{abstract}
 LLM agents 正在从固定工具调用器演变为可扩展执行环境，可以加载 Skills、连接 MCP servers、运行本地脚本，并将任务委托给 subagents。
-这些 extensions 不只执行操作，也让文档、工具结果和扩展说明影响未来的 tool selection、sink selection、approval scope 和 delegation target。
+这些 extensions 不只执行操作，也让用户意图、Skill/manual instructions、tool metadata、文档内容、工具结果和环境状态共同影响未来的 tool selection、sink selection、approval scope 和 delegation target。
 现有权限机制主要约束工具、文件和网络端点，难以表达哪个 context 被允许控制一次 authority-bearing decision。
 结果是 agent 可能发出参数看似合法的调用，却已经通过不可信 context 扩大 approval、复用一次性权限或错误委托 authority。
 \sys 的核心观点是：agent authorization 的单位不应是 tool permission、context label 或已发生的 action，而应是会选择工具、选择 sink、扩大 approval 或委托权限的受保护转移（protected-decision transition）。
@@ -194,9 +194,9 @@ G4 & C2 & E4 / E1,E3 & adapter calls checker before side effect or authority tra
 
 \subsection{Authority Inputs}
 
-\sys 的 capability synthesis 不是从单一 prompt context 中抽取权限，而是从四类授权输入类（authority-input classes）中求解 lease。本文将 agent、instruction、tool 和 env 称为四类输入。表~\ref{tab:authority-inputs} 把它们定义为系统接口，而不是单纯分类。两个来源只有在 issuer、可伪造面、可证明的 authority field 和观测边界都相同时才可以合并。
+\sys 的 capability synthesis 不是从单一 prompt context 中抽取权限，而是从四类授权输入类（authority-input classes）中求解 lease。本文将 agent、instruction、tool 和 env 称为四类输入。若只从语义上看，agent intent、instruction/Skill/manual 和 tool/MCP interface 是三类上层 authority source；但系统执行时还必须有第四类 env/runtime source，用来证明路径、进程、输出、资源状态和工具结果等运行时事实。缺少 env 类，论文会退化成 prompt/tool policy；把 env 合并进 tool 或 instruction，又会让运行时文本继承接口或过程可信度。表~\ref{tab:authority-inputs} 因此把四类定义为系统接口，而不是单纯分类。两个来源只有在 issuer、可伪造面、可证明的 authority field 和观测边界都相同时才可以合并。
 
-Agent context 不是模型隐藏状态，而是 trusted issuer 维护的 task intent、approval 和 workflow state。Instruction context 是可被当作过程指导的 policy/Skill/manual 文本。Tool context 是接口、凭证和 sandbox contract。Env context 是运行时观测到的对象、值、结果和资源事实。这四类输入的边界是 agent-specific 的。同一段文本如果来自 \texttt{SKILL.md}，可能在 workflow scope 内成为 instruction context。如果来自 PDF、tool result 或 script output，即使内容像指令，也仍是低完整性的 env context，不能自动升级为 instruction。
+Agent context 不是模型隐藏状态，而是 trusted issuer 维护的 task intent、approval 和 workflow state。Instruction context 是可被当作过程指导的 policy/Skill/manual 文本。Tool context 是接口、凭证和 sandbox contract。Env context 是运行时观测到的对象、值、结果和资源事实。这四类输入的边界是 agent-specific 的。同一段文本如果来自被 endorsement 的 \texttt{SKILL.md} 或手册，可能在 workflow scope 内成为 instruction context；如果来自普通 PDF、网页、tool result、script output 或 subagent summary，即使内容像指令，也仍是低完整性的 env context，不能自动升级为 instruction。Command-line tools 同时涉及 tool context 和 env context：binary、argv schema 和 sandbox profile 属于 tool context；实际 cwd、输入文件、stdout/stderr 和文件系统变化属于 env context。
 
 这四类不能合并成三类。Agent 输入的 issuer 是 trusted UI/approval state，能证明“为什么做”和“哪个对象或 sink 被用户授权”。Instruction 输入的 issuer 是 system/developer policy 或被 endorsement 的 Skill/manual source，能证明“按什么过程做”。Tool 输入的 issuer 是 trusted registry、MCP broker 或 local command registry，能证明“通过哪个接口、凭证和 sandbox contract 做”。Env 输入的 issuer 是 runtime observer 或 monitor，能证明“哪些对象、值和结果在本次执行中存在”。
 
@@ -217,6 +217,8 @@ Agent context 不是模型隐藏状态，而是 trusted issuer 维护的 task in
 Collapsed classes & False authority path & Consequence \\
 \midrule
 Agent + Instruction & Skill/manual procedure is treated as user intent or approval & workflow advice can widen sink or approval scope \\
+Agent + Tool & Tool metadata is treated as user-authorized goal or sink & server/interface description can authorize its own destination \\
+Agent + Env & Observed runtime value is treated as explicit user selection & file existence or tool output can mint object/sink authority \\
 Tool + Env & Tool result or script output is treated as trusted interface metadata & runtime text can choose tool, binary, or sandbox profile \\
 Instruction + Env & PDF/tool output with imperative text is treated as workflow instruction & untrusted data can plan, delegate, or request authority \\
 \bottomrule
@@ -652,7 +654,7 @@ Exp. & Claim question & Evidence source & Primary metric & Scope \\
 \midrule
 E1 & Safety on protected decisions & protected-event replay, benign reference actions, saved local-Qwen proposals & dangerous accept, reference coverage, off-reference proposal accepted & replay + utility proxy \\
 E2 & Lease auditability & 24 author-adjudicated lease labels & invariant pass rate, policy distance & author-adjudicated labels \\
-E3 & Mechanism necessity & residual workflow-policy suites and env cases & unauthorized influence accepted & controlled residuals \\
+E3 & Mechanism necessity & residual workflow-policy suites, env cases, and MCPTox-derived residual lift & unauthorized influence accepted & controlled + benchmark-derived residuals \\
 E4 & Pre-side-effect enforcement & local env suite, Qwen3.6 adversarial loop, ActPlane-style lowering target & unsafe side effects executed, monitor/checker mismatch & local backend + lowering target \\
 \bottomrule
 \end{tabular}
@@ -678,11 +680,15 @@ E2 的结论限定在 author-adjudicated lease-audit result。若要声称 \sys 
 
 E3 检查统一的 protected-decision transition 是否提供独立机制价值。没有这个 transition，一个系统即使拥有 object predicates、provenance labels 和 independent counters，仍可能接受 cross-class promotion、stale lease reuse 或 delegation mismatch。
 
-当前实验使用 concrete Skill、MCP、subagent 和 local-env workflow 的 controlled residual suites。三个对照族是 object/action guard、IFC/provenance guard 和 split-state composite guard。Residual cases 覆盖 context-class collapse、env/tool metadata misclassification、lifecycle reuse、over-delegation，以及 trusted tool metadata \(\rightarrow\) policy update。
+当前实验使用 concrete Skill、MCP、subagent 和 local-env workflow 的 controlled residual suites，并把其中一类 residual lift 到已有 MCPTox artifact。三个对照族是 object/action guard、IFC/provenance guard 和 split-state composite guard。Residual cases 覆盖 context-class collapse、env/tool metadata misclassification、lifecycle reuse、over-delegation，以及 trusted tool metadata \(\rightarrow\) policy update。
 
-\sys 拒绝这些 suites 中的 lifecycle/no-promotion residual violations。Closest labelers 会接受 trusted tool metadata 供应 policy authority 的 cases，也会接受 generic provenance 折叠 agent/instruction/tool/env fields 的 cases。在 R217 workflow-policy suite 中，\sys 执行 2 个合法 workflow events，并阻止 7 个 residual violations。Closest labelers 接受全部 9 个 events，因为它们不区分 trusted tool metadata 和 agent/admin policy authority。该结果支持 controlled residual attacks 上的机制结论：no-substitution、no-promotion 和 atomic check/consume 必须一起检查。
+\sys 拒绝这些 suites 中的 lifecycle/no-promotion residual violations。Closest labelers 会接受 trusted tool metadata 供应 policy authority 的 cases，也会接受 generic provenance 折叠 agent/instruction/tool/env fields 的 cases。在 R217 workflow-policy suite 中，\sys 执行 2 个合法 workflow events，并阻止 7 个 residual violations。Closest labelers 接受全部 9 个 events，因为它们不区分 trusted tool metadata 和 agent/admin policy authority。
 
-这是 controlled mechanism evidence，不是 benchmark-scale prevalence 结论。若要声明这些 residual patterns 在 benchmark 中普遍出现，还需要在 AgentDojo、MCPTox、InjecAgent 和 tau2-style traces 上刻画 naturally occurring protected decisions 有多常需要同样的四类输入和 lifecycle checks。
+R219 将同一四类 no-substitution residual lift 到已有 MCPTox artifact，而没有同步或下载新数据。实验读取本地 R007 successful-call trace 和 \texttt{response\_all.json} 的 authentic tool catalog，确定性选择 24 个在 trace 中真实出现且属于 authentic catalog 的 MCP tool objects。对每个 object，构造一个合法 schema-use 事件和两个非法 authority-promotion 事件：trusted tool metadata \(\rightarrow\) \texttt{policy.update(agent.policy)}，以及 trusted tool metadata \(\rightarrow\) approval widening。\sys 允许 24/24 个 schema-use 事件，拒绝 48/48 个 policy/approval residual events。Closest provenance/IFC/policy-style labelers 接受这 48 个 residual events，因为控制来源是 trusted metadata 且事件匹配 policy-shaped lease；\sys 拒绝它们，因为 tool context 只能证明接口/schema，不能证明 agent/admin policy 或 approval scope。该结果把 R217 的本地 controlled residual 从自定义 workflow 提升到 benchmark-derived MCP tool metadata objects，但仍不是 naturally occurring prevalence 或 fresh online utility 结论。
+
+这些结果支持 controlled residual attacks 与 benchmark-derived residual-lift 上的机制结论：no-substitution、no-promotion 和 atomic check/consume 必须一起检查。
+
+这是 controlled mechanism evidence 加 benchmark-derived lift，不是 benchmark-scale prevalence 结论。若要声明这些 residual patterns 在 benchmark 中普遍出现，还需要在 AgentDojo、MCPTox、InjecAgent 和 tau2-style traces 上刻画 naturally occurring protected decisions 有多常需要同样的四类输入和 lifecycle checks。
 
 \subsection{E4: Local Env Gateway Practicality}
 
@@ -708,8 +714,9 @@ Saved benchmark traces 和 live callable gateway 说明，同一 checker semanti
 
 \begin{table}[t]
 \centering
-\scriptsize
+\tiny
 \setlength{\tabcolsep}{1.5pt}
+\renewcommand{\arraystretch}{0.94}
 \caption{当前实验结果和适用范围。}
 \label{tab:current-evidence}
 \begin{tabular}{p{0.19\linewidth}p{0.15\linewidth}p{0.34\linewidth}p{0.20\linewidth}}
@@ -720,6 +727,7 @@ Same-event wrapper matrix & tool/env & \sys accepts 0 dangerous events on 3,746 
 Reference-action proxy & agent/tool/env & \sys covers 3,813/3,813 benign reference actions and passes 2,554/2,556 applicable tool-oracle tasks & Reference-action feasibility, not live model completion \\
 Saved local-Qwen replay & agent/tool/env & \sys keeps 11/11 exact proposals and rejects 47/47 off-reference proposals; object-only wrappers accept many of them & Replay compiler safety, not replanning or approval burden \\
 Residual workflow-policy suites & inst., tool, env, delegation & Local workflow suites reject lifecycle/no-promotion residuals in concrete Skill/MCP/subagent workflows, including trusted-tool-metadata \(\rightarrow\) policy-update cases accepted by closest labelers & Controlled mechanism evidence over residual suites \\
+MCPTox-derived residual lift & tool/agent & R219 derives 24 authentic MCP tool-metadata cases from saved MCPTox artifacts, allows 24 schema-use events, and denies 48 policy-update/approval-widening residual events that closest provenance/IFC/policy-style labelers accept & Benchmark-derived residual-lift evidence, not natural-prevalence or online utility \\
 Env side-effect suite & env/tool/inst. & On 10 local script/file/network events, full checker preserves 4 authorized effects and rejects 6 violations; the real local experiment executes 4 IntentCap-authorized effects, blocks 6 before side effects, executes 0 unsafe effects, while object-only executes 8 effects including 4 unsafe effects and modifies the isolated secret file & Isolated local backend, not production sandbox \\
 Env Qwen model loop & env/tool/inst. & On the same 10 events, Qwen3.6 returns 8 calls, including 4 denied unsafe calls; \sys executes only the 4 authorized calls and blocks the 4 unsafe calls before side effects, while object-only executes 7 calls including 3 unsafe effects and modifies the isolated secret file & Local adversarial model-loop safety \\
 ActPlane-style env lowering & env/tool/inst. & R218 lowers 4 active env leases to 4 deny-by-default monitor rules; replaying the 10 env events yields 4 allows, 6 blocks, 0 checker/monitor mismatches, and 0 unsafe monitor allows & Structured lowering target, not production ActPlane integration \\
@@ -732,7 +740,7 @@ Local-Qwen trajectory slice & agent/tool/env & In a matched 18-task local-Qwen p
 \subsection{Limitations}
 当前评估支持的结论是：protected-decision transitions 可以在已 instrumented 的边界上被形式化并执行。当前结果覆盖 instrumented protected-decision events。端到端 utility、approval burden、independent expert replication 和 production sandbox integration 需要单独实验。
 
-第一，当前 workloads 仍以 saved traces、reference-action proxies、controlled residual suites 和 local experiments 为主。它们覆盖 agent/tool/env/instruction/delegation 边界。更大规模的 online user-simulator evaluation 是端到端 utility claim 的证据来源。第二，E2 使用 author-adjudicated lease labels。这能检查 lease schema 和 authority-distance invariants。Blinded independent expert replication 才能支撑 expert-oracle least-privilege claim。第三，本地 env backend 在隔离目录中验证 pre-side-effect blocking，R218 只验证同一 lease contract 可以降低成 ActPlane-style monitor rule set。Production ActPlane/kernel integration、真实 syscall mediation 和低开销 enforcement 仍需要单独工程与实验。
+第一，当前 workloads 仍以 saved traces、reference-action proxies、controlled residual suites、benchmark-derived residual lift 和 local experiments 为主。R219 使用已有 MCPTox artifacts 生成 24 个 authentic tool-metadata residual cases，但它不是自然发生频率统计。更大规模的 online user-simulator evaluation 是端到端 utility claim 的证据来源。第二，E2 使用 author-adjudicated lease labels。这能检查 lease schema 和 authority-distance invariants。Blinded independent expert replication 才能支撑 expert-oracle least-privilege claim。第三，本地 env backend 在隔离目录中验证 pre-side-effect blocking，R218 只验证同一 lease contract 可以降低成 ActPlane-style monitor rule set。Production ActPlane/kernel integration、真实 syscall mediation 和低开销 enforcement 仍需要单独工程与实验。
 
 这些限制限定外推范围。\sys 证明的是 instrumented protected-decision events 可以由 intent-derived, provenance-gated, consumable leases 管理。完整 workload utility、approval burden、independent expert-oracle least privilege 和 production sandbox integration 需要分别报告，而不能由当前结果自动推出。
 

@@ -1,0 +1,1 @@
+/usr/bin/python3 scripts/build_e3_benchmark_residual_lift.py --trace results/mcptox/R007/intentcap_trace.json --response-all benchmarks/mcptox/response_all.json --output-dir results/eval/R219E3LIFT --run-id R219E3LIFT --case-limit 24
