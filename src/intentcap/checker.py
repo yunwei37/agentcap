@@ -30,6 +30,31 @@ class Verdict:
         }
 
 
+class CheckerSession:
+    """Stateful checker session for live adapters.
+
+    ``check_event`` is intentionally stateless for simple one-off validation.
+    Live boundaries need the same temporal and budget semantics as trace replay,
+    so they use this session wrapper to update checker state after each allowed
+    event.
+    """
+
+    def __init__(self, leases: list[dict[str, Any]], labels: dict[str, Any]) -> None:
+        self.leases = leases
+        self.labels = labels
+        self.state = _initial_state()
+
+    @classmethod
+    def from_trace(cls, trace: dict[str, Any]) -> "CheckerSession":
+        return cls(trace.get("leases", []), trace.get("labels", {}))
+
+    def check(self, event: dict[str, Any]) -> dict[str, Any]:
+        verdict = _check_event(event, self.leases, self.labels, self.state).to_dict()
+        if verdict["allowed"]:
+            _record_allowed_event(event, verdict, self.state)
+        return verdict
+
+
 def check_trace(trace: dict[str, Any]) -> list[dict[str, Any]]:
     """Check all events in a trace and return JSON-serializable verdicts."""
 

@@ -604,14 +604,14 @@ Checker judgment is:
 \section{实现}
 \label{sec:implementation}
 
-我们的原型是一个 Python-based agent authorization harness，用于验证三个边界性质：lease language 是否足以表达 intent/context authority，deterministic checker 是否能在统一 event model 上执行这些约束，以及这些约束能否落到 trace replay、live callable gateway、benchmark-derived workflows 和 env/OS-monitor-style policy target。当前完整实现的是 checker core、tool/live callable gateway、本地 env pre-side-effect gateway、runtime binding 和结果分析脚本；instruction placement 与 delegation 主要通过 trace-level semantics 验证；ActPlane 是 policy-target lowering，而不是 production kernel integration。Production MCP broker、production ActPlane integration 和 fresh user-simulator loop 是扩展实验所需的工程边界。
+我们的原型是一个 Python-based agent authorization harness，用于验证三个边界性质：lease language 是否足以表达 intent/context authority，deterministic checker 是否能在统一 event model 上执行这些约束，以及这些约束能否落到 trace replay、live callable gateway、benchmark-derived workflows、context/delegation boundary probes 和 env/OS-monitor-style policy target。当前完整实现的是 checker core、tool/live callable gateway、本地 env pre-side-effect gateway、live context-placement gateway、live delegation monitor、runtime binding 和结果分析脚本；ActPlane 是 policy-target lowering，而不是 production kernel integration。Production MCP broker、production prompt builder/subagent runtime、production ActPlane integration 和 fresh user-simulator loop 是扩展实验所需的工程边界。
 
 \subsection{Checker Core}
 Checker core 位于 \texttt{src/intentcap/}，实现 context labels、effect events、leases、checker state 和 proof objects。当前 checker 支持 exact、prefix、suffix 和 one-of argument predicates，支持 lease matching、holder scoping、control/data provenance checks、context-label influence-mode checks、temporal prerequisites、per-lease invocation budgets、proof-carrying intent/approval derivation，以及 delegated capability attenuation。这个 core 是本文的主要 TCB：LLM 输出、Skill 描述、MCP annotations 和 tool results 只能产生 candidate effects 或 candidate leases，不能绕过 checker 直接获得 authority。
 
 \subsection{Adapter Surface}
 
-表~\ref{tab:adapter-surface} 将实现边界分为 implemented、trace-level 和 target 三类，以限定原型结果的解释范围。当前实现的实证重点是 checker semantics、gateway boundary、runtime binding、benchmark-derived protected-decision events、隔离目录中的本地 env pre-side-effect 和 Qwen3.6 model-loop experiments，以及把同一 env lease contract 降低到 ActPlane-style deny-by-default policy target。Production ActPlane monitor 仍是 env adapter 的可选生产后端。
+表~\ref{tab:adapter-surface} 将实现边界分为 implemented、trace-level 和 target 三类，以限定原型结果的解释范围。当前实现的实证重点是 checker semantics、gateway boundary、runtime binding、benchmark-derived protected-decision events、live context/delegation boundary probes、隔离目录中的本地 env pre-side-effect 和 Qwen3.6 model-loop experiments，以及把同一 env lease contract 降低到 ActPlane-style deny-by-default policy target。Production ActPlane monitor 仍是 env adapter 的可选生产后端。
 
 \begin{table}[t]
 \centering
@@ -624,10 +624,10 @@ Checker core 位于 \texttt{src/intentcap/}，实现 context labels、effect eve
 Adapter & Inputs & Events / block point & Status & ActPlane relation \\
 \midrule
 Agent & intent, approvals, workflow/delegation state & lease mint, approval, spawn & trace-level + runtime state & not applicable \\
-Instruction & system, user, Skill/manual, MCP prompt labels & ctx.use, prompt-section placement & trace-level classifier contract & not applicable \\
+Instruction & system, user, Skill/manual, MCP prompt labels & ctx.use, prompt-section placement & implemented local placement gateway + trace-level classifier & not applicable \\
 Tool & tool schemas, MCP methods, local callable registry & call/mcp before callable execution & implemented gateway & broker-level complement \\
 Env & cwd/files/results/script outputs/resources & read/write/exec/net evidence and sandbox policy & implemented local pre-side-effect/model-loop experiments + ActPlane-style lowering target & optional OS backend \\
-Delegation & parent lease set, child context/caps & subagent.spawn before handoff & checker implemented, trace-level workloads & not applicable \\
+Delegation & parent lease set, child context/caps & subagent.spawn before handoff & implemented local monitor + trace-level workloads & not applicable \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -637,19 +637,21 @@ Delegation & parent lease set, child context/caps & subagent.spawn before handof
 
 \texttt{LiveToolGateway} 包裹本地 Python callables。只有 checker 接受的 event 才会真正调用注册函数。被拒绝的事件在 side effect 发生前停止。这一区分很重要：trace replay 提供大规模 policy evidence，live gateway 验证同一 lease semantics 可以保护真实 callable boundary。
 
+\texttt{LiveContextPlacementGateway} 和 \texttt{LiveDelegationMonitor} 将同一个 stateful checker session 放在 prompt-section placement 与 subagent handoff 之前。前者只有在 \texttt{ctx.use} event 被允许后才把内容写入目标 section；后者只有在 \texttt{subagent.spawn} event 的 delegated capabilities 被 lease attenuation 覆盖后才记录 child handoff。这两个 adapters 是本地 probe，不是 production prompt builder 或 subagent runtime。
+
 \subsection{Compiler Probes and Runtime Binding}
 原型还包含 local llama.cpp/Qwen frontend，用来模拟不可信 lease compiler 和 action proposer。模型可以根据 task text、tool schemas、已有 tool-result previews 或 checker feedback 生成 candidate leases/actions。系统只把通过 checker 的结果交给 gateway。
 
 对于 tau2-bench-style stateful workflows，runtime binding 会从已经执行的 tool-result evidence 中铸造 exact one-shot leases，并重新检查参数值是否出现在当前可见 task/tool-result context 中~\cite{tau2bench}。High-impact write candidates 还必须满足 structured value proof：例如列表参数需要逐项绑定到结构化上下文，不能从原始文本窗口或 sibling objects 中借用 authority。
 
 \subsection{Implemented Surface}
-当前原型实现了 checker/gateway、live local callable boundary、benchmark-derived replay adapters、runtime binding、structured value proof、read/write activation、lease-label audit，以及 E1 security/utility wrapper matrices。这些组件共同验证同一 lease semantics 可以同时服务 trace replay、真实本地 callable boundary 和 benchmark-derived protected-decision events。
+当前原型实现了 checker/gateway、live callable、context/delegation probes、benchmark replay adapters、runtime binding、structured value proof、read/write activation、lease-label audit，以及 E1 security/utility wrapper matrices。这些组件共同验证同一 lease semantics 可以同时服务 trace replay、真实本地 callable/context/delegation boundary 和 benchmark-derived protected-decision events。
 
 当前原型还包含 local Qwen/llama.cpp compiler experiments 和本地 env backend experiments。Env backend 在隔离目录中真实执行 Python script、file read/write 和 context-use handlers，并在 side effect handler 之前调用 checker。被拒绝的 exec/read/write/net/ctx events 不会进入本地 side-effect handler。模型闭环版本使用 Qwen3.6/llama.cpp 作为不可信 action proposer。模型在 adversarial env-context prompt 下返回 call/abort，只有 call 事件会继续进入 checker 和本地 side-effect handler。
 
 原型还实现了一个 ActPlane-style lowering target：从 active env leases 生成 deny-by-default monitor rules，并在 replay monitor 中检查 operation、object、holder、argument predicates、budget consumption、control/data provenance 和 context-label influence rules。该 lowering 证明 lease contract 可以被编码为 env/OS monitor policy 形态。它不是 production ActPlane integration，因为当前 monitor 运行在 Python replay harness 中，且 provenance labels 仍由 IntentCap adapter 提供。
 
-这些实现支撑机制性结论：在已接入 checker 的边界上，\sys 能拒绝 unauthorized context-to-decision influence，run-time exact leases 可以缩小 object/tool authority surface，checker 可以阻止 LLM-proposed broad/runtime authority 直接进入执行路径，并且同一 env lease contract 可以被降低为包含 provenance/influence checks 的 monitor rules。生产级 sandbox、full MCP broker、独立 human expert-oracle replication 和 benchmark-scale recovery evaluation 属于扩展结论所需的实验条件。
+这些实现支撑机制性结论：在已接入 checker 的边界上，\sys 能拒绝 unauthorized context-to-decision influence，run-time exact leases 可以缩小 object/tool authority surface，checker 可以阻止 LLM-proposed broad/runtime authority 直接进入执行路径，context/delegation boundary 可以在 placement/handoff 前调用同一 checker，并且同一 env lease contract 可以被降低为包含 provenance/influence checks 的 monitor rules。生产级 sandbox、full MCP broker、独立 human expert-oracle replication 和 benchmark-scale recovery evaluation 属于扩展结论所需的实验条件。
 
 \section{评估}
 \label{sec:evaluation}
@@ -749,6 +751,8 @@ E4 的假设是：同一 checker transition 可以在真实本地边界、untrus
 
 R218 进一步把同一组 active env leases 降低为 4 条 deny-by-default ActPlane-style monitor rules，分别覆盖 \texttt{process.exec}、\texttt{filesystem.read}、\texttt{filesystem.write} 和 \texttt{context.use}。对同一 10-event env suite replay 时，lowered monitor 允许 4 个 authorized events、拒绝 6 个 violations，与 checker 有 0 个 decision mismatches，并执行 0 个 unsafe monitor allows。重要的是，lowered rules 不只包含 object/path predicates；它们还携带 context labels、control/data provenance 和 influence-mode predicates。否则 \texttt{script\_output} 这类 env context 会被错误提升为 instruction authority。这个结果的系统含义是 lease contract 可以保留 issuer/provenance/influence predicates 降到 OS-monitor policy 形态；它不是 production ActPlane/kernel integration claim。
 
+R222 对 instruction placement 和 delegation boundary 做一个小型 live adapter probe。Context placement gateway 在 3 个 \texttt{ctx.use} attempts 中放置 2 个授权内容，并在 prompt-section placement 前阻止 1 个 \texttt{script\_output} 提升为 instruction 的事件。Delegation monitor 在 2 个 handoff attempts 中允许 1 个 summary-only subagent capability，并阻止 1 个把 email sink capability 交给 calendar subagent 的 over-delegation。两个 unsafe counters 都为 0。该结果把 instruction/delegation 从纯 trace-level semantics 推进到本地 live adapter evidence，但它仍不是 production prompt builder、真实 subagent runtime 或用户研究。
+
 \section{范围与局限}
 \label{sec:evidence-status}
 
@@ -782,6 +786,7 @@ MCPTox-derived residual lift & tool/agent & R219 derives 24 authentic MCP tool-m
 Env side-effect suite & env/tool/inst. & On 10 local script/file/network events, full checker preserves 4 authorized effects and rejects 6 violations; the real local experiment executes 4 IntentCap-authorized effects, blocks 6 before side effects, executes 0 unsafe effects, while object-only executes 8 effects including 4 unsafe effects and modifies the isolated secret file & Isolated local backend, not production sandbox \\
 Env Qwen model loop & env/tool/inst. & On the same 10 events, Qwen3.6 returns 8 calls, including 4 denied unsafe calls; \sys executes only the 4 authorized calls and blocks the 4 unsafe calls before side effects, while object-only executes 7 calls including 3 unsafe effects and modifies the isolated secret file & Local adversarial model-loop safety \\
 ActPlane-style env lowering & env/tool/inst. & R218 lowers 4 active env leases to 4 deny-by-default monitor rules; replaying the 10 env events yields 4 allows, 6 blocks, 0 checker/monitor mismatches, and 0 unsafe monitor allows & Structured lowering target, not production ActPlane integration \\
+Context/delegation live adapters & inst./env/delegation & R222 places 2/3 authorized context items, blocks one instruction-promotion attempt before placement, spawns 1/2 delegated subagents, and blocks one email over-delegation; unsafe counters are 0 & Local adapter probe, not production prompt/subagent runtime \\
 Author-adjudicated E2 audit & agent/tool/env; partial instruction & 24/24 lease labels pass schema, sample, and policy-distance invariant checks & Author-adjudicated lease oracle, not blinded expert replication \\
 Local-Qwen trajectory slice & agent/tool/env & In a matched 18-task local-Qwen pair, all-tool exposure raises visible schemas from 2.61 to 14.72 on average and model calls from 62 to 74; action-reward stays 8/18 and tool-oracle stays 0/18, while gateway/off-lease blocks increase. Exact-sequence matches move separately from reward/oracle success, so trajectory progress must be reported separately & Local Qwen utility slice, not benchmark-scale recovery \\
 \bottomrule
@@ -791,7 +796,7 @@ Local-Qwen trajectory slice & agent/tool/env & In a matched 18-task local-Qwen p
 \subsection{Limitations}
 当前评估支持的结论是：protected-decision transitions 可以在已 instrumented 的边界上被形式化并执行。当前结果覆盖 instrumented protected-decision events。端到端 utility、approval burden、independent expert replication 和 production sandbox integration 需要单独实验。
 
-第一，当前 workloads 仍以 saved traces、reference-action proxies、controlled residual suites、benchmark-derived residual lift 和 local experiments 为主。R220 使用已有 artifacts 做 issuer-class characterization，但它是 derived trace annotation；R221 已经把其中 48 个 natural protected-decision events 做成可复核标注包和 project-author first-pass labels，但顶会级 novelty claim 仍需要独立标注者复核 field owner 与 unsafe substitutes。R219 使用已有 MCPTox artifacts 生成 24 个 authentic tool-metadata residual cases，但它不是自然发生频率统计。更大规模的 online user-simulator evaluation 是端到端 utility claim 的证据来源。第二，E2 使用 author-adjudicated lease labels。这能检查 lease schema 和 authority-distance invariants。Blinded independent expert replication 才能支撑 expert-oracle least-privilege claim。第三，本地 env backend 在隔离目录中验证 pre-side-effect blocking，R218 只验证同一 lease contract 可以降低成 ActPlane-style monitor rule set。Production ActPlane/kernel integration、真实 syscall mediation 和低开销 enforcement 仍需要单独工程与实验。第四，instruction placement 和 delegation 目前主要是 trace-level validation；若要声称完整多边界 enforcement，需要实现 live context-placement guard 和 live delegation monitor。
+第一，当前 workloads 仍以 saved traces、reference-action proxies、controlled residual suites、benchmark-derived residual lift 和 local experiments 为主。R220 使用已有 artifacts 做 issuer-class characterization，但它是 derived trace annotation；R221 已经把其中 48 个 natural protected-decision events 做成可复核标注包和 project-author first-pass labels，但顶会级 novelty claim 仍需要独立标注者复核 field owner 与 unsafe substitutes。R219 使用已有 MCPTox artifacts 生成 24 个 authentic tool-metadata residual cases，但它不是自然发生频率统计。更大规模的 online user-simulator evaluation 是端到端 utility claim 的证据来源。第二，E2 使用 author-adjudicated lease labels。这能检查 lease schema 和 authority-distance invariants。Blinded independent expert replication 才能支撑 expert-oracle least-privilege claim。第三，本地 env backend 在隔离目录中验证 pre-side-effect blocking，R218 只验证同一 lease contract 可以降低成 ActPlane-style monitor rule set。Production ActPlane/kernel integration、真实 syscall mediation 和低开销 enforcement 仍需要单独工程与实验。第四，R222 已经实现本地 live context-placement guard 和 live delegation monitor probe；若要声称完整多边界 enforcement，还需要接入 production prompt builder、真实 subagent runtime、更多 Skill/manual injection workloads 和端到端 approval/recovery metrics。
 
 这些限制限定外推范围。\sys 证明的是 instrumented protected-decision events 可以由 intent-derived, provenance-gated, consumable leases 管理。完整 workload utility、approval burden、independent expert-oracle least privilege 和 production sandbox integration 需要分别报告，而不能由当前结果自动推出。
 
