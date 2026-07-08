@@ -39,7 +39,7 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 \sys 从这一差异出发，但不把“检查 action provenance 是否可信”作为 novelty claim；这一方向已经被多种 agent provenance、IFC 和 intent-policy 系统探索。本文的核心观点更窄也更强：protected agent decisions 不应只被当作 materialized action 之后的检查事件，而应被建模为 authority-state transitions，其有效性取决于谁被允许影响这次 transition。\sys 的 lease 是这类 transition 的原子授权对象：它把 trusted mint provenance、decision-specific influence authority、consumption/expiration 和 delegation attenuation 绑定在同一个状态更新里。关键 invariant 不是 action 是否带有 provenance，而是 authority state 不能通过 untrusted provenance 被 mint、refresh、widen 或 delegate，即使最终 action arguments 单独看都合法。一个 high-impact event 只有在两个条件同时成立时才允许执行：它必须由当前 intent certificate 推导出来；并且它的 control provenance 必须来自被授权影响对应 decision class 的 context source。
 
-\sys 用 intent-carrying capability leases 表达这一生命周期。Lease 是短期、可消耗、可衰减的授权对象，绑定 holder、operation、object、arguments、intent derivation、control/data provenance、flow、temporal state、budget 和 delegation。它的输入不是单一 prompt，而是四类 agent-specific context 的交集：agent context 给出当前 intent 与 workflow state，instruction context 给出可被当作过程指导的文本，tool context 给出接口和 side-effect surface，env context 给出运行时对象、结果、资源和 lease state。与只在 action time 比对参数来源的 guard 不同，\sys lease 先成为 future decision authority 的对象：它定义哪些 context 可以影响哪些安全相关字段、何时有效、可以被调用几次、能否传给 subagent、以及如何 lowering 到不同 extension boundary。因此，同一个 document 可以被授权 parameterize 输出数据，但不能 authorize 新工具、扩大 approval scope 或选择外部 sink。
+\sys 用 intent-carrying capability leases 表达这一生命周期。Lease 是短期、可消耗、可衰减的授权对象，绑定 holder、operation、object、arguments、intent derivation、control/data provenance、flow、temporal state、budget 和 delegation。它的输入不是单一 prompt，而是四类 agent-specific context 的交集：agent context 给出当前 intent 与 workflow state，instruction context 给出可被当作过程指导的文本，tool context 给出接口和 side-effect surface，env context 给出运行时对象、结果和资源事实。Lease table、budget counter 和 consumption state 属于 checker state \(\sigma\)，而不是 env context；env 可以报告观测事实，但不能伪造 active 或 exhausted authority。与只在 action time 比对参数来源的 guard 不同，\sys lease 先成为 future decision authority 的对象：它定义哪些 context 可以影响哪些安全相关字段、何时有效、可以被调用几次、能否传给 subagent、以及如何 lowering 到不同 extension boundary。因此，同一个 document 可以被授权 parameterize 输出数据，但不能 authorize 新工具、扩大 approval scope 或选择外部 sink。
 
 这一设计带来两个实现挑战。第一，lease 不能由 LLM 单独决定，否则攻击 context 仍可能通过 prompt 影响授权本身。第二，系统不能只在工具调用口检查权限，因为 untrusted context 可能先影响 plan、prompt construction、delegation 或 approval request。\sys 因此采用 LLM-assisted compiler 与 deterministic checker 的结构：LLM 只提出 plan 和 candidate leases；checker 根据 intent certificate、context labels、effect IR 和 global policy 验证 proof-carrying leases；runtime adapters 再将 leases lowering 到 context constructor、tool gateway、MCP broker、本地执行 sandbox 和 delegation monitor。这个定位把 \sys 与参数级 provenance guard 区分开来：后者判断已观察到的 action 是否可信，\sys 还显式管理未来决策权限的 mint、check、consume、attenuate 和 delegate 过程。
 
@@ -207,7 +207,7 @@ Denial 是 runtime refinement 的输入，而不是 authority escape hatch。LLM
   \item \textbf{Agent adapter.} 维护 intent certificate、approval tokens、workflow stage、active/exhausted leases 和 parent-child delegation state。它是 \(C_{agent}\) 的 trusted issuer，并且是唯一能把 approval 转换为 fresh lease mint event 的组件。
   \item \textbf{Instruction adapter.} 对 system/developer/user instructions、Skill/manual files、\texttt{SKILL.md}、workflow notes 和 MCP prompts 做 provenance labeling，决定哪些文本可以进入 trusted instruction section，哪些只能进入 untrusted data section。它执行 no-promotion rule：env outputs 不会因为包含命令式文本而变成 instruction。
   \item \textbf{Tool adapter.} 将 MCP/tool schema、本地 command descriptor、credential scope、argv/env schema 和 declared side effects 转换为 \(C_{tool}\)。Tool gateway 和 MCP broker 只暴露 active leases 覆盖的 callable surface，并在 side effect 前验证 arguments、control provenance 和 budget。
-  \item \textbf{Env adapter.} 观察 cwd、selected files、tool results、script outputs、runtime evidence、resource availability 和 lease consumption state。Execution sandbox 将 file、process、network 和 secrets constraints 下发到底层环境；ActPlane-style backend 可以作为这一 adapter 的 OS-level lowering target，用来覆盖 local script、process 和 network side effects。
+  \item \textbf{Env adapter.} 观察 cwd、selected files、tool results、script outputs、runtime evidence 和 resource availability。它只产生 \(C_{env}\) facts，并把 file、process、network 和 secrets events 交给 checker；active/exhausted lease table 与 consumption counters 只在 checker state \(\sigma\) 中维护。Execution sandbox 将 file、process、network 和 secrets constraints 下发到底层环境；ActPlane-style backend 可以作为这一 adapter 的 OS-level lowering target，用来覆盖 local script、process 和 network side effects。
   \item \textbf{Delegation adapter.} 在 subagent spawn 前调用 \(attenuate(\kappa_{parent},K_c)\)，确保 child context 和 capabilities 都不宽于 parent active leases，并记录 delegated authority 的 consumption state。
 \end{itemize}
 
@@ -280,7 +280,7 @@ Intent-carrying lease 的抽象形式为：
 \kappa \in Solve_\Gamma(C_{agent}, C_{inst}, C_{tool}, C_{env}) .
 \]
 
-其中 \(C_{agent}\) 包含 intent certificate、approvals、plan stage、agent role 和 parent authority；\(C_{inst}\) 包含 system/developer/user instructions、Skill/manual workflow text、MCP prompts 和 trust endorsements；\(C_{tool}\) 包含 MCP/tool schemas、server identity、credential scope、command/script execution descriptors 和 sandbox contracts；\(C_{env}\) 包含 selected objects、cwd/filesystem state、concrete arguments、observed results、runtime evidence、resource availability 和当前 lease consumption state。
+其中 \(C_{agent}\) 包含 intent certificate、approvals、plan stage、agent role 和 parent authority；\(C_{inst}\) 包含 system/developer/user instructions、Skill/manual workflow text、MCP prompts 和 trust endorsements；\(C_{tool}\) 包含 MCP/tool schemas、server identity、credential scope、command/script execution descriptors 和 sandbox contracts；\(C_{env}\) 包含 selected objects、cwd/filesystem state、concrete arguments、observed results、runtime evidence 和 resource availability。Active/exhausted lease table、per-lease counters 和 delegation graph 属于 checker state \(\sigma\)，不属于任何可由环境输出填充的 context class。
 
 Checker 以四个 projection functions 读取这些输入面：
 
@@ -461,7 +461,7 @@ Checker core 位于 \texttt{src/intentcap/}，实现 context labels、effect eve
 
 \subsection{Adapter Surface}
 
-表~\ref{tab:adapter-surface} 区分当前 prototype 已实现的 adapter、trace-level adapter 和设计层 lowering target。这个表是为了避免把 \sys 写成已经完整替换 production MCP broker 或 OS sandbox。当前 artifact 的实证重点是 checker semantics、gateway boundary、runtime binding 和 benchmark-derived protected-decision events；ActPlane-style monitor 是 env adapter 的可选后端。
+表~\ref{tab:adapter-surface} 区分当前 prototype 已实现的 adapter、trace-level adapter 和设计层 lowering target。这个表是为了避免把 \sys 写成已经完整替换 production MCP broker 或 OS sandbox。当前 artifact 的实证重点是 checker semantics、gateway boundary、runtime binding、benchmark-derived protected-decision events 和一个 representative env side-effect event suite；ActPlane-style monitor 是 env adapter 的可选后端。
 
 \begin{table}[t]
 \centering
@@ -476,7 +476,7 @@ Adapter & Inputs & Events / block point & Status & ActPlane relation \\
 Agent & intent, approvals, workflow/delegation state & lease mint, approval, spawn & trace-level + runtime state & not applicable \\
 Instruction & system, user, Skill/manual, MCP prompt labels & ctx.use, prompt-section placement & trace-level classifier contract & not applicable \\
 Tool & tool schemas, MCP methods, local callable registry & call/mcp before callable execution & implemented gateway & broker-level complement \\
-Env & cwd/files/results/script outputs/resources & read/write/exec/net evidence and sandbox policy & partial runtime binding + design target & optional backend \\
+Env & cwd/files/results/script outputs/resources & read/write/exec/net evidence and sandbox policy & trace-level side-effect suite + design target & optional backend \\
 Delegation & parent lease set, child context/caps & subagent.spawn before handoff & checker implemented, trace-level workloads & not applicable \\
 \bottomrule
 \end{tabular}
@@ -522,7 +522,7 @@ E2 检验 \sys 生成的 run-time leases 是否比 static extension/server polic
 
 \subsection{E3: Context-Influence Mechanism Ablation}
 
-E3 隔离 \sys 的核心机制是否真的是 context influence capability，而不是普通 tool permission 或 taint/provenance tracking。实验比较 full-mechanism \sys checker、no intent certificate、no influence lattice、no control/data split、object-only checker、no-provenance checker，以及 AuthGraph/PACT/AIRGuard-style provenance-authority 和 IFC/taint-style labelers。新增两个直接检验四类 context 的对照：\textbf{collapsed-context baseline} 将 agent/instruction/tool/env 合并成 generic context，只检查 provenance 是否 trusted；\textbf{misclassified-context baseline} 允许 env output 或 tool metadata 在没有 endorsement 时升级为 instruction/agent context。更强的 novelty test 是 incremental lifecycle ablation：每个对照只加入以下机制的真子集：trusted mint、decision-specific influence、consumption/expiry、delegation partial order 和 no-promotion。实验检查这些对照是否仍接受 full checker 拒绝的 residual violation。Workloads 包括 document injection、MCP poisoning、malicious Skill/tool-result、本地 command/script side-effect cases 和 residual workflow suites。
+E3 隔离 \sys 的核心机制是否真的是 context influence capability，而不是普通 tool permission 或 taint/provenance tracking。E3 不衡量 task utility；它只在同一 protected-event schema 上检验哪些机制缺失会接受 full checker 拒绝的 violation。实验比较 full-mechanism \sys checker、no intent certificate、no influence lattice、no control/data split、object-only checker、no-provenance checker，以及 AuthGraph/PACT/AIRGuard-style provenance-authority 和 IFC/taint-style labelers。新增两个直接检验四类 context 的对照：\textbf{collapsed-context baseline} 将 agent/instruction/tool/env 合并成 generic context，只检查 provenance 是否 trusted；\textbf{misclassified-context baseline} 允许 env output 或 tool metadata 在没有 endorsement 时升级为 instruction/agent context。更强的 novelty test 是 incremental lifecycle ablation：每个对照只加入以下机制的真子集：trusted mint、decision-specific influence、consumption/expiry、delegation partial order 和 no-promotion。实验检查这些对照是否仍接受 full checker 拒绝的 residual violation。Workloads 包括 document injection、MCP poisoning、malicious Skill/tool-result、本地 command/script side-effect cases 和 residual workflow suites。
 
 关键指标是 protected decisions 中 unauthorized context control 的接受率，以及每个 denial 是否只能由 lease semantics、temporal guards、budget、delegation 或 proof constraints 解释。成功条件是 ablations 或 access-control baselines 接受 full-mechanism \sys checker 拒绝的 protected-decision violations，并且每类 residual case 都需要完整 lifecycle set 中缺失的某一项才能解释。若最强 baseline 在同一事件 schema 上加入等价的原子授权对象后解释所有 denials，论文应承认其为 semantic-equivalent baseline，并将“新的 security boundary”表述收窄为 proof-carrying lease compiler/checker organization。
 
@@ -558,6 +558,7 @@ Same-event wrapper matrix & tool/env & \sys accepts 0 dangerous events on 3,746 
 Reference-action proxy & agent/tool/env & \sys covers 3,813/3,813 benign reference actions and passes 2,554/2,556 applicable tool-oracle tasks & Whether a live model completes tasks under narrow leases \\
 Saved local-Qwen replay & agent/tool/env & \sys keeps 11/11 exact proposals and rejects 47/47 off-reference proposals; object-only wrappers accept many of them & Replanning, approval burden, and full task success \\
 Residual workflow suite & inst., tool, env, delegation & Full checker rejects lifecycle and promotion-like residuals that closest labelers accept & Needs benchmark-derived/model-loop lift \\
+Env side-effect suite & env/tool/inst. & On 10 local script/file/network events, full checker preserves 4 authorized side effects and rejects 6 violations; object-only false-accepts 4 and no-provenance full-event candidates false-accept 6 & Trace-level ActPlane-style event surface only; no production sandbox backend yet \\
 Author-adjudicated E2 audit & agent/tool/env; partial instruction & 24/24 lease labels pass schema, sample, and policy-distance invariant checks & Independent blinded expert-oracle replication and broader Skill/local-command cases \\
 Fresh local-Qwen online slice & agent/tool/env & On the same 11 tau2 tasks, all-tool exposure raises visible schemas from 4.27 to 14.73 on average but does not improve action reward or exact sequence match; it adds 3 gateway blocks, 2 off-lease blocks, and 1 missing-value-proof block & Still a small utility slice; needs matched broader online security/utility runs and recovery metrics \\
 \bottomrule

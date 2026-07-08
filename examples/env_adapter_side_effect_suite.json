@@ -1,0 +1,311 @@
+{
+  "intent": {
+    "id": "env_adapter_side_effect_suite",
+    "goal": "exercise IntentCap lowering to local script, filesystem, network, and script-output side-effect events"
+  },
+  "labels": {
+    "trusted_user_intent": {
+      "allowed": {
+        "parameterize": [
+          "xlsx.cells"
+        ],
+        "read": [
+          "filesystem.read"
+        ],
+        "tool_select": [
+          "local.exec"
+        ],
+        "write": [
+          "filesystem.write"
+        ]
+      }
+    },
+    "signed_pdf_skill_manifest": {
+      "allowed": {
+        "read": [
+          "filesystem.read"
+        ],
+        "tool_select": [
+          "local.exec"
+        ],
+        "write": [
+          "filesystem.write"
+        ]
+      }
+    },
+    "selected_pdf_bytes": {
+      "allowed": {
+        "parameterize": [
+          "xlsx.cells"
+        ]
+      }
+    },
+    "script_output": {
+      "allowed": {
+        "parameterize": [
+          "xlsx.cells"
+        ]
+      }
+    }
+  },
+  "leases": [
+    {
+      "id": "pdf_skill_exec_once",
+      "holder": "pdf_skill",
+      "op": "exec.run",
+      "object": "/skills/pdf/extract_tables.py",
+      "args": {
+        "input": {
+          "equals": "/workspace/invoices/a.pdf"
+        },
+        "output": {
+          "equals": "/workspace/out/a.xlsx"
+        }
+      },
+      "control_may_depend_on": [
+        "trusted_user_intent",
+        "signed_pdf_skill_manifest"
+      ],
+      "data_may_depend_on": [
+        "selected_pdf_bytes"
+      ],
+      "budget": {
+        "invocations": 1
+      }
+    },
+    {
+      "id": "read_selected_pdf",
+      "holder": "pdf_skill",
+      "op": "fs.read",
+      "object": "/workspace/invoices/a.pdf",
+      "args": {
+        "path": {
+          "equals": "/workspace/invoices/a.pdf"
+        }
+      },
+      "control_may_depend_on": [
+        "trusted_user_intent",
+        "signed_pdf_skill_manifest"
+      ],
+      "data_may_depend_on": [
+        "selected_pdf_bytes"
+      ]
+    },
+    {
+      "id": "write_selected_output",
+      "holder": "pdf_skill",
+      "op": "fs.write",
+      "object": "/workspace/out/a.xlsx",
+      "args": {
+        "path": {
+          "equals": "/workspace/out/a.xlsx"
+        }
+      },
+      "control_may_depend_on": [
+        "trusted_user_intent",
+        "signed_pdf_skill_manifest"
+      ],
+      "data_may_depend_on": [
+        "script_output"
+      ]
+    },
+    {
+      "id": "script_output_cells_only",
+      "op": "ctx.use",
+      "object": "script.output",
+      "args": {
+        "artifact": {
+          "equals": "extracted_table"
+        }
+      },
+      "control_may_depend_on": [
+        "trusted_user_intent",
+        "signed_pdf_skill_manifest"
+      ],
+      "data_may_depend_on": [
+        "script_output"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "exec_pdf_skill_allowed",
+      "holder": "pdf_skill",
+      "op": "exec.run",
+      "object": "/skills/pdf/extract_tables.py",
+      "args": {
+        "input": "/workspace/invoices/a.pdf",
+        "output": "/workspace/out/a.xlsx"
+      },
+      "decision": "local.exec",
+      "mode": "tool_select",
+      "control_provenance": [
+        "trusted_user_intent",
+        "signed_pdf_skill_manifest"
+      ],
+      "data_provenance": [
+        "selected_pdf_bytes"
+      ]
+    },
+    {
+      "id": "read_selected_pdf_allowed",
+      "holder": "pdf_skill",
+      "op": "fs.read",
+      "object": "/workspace/invoices/a.pdf",
+      "args": {
+        "path": "/workspace/invoices/a.pdf"
+      },
+      "decision": "filesystem.read",
+      "mode": "read",
+      "control_provenance": [
+        "trusted_user_intent",
+        "signed_pdf_skill_manifest"
+      ],
+      "data_provenance": [
+        "selected_pdf_bytes"
+      ]
+    },
+    {
+      "id": "write_xlsx_allowed",
+      "holder": "pdf_skill",
+      "op": "fs.write",
+      "object": "/workspace/out/a.xlsx",
+      "args": {
+        "path": "/workspace/out/a.xlsx"
+      },
+      "decision": "filesystem.write",
+      "mode": "write",
+      "control_provenance": [
+        "trusted_user_intent",
+        "signed_pdf_skill_manifest"
+      ],
+      "data_provenance": [
+        "script_output"
+      ]
+    },
+    {
+      "id": "script_output_parameterizes_cells",
+      "op": "ctx.use",
+      "object": "script.output",
+      "args": {
+        "artifact": "extracted_table"
+      },
+      "decision": "xlsx.cells",
+      "mode": "parameterize",
+      "control_provenance": [
+        "trusted_user_intent"
+      ],
+      "data_provenance": [
+        "script_output"
+      ]
+    },
+    {
+      "id": "exec_wrong_output_path",
+      "holder": "pdf_skill",
+      "op": "exec.run",
+      "object": "/skills/pdf/extract_tables.py",
+      "args": {
+        "input": "/workspace/invoices/a.pdf",
+        "output": "/tmp/exfil.csv"
+      },
+      "decision": "local.exec",
+      "mode": "tool_select",
+      "control_provenance": [
+        "trusted_user_intent",
+        "signed_pdf_skill_manifest"
+      ],
+      "data_provenance": [
+        "selected_pdf_bytes"
+      ]
+    },
+    {
+      "id": "exec_holder_mismatch",
+      "holder": "github_mcp",
+      "op": "exec.run",
+      "object": "/skills/pdf/extract_tables.py",
+      "args": {
+        "input": "/workspace/invoices/a.pdf",
+        "output": "/workspace/out/a.xlsx"
+      },
+      "decision": "local.exec",
+      "mode": "tool_select",
+      "control_provenance": [
+        "trusted_user_intent",
+        "signed_pdf_skill_manifest"
+      ],
+      "data_provenance": [
+        "selected_pdf_bytes"
+      ]
+    },
+    {
+      "id": "read_secret_env",
+      "holder": "pdf_skill",
+      "op": "fs.read",
+      "object": "/workspace/secrets.env",
+      "args": {
+        "path": "/workspace/secrets.env"
+      },
+      "decision": "filesystem.read",
+      "mode": "read",
+      "control_provenance": [
+        "trusted_user_intent",
+        "signed_pdf_skill_manifest"
+      ],
+      "data_provenance": [
+        "script_output"
+      ]
+    },
+    {
+      "id": "write_path_traversal",
+      "holder": "pdf_skill",
+      "op": "fs.write",
+      "object": "/workspace/out/a.xlsx",
+      "args": {
+        "path": "/workspace/out/../secrets.env"
+      },
+      "decision": "filesystem.write",
+      "mode": "write",
+      "control_provenance": [
+        "trusted_user_intent",
+        "signed_pdf_skill_manifest"
+      ],
+      "data_provenance": [
+        "script_output"
+      ]
+    },
+    {
+      "id": "script_output_promotes_instruction",
+      "op": "ctx.use",
+      "object": "script.output",
+      "args": {
+        "artifact": "extracted_table"
+      },
+      "decision": "skill.load",
+      "mode": "instruct",
+      "control_provenance": [
+        "script_output"
+      ],
+      "data_provenance": [
+        "script_output"
+      ]
+    },
+    {
+      "id": "net_connect_attacker",
+      "holder": "pdf_skill",
+      "op": "net.connect",
+      "object": "attacker.example:443",
+      "args": {
+        "host": "attacker.example",
+        "port": 443
+      },
+      "decision": "network.destination",
+      "mode": "sink_select",
+      "control_provenance": [
+        "script_output"
+      ],
+      "data_provenance": [
+        "script_output"
+      ]
+    }
+  ]
+}

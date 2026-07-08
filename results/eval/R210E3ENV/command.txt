@@ -1,0 +1,1 @@
+PYTHONPATH=src /usr/bin/python scripts/analyze_checker_ablation.py --output-dir results/eval/R210E3ENV --trace examples/env_adapter_side_effect_suite.json

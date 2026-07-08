@@ -164,3 +164,28 @@ def test_checker_ablation_separates_object_only_from_arg_constraints(tmp_path):
     assert summary["object_only_false_accept"] == 1
     assert summary["lease_constraints_no_provenance_false_accept"] == 0
     assert summary["full_event_args_no_provenance_false_accept"] == 1
+
+
+def test_checker_ablation_covers_env_adapter_side_effect_suite():
+    runner = _load_runner()
+    trace_path = (
+        Path(__file__).parents[1]
+        / "examples"
+        / "env_adapter_side_effect_suite.json"
+    )
+
+    summary = runner.analyze((trace_path,))["summary"]
+
+    assert summary["events"] == 10
+    assert summary["checker_allowed"] == 4
+    assert summary["checker_denied"] == 6
+    assert summary["object_only_false_accept"] == 4
+    assert summary["lease_constraints_no_provenance_false_accept"] == 2
+    assert summary["full_event_args_no_provenance_false_accept"] == 6
+    assert summary["checker_denied_by_mode"] == {
+        "instruct": 1,
+        "read": 1,
+        "sink_select": 1,
+        "tool_select": 2,
+        "write": 1,
+    }
