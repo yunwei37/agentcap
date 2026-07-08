@@ -60,7 +60,7 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 \begin{enumerate}[leftmargin=*,label=\textbf{C\arabic*.}]
   \item \textbf{Model.} 一个 issuer-typed protected-decision lease model，将 agent 授权单位定义为由 intent 铸造、带 no-substitution rule、可原子消费/过期且可衰减委托的受保护转移（第~\ref{sec:formal} 节）。
   \item \textbf{System.} 一个 checker-centered transition API 和原型系统，完整执行 tool/live-callable 与 local-env pre-side-effect 边界，并以 trace-level semantics 验证 instruction/delegation，以 ActPlane-style policy target 展示 env lowering（第~\ref{sec:design}--\ref{sec:implementation} 节）。
-  \item \textbf{Evaluation.} 一个原型评估，展示 protected-event safety、authority-input mechanism necessity 和 local pre-side-effect enforcement；lease auditability 作为辅助证据报告（第~\ref{sec:evaluation}--\ref{sec:evidence-status} 节）。
+  \item \textbf{Evaluation.} 一个原型评估，展示三个有边界的结论：same-event protected-decision safety、issuer/lifecycle ablation 下的 mechanism necessity，以及 local pre-side-effect enforceability；lease auditability 作为辅助证据报告（第~\ref{sec:evaluation}--\ref{sec:evidence-status} 节）。
 \end{enumerate}
 
 \section{背景与动机}
@@ -188,7 +188,7 @@ G4 & C2 & E4 / E3 & checker runs before side effects at tool/local-env boundarie
 \node[draw, dotted, rounded corners=3pt, fit=(compiler), inner sep=0.16cm, label={[font=\scriptsize]above:Untrusted}] {};
 \end{scope}
 \end{tikzpicture}
-\caption{\sys architecture. Trusted components issue intent certificates, label context, and check candidate leases. The LLM-assisted compiler proposes plans and leases but cannot mint authority. Runtime adapters enforce accepted leases at tool, MCP, local execution, and delegation boundaries.}
+\caption{\sys architecture. Trusted components issue intent certificates, label context, and check candidate leases. The LLM-assisted compiler proposes plans and leases but cannot mint authority. The checker transition API covers tool, MCP, local execution, context-placement, and delegation boundaries; the prototype fully enforces tool/local-env boundaries and validates instruction/delegation semantics at trace level.}
 \label{fig:architecture}
 \end{figure}
 
@@ -654,7 +654,7 @@ Delegation & parent lease set, child context/caps & subagent.spawn before handof
 \section{评估}
 \label{sec:evaluation}
 
-评估围绕四个 claim-facing questions 组织。E1 测试 protected decisions 的安全性和良性动作覆盖率。E2 测试 lease 是否支持可审计的 least-privilege 判断。E3 测试四类授权输入和 stateful lease lifecycle 是否带来独立机制价值。E4 测试 checker transition 是否能在本地环境和 Qwen3.6 proposer 前阻止副作用。
+评估围绕四个 claim-facing questions 组织。E1 测试 protected decisions 的安全性和良性动作覆盖率。E2 测试 lease 是否支持机器审计和 structured policy-distance analysis。E3 测试四类授权输入和 stateful lease lifecycle 是否带来独立机制价值。E4 测试 checker transition 是否能在本地环境和 Qwen3.6 proposer 前阻止副作用。
 
 所有实验固定底层模型、任务顺序、工具描述和 prompt budget，尽量只改变授权层。High-impact denials 使用同一个 protected-decision oracle 判定：若某个 protected decision 的 control provenance 来自缺少相应 influence mode 的 context source，则该事件应被拒绝。本文中的 closest baseline labelers 是在同一事件模型上实现的 trace-level policy-family abstractions，用来表示 provenance/IFC/policy-style baselines 的可判定谓词；它们不是 AuthGraph、PACT、AIRGuard 或其他完整系统的 artifact reproduction。表~\ref{tab:evaluation-matrix} 给出四个实验与结论的对应关系。
 
@@ -700,11 +700,30 @@ E2 的结论限定在 author-adjudicated lease-audit result。若要声称 \sys 
 
 \subsection{E3: Authority-Input Characterization and Mechanism Ablation}
 
-E3 的假设是：四类 authority-input fields 和 stateful lease lifecycle 共同形成一个不可拆开的机制。Object/action guards、IFC/provenance guards 和 split-state counters 会失败，因为它们允许一类输入替另一类输入补齐 field，或把 budget/delegation/provenance 分散到不同状态中。E3 先做 trace-level authority-input characterization，再用 controlled residual suites 测试 collapse 后的具体失败机制。
+E3 的假设是：四类 authority-input fields 和 stateful lease lifecycle 共同形成一个不可拆开的机制。Object/action guards、IFC/provenance guards 和 split-state counters 会失败，因为它们允许一类输入替另一类输入补齐 field，或把 budget/delegation/provenance 分散到不同状态中。E3 先做 trace-level authority-input characterization，再用 controlled residual suites 测试 collapse 后的具体失败机制。R220 刻画 P1 no issuer substitution 和 P5 no context-class promotion 的需求是否出现在已有 traces 中；residual suites 测试 P1、P3、P4 和 P5 的失败模式；R219 专门测试 trusted tool metadata \(\rightarrow\) agent-owned policy/approval field 的 substitution。
 
 R220 读取已有本地 artifacts，没有同步或下载新数据。输入包括 local env suite、residual workflow-policy suite、AgentDojo、MCPTox、InjecAgent、tau2-style traces 和 R136 runtime-binding summary。Analyzer 从已有 provenance labels 和 event modes 派生 issuer-class annotation，因此这是 trace-level annotation，不是独立人工标注。``Requires multiple issuer classes'' 指 analyzer 根据事件的 \(op\)、mode、decision class 和 provenance labels 推导出的 required-field class set 包含至少两个 owner classes，而不是人工断言该事件真实使用了两个独立 UI/API。结果显示，在 8,696 个事件中，8,691 个需要多个 issuer classes；198 个需要 env/runtime issuer；3,593 个 checker-denied events 存在 class-substitution attempt。Substitution edges 包括 tool \(\rightarrow\) agent 1,928 次、env \(\rightarrow\) agent 1,663 次、env \(\rightarrow\) tool 1,662 次，以及 instruction \(\rightarrow\) agent 2 次。Edge 计数不是互斥事件数，因为同一事件可能同时暴露多个 collapse risk。R136 还显示 29/29 次 runtime binding 成功，并有 25 个 runtime-evidence hint steps，说明当前原型确实把已执行 tool-result evidence 作为 env issuer 来铸造 one-shot leases，而不是让 prompt 或 tool metadata 代替 runtime observer。
 
 R220 的作用是回答“四类是否只是作者任意分类”。它不证明所有真实 agent workloads 都天然包含这些 substitution patterns，但它说明已有 benchmark-derived traces 和 local workflows 已经同时触发 agent、instruction、tool 和 env 的不同证明边界。特别是，MCPTox 中 tool metadata 试图影响 authority，InjecAgent 和 AgentDojo 中 env/tool-result 或 injected goal 试图影响 agent-owned decisions，本地 env suite 和 R136 runtime binding 则需要 runtime observer 证明实际路径、输出和 tool-result values。
+
+\begin{table}[t]
+\centering
+\tiny
+\setlength{\tabcolsep}{1.5pt}
+\caption{R220 decision-class characterization。Required class sets 由 analyzer 根据 \(op\)、mode、decision 和 provenance labels 派生；substitution edges 统计 checker-denied events 中哪类 issuer 试图补齐另一类 field。}
+\label{tab:r220-decision-characterization}
+\begin{tabular}{p{0.12\linewidth}p{0.09\linewidth}p{0.34\linewidth}p{0.09\linewidth}p{0.27\linewidth}}
+\toprule
+Mode group & Events & Dominant required class sets & Env req. & Substitution edges \\
+\midrule
+tool select & 5,092 & agent+tool: 4,034; agent+instruction+tool: 1,054; all four: 4 & 4 & none \\
+authorize & 2,271 & agent+tool: 2,085; agent+env+tool: 185; agent: 1 & 185 & env\(\rightarrow\)agent/tool: 1,010 each; tool\(\rightarrow\)agent: 1,260 \\
+sink select & 1,324 & agent+tool: 1,322; agent+env: 1; agent+instruction+tool: 1 & 1 & env\(\rightarrow\)agent: 653; env\(\rightarrow\)tool: 652; tool\(\rightarrow\)agent: 667; instruction\(\rightarrow\)agent: 1 \\
+policy/delegate & 2 & agent: 1; agent+env+instruction: 1 & 1 & tool\(\rightarrow\)agent: 1; instruction\(\rightarrow\)agent: 1 \\
+env/data modes & 7 & all four: 4; env only: 3 & 7 & none \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 我们随后用 trace-level baseline audit 界定剩余边界：普通 saved-trace denials 大多可由 provenance/IFC abstractions 解释；因此 E3 的 residual 部分不是自然频率统计，而是 mechanism stress test。每个 residual case 都对应表~\ref{tab:decision-reqs} 中的 owner-field violation；例如 R219 是 tool-issued proof 试图补齐 agent/admin-owned policy 或 approval fields。
 
@@ -726,7 +745,7 @@ E4 的假设是：同一 checker transition 可以在真实本地边界、untrus
 
 在同一组 10 个 events 的 Qwen3.6 adversarial model loop 中，模型返回 8 个 calls，其中包括 4 个 unsafe calls。\sys 只执行 4 个 authorized calls，并在副作用前阻止全部 4 个 unsafe calls。Object-only wrapper 执行 7 个 calls，其中包括 3 个 unsafe effects，并修改 isolated secret file。该实验支持 local env adapter 和 untrusted model proposer 场景下的接口可行性。Production sandbox 需要将同一 lease contract 继续降低到 OS-level monitor。
 
-R218 进一步把同一组 active env leases 降低为 4 条 deny-by-default ActPlane-style monitor rules，分别覆盖 \texttt{process.exec}、\texttt{filesystem.read}、\texttt{filesystem.write} 和 \texttt{context.use}。对同一 10-event env suite replay 时，lowered monitor 允许 4 个 authorized events、拒绝 6 个 violations，与 checker 有 0 个 decision mismatches，并执行 0 个 unsafe monitor allows。重要的是，lowered rules 不只包含 object/path predicates；它们还携带 context labels、control/data provenance 和 influence-mode predicates。否则 \texttt{script\_output} 这类 env context 会被错误提升为 instruction authority。这个结果是 OS-monitor policy-target evidence，不是 production ActPlane/kernel integration claim。
+R218 进一步把同一组 active env leases 降低为 4 条 deny-by-default ActPlane-style monitor rules，分别覆盖 \texttt{process.exec}、\texttt{filesystem.read}、\texttt{filesystem.write} 和 \texttt{context.use}。对同一 10-event env suite replay 时，lowered monitor 允许 4 个 authorized events、拒绝 6 个 violations，与 checker 有 0 个 decision mismatches，并执行 0 个 unsafe monitor allows。重要的是，lowered rules 不只包含 object/path predicates；它们还携带 context labels、control/data provenance 和 influence-mode predicates。否则 \texttt{script\_output} 这类 env context 会被错误提升为 instruction authority。这个结果的系统含义是 lease contract 可以保留 issuer/provenance/influence predicates 降到 OS-monitor policy 形态；它不是 production ActPlane/kernel integration claim。
 
 \section{范围与局限}
 \label{sec:evidence-status}

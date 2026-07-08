@@ -52,6 +52,10 @@ EVENT_FIELDS = [
     "requires_env",
     "has_class_substitution_attempt",
     "substitution_edges",
+    "requirement_basis",
+    "observed_multi_control_classes",
+    "observed_multi_data_classes",
+    "observed_multi_provenance_classes",
 ]
 
 CLASS_FIELDS = [
@@ -63,6 +67,22 @@ CLASS_FIELDS = [
 ]
 
 COLLAPSE_FIELDS = ["substitution_edge", "events", "example_event_ids"]
+
+DECISION_FIELDS = [
+    "mode",
+    "events",
+    "checker_allowed",
+    "checker_denied",
+    "required_class_sets",
+    "control_class_sets",
+    "events_requiring_agent",
+    "events_requiring_instruction",
+    "events_requiring_tool",
+    "events_requiring_env",
+    "events_with_observed_multi_provenance",
+    "events_with_class_substitution_attempt",
+    "substitution_edges",
+]
 
 RUNTIME_FIELDS = [
     "path",
@@ -110,6 +130,11 @@ def main() -> int:
     _write_rows(args.output_dir / "event_authority_characterization.csv", result["event_rows"], EVENT_FIELDS)
     _write_rows(args.output_dir / "issuer_class_summary.csv", result["class_rows"], CLASS_FIELDS)
     _write_rows(args.output_dir / "collapse_risk_summary.csv", result["collapse_rows"], COLLAPSE_FIELDS)
+    _write_rows(
+        args.output_dir / "decision_class_characterization.csv",
+        result["decision_rows"],
+        DECISION_FIELDS,
+    )
     _write_rows(args.output_dir / "runtime_evidence_summary.csv", result["runtime_rows"], RUNTIME_FIELDS)
     _write_rows(args.output_dir / "input_digests.csv", result["input_digests"], INPUT_DIGEST_FIELDS)
     (args.output_dir / "command.txt").write_text(_command_text())
@@ -134,6 +159,7 @@ def analyze(
     runtime_rows = [_runtime_row(path) for path in runtime_paths if path.exists()]
     class_rows = _class_rows(event_rows)
     collapse_rows = _collapse_rows(event_rows)
+    decision_rows = _decision_rows(event_rows)
     input_paths = [path for path in (*trace_paths, *runtime_paths) if path.exists()]
     input_digests = [_file_digest(path) for path in input_paths]
     summary = _summary(
@@ -143,6 +169,7 @@ def analyze(
         event_rows=event_rows,
         class_rows=class_rows,
         collapse_rows=collapse_rows,
+        decision_rows=decision_rows,
         runtime_rows=runtime_rows,
         input_digests=input_digests,
     )
@@ -151,6 +178,7 @@ def analyze(
         "event_rows": event_rows,
         "class_rows": class_rows,
         "collapse_rows": collapse_rows,
+        "decision_rows": decision_rows,
         "runtime_rows": runtime_rows,
         "input_digests": input_digests,
     }
@@ -192,25 +220,35 @@ def _event_rows(source: str, path: Path, trace: dict[str, Any]) -> list[dict[str
             required_classes=required_classes,
             control_classes=control_classes,
         )
-        rows.append(
-            {
-                "source": source,
-                "source_path": str(path),
-                "event_id": str(event.get("id", "")),
-                "op": str(event.get("op", "")),
-                "object": str(event.get("object", "")),
-                "mode": str(event.get("mode", "")),
-                "decision": str(event.get("decision", "")),
-                "checker_allowed": bool(verdict["allowed"]),
-                "required_classes": "|".join(sorted(required_classes)),
-                "control_classes": "|".join(sorted(control_classes)),
-                "data_classes": "|".join(sorted(data_classes)),
-                "requires_multiple_classes": len(required_classes) > 1,
-                "requires_env": "env" in required_classes,
-                "has_class_substitution_attempt": bool(substitution_edges),
-                "substitution_edges": "|".join(sorted(substitution_edges)),
-            }
+        row = {
+            "source": source,
+            "source_path": str(path),
+            "event_id": str(event.get("id", "")),
+            "op": str(event.get("op", "")),
+            "object": str(event.get("object", "")),
+            "mode": str(event.get("mode", "")),
+            "decision": str(event.get("decision", "")),
+            "checker_allowed": bool(verdict["allowed"]),
+            "required_classes": "|".join(sorted(required_classes)),
+            "control_classes": "|".join(sorted(control_classes)),
+            "data_classes": "|".join(sorted(data_classes)),
+            "requires_multiple_classes": len(required_classes) > 1,
+            "requires_env": "env" in required_classes,
+            "has_class_substitution_attempt": bool(substitution_edges),
+            "substitution_edges": "|".join(sorted(substitution_edges)),
+        }
+        row["requirement_basis"] = "|".join(
+            _requirement_basis(
+                event=event,
+                required_classes=required_classes,
+                control_classes=control_classes,
+                data_classes=data_classes,
+            )
         )
+        row["observed_multi_control_classes"] = len(control_classes) > 1
+        row["observed_multi_data_classes"] = len(data_classes) > 1
+        row["observed_multi_provenance_classes"] = len(control_classes | data_classes) > 1
+        rows.append(row)
     return rows
 
 
@@ -303,6 +341,78 @@ def _substitution_edges(
     return edges
 
 
+def _requirement_basis(
+    *,
+    event: dict[str, Any],
+    required_classes: set[str],
+    control_classes: set[str],
+    data_classes: set[str],
+) -> list[str]:
+    basis: list[str] = []
+    op = str(event.get("op", ""))
+    mode = str(event.get("mode", ""))
+    if "agent" in required_classes:
+        basis.append("agent_authority")
+    if "tool" in required_classes and (mode == "tool_select" or op in {"tool.call", "mcp.call", "exec.run"}):
+        basis.append("tool_schema_or_interface")
+    if "instruction" in required_classes:
+        basis.append("instruction_procedure")
+    if "env" in required_classes:
+        basis.append("env_runtime_evidence")
+    if len(control_classes) > 1:
+        basis.append("observed_multi_control")
+    if len(data_classes) > 1:
+        basis.append("observed_multi_data")
+    if len(control_classes | data_classes) > 1:
+        basis.append("observed_multi_provenance")
+    return sorted(set(basis))
+
+
+def _decision_rows(event_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for row in event_rows:
+        grouped.setdefault(str(row["mode"]), []).append(row)
+
+    rows: list[dict[str, Any]] = []
+    for mode, rows_for_mode in sorted(grouped.items()):
+        required_sets = Counter(str(row["required_classes"]) for row in rows_for_mode)
+        control_sets = Counter(str(row["control_classes"]) for row in rows_for_mode)
+        substitution_edges: Counter[str] = Counter()
+        for row in rows_for_mode:
+            for edge in _split(row["substitution_edges"]):
+                substitution_edges[edge] += 1
+        rows.append(
+            {
+                "mode": mode,
+                "events": len(rows_for_mode),
+                "checker_allowed": sum(1 for row in rows_for_mode if row["checker_allowed"]),
+                "checker_denied": sum(1 for row in rows_for_mode if not row["checker_allowed"]),
+                "required_class_sets": _counter_cell(required_sets),
+                "control_class_sets": _counter_cell(control_sets),
+                "events_requiring_agent": sum(
+                    1 for row in rows_for_mode if "agent" in _split(row["required_classes"])
+                ),
+                "events_requiring_instruction": sum(
+                    1 for row in rows_for_mode if "instruction" in _split(row["required_classes"])
+                ),
+                "events_requiring_tool": sum(
+                    1 for row in rows_for_mode if "tool" in _split(row["required_classes"])
+                ),
+                "events_requiring_env": sum(
+                    1 for row in rows_for_mode if "env" in _split(row["required_classes"])
+                ),
+                "events_with_observed_multi_provenance": sum(
+                    1 for row in rows_for_mode if row["observed_multi_provenance_classes"]
+                ),
+                "events_with_class_substitution_attempt": sum(
+                    1 for row in rows_for_mode if row["has_class_substitution_attempt"]
+                ),
+                "substitution_edges": _counter_cell(substitution_edges),
+            }
+        )
+    return rows
+
+
 def _class_rows(event_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for class_name in ISSUER_CLASSES:
@@ -373,6 +483,7 @@ def _summary(
     event_rows: list[dict[str, Any]],
     class_rows: list[dict[str, Any]],
     collapse_rows: list[dict[str, Any]],
+    decision_rows: list[dict[str, Any]],
     runtime_rows: list[dict[str, Any]],
     input_digests: list[dict[str, Any]],
 ) -> dict[str, Any]:
@@ -395,8 +506,24 @@ def _summary(
         "denied_events_with_class_substitution_attempt": denied_substitutions,
         "required_class_set_counts": dict(sorted(required_set_counts.items())),
         "control_class_set_counts": dict(sorted(control_set_counts.items())),
+        "events_requiring_agent_authority": sum(
+            1 for row in event_rows if "agent" in _split(row["required_classes"])
+        ),
+        "events_requiring_tool_schema_or_interface": sum(
+            1 for row in event_rows if "tool_schema_or_interface" in _split(row["requirement_basis"])
+        ),
+        "events_requiring_instruction_procedure": sum(
+            1 for row in event_rows if "instruction" in _split(row["required_classes"])
+        ),
+        "events_requiring_env_runtime_evidence": sum(
+            1 for row in event_rows if "env" in _split(row["required_classes"])
+        ),
+        "events_with_observed_multi_provenance_classes": sum(
+            1 for row in event_rows if row["observed_multi_provenance_classes"]
+        ),
         "class_rows": class_rows,
         "collapse_rows": collapse_rows,
+        "decision_rows": decision_rows,
         "runtime_binding_attempts": runtime_attempts,
         "runtime_binding_successes": runtime_successes,
         "runtime_binding_success_rate": runtime_successes / runtime_attempts if runtime_attempts else 0.0,
@@ -409,6 +536,10 @@ def _summary(
             "Runtime-binding rows are pilot evidence that env/runtime observer facts are used to mint one-shot leases from executed tool results.",
         ],
     }
+
+
+def _counter_cell(counter: Counter[str]) -> str:
+    return "|".join(f"{key}:{value}" for key, value in sorted(counter.items()))
 
 
 def _as_list(value: Any) -> list[Any]:

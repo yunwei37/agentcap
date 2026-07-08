@@ -93,6 +93,14 @@ def test_authority_characterization_detects_four_classes_and_substitution(tmp_pa
             "example_event_ids": "tool_metadata_policy_update",
         }
     ]
+    assert summary["events_requiring_tool_schema_or_interface"] == 1
+    assert summary["events_requiring_env_runtime_evidence"] == 1
+    assert summary["events_with_observed_multi_provenance_classes"] == 1
+
+    decision_rows = {row["mode"]: row for row in result["decision_rows"]}
+    assert decision_rows["tool_select"]["events_requiring_tool"] == 1
+    assert decision_rows["tool_select"]["events_requiring_env"] == 1
+    assert decision_rows["policy_update"]["substitution_edges"] == "tool->agent:1"
 
     class_counts = {row["class_name"]: row for row in result["class_rows"]}
     assert class_counts["agent"]["required_events"] == 2
