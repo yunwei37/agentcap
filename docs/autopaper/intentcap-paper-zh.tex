@@ -140,6 +140,18 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 这个结构把 \sys 和普通 tool allowlist 区分开来。Allowlist 只决定哪个对象可见；\sys 还决定哪些 context source 可以影响哪个 protected decision。即使某个工具和参数在对象层面都匹配，checker 仍会拒绝 control provenance 来自无权影响该 decision class 的 context。
 
+\subsection{Authority Inputs}
+
+\sys 的 capability synthesis 不是从单一 prompt context 中抽取权限，而是同时读取四类 context。第一类是 \textbf{agent context}，包括当前 user goal、显式选择的 objects/sinks、approval tokens、plan stage、agent role、parent lease 和 temporal state。第二类是 \textbf{instruction context}，包括 system/developer policy、trusted user instructions、Skill/manual instructions、\texttt{SKILL.md}、workflow notes、reference files 和 MCP prompts。Instruction context 说明哪些文本可以作为过程性指导，但它本身不能扩大工具、sink 或 approval scope。第三类是 \textbf{tool context}，包括 MCP/tool schema、description、annotations、server identity、credential scope、本地 command descriptor、binary path、argv/env schema、声明的 side effects 和 sandbox contract。Tool context 说明“可调用什么以及接口边界是什么”，但不决定本次调用是否符合用户 intent。第四类是 \textbf{env context}，包括 cwd、选中文件、filesystem snapshot、secrets/network availability、concrete arguments、observed tool results、script outputs、subagent summaries、runtime evidence、remaining budget 和 consumed/exhausted lease state。Env context 提供本次运行的事实与证据；其中的 document text、tool result 或 script output 即使看起来像指令，也默认只是低完整性的环境数据，不能自动升级为 instruction context。
+
+实际 capability 必须由这四类 context 与全局策略共同决定：
+
+\[
+K = Solve_\Gamma(C_{agent}, C_{inst}, C_{tool}, C_{env}) .
+\]
+
+任一类 context 都不能单独授予 high-impact authority。Agent context 可以授权“处理这两个 PDF 并在 org/repo-x 创建一个 issue”，但不能指定 PDF Skill 的脚本路径；instruction context 可以指导 extraction workflow，但不能选择 GitHub sink 或扩大 approval scope；tool context 可以说明 \texttt{github.create\_issue} 的参数结构和 credential scope，但不能把任意 repo 变成授权 sink；env context 可以提供 concrete arguments、PDF text 和 observed results，但不能 retroactively mint broader authority。Lease 的作用是把这四类输入的交集固定为一个可检查、可消耗、可衰减的 transition object。
+
 \subsection{Intent Certificates}
 
 Intent certificate 是结构化安全对象，而不是 prompt 中的一段自然语言。它记录用户目标、选择的对象、允许的 sinks、禁止的 sinks、approval tokens 和 expiry。对于 PDF 处理任务，certificate 会命名选中的 PDF 路径、输出目录、唯一授权的 GitHub repository、禁止任意网络访问的约束，以及创建 issue 所需的 fresh approval。LLM 可以提出 certificate fields，但 trusted parser、UI、administrator policy 或 approval step 必须 canonicalize 这些字段。Certificate 是后续 capability derivation 的根。
@@ -233,7 +245,26 @@ Intent-carrying lease 的抽象形式为：
 
 其中 \(I\) 是当前 intent certificate，\(influence\) 约束 control/data provenance，\(flow\) 约束 confidentiality 到 sink 的流向，\(temporal\) 和 \(budget\) 约束事件顺序与调用次数，\(delegation\) 约束可传递给 subagent 的能力集合。
 
-Lease lifecycle 是 \sys 与静态 policy rule 或单次 action provenance check 的主要区别。Lease 是 future protected decision 的有状态授权对象，而不只是具体 operation 的 permission：它表达某个 context source 在 intent \(I\) 下可以影响 decision class \(d\)，直到某个状态转移使其被消耗、过期或衰减。更重要的是，mint provenance、influence authority、consumption/expiration 和 delegation bound 必须在同一个 authorization object 上被检查并原子更新；若它们分散在独立 taint labels、ACL entries、counters 和 delegation records 中，系统就必须额外证明这些对象不会产生 stale authority reuse、cross-object widening 或 consumed-state bypass。Runtime state \(\sigma\) 至少包含 active/exhausted lease table、per-lease consumption counters、temporal automata state、mint proof records 和 parent-child delegation graph；实现中的 checker state schema 直接保存这些字段，并在每个 accepted event 后原子更新。Checker 将 lease 作为有状态对象处理，而不是把它当作一组静态 predicates：
+形式上，lease synthesis 可被看作从 agent、instruction、tool 和 env 四类 context 中求解可授权交集：
+
+\[
+\kappa \in Solve_\Gamma(C_{agent}, C_{inst}, C_{tool}, C_{env}) .
+\]
+
+其中 \(C_{agent}\) 包含 intent certificate、approvals、plan stage、agent role 和 parent authority；\(C_{inst}\) 包含 system/developer/user instructions、Skill/manual workflow text、MCP prompts 和 trust endorsements；\(C_{tool}\) 包含 MCP/tool schemas、server identity、credential scope、command/script execution descriptors 和 sandbox contracts；\(C_{env}\) 包含 selected objects、cwd/filesystem state、concrete arguments、observed results、runtime evidence、resource availability 和当前 lease consumption state。
+
+Lease lifecycle 是 \sys 与静态 policy rule 或单次 action provenance check 的主要区别。Lease 是 future protected decision 的有状态授权对象，而不只是具体 operation 的 permission：它表达某个 context source 在 intent \(I\) 下可以影响 decision class \(d\)，直到某个状态转移使其被消耗、过期或衰减。更重要的是，mint provenance、influence authority、consumption/expiration 和 delegation bound 必须在同一个 authorization object 上被检查并原子更新；若它们分散在独立 taint labels、ACL entries、counters 和 delegation records 中，系统就必须额外证明这些对象不会产生 stale authority reuse、cross-object widening 或 consumed-state bypass。Runtime state \(\sigma\) 至少包含 active/exhausted lease table、per-lease consumption counters、temporal automata state、mint proof records 和 parent-child delegation graph；实现中的 checker state schema 直接保存这些字段，并在每个 accepted event 后原子更新。Checker 将 lease 作为有状态对象处理，而不是把它当作一组静态 predicates。
+
+Checker 暴露的 authority-changing interface 只有四类 transition：
+
+\[
+\begin{aligned}
+&mint(\kappa), \quad check\_and\_consume(e,\kappa),\\
+&attenuate(\kappa_{parent},K_c), \quad expire(\kappa).
+\end{aligned}
+\]
+
+Runtime adapters 可以分布在 context、tool、MCP、local execution 和 delegation 边界，但它们不能本地修改 authority state；side effect 发生前必须经过 central checker state 的 \(check\_and\_consume\)，且 accepted event、budget update、provenance record 和 delegation-state update 是同一个 transition：
 
 \begin{itemize}[leftmargin=*]
   \item \textbf{Mint.} 只有 trusted issuer 可以通过 \(lease(\kappa)\) 事件把新 lease 加入 \(K\)。Mint rule 要求 \(\kappa.intent\) 可由 \(I\) 中的 trusted user input、explicit object/sink selection、administrator policy 或 fresh approval 推导；untrusted context 不能成为 mint 或 widening 的 control dependency。
@@ -289,6 +320,7 @@ Event & Candidate baseline accepts because & \sys rejects because \\
 Reuse issue creation after first approved call & Repo still equals the user-selected sink & The one-shot issue lease is exhausted and cannot be reused without trusted mint \\
 PDF induces full GitHub approval scope & Approval request is visible and not itself a forbidden tool call & The scope is controlled by untrusted PDF provenance and widens authority \\
 Delegate issue authority to summarizer subagent & Child would call the same GitHub method and repo & Parent lacks an unconsumed delegable lease, so \(K_c \not\sqsubseteq K_{parent}\) \\
+Split-state policy reuse & Tool policy still contains repo predicate while a separate counter/delegation record is stale & \(check\_and\_consume\) reads and updates predicate, budget, provenance, and delegation state in one lease transition \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -368,7 +400,7 @@ E3 隔离 \sys 的核心机制是否真的是 context influence capability，而
 
 关键指标是 protected decisions 中 unauthorized context control 的接受率，以及每个 denial 是否只能由 lease semantics、temporal guards、budget、delegation 或 proof constraints 解释。成功条件是 ablations 或 access-control baselines 接受 full-mechanism \sys checker 拒绝的 protected-decision violations，并且每类 residual case 都需要完整 lifecycle set 中缺失的某一项才能解释。若最强 baseline 在同一事件 schema 上加入等价的原子授权对象后解释所有 denials，论文应承认其为 semantic-equivalent baseline，并将“新的 security boundary”表述收窄为 proof-carrying lease compiler/checker organization。
 
-为避免 baseline 只停留在名称层面，E3 将每个对照实现为明确的 checker variant。若无法复现某个完整系统，论文应把它写成 over-the-same-event-schema 的 semantic variant，而不是声称复现原系统。Object ACL 只维护 operation/object/argument predicates。Taint/IFC-style baseline 维护 label 和 flow constraints，但不维护 lease consumption 或 delegation partial order。Action-provenance baseline 检查 observed action 的 intent/provenance alignment，但不允许 consumed lease state 影响后续授权。Stateful policy baseline 加入 temporal/budget state，但不区分 protected-decision influence modes。Full-mechanism \sys checker 同时维护 trusted mint provenance、per-lease consumption/expiration、decision-specific influence modes 和 parent-child capability partial order。
+为避免 baseline 只停留在名称层面，E3 将每个对照实现为明确的 checker variant。若无法复现某个完整系统，论文应把它写成 over-the-same-event-schema 的 semantic variant，而不是声称复现原系统。Object ACL 只维护 operation/object/argument predicates。Taint/IFC-style baseline 维护 label 和 flow constraints，但不维护 lease consumption 或 delegation partial order。Action-provenance baseline 检查 observed action 的 intent/provenance alignment，但不允许 consumed lease state 影响后续授权。Split-state stateful policy baseline 加入 temporal/budget/delegation tables，但不提供统一 \(check\_and\_consume\) transaction API，因此用于测试 stale reuse、split-state widening 和 delegation mismatch。Lease-API policy baseline 若实现等价的 transition object，则作为 semantic-equivalent baseline，而不是弱对照。Full-mechanism \sys checker 同时维护 trusted mint provenance、per-lease consumption/expiration、decision-specific influence modes 和 parent-child capability partial order。
 
 \subsection{E4: Compiler, Checker, and Recovery Practicality}
 
@@ -420,7 +452,7 @@ Author-adjudicated E2 audit & 24/24 lease labels pass schema, sample, and policy
 \subsection{Prompt Injection, Provenance, and Information Flow}
 CaMeL、Prompt Flow Integrity、FIDES、RTBAS 和 NeuroTaint 等工作从 control/data flow、IFC、dependency screening 或 taint tracking 的角度约束 untrusted content~\cite{camel,prompt-flow-integrity,fides,rtbas,neurotaint}。AuthGraph、PACT 和 AIRGuard 进一步把 user intent、argument provenance 和 action-time authority control 引入 agent security~\cite{authgraph,pact,airguard}。这些工作是 \sys 最接近的思想背景；本文不把“intent/provenance authorization”本身作为新颖性主张。
 
-本文把差异放在授权对象的粒度和生命周期上：这些系统主要检查 observed action、argument 或 side effect 是否与 intent/provenance 对齐；\sys 额外把未来决策权限表示为短期 lease，显式记录 authority 如何由 intent mint、如何在 protected decision 前被 check/consume、如何按 temporal/budget guard 缩小、如何在 delegation 中 attenuation，以及如何 lowering 到 Skills、MCP tools、本地执行和 subagents。一个与 \sys 等价的系统不能只是分别维护 provenance labels、ACL rules、counters 和 delegation graph；它必须把 trusted mint provenance、per-lease consumption/expiration、protected-decision influence modes 和 parent-child capability partial order 绑定为同一个原子 authority transition。现有系统分别覆盖其中若干子集；\sys 的 claim 是 agent-specific authorization granularity and lifecycle object，而不是单独发明 provenance label、taint tracking 或 attenuable capability。换言之，provenance label 是 checker 的输入，lease 是可被铸造、消耗和委托的授权对象，也是每次 protected decision 更新 authority state 的原子单位。
+本文把差异放在授权对象的粒度和生命周期上：这些系统主要检查 observed action、argument 或 side effect 是否与 intent/provenance 对齐；\sys 额外把未来决策权限表示为短期 lease，显式记录 authority 如何由 intent mint、如何在 protected decision 前被 check/consume、如何按 temporal/budget guard 缩小、如何在 delegation 中 attenuation，以及如何 lowering 到 Skills、MCP tools、本地执行和 subagents。一个与 \sys 等价的系统不能只是分别维护 provenance labels、ACL rules、counters 和 delegation graph；它必须把 trusted mint provenance、per-lease consumption/expiration、protected-decision influence modes 和 parent-child capability partial order 绑定为同一个原子 authority transition，并把 agent context、instruction context、tool context 和 env context 作为同一 transaction API 的输入。现有系统分别覆盖其中若干子集；\sys 的 claim 是 agent-specific authorization granularity and lifecycle object，而不是单独发明 provenance label、taint tracking 或 attenuable capability。换言之，provenance label 是 checker 的输入，lease 是可被铸造、消耗和委托的授权对象，也是每次 protected decision 更新 authority state 的原子单位。
 
 \subsection{Agent Policy Languages and Access Control}
 Progent、PCAS、AgentSpec、AgentGuard 和 AgentBound 等工作提供 programmable privilege control、policy compilation、runtime DSL、ABAC 或 MCP access-control enforcement~\cite{progent,pcas,agentspec,agentguard,agentbound}。这些系统回答“某个工具、参数、server 或 action 是否被 policy 允许”。\sys 与它们的关系是互补和竞争并存：它同样需要确定性 checker，但 policy object 不是静态工具规则或 server policy，而是从当前 run 的 intent 和 context provenance 推导出的短期 leases。E2 和 E3 因此必须比较 \sys 与这些 policy families 在 authority breadth、oracle distance 和 protected-decision false accepts 上的差异。
