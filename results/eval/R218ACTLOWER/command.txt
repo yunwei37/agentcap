@@ -1,0 +1,1 @@
+/usr/bin/python3 scripts/lower_env_leases_actplane.py --trace examples/env_adapter_side_effect_suite.json --output-dir results/eval/R218ACTLOWER --run-id R218ACTLOWER

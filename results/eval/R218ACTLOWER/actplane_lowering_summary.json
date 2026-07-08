@@ -1,0 +1,34 @@
+{
+  "analysis": "ActPlane-style lowering of IntentCap env leases",
+  "checker_allowed": 4,
+  "checker_allowed_monitor_denied": 0,
+  "checker_blocked": 6,
+  "decision_mismatches": 0,
+  "default_action": "deny",
+  "events": 10,
+  "git_status": "## main...origin/main\n M docs/autopaper/intentcap-paper-zh.tex\n M docs/design.md\n M docs/evaluation.md\n M docs/implementation.md\n?? docs/tmp/2026-07-08-iter-refine-writing/round-13-actplane-lowering.md\n?? results/eval/R218ACTLOWER/\n?? scripts/lower_env_leases_actplane.py\n?? tests/test_lower_env_leases_actplane.py",
+  "input_trace_sha256": "a1d5fa355deb0a837e8d5848467bcfbb02697ddff9b94ca5fa4a48fb8e3fdccf",
+  "lowered_rules": 4,
+  "monitor_allowed": 4,
+  "monitor_blocked": 6,
+  "notes": [
+    "This is a deterministic lowering target, not a production ActPlane integration.",
+    "The generated policy is deny-by-default and derived only from active IntentCap leases.",
+    "The deterministic checker remains the source of intent/provenance labels.",
+    "The monitor interpreter checks concrete op/object/holder/argument/budget constraints and supplied influence labels before side effects."
+  ],
+  "output_dir": "results/eval/R218ACTLOWER",
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "5fdc7c673ba1ac5835876f3294a1abee55c8ae0d",
+  "python": "3.12.3",
+  "rule_counts": {
+    "context.use": 1,
+    "filesystem.read": 1,
+    "filesystem.write": 1,
+    "process.exec": 1
+  },
+  "run_id": "R218ACTLOWER",
+  "script_sha256": "5e2bacab0290db68c27439a86fad0428be4f961315391e689f3233aff963fe66",
+  "trace_path": "examples/env_adapter_side_effect_suite.json",
+  "unsafe_monitor_allowed": 0
+}
