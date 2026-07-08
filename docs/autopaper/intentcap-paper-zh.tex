@@ -45,7 +45,7 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 现有防线分别覆盖了这个问题的一部分。Tool guards、argument validators 和 action-time authority controls 可以拒绝错误对象或非法参数~\cite{authgraph,pact,airguard}。Static allowlists 和 server-level policies 可以限制可见工具。Human approval gates 可以重新引入用户确认。OS sandbox 或 monitor 可以约束文件、网络和进程 side effects~\cite{actplane}。Provenance、taint 和 IFC-style defenses 可以表达部分 flow policy~\cite{camel,prompt-flow-integrity,fides,rtbas,neurotaint}。这些机制是必要的，但本文比较的是默认 authorization object，而不是声称这些系统无法额外编码类似规则。若一个 policy DSL 要等价支持 \sys，它必须显式加入 issuer-owned fields、结构化 proof object，以及原子更新的 lease consumption、expiry 和 delegation state。\sys 的贡献是把这组约束作为 agent protected-decision 的统一授权对象。
 
-最接近的 provenance/action-authority systems 已经能问“这个参数或动作是否来自可信来源”。\sys 要回答的是更窄但更状态化的问题：当参数合法、provenance 可信时，提交证明的 issuer class 是否拥有该 authority field，相关 lease 是否仍然 active，预算是否已消耗，child delegation 是否仍然窄于 parent。换言之，trusted provenance 仍然不充分；每个 authority field 必须有 owner issuer，并且 owner proof、provenance、budget、expiry 和 delegation 必须在同一次 protected-decision transition 中被原子检查和更新。
+最接近的 provenance/action-authority systems 已经能问“这个参数或动作是否来自可信来源”。\sys 要回答的是更窄但更状态化的问题：当参数合法、provenance 可信时，提交证明的 issuer class 是否拥有该 authority field，相关 lease 是否仍然 active，预算是否已消耗，child delegation 是否仍然窄于 parent。普通 provenance policy 问“这个值从哪里来”。\sys 问“这个来源是否拥有本次 lease mint、consume 或 delegate transition 中对应 authority field 的签发权”。因此，安全边界不是 action、flow 或 capability 本身，而是带 issuer ownership 和 lifecycle update 的原子 protected-decision transition。
 
 \sys 从这一差异出发。本文的贡献在于把 future decision authority 作为可消耗、可过期、可委托的授权状态，而不是只检查已发生 action 的 provenance。Agent least privilege 的授权单位不应是 tool、resource、context source 或已发生的 action，而应是一次由 intent 铸造、会改变未来 authority state 的受保护转移。换言之，问题从“工具能不能调用”转为“哪个 context 能不能控制一次权限状态转移”。
 
@@ -200,7 +200,7 @@ G4 & C2 & E4 / E3 & checker runs before tool/local-env side effects, prompt plac
 
 \subsection{Authority Inputs}
 
-\sys 的 capability synthesis 不是从单一 prompt context 中抽取权限，而是从四类授权输入类（authority-input classes）中求解 lease。本文将 agent、instruction、tool 和 env 称为四类输入。若只从语义上看，agent intent、instruction/Skill/manual 和 tool/MCP interface 是三类上层 authority source；但系统执行时还必须有第四类 env/runtime source，用来证明路径、进程、输出、资源状态和工具结果等运行时事实。缺少 env 类，论文会退化成 prompt/tool policy；把 env 合并进 tool 或 instruction，又会让运行时文本继承接口或过程可信度。表~\ref{tab:authority-inputs} 因此把四类定义为系统接口，而不是单纯分类。两个来源只有在 issuer、可伪造面、可证明的 authority field 和观测边界都相同时才可以合并。
+\sys 的 capability synthesis 不是从单一 prompt context 中抽取权限，而是从四类授权输入类（authority-input classes）中求解 lease。本文将 agent、instruction、tool 和 env 称为四类输入。若只从语义上看，agent intent、instruction/Skill/manual 和 tool/MCP interface 是三类上层 authority source；但系统执行时还必须有第四类 env/runtime source，用来证明路径、进程、输出、资源状态和工具结果等运行时事实。缺少 env 类，论文会退化成 prompt/tool policy；把 env 合并进 tool 或 instruction，又会让运行时文本继承接口或过程可信度。表~\ref{tab:authority-inputs} 因此把四类定义为系统接口，而不是单纯分类。四类输入不是 attribute namespaces，而是四个互不替代的签发接口：每个接口有独立 issuer、独立失效模式和不可由其他接口补齐的 authority fields。两个来源只有在 issuer、可伪造面、可证明的 authority field 和观测边界都相同时才可以合并。
 
 Agent context 不是模型隐藏状态，而是 trusted issuer 维护的 task intent、approval 和 workflow state。Instruction context 是可被当作过程指导的 policy/Skill/manual 文本。Tool context 是接口、凭证和 sandbox contract。Env context 是运行时观测到的对象、值、结果和资源事实。这四类输入的边界是 agent-specific 的。同一段文本如果来自被 endorsement 的 \texttt{SKILL.md} 或手册，可能在 workflow scope 内成为 instruction context；如果来自普通 PDF、网页、tool result、script output 或 subagent summary，即使内容像指令，也仍是低完整性的 env context，不能自动升级为 instruction。Command-line tools 同时涉及 tool context 和 env context：binary、argv schema 和 sandbox profile 属于 tool context；实际 cwd、输入文件、stdout/stderr 和文件系统变化属于 env context。
 
@@ -572,6 +572,8 @@ Split-state policy reuse & Tool policy still contains repo predicate while a sep
 
 这个 trace 的 takeaway 是：\sys 的区别不在单独的 counter、taint label 或 argument predicate，而在 trusted mint provenance、consumption/expiration、decision-specific influence modes 和 delegation partial order 必须同时进入同一个 authorization state，并随每次 accepted transition 一起更新。
 
+分离实现会留下具体 interleaving。一个 tool guard 可能先看到 repo argument 合法并准备执行，另一个 budget counter 随后才发现 one-shot lease 已耗尽。一个 provenance guard 可能允许 issue body 由 PDF text 控制，而 delegation guard 在不同状态中仍看到 parent 拥有旧的 issue authority，于是把同一 sink 权限交给 child。一个 expiry checker 可能使 lease 失效，但 policy cache 仍保留可调用 tool 和 sink predicate。只要这些检查不在同一个 \(check\_and\_consume\) transition 中读取并更新，就必须额外证明它们不会出现 stale read、split-brain state 或 cross-object widening。\sys 把这些状态绑定进同一个 lease object，正是为了消除这类 interleaving。
+
 表~\ref{tab:context-residual-trace} 给出四类 context 直接相关的 residual attacks。它们不是“参数不匹配”的错误，而是 context class 被错误升级或跨类补权的错误。Collapsed-context 或 misclassified-context baseline 会把这些输入都当作 generic trusted context，从而接受 full checker 拒绝的 transition。
 
 \begin{table}[t]
@@ -831,7 +833,7 @@ Local-Qwen trajectory slice & agent/tool/env & In a matched 18-task local-Qwen p
 \centering
 \scriptsize
 \setlength{\tabcolsep}{2pt}
-\caption{最接近抽象的比较。表中标注的是默认模型中是否把该列作为 first-class authorization object 并在生命周期中评估；``partial'' 表示对应工作可表达或间接覆盖部分语义。该表不是声称 prior work 无法额外编码类似策略。}
+\caption{最接近抽象的比较。表中标注的是默认授权对象是否把该列作为 atomic transition state；``partial'' 表示对应工作可表达或间接覆盖部分语义。该表不是声称 prior work 无法额外编码类似策略。若一个 policy DSL 显式加入这些列并在同一 transition 中原子更新，它就在模拟 \sys 的授权对象。}
 \label{tab:closest-abstractions}
 \begin{tabular}{p{0.16\linewidth}p{0.08\linewidth}p{0.13\linewidth}p{0.10\linewidth}p{0.12\linewidth}p{0.10\linewidth}p{0.13\linewidth}}
 \toprule
@@ -852,7 +854,7 @@ ActPlane & policy & OS event & policy dependent & no & no & OS \\
 表~\ref{tab:closest-abstractions} 比较的是 abstraction coverage，而不是实现成熟度或可编程表达力。CaMeL/IFC-style work 的核心对象是 flow 或 dependency。AuthGraph、PACT 和 AIRGuard 更接近 action-time authority/provenance control。SkillGuard/SkillScope 以 Skill package permission 为中心。Progent、PCAS 和 AgentSpec 可以编码丰富 policy。ActPlane 提供 OS-level enforcement substrate。与这些方向相比，\sys 将授权对象定义为可消耗、可过期、可衰减的 protected-decision lease，并把 issuer ownership、proof、budget 和 delegation 放入同一个 transition。
 
 \subsection{应用扩展隔离与底层 Enforcement}
-传统扩展系统和 sandbox 关注扩展代码能访问哪些宿主资源。EIM/bpftime 将应用扩展表示为 host resources 和 capabilities，并强调安全、高效的 userspace extension execution~\cite{eim-bpftime}。ActPlane 将 agent policy lowering 到 OS-level enforcement，以覆盖 tool interception 看不到的 file、process 和 network side effects~\cite{actplane}。这些机制适合作为 \sys 的 enforcement backend 或系统对照，但它们不决定 policy 的来源。\sys 的问题在更上层：某个 tool choice、sink selection、approval scope 或 delegation decision 是否由当前用户 intent 授权，并且是否被不可信 context 非法影响。
+传统扩展系统和 sandbox 关注扩展代码能访问哪些宿主资源。EIM/bpftime 将应用扩展表示为 host resources 和 capabilities，并强调安全、高效的 userspace extension execution~\cite{eim-bpftime}。ActPlane 将 agent policy lowering 到 OS-level enforcement，以覆盖 tool interception 看不到的 file、process 和 network side effects~\cite{actplane}。这些机制适合作为 \sys 的 enforcement backend 或系统对照，但它们不决定 policy 的来源。ActPlane-style monitor 可以阻止 \texttt{net.connect(attacker.com)} 或未授权 file write，但仅靠 OS event 不能判断 \texttt{repo=org/repo-x} 是用户授权、tool metadata 建议，还是 PDF text 诱导。\sys 先生成带 issuer proof 的 lease contract；ActPlane-style backend 只执行其中 local/env 子集。\sys 的问题在更上层：某个 tool choice、sink selection、approval scope 或 delegation decision 是否由当前用户 intent 授权，并且是否被不可信 context 非法影响。
 
 \subsection{Prompt Injection, Provenance, and Information Flow}
 CaMeL、Prompt Flow Integrity、FIDES、RTBAS 和 NeuroTaint 等工作从 control/data flow、IFC、dependency screening 或 taint tracking 的角度约束 untrusted content~\cite{camel,prompt-flow-integrity,fides,rtbas,neurotaint}。AuthGraph、PACT 和 AIRGuard 进一步把 user intent、argument provenance 和 action-time authority control 引入 agent security~\cite{authgraph,pact,airguard}。这些工作是 \sys 最接近的思想背景。本文的新粒度不是单独的 intent/provenance authorization，而是会铸造、消耗、过期和委托的 protected-decision lease。
@@ -863,7 +865,7 @@ CaMeL、Prompt Flow Integrity、FIDES、RTBAS 和 NeuroTaint 等工作从 contro
 Progent、PCAS、AgentSpec、AgentGuard 和 AgentBound 等工作提供 programmable privilege control、policy compilation、runtime DSL、ABAC 或 MCP access-control enforcement~\cite{progent,pcas,agentspec,agentguard,agentbound}。这些系统提供 policy/checker substrate，并回答“某个工具、参数、server 或 action 是否被 policy 允许”。\sys 选择不同授权对象：从当前 run 的 intent 和 context provenance 铸造短期 lease，并让 lease 随 protected decision 被消耗、过期或委托。因此，评估通过 authority breadth、oracle-distance audit 和 controlled protected-decision residuals 比较这些 policy families。
 
 \subsection{Skill and MCP Permission Frameworks}
-SkillGuard 和 SkillScope 直接面向 Agent Skills 的权限、行为规范和 least-privilege enforcement~\cite{skillguard,skillscope}。MCP 规范也强调 tool metadata 和 behavior annotations 不能默认被当作可信事实~\cite{mcp-spec}。这些工作说明 Skill/MCP ecosystem 已经需要权限边界。\sys 的范围是 run-centric 和 cross-extension 的：一个 lease 可以同时约束 Skill instruction 对 workflow 的影响、MCP result 对后续 sink 的影响、本地脚本的 file/network authority，以及 subagent 获得的 attenuated capability set。与 package-level manifest 或 server-level grant 不同，\sys 的 authority root 是当前 intent certificate。同一个 Skill 或 MCP server 在不同 run 中会得到不同、可消耗、不可自扩张的 leases。这个定位把 \sys 放在 Skill/MCP permissions 之上，作为一个 intent-derived lease compiler/checker，而不是替代 Skill/MCP 的包级权限系统。
+SkillGuard 和 SkillScope 直接面向 Agent Skills 的权限、行为规范和 least-privilege enforcement~\cite{skillguard,skillscope}。MCP 规范也强调 tool metadata 和 behavior annotations 不能默认被当作可信事实~\cite{mcp-spec}。这些工作说明 Skill/MCP ecosystem 已经需要权限边界。\sys 的范围是 run-centric 和 cross-extension 的：一个 lease 可以同时约束 Skill instruction 对 workflow 的影响、MCP result 对后续 sink 的影响、本地脚本的 file/network authority，以及 subagent 获得的 attenuated capability set。与 package-level manifest 或 server-level grant 不同，\sys 的 authority root 是当前 intent certificate。同一个 Skill 或 MCP server 在不同 run 中会得到不同、可消耗、不可自扩张的 leases。更重要的是 field ownership：即使 Skill/MCP manifest 也按 run mint，如果 package 或 server 可以声明 sink、approval 或 delegation field，它仍然能替 agent issuer 证明 user-owned authority。\sys 禁止 Skill、MCP tool 和 env result 补齐 agent-owned fields。这个定位把 \sys 放在 Skill/MCP permissions 之上，作为一个 intent-derived lease compiler/checker，而不是替代 Skill/MCP 的包级权限系统。
 
 一个具体区别是 union authority。相同的 PDF Skill 若用于“只把两个选中文件转换为本地 XLSX”，\sys 只会给 selected-file read、本地 output write 和无网络 exec lease；若用于“提取表格并在指定 GitHub repo 创建 issue”，同一 Skill 仍不能选择 repo，但 workflow 会多出由 agent intent 和 GitHub tool context 共同证明的一次性 issue lease。Skill-level manifest 若要覆盖两个 run，通常必须声明二者的 union authority；\sys 则在每次 protected transition 上重新绑定 intent、Skill instruction、tool/cmd interface 和 env evidence。因此它不是 Skill permission 的子集，而是跨 Skill、MCP/cmd、env 和 subagent 的 run-time authorization layer。
 
