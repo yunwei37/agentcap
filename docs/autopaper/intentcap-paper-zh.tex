@@ -255,6 +255,8 @@ Env & runtime observer, filesystem/process monitor, tool gateway & cwd, runtime 
 K = Solve_\Gamma(C_{agent}, C_{inst}, C_{tool}, C_{env}) .
 \]
 
+这里的 \(Solve\) 是合取约束而不是权限并集。Agent context 给出目标、对象和 sink 的上界；instruction context 只能在该上界内约束过程；tool context 只能暴露可调用接口、凭证范围和 sandbox contract；env context 只能把本次运行实际观测到的值绑定到这些 lease predicates。任一 required field 缺失都会使 lease 不可铸造。相反，若把四类 context 做成 union authority，最强或最会写自然语言的一类输入就可能替其他类补齐字段。
+
 纯 approval event、纯 context-use event 和本地 evidence event 可能只需要其中几类字段。关键规则是：对某个 protected decision 所需的字段，checker 必须从该字段指定的输入类读取，不能由其他输入类代填。
 
 Agent context 可以授权“处理这两个用户选中的 PDF 并在 org/repo-x 创建一个 issue”，但不能指定 PDF Skill 的脚本路径。Instruction context 可以指导 extraction workflow，但不能选择 GitHub sink 或扩大 approval scope。Tool context 可以说明 \texttt{github.create\_issue} 的参数结构和 credential scope，但不能把任意 repo 变成授权 sink。Env context 可以证明某个路径、参数值、PDF text 或 observed result 在运行时存在，但不能把存在性变成用户选择或 retroactively mint broader authority。Local command 不是第五类 context：例如 \texttt{pdftotext} 的 binary path、argv schema 和 sandbox profile 属于 tool context；cwd、input file existence、stdout/stderr 和 created files 属于 env context。
@@ -403,6 +405,14 @@ evidence(e) &\leftarrow \pi_{env}(C_{env}) .
 \]
 
 一个 protected event \(e\) 只有在 \(Req(d)\) 要求的 projections 与同一个 lease \(\kappa\) 的 predicates 一致时才被接受。未被 \(Req(d)\) 要求的输入类可以为空，但 required field 不能从其他 context class 中补齐。例如 instruction 不能补齐 authorized sink，tool schema 不能补齐 user intent，env evidence 不能补齐 approval token。这个 typed field rule 使 \sys 不只是 MCP/tool-call guard，而是跨 Skill instruction、tool interface、runtime environment 和 agent workflow state 的统一 checker transition。
+
+也可以把“四类是否可以合并”写成 soundness question。令 \(h:\{agent,inst,tool,env\}\rightarrow Q'\) 是一个把若干输入类折叠到更少类别的映射，\(Accept_h(e)\) 是 checker 在折叠后只检查 \(h(owner(f))\) 是否匹配时的接受判定。一次折叠是安全的，必须满足：
+
+\[
+\forall e,\sigma,\kappa.\quad Accept_h(e,\sigma,\kappa) \Rightarrow Accept(e,\sigma,\kappa).
+\]
+
+E3 的 residual suites 和 R220/R224 的 authority-input evidence 就是在寻找该蕴含式的反例：同一 object、argument 或 prompt slot 保持不变，只替换 issuer class。若折叠后的 checker 接受而四类 checker 拒绝，说明被合并的两类拥有不同 authority fields，不能作为同一个 proof boundary。这个定义把“四类不是三类”的主张变成可测试的 false-accept 条件，而不是命名偏好。
 
 更具体地，令 \(\Phi(e,d)\) 是事件 \(e\) 对 decision class \(d\) 提交的 field-proof set。每个证明项的形状为
 
