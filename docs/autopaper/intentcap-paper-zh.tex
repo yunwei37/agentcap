@@ -29,9 +29,9 @@ LLM agents 正在从固定工具调用器演变为可扩展执行环境，可以
 \sys 将 agent authorization 的单位定义为 protected-decision lease，而不是 tool permission、context label 或已发生的 action。
 每个 lease 分别从 agent、instruction、tool 和 env 四类 issuer-owned context 中取证，绑定当前用户意图、provenance、预算、过期和委托约束，并由 deterministic checker 在副作用、prompt placement 或权限转移前原子验证。
 当前原型执行 tool/live-callable 和 local-env 边界，并用本地 probes 验证 context placement、delegation 和 Skill instruction placement。
-E1 中，\sys 对 3,746 个危险 protected events 产生 0 个误接受，并在 tau2-style reference-action proxy 中覆盖 3,813/3,813 个 reference actions。
-E3 中，\sys 拒绝弱化 variants 会接受的 issuer-collapse、instruction-source substitution 和 one-shot lifecycle violations。
-E4 中，\sys 在 38 个本地多边界 attempts 上产生 0 个 unsafe effects/placements，并将同一 env lease contract 降低到 ActPlane-style monitor target 且产生 0 个 checker/monitor mismatches。
+在 protected-event replay 上，\sys 对 3,746 个危险 protected events 产生 0 个误接受，并在 tau2-style reference-action proxy 中覆盖 3,813/3,813 个 reference actions。
+在 issuer-collapse 和 lifecycle ablations 中，\sys 拒绝弱化 variants 会接受的 instruction-source substitution、policy/approval promotion 和 one-shot reuse violations。
+在 local multi-boundary probes 上，\sys 在 38 个 attempts 上产生 0 个 unsafe effects/placements，并将同一 env lease contract 降低到 ActPlane-style monitor target 且产生 0 个 checker/monitor mismatches。
 \end{abstract}
 
 \section{引言}
