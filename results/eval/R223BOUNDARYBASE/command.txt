@@ -1,0 +1,1 @@
+PYTHONPATH=.:src /usr/bin/python scripts/analyze_boundary_baselines.py --output-dir results/eval/R223BOUNDARYBASE
