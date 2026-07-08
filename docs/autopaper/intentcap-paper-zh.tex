@@ -48,9 +48,9 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 本文贡献如下：
 
 \begin{enumerate}[leftmargin=*,label=\textbf{C\arabic*.}]
-  \item \textbf{Model.} 一个面向 agent protected decisions 的 stateful intent-carrying lease model。它将授权单位从 operation/resource 重定义为 intent-minted decision transition，并把 influence authority、mint、check、consume、expire、attenuate 和 no-amplification 绑定为同一状态转移（第~\ref{sec:formal} 节）。
-  \item \textbf{System.} 一个 checker-centered four-plane transaction runtime，把 agent、instruction、tool 和 env 四个独立 authority planes 的字段绑定到同一个 proof-carrying lease transition，并在 instruction、tool/MCP、local environment 和 delegation boundaries 上执行 fail-closed checks（第~\ref{sec:design}--\ref{sec:implementation} 节）。
-  \item \textbf{Evidence.} 一个围绕 E1--E4 组织的评估框架和当前 prototype evidence boundary。已有结果显示 checker 可以在 saved traces、本地 Qwen/llama.cpp callable gateway 和隔离 env backend 中执行 intent/provenance/lease invariants；第~\ref{sec:evaluation} 节明确区分已支持的 mechanism claim 与仍需完整闭环的 utility、recovery 和 expert-oracle claims。
+  \item \textbf{Model.} 一个面向 agent protected decisions 的 stateful intent-carrying lease model。它将授权单位从 operation/resource 重定义为 intent-minted decision transition，定义 four-plane requirements、no-promotion 和 check-and-consume lifecycle，并给出 no unauthorized influence、intent-bounded authority、delegation monotonicity 和 no context-class promotion 四个 trace-level properties（第~\ref{sec:formal} 节）。
+  \item \textbf{System.} 一个 checker-centered four-plane transaction runtime，实现铸造、检查消耗、衰减和过期四类 central checker APIs，并将 accepted leases 在 instruction、tool/MCP、local environment 和 delegation boundaries 上以 fail-closed adapter contracts 执行（第~\ref{sec:design}--\ref{sec:implementation} 节）。
+  \item \textbf{Evidence.} 一个四块评估结果，说明 \sys 的 checker semantics 可以降低 protected-decision false accepts、压缩 authority surface，并在已接入边界上阻止副作用：当前 artifact 在 3,746 个 protected events 上执行 0 dangerous events，在本地 env suite 中 pre-side-effect 阻止 6/6 denied events 且 unsafe effects 为 0，并在 18-task local-Qwen matched pair 中把平均可见 tool schemas 从 14.72 降到 2.61 而 action reward 保持 8/18（第~\ref{sec:evaluation}--\ref{sec:evidence-status} 节）。
 \end{enumerate}
 
 \section{背景}
@@ -108,9 +108,28 @@ Script/tool output & observed values, runtime evidence & instruction promotion, 
   \item \textbf{Intent-bounded authority.} High-impact authority 必须来自当前用户意图、显式对象/目标选择、管理员策略或 fresh approval；该目标由 C1 建模，并由 E1/E2 检验。
   \item \textbf{Context influence separation.} 系统必须区分 data dependency 和 control dependency，允许不可信 context 作为数据使用，同时阻止其影响 protected decisions；该目标由 C1/C2 支撑，并由 E1/E3 检验。
   \item \textbf{Stateful least-privilege lifecycle.} 权限必须是短期、可消耗、可过期、可衰减、不可由不可信 context 自扩张的 run-time leases，而不是安装期或 server 级别 ambient permission；该目标由 C1/C2 支撑，并由 E2/E3 检验。
-  \item \textbf{Untrusted compiler with deterministic recovery.} LLM 只能提出 plan 和 lease 候选；checker 决定授权。被拒绝的 proposal 只能通过 structured denial、重新规划或 fresh approval 恢复，而不能 fallback 到 broad permission；该目标由 C2 支撑，并由 E4 检验。
-  \item \textbf{Multi-boundary lowering.} 同一 lease semantics 必须能 lowering 到 context construction、tool/MCP invocation、本地执行环境和 delegation boundary。当前 prototype 完整覆盖 checker、trace replay、本地 callable gateway、benchmark-derived adapter，以及隔离目录中的本地 env pre-side-effect 与 Qwen3.6 model-loop probes；生产级 script/file/process/network enforcement 仍需要 sandbox 或 ActPlane-style env backend；该目标由 C2 支撑，并由 E1/E3/E4 的系统实验检验。
+  \item \textbf{Untrusted compiler with fail-closed refinement.} LLM 只能提出 plan 和 lease 候选；checker 决定授权。被拒绝的 proposal 不能 fallback 到 broad permission；只有 structured denial 后产生的 evidence-bound narrower lease 或 fresh approval 才能恢复执行。该目标由 C2 支撑，并由 E4 检验。
+  \item \textbf{Adapter-contract lowering on selected boundaries.} 同一 lease semantics 必须有明确 lowering contract，覆盖 context construction、tool/MCP invocation、本地执行环境和 delegation boundary。当前 prototype 完整覆盖 checker、trace replay、本地 callable gateway、benchmark-derived adapter，以及隔离目录中的本地 env pre-side-effect 与 Qwen3.6 model-loop probes；生产级 script/file/process/network enforcement 仍需要 sandbox 或 ActPlane-style env backend。该目标由 C2 支撑，并由 E1/E3/E4 的系统实验检验。
 \end{enumerate}
+
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2pt}
+\caption{Design goals, contributions, and evaluation obligations. Each goal has a falsifiable metric; unmet metrics narrow the paper claim rather than becoming separate ad hoc experiments.}
+\label{tab:goal-map}
+\begin{tabular}{p{0.10\linewidth}p{0.15\linewidth}p{0.18\linewidth}p{0.47\linewidth}}
+\toprule
+Goal & Contribution & Evaluation & Primary obligation \\
+\midrule
+G1 & C1 & E1/E3 & unauthorized protected-decision accept rate, wrong-sink and approval-scope violations \\
+G2 & C1/C2 & E3 & collapsed-context and misclassified-context false accepts under no-promotion ablation \\
+G3 & C1 & E2/E3 & authority score, oracle distance, stale reuse, budget, expiry, and delegation violations \\
+G4 & C2 & E4 & invalid accepted \(=0\), dangerous execute \(=0\), and recovery only through narrower evidence-bound leases or fresh approval \\
+G5 & C2 & E1/E3/E4 & adapter coverage, pre-side-effect block rate, unsafe side effects \(=0\) on implemented local boundaries \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 非目标同样重要。\sys 不声称解决 prompt injection，不声称自动 compiler 永远正确，不替代 sandbox，也不保证所有 agent 决策都能被完整追踪。它的安全性质只覆盖已建模的 decision classes 和已接入的 enforcement boundaries。
 
@@ -539,7 +558,7 @@ Prototype 已经实现 checker/gateway、live local callable boundary、benchmar
 \section{评估}
 \label{sec:evaluation}
 
-本文评估围绕四个可证伪问题组织。每个实验都按 hypothesis、baselines、metrics、success criterion 和 interpretation boundary 解读。具体运行编号、探索性 probes 和 residual analyses 只作为这些问题的证据来源，不作为论文主实验编号。
+本文评估围绕四个可证伪问题组织。E1 回答系统是否有端到端安全和 utility 信号；E2 回答 leases 是否更接近 least privilege；E3 是 novelty 的旗舰实验，检验没有 four-plane no-promotion 和 check-and-consume lifecycle 的最强替代机制是否仍会 false accept；E4 回答 LLM-assisted compiler 在 checker 下是否实际可用。每个实验都按 hypothesis、baselines、metrics、success criterion 和 interpretation boundary 解读。具体运行编号、探索性 probes 和 residual analyses 只作为这些问题的证据来源，不作为论文主实验编号。
 
 评估的共同原则是固定底层模型、任务顺序、工具描述和 prompt budget，尽量只改变授权层。当某个 baseline 只有 trace-level 或概念性复现时，结果必须标记为 partial comparison，不能写成完整数值胜利。所有 high-impact denials 使用 protected-decision oracle 判定：若某个 protected decision 的 control provenance 来自缺少相应 influence mode 的 context source，则该事件应被拒绝。
 
