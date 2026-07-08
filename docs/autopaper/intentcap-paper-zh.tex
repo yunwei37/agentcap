@@ -47,7 +47,7 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 \begin{enumerate}[leftmargin=*,label=\textbf{C\arabic*.}]
   \item \textbf{Model.} 一个面向 agent protected decisions 的 stateful intent-carrying lease model。它将 future decision authority 绑定到 intent、context influence modes，以及 mint、check、consume、expire、attenuate 和 no-amplification 六类状态转移（第~\ref{sec:formal} 节）。
-  \item \textbf{System.} 一个 four-context authorization runtime，把不可信 LLM proposals 转换为可检查 leases，并定义 agent、instruction、tool、env 和 delegation 边界的 lowering contracts。Prototype 实现 trace replay、本地 callable gateway、runtime binding、structured value proof，以及 benchmark-derived MCP/delegation adapters（第~\ref{sec:design}--\ref{sec:implementation} 节）。
+  \item \textbf{System.} 一个 four-context authorization runtime，把不可信 LLM proposals 转换为可检查 leases，并定义 agent、instruction、tool、env 和 delegation 边界的 lowering contracts。Prototype 已实现 checker、trace replay、本地 callable gateway、runtime binding、structured value proof 和 benchmark-derived adapters；ActPlane-style/full sandbox 是 env adapter 的 lowering target，而不是当前完整实现（第~\ref{sec:design}--\ref{sec:implementation} 节）。
   \item \textbf{Evaluation.} 一个四实验评估结构，分别验证 security+utility、lease quality、mechanism ablation 和 compiler/recovery practicality，并用明确的判定标准限定最终结论（第~\ref{sec:evaluation} 节）。
 \end{enumerate}
 
@@ -154,10 +154,10 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 \toprule
 Context & Issuer / trust source & Examples & May influence & Must not influence & Adapter \\
 \midrule
-Agent & trusted UI, issuer, parent checker state & user goal, selected objects/sinks, approvals, role, parent lease, workflow stage & intent derivation, authorized sinks, task phase, delegation root & tool schema, script path, unobserved env facts & agent state \\
+Agent & trusted UI, issuer, approval state & user goal, selected objects/sinks, approvals, role, workflow stage, delegation root & intent derivation, authorized sinks, task phase, delegation root & tool schema, script path, observed env facts & agent state \\
 Instruction & system/developer policy, trusted user instruction, signed Skill/manual source & system policy, \texttt{SKILL.md}, workflow notes, references, MCP prompts & planning and procedure within declared scope & sink choice, approval scope, fresh authority, self-widening & instruction classifier / context constructor \\
 Tool & trusted registry, MCP broker, local command registry, sandbox profile & tool schema, annotations, server id, credential scope, binary path, argv/env schema, declared side effects & callable interface, argument schema, sandbox lowering target & current user intent, destination authorization, lease budget refresh & tool/MCP broker \\
-Env & runtime observer, filesystem/process monitor, tool gateway, checker state & cwd, selected files, concrete args, tool results, script outputs, subagent summaries, resources, consumed leases & data values, runtime evidence, resource availability, budget consumption & instruction promotion, authority minting, sink/tool/approval widening & env observer / sandbox / ActPlane-style backend \\
+Env & runtime observer, filesystem/process monitor, tool gateway & cwd, selected files, concrete args, tool results, script outputs, subagent summaries, resources & data values, runtime evidence, resource availability & instruction promotion, authority minting, sink/tool/approval widening, lease-state forgery & env observer / sandbox / ActPlane-style backend \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -289,7 +289,7 @@ c\in C_{inst} \land \neg endorse_{agent}(c) & \Rightarrow c \notin C_{agent}.
 \end{array}
 \]
 
-直观地说，tool result、script output 或 PDF text 不能因为包含祈使句就变成 instruction；tool schema 不能因为声明“安全”就变成 user intent；Skill/manual instruction 不能因为要求更多权限就变成 approval。Promotion 只能由 trusted issuer、policy 或 fresh approval 显式产生，并作为新的 lease mint event 记录在 \(\sigma\) 中。
+直观地说，tool result、script output 或 PDF text 不能因为包含祈使句就变成 instruction；tool schema 不能因为声明“安全”就变成 user intent；Skill/manual instruction 不能因为要求更多权限就变成 approval。Promotion 只能由 trusted issuer、policy 或 fresh approval 显式产生，并作为新的 lease mint event 记录在 \(\sigma\) 中。No-promotion 还意味着任一 context class 都不能替另一个 class 补齐缺失的 authority field：instruction 可以建议 workflow，但 binary/schema 必须由 tool context 验证；tool context 可以定义接口，但 sink/intent 必须由 agent context 验证；env context 可以提供 observed values，但不能把这些 values 转换成 approval 或 policy。
 
 Lease lifecycle 是 \sys 与静态 policy rule 或单次 action provenance check 的主要区别。Lease 是 future protected decision 的有状态授权对象，而不只是具体 operation 的 permission：它表达某个 context source 在 intent \(I\) 下可以影响 decision class \(d\)，直到某个状态转移使其被消耗、过期或衰减。更重要的是，mint provenance、influence authority、consumption/expiration 和 delegation bound 必须在同一个 authorization object 上被检查并原子更新；若它们分散在独立 taint labels、ACL entries、counters 和 delegation records 中，系统就必须额外证明这些对象不会产生 stale authority reuse、cross-object widening 或 consumed-state bypass。Runtime state \(\sigma\) 至少包含 active/exhausted lease table、per-lease consumption counters、temporal automata state、mint proof records 和 parent-child delegation graph；实现中的 checker state schema 直接保存这些字段，并在每个 accepted event 后原子更新。Checker 将 lease 作为有状态对象处理，而不是把它当作一组静态 predicates。
 
@@ -302,7 +302,7 @@ Checker 暴露的 authority-changing interface 只有四类 transition：
 \end{aligned}
 \]
 
-Runtime adapters 可以分布在 context、tool、MCP、local execution 和 delegation 边界，但它们不能本地修改 authority state；side effect 发生前必须经过 central checker state 的 \(check\_and\_consume\)，且 accepted event、budget update、provenance record 和 delegation-state update 是同一个 transition：
+Runtime adapters 可以分布在 context、tool、MCP、local execution 和 delegation 边界，但它们不能本地修改 authority state。任何会产生外部副作用或改变 authority state 的 protected event，包括 tool call、MCP call、local command、approval request、lease mint、policy update 和 delegation，在副作用发生前都必须经过 central checker state 的 \(check\_and\_consume\)。Accepted event、budget update、provenance record 和 delegation-state update 是同一个 transition：
 
 \begin{itemize}[leftmargin=*]
   \item \textbf{Mint.} 只有 trusted issuer 可以通过 \(lease(\kappa)\) 事件把新 lease 加入 \(K\)。Mint rule 要求 \(\kappa.intent\) 可由 \(I\) 中的 trusted user input、explicit object/sink selection、administrator policy 或 fresh approval 推导；untrusted context 不能成为 mint 或 widening 的 control dependency。
@@ -365,6 +365,25 @@ Split-state policy reuse & Tool policy still contains repo predicate while a sep
 
 这个 trace 的 takeaway 是：\sys 的区别不在单独的 counter、taint label 或 argument predicate，而在 trusted mint provenance、consumption/expiration、decision-specific influence modes 和 delegation partial order 必须同时进入同一个 authorization state，并随每次 accepted transition 一起更新。
 
+表~\ref{tab:context-residual-trace} 给出四类 context 直接相关的 residual attacks。它们不是“参数不匹配”的错误，而是 context class 被错误升级或跨类补权的错误。Collapsed-context 或 misclassified-context baseline 会把这些输入都当作 generic trusted context，从而接受 full checker 拒绝的 transition。
+
+\begin{table}[t]
+\centering
+\small
+\caption{四类 context residual attacks。每个攻击都试图让一个 context class 供应另一个 class 才能提供的 authority field。}
+\label{tab:context-residual-trace}
+\begin{tabular}{p{0.22\linewidth}p{0.31\linewidth}p{0.36\linewidth}}
+\toprule
+Attack & Baseline mistake & \sys rejection reason \\
+\midrule
+Env output pretends to be instruction & Script output says ``load extra skill'' and is placed into procedure context & \(C_{env}\) lacks endorsement as \(C_{inst}\); no class promotion \\
+Tool metadata pretends to be intent & MCP description says a broad repo/scope is safe & \(C_{tool}\) cannot supply sink or approval fields from \(C_{agent}\) \\
+Skill instruction widens approval & \texttt{SKILL.md} asks for full GitHub access to finish workflow & \(C_{inst}\) may guide workflow but cannot mint or widen authority \\
+Subagent summary expands delegation & Child summary asks parent to pass issue/write capability onward & Delegation requires attenuated active parent lease and no consumed-state reuse \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 Checker judgment is:
 
 \[
@@ -396,6 +415,29 @@ Checker judgment is:
 
 \subsection{Checker Core}
 Checker core 位于 \texttt{src/intentcap/}，实现 context labels、effect events、leases、checker state 和 proof objects。当前 checker 支持 exact、prefix、suffix 和 one-of argument predicates，支持 lease matching、holder scoping、control/data provenance checks、context-label influence-mode checks、temporal prerequisites、per-lease invocation budgets、proof-carrying intent/approval derivation，以及 delegated capability attenuation。这个 core 是本文的主要 TCB：LLM 输出、Skill 描述、MCP annotations 和 tool results 只能产生 candidate effects 或 candidate leases，不能绕过 checker 直接获得 authority。
+
+\subsection{Adapter Surface}
+
+表~\ref{tab:adapter-surface} 区分当前 prototype 已实现的 adapter、trace-level adapter 和设计层 lowering target。这个表是为了避免把 \sys 写成已经完整替换 production MCP broker 或 OS sandbox。当前 artifact 的实证重点是 checker semantics、gateway boundary、runtime binding 和 benchmark-derived protected-decision events；ActPlane-style monitor 是 env adapter 的可选后端。
+
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2pt}
+\caption{Prototype adapter surface。Implemented 表示已有可运行代码；trace-level 表示通过 benchmark-derived events 验证语义；target 表示设计层 lowering 目标。}
+\label{tab:adapter-surface}
+\begin{tabular}{p{0.14\linewidth}p{0.24\linewidth}p{0.22\linewidth}p{0.18\linewidth}p{0.12\linewidth}}
+\toprule
+Adapter & Inputs & Events / block point & Status & ActPlane relation \\
+\midrule
+Agent & intent, approvals, workflow/delegation state & lease mint, approval, spawn & trace-level + runtime state & not applicable \\
+Instruction & system, user, Skill/manual, MCP prompt labels & ctx.use, prompt-section placement & trace-level classifier contract & not applicable \\
+Tool & tool schemas, MCP methods, local callable registry & call/mcp before callable execution & implemented gateway & broker-level complement \\
+Env & cwd/files/results/script outputs/resources & read/write/exec/net evidence and sandbox policy & partial runtime binding + design target & optional backend \\
+Delegation & parent lease set, child context/caps & subagent.spawn before handoff & checker implemented, trace-level workloads & not applicable \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Trace and Live Gateways}
 \texttt{TraceGateway} 用同一个 checker replay benchmark-derived traces，并把每个事件记录为 execute/block decision。它用于把 AgentDojo、MCPTox、InjecAgent 和 tau2-bench reference artifacts 转换成统一的 protected-decision events~\cite{agentdojo,mcptox,injecagent,tau2bench}，从而比较不同 policy variants 的 false accept、authority breadth 和 oracle distance。
