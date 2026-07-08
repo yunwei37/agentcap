@@ -22,7 +22,7 @@
 \maketitle
 
 \begin{abstract}
-LLM agents 正在从固定工具调用器演变为可扩展执行环境，可以加载 Skills、连接 MCP servers、运行本地脚本，并将任务委托给 subagents。现有权限机制通常约束扩展能调用哪些工具、访问哪些文件或连接哪些网络端点，但它们很少约束不可信 context 能否影响未来的 tool selection、sink selection、approval scope 或 delegation target。本文提出 \sys，一种面向 agent protected decisions（受保护的权限状态转移）的 intent-carrying capability model：授权单位不是 tool permission、context label 或已发生的 action，而是由当前用户意图铸造、会改变未来 authority state 的短期 lease。\sys 将 agent context、instruction context、tool context 和 env context 作为四个独立 authority planes，并用 deterministic checker 验证每个 proof-carrying lease 的 intent derivation、context influence modes、control/data provenance、temporal state 和 delegation bounds。当前稿呈现设计、形式化和 pilot evidence：在已建模边界内，\sys 拒绝 ACL-style wrappers 会放行的 protected-decision violations，阻止本地 env model-loop 中的 unsafe side effects，并在 local-Qwen 对照中分离 authority surface 与 reward/oracle success；完整端到端 utility、recovery 和独立 expert-oracle 结论仍由 E1--E4 主实验闭环决定。
+LLM agents 正在从固定工具调用器演变为可扩展执行环境，可以加载 Skills、连接 MCP servers、运行本地脚本，并将任务委托给 subagents；现有权限机制约束工具、文件和网络端点，却很少约束不可信 context 能否影响未来的 tool selection、sink selection、approval scope 或 delegation target。本文的核心 insight 是：agent authorization 的单位不应是 tool permission、context label 或已发生的 action，而应是由当前用户意图铸造、会改变未来 authority state 的 protected-decision transition（受保护的权限状态转移）。\sys 将这种 transition 表示为短期 lease，把 agent、instruction、tool 和 env 四类 issuer-typed required fields 与 control/data provenance、temporal state、budget 和 delegation bounds 绑定，并由 deterministic checker 在副作用或权限转移前原子验证。当前稿呈现设计、形式化和 pilot evidence：在已建模边界内，\sys 拒绝 ACL-style wrappers 会放行的 protected-decision violations，阻止本地 env model-loop 中的 unsafe side effects，并在 local-Qwen 对照中分离 authority surface 与 reward/oracle success；完整端到端 utility、recovery 和独立 expert-oracle 结论仍由 E1--E4 主实验闭环决定。
 \end{abstract}
 
 \section{引言}
@@ -379,7 +379,19 @@ Req(d)=\langle A_d, I_d, T_d, E_d\rangle
      {\Gamma \nvdash \langle q,v,s\rangle : f}
 \]
 
-例如 \texttt{repo=org/repo-x} 的 sink authorization field 由 agent issuer 证明；trusted GitHub tool metadata 可以证明 schema field，却不能证明该 repo 是用户授权 sink。ABAC 或 IFC system 若要与 \sys 等价，必须实现这种 typed transaction API，并且在同一次 accepted transition 中原子检查 required fields、control-provenance proof、lease consumption 和 delegation state。
+例如 \texttt{repo=org/repo-x} 的 sink authorization field 由 agent issuer 证明；trusted GitHub tool metadata 可以证明 schema field，却不能证明该 repo 是用户授权 sink。于是，同一个 tool-issued proof 对 interface field 可以被接受：
+
+\[
+\Gamma \vdash \langle tool,\texttt{create\_issue.schema},mcp\_registry\rangle : github\_schema ,
+\]
+
+但对 agent-owned field 必须被拒绝：
+
+\[
+\Gamma \nvdash \langle tool,\texttt{org/repo-x},mcp\_metadata\rangle : authorized\_sink .
+\]
+
+同理，tool result 或 tool metadata 也不能证明 \(policy\_update\) field。ABAC 或 IFC system 若要与 \sys 等价，必须实现这种 typed transaction API，并且在同一次 accepted transition 中原子检查 required fields、control-provenance proof、lease consumption 和 delegation state。
 
 \begin{table}[t]
 \centering
@@ -587,7 +599,7 @@ Prototype 已经实现 checker/gateway、live local callable boundary、benchmar
 
 E1 检验 \sys 是否在真实 agent workflows 中降低攻击成功率，同时不把 benign task progress 降到不可用。Primary comparison 是同一模型和同一任务集下的 vanilla agent、static ACL、exact-tool ACL、MCP/server allowlist、tool-call guard、OS/sandbox-only wrapper 和 evaluated \sys configuration。Workloads 必须覆盖四类边界，而不是只覆盖 MCP/tool calls：Skill/manual injection 检验 instruction context，MCPTox-style MCP poisoning 检验 tool context，document/tool-result/script-output injection 检验 env context，tau2-bench-style stateful workflows 和 subagent delegation cases 检验 agent context 与 delegation state~\cite{agentdojo,injecagent,mcptox,tau2bench}。
 
-主要指标是 attack success、wrong-sink rate、data exfiltration、approval/delegation violations、approval count、approval-scope breadth、benign completion、false denial、recovery rate 和 tool errors。Oracle 来自 benchmark security/utility checks 与 \sys protected-decision labels。成功条件是：\sys 相比 access-control baselines 明显降低危险动作和 broad approval requests，并且 utility loss 有界、可由 denial/recovery 日志解释；若 utility 大幅下降，论文只能主张 \sys 是安全 enforcement layer；若攻击仍通过，则必须定位到缺失的 provenance 或 enforcement boundary。
+主要指标是 attack success、wrong-sink rate、data exfiltration、approval/delegation violations、approval count、approval-scope breadth、benign completion、false denial、recovery rate、tool errors 和 provenance-proof completeness。最后一项报告 protected fields 中有多少带 precise structured proof、多少退化为 prompt-wide conservative proof、以及这种退化造成多少 false denial 或 recovery turn。Oracle 来自 benchmark security/utility checks 与 \sys protected-decision labels。成功条件是：\sys 相比 access-control baselines 明显降低危险动作和 broad approval requests，并且 utility loss 有界、可由 denial/recovery 日志解释；若 utility 大幅下降，论文只能主张 \sys 是安全 enforcement layer；若攻击仍通过，则必须定位到缺失的 provenance 或 enforcement boundary。
 
 E1 的解释必须同时报告安全收益和 utility cost。若 \sys 降低攻击成功率但造成 benign completion 大幅下降，结论应降级为 safety enforcement layer，而不是完整端到端 agent 安全结果。若攻击仍通过，结果必须定位到缺失的 provenance source、decision class 或 enforcement boundary，而不是把失败归因于模型“没有遵守提示”。
 
@@ -617,7 +629,7 @@ E3 隔离 \sys 的核心机制是否真的是 context influence capability，而
 
 E4 检验 LLM-assisted compiler 在 deterministic checker 下是否可用。这里的对象不是模型能力本身，而是一个安全 pipeline：LLM 生成 candidate plans/leases，checker 拒绝 broad/runtime policies 或 missing-proof writes，runtime 返回 structured denial，planner 再生成更窄的替代动作。比较对象包括 LLM-only accept、checker strict、checker+feedback、proof-only/rank-only/filter-only variants 和 checker+CEGAR planner。
 
-指标包括 invalid leases accepted、valid leases rejected、broad/runtime proposals rejected、broad approval avoided、proof completeness、exact-next precision/recall、denial recovery、dangerous execute、tool errors 和 benchmark task reward。成功条件不是简单增加 executed calls，而是在不激活 broad/runtime authority、零 dangerous execute、零 tool error 的前提下，提高 task-correct executions 或 reward，并减少不必要的 broad approval。若 recovery 仍停滞，论文应把 utility claim 收窄为 bounded safety/proof completeness，并将 planner/candidate generation 明确列为 prototype limitation。
+指标包括 invalid leases accepted、valid leases rejected、broad/runtime proposals rejected、broad approval avoided、provenance-proof completeness、exact-next precision/recall、denial recovery、dangerous execute、tool errors 和 benchmark task reward。Proof completeness 需要区分 precise structured proof、conservative prompt-wide proof 和 missing proof，并把它们分别关联到 accepted actions、false denials 和 successful recoveries。成功条件不是简单增加 executed calls，而是在不激活 broad/runtime authority、零 dangerous execute、零 tool error 的前提下，提高 task-correct executions 或 reward，并减少不必要的 broad approval。若 recovery 仍停滞，论文应把 utility claim 收窄为 bounded safety/proof completeness，并将 planner/candidate generation 明确列为 prototype limitation。
 
 \section{讨论与局限}
 \label{sec:evidence-status}
@@ -652,12 +664,11 @@ Fresh local-Qwen online slice & agent/tool/env & R216 consolidates the R214/R215
 \end{table}
 
 \subsection{Claim Boundaries}
-完整论文的主张需要三个闭环。第一，utility 不能只依赖固定 slices、reference-action accounting、saved proposal replay、saved-online trajectory comparison、局部 recovery 或 bounded activation；这些证据能说明机制边界和 failure modes，但不能替代 fresh model/user-simulator loop。R216 的 18-task 本地 Qwen 对照比早期 11-task slice 更强：它显示更宽的 all-tools exposure 不会提高 action reward 或 official tool-oracle，通过更多 visible schemas 换来更多模型步数和 checker-visible blocks；同时 exact-sequence 有小幅提升，说明论文必须把 trajectory progress、reward/oracle success 和 authority cost 分开报告，而不能简单声称 all-tools “没有任何 utility”。第二，least-privilege 需要 independent expert-oracle replication；author-adjudicated labels、policy-distance scoring 和机器审计可以作为 pilot evidence，但不应被表述为双专家盲标结论。第三，context-influence residual 已经有 local env backend 和 Qwen3.6 model-loop evidence，但仍需要更接近 benchmark workflow 的 residual lift，才能把 novelty claim 从 lease lifecycle organization 推到更宽的 benchmark-scale security boundary。
+本文采用条件式 claim ladder，而不是把 pilot evidence 写成最终结论。当前 extended abstract claim 是：protected-decision transition 是一个可实现、可形式化、可在已接入边界执行的 agent authorization unit。这个 claim 由 checker semantics、local gateway/env probes、residual workflow suites 和 saved/local-Qwen pilot evidence 支撑。
 
-\subsection{Claim Selection}
-论文最终应按实验结果选择 claim 强度。如果 E1 同时显示低 attack success 和可接受 utility，\sys 可以主张端到端安全收益。如果 E1 的 utility 不足，则应把 \sys 写成 safety enforcement layer，并把 planner/recovery 作为未解决的工程限制。
+Full-paper security claim 还需要 E1 和 E3 同时闭环：benchmark-scale workflows 中 attack success、wrong-sink、approval widening、delegation mismatch 和 policy-update violations 显著下降，并且 workload characterization 显示这些 protected decisions 不是人工构造的孤例。Full-paper least-privilege claim 需要 E2 的 independent expert-oracle replication；author-adjudicated labels、policy-distance scoring 和机器审计只能作为 pilot evidence。Full-paper utility/recovery claim 需要 E4 显示 denial feedback 和 evidence-bound repair 在不激活 broad/runtime authority、零 dangerous execute 和零 tool error 的前提下提升 task-correct executions 或 reward。
 
-如果 E2 的 expert-oracle scoring 显示 leases 明显更窄，才能主张 least-privilege synthesis；否则只能主张 proof-carrying checker operationalization。如果 E3 的 ablation 显示普通 ACL、provenance 或 IFC baselines 接受 full-mechanism \sys checker 拒绝的 protected-decision violations，才能强调 context influence capability 是新的安全边界。若 E4 不能提升 task-correct executions 或 reward，则 recovery 只能作为 diagnostic/refinement mechanism，而不是 utility-preservation result。
+这一级别划分也约束负结果的写法。若 E1 utility 不足，\sys 只能主张 safety enforcement layer，而不是完整端到端 agent 安全；若 E2 oracle distance 不优于 symbolic policy baselines，least-privilege synthesis claim 应收窄为 proof-carrying checker operationalization；若 E3 的 strongest composite baseline 采用统一 lease API 后同样通过，结论应是该 baseline 实现了本文识别出的 transaction boundary，而不是被 \sys “击败”；若 E4 recovery 停滞，recovery 只能作为 diagnostic/refinement mechanism。
 
 \section{相关工作}
 
@@ -665,18 +676,20 @@ Fresh local-Qwen online slice & agent/tool/env & R216 consolidates the R214/R215
 \centering
 \scriptsize
 \setlength{\tabcolsep}{2pt}
-\caption{Closest abstraction comparison. A checkmark means the work makes the column a first-class authorization object in the paper's model, not merely that an implementation could encode it with extra policy.}
+\caption{Closest abstraction comparison. A ``yes'' means the paper makes the column a first-class authorization object, not merely that an implementation could encode it with extra policy.}
 \label{tab:closest-abstractions}
-\begin{tabular}{p{0.19\linewidth}p{0.09\linewidth}p{0.15\linewidth}p{0.11\linewidth}p{0.14\linewidth}p{0.13\linewidth}}
+\begin{tabular}{p{0.16\linewidth}p{0.08\linewidth}p{0.13\linewidth}p{0.10\linewidth}p{0.12\linewidth}p{0.10\linewidth}p{0.13\linewidth}}
 \toprule
-Work family & Intent root & Decision object & Atomic lifecycle & No-promotion & Lowering \\
+Work & Root & Object & Lifecycle & No-prom. & Deleg. & Lowering \\
 \midrule
-IFC/taint defenses & partial & no & no & partial & partial \\
-Provenance authority & yes & action/argument & no & partial & tool/action \\
-Policy DSL / ABAC systems & policy-dependent & action/policy rule & partial & no & tool/runtime \\
-Skill/MCP permissions & pkg. or server & extension permission & no & partial & skill or MCP \\
-ActPlane / OS monitors & policy input & OS event & policy dep. & no & OS boundary \\
-\sys & yes & lease transition & yes & yes & all adapters \\
+CaMeL / IFC & partial & flow & no & partial & no & tool/runtime \\
+AuthGraph & yes & action graph & no & partial & no & action \\
+PACT & partial & argument & no & partial & no & tool args \\
+AIRGuard & yes & action & no & partial & no & action \\
+SkillGuard / SkillScope & package & skill perm. & no & partial & no & skill \\
+Progent / PCAS / AgentSpec & policy & policy rule & partial & no & partial & tool/runtime \\
+ActPlane & policy & OS event & policy dep. & no & no & OS \\
+\sys & yes & lease trans. & yes & yes & yes & multi-boundary contract \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -687,7 +700,7 @@ ActPlane / OS monitors & policy input & OS event & policy dep. & no & OS boundar
 \subsection{Prompt Injection, Provenance, and Information Flow}
 CaMeL、Prompt Flow Integrity、FIDES、RTBAS 和 NeuroTaint 等工作从 control/data flow、IFC、dependency screening 或 taint tracking 的角度约束 untrusted content~\cite{camel,prompt-flow-integrity,fides,rtbas,neurotaint}。AuthGraph、PACT 和 AIRGuard 进一步把 user intent、argument provenance 和 action-time authority control 引入 agent security~\cite{authgraph,pact,airguard}。这些工作是 \sys 最接近的思想背景；本文不把“intent/provenance authorization”本身作为新颖性主张。
 
-本文把差异放在授权对象的粒度和生命周期上：这些系统主要检查 observed action、argument 或 side effect 是否与 intent/provenance 对齐；\sys 额外把未来决策权限表示为短期 lease，显式记录 authority 如何由 intent mint、如何在 protected decision 前被 check/consume、如何按 temporal/budget guard 缩小、如何在 delegation 中 attenuation，以及如何 lowering 到 Skills、MCP tools、本地执行和 subagents。一个足够扩展的 ABAC/IFC system 可以编码相同语义，但前提是它采用同一个新的授权单位：由 intent 铸造、被 check-and-consume、可过期、可衰减的 protected-decision lease。换言之，做到等价就等于接受本文提出的 agent-specific transaction boundary。关键不是单独发明 provenance label、taint tracking 或 attenuable capability，而是把 trusted mint provenance、per-lease consumption/expiration、protected-decision influence modes、no context-class promotion 和 parent-child capability partial order 绑定为同一个 authority transition，并把 agent context、instruction context、tool context 和 env context 作为同一 transaction API 的 mandatory inputs。Provenance label 是 checker 的输入，lease 是可被铸造、消耗和委托的授权对象，也是每次 protected decision 更新 authority state 的原子单位。
+本文把差异放在授权对象的粒度和生命周期上：这些系统主要检查 observed action、argument 或 side effect 是否与 intent/provenance 对齐；\sys 额外把未来决策权限表示为短期 lease，显式记录 authority 如何由 intent mint、如何在 protected decision 前被 check/consume、如何按 temporal/budget guard 缩小、如何在 delegation 中 attenuation，以及如何 lowering 到 Skills、MCP tools、本地执行和 subagents。一个足够扩展的 ABAC/IFC system 可以编码相同语义，但前提是它采用同一个授权单位：由 intent 铸造、被 check-and-consume、可过期、可衰减的 protected-decision lease。如果某个 baseline 实现了同样的 transaction object，实验结果应解释为 semantic equivalence，而不是 \sys 对它的击败；本文的 claim 将变成识别并评估这个 transaction boundary。关键不是单独发明 provenance label、taint tracking 或 attenuable capability，而是把 trusted mint provenance、per-lease consumption/expiration、protected-decision influence modes、no context-class promotion 和 parent-child capability partial order 绑定为同一个 authority transition，并把每个 protected decision 的 required fields 绑定到 issuer-typed agent、instruction、tool 或 env plane。Provenance label 是 checker 的输入，lease 是可被铸造、消耗和委托的授权对象，也是每次 protected decision 更新 authority state 的原子单位。
 
 \subsection{Agent Policy Languages and Access Control}
 Progent、PCAS、AgentSpec、AgentGuard 和 AgentBound 等工作提供 programmable privilege control、policy compilation、runtime DSL、ABAC 或 MCP access-control enforcement~\cite{progent,pcas,agentspec,agentguard,agentbound}。这些系统回答“某个工具、参数、server 或 action 是否被 policy 允许”。\sys 与它们的关系是互补和竞争并存：它同样需要确定性 checker，但 policy object 不是静态工具规则或 server policy，而是从当前 run 的 intent 和 context provenance 推导出的短期 leases。E2 和 E3 因此必须比较 \sys 与这些 policy families 在 authority breadth、oracle distance 和 protected-decision false accepts 上的差异。
