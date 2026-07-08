@@ -7,9 +7,9 @@
   "failed_claims": [],
   "input_digests": [
     {
-      "bytes": 117684,
+      "bytes": 119784,
       "path": "docs/autopaper/intentcap-paper-zh.tex",
-      "sha256": "614a37883517a959bc56b779d8c574d8c0dc60d38548b9f2a7719b2d327e98cc"
+      "sha256": "e90f99375f9cbce628fbcad0c8d6922f9c71c3b911ea3f05dd9a093e011e4efa"
     },
     {
       "bytes": 1437,
@@ -102,7 +102,7 @@
     "Some source artifacts still use historical field names such as dangerous_accepted; the paper-facing terminology is unsafe accept/execution."
   ],
   "paper": "docs/autopaper/intentcap-paper-zh.tex",
-  "project_head": "06dbb76131c891a35cfac5306aa35b4d13b56f6a",
+  "project_head": "6267230273e21c6094058b65ae3709b6d6e16b53",
   "python": "3.12.3",
   "run_id": "R237PAPERAUDIT"
 }
