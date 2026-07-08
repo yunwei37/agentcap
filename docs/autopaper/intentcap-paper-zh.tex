@@ -29,13 +29,13 @@ LLM agents 正在从固定工具调用器演变为可扩展的执行环境，可
 
 LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 API、插件接口或系统调用与宿主交互，因此权限系统可以围绕文件、网络、进程和工具调用来定义。现代 agent extension 的行为则由用户请求、系统策略、扩展说明、外部文档、工具结果和中间总结共同塑造。
 
-这种执行过程打破了 data 和 authority 的传统边界。Agent runtime 会把 trusted instructions、用户请求、扩展说明和 untrusted documents/tool results 放进相邻的模型上下文；模型再输出 plan、tool arguments、approval request 或 delegation decision。下游 guard 往往只看到最终操作，而看不到哪个 context 控制了安全相关字段。于是，一个 PDF 或网页虽然在类型上只是输入数据，却可能成为选择工具、选择 sink、扩大 approval scope、跳过检查步骤或委托权限的控制信号。本文称这一问题为 context privilege：context 获得了影响 protected decisions 的权力，而不仅是携带可被引用或总结的信息。
+这种执行过程打破了 data 和 authority 的传统边界。Agent runtime 用同一个 probabilistic planning channel 同时处理 trusted instructions、用户请求、扩展说明和 untrusted documents/tool results；模型再输出 plan、tool arguments、approval request 或 delegation decision。结构性根因不是不可信文本进入 prompt 本身，而是 authorization state 通常没有记录“在当前 intent 下，哪类 context 可以影响哪类未来决策”。下游 guard 往往只看到最终操作，而看不到哪个 context 控制了安全相关字段。于是，一个 PDF 或网页虽然在类型上只是输入数据，却可能成为选择工具、选择 sink、扩大 approval scope、跳过检查步骤或委托权限的控制信号。本文称这一问题为 context privilege：context 获得了影响 protected decisions 的权力，而不仅是携带可被引用或总结的信息。
 
-一个文档处理工作流展示了这个问题的具体形状。用户可能希望 agent 从选中的 PDF 提取表格、保存 XLSX，并在指定 GitHub repository 中创建 issue；PDF 内容应影响输出数据和 summary，但不应影响 repository selection、approval scope 或 delegation target。第~\ref{sec:motivation} 节用这一例子展开完整 trace。
+一个文档处理工作流展示了这个问题的具体形状。用户可能希望 agent 从选中的 PDF 提取表格、保存 XLSX，并在指定 GitHub repository 中创建 issue；PDF 内容应影响输出数据和 summary，但不应影响 repository selection、approval scope 或 delegation target。最终的 \texttt{create\_issue(repo=org/repo-x)} 调用可能通过参数校验，但同一 PDF 已经诱导 agent 请求 full GitHub approval 或把 issue authority 委托给 untrusted subagent。此时 final action 看似合法，authority path 却已经被不可信 context 改写。第~\ref{sec:motivation} 节用这一例子展开完整 trace。
 
-本文关注的 protected decisions 包括 tool selection、sink selection、approval scope、policy/capability request 和 delegation target；我们不声称追踪模型内部的任意语义影响。
+本文关注的 protected decisions 不是模型内部的任意语义判断，而是会 mint、select、widen、consume 或 delegate authority 的生命周期事件，包括 tool selection、sink selection、approval scope、policy/capability request 和 delegation target。我们不声称追踪模型内部的任意语义影响。
 
-现有防线分别覆盖了这个问题的一部分。Tool guards 和 argument validators 可以拒绝错误对象或非法参数；static allowlists 和 server-level policies 可以限制可见工具；human approval gates 可以让用户确认高影响操作；OS sandbox 或 monitor 可以约束文件、网络和进程 side effects。这些机制是必要的，但它们本身不为 context 分配 influence authority：它们检查最终操作、可见资源或 side effect，而不是检查产生该决策的 control provenance 是否由当前用户 intent 授权。
+现有防线分别覆盖了这个问题的一部分。Tool guards 和 argument validators 可以拒绝错误对象或非法参数；static allowlists 和 server-level policies 可以限制可见工具；human approval gates 可以让用户确认高影响操作；OS sandbox 或 monitor 可以约束文件、网络和进程 side effects。Provenance、taint 和 IFC-style defenses 还能拒绝部分已经显化的可疑 flow。这些机制是必要的，但它们通常不维护一个面向未来决策的、可消耗授权对象；该对象的有效性同时依赖 intent derivation、allowed control provenance、temporal state、budget 和 delegation bounds。
 
 \sys 从这一差异出发，但不把“检查 action provenance 是否可信”作为 novelty claim；这一方向已经被多种 agent provenance、IFC 和 intent-policy 系统探索。本文的核心观点更窄：agent extensions 需要一个以 run-time lease 为单位的授权生命周期，用来记录 authority 如何由当前 intent 产生、如何在 protected decision 前被检查和消耗、如何按 temporal/budget guard 缩小、以及如何在 delegation 时单调衰减。关键 invariant 不是 action 是否带有 provenance，而是 authority state 不能通过 untrusted provenance 被 mint、refresh、widen 或 delegate，即使最终 action arguments 单独看都合法。一个 high-impact event 只有在两个条件同时成立时才允许执行：它必须由当前 intent certificate 推导出来；并且它的 control provenance 必须来自被授权影响对应 decision class 的 context source。
 
@@ -78,7 +78,7 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 \section{威胁模型与目标}
 
-\sys 面向可扩展 agent runtime。Agent 可以读取外部文档、加载 Skills、连接 MCP servers、运行本地脚本、调用工具，并将部分任务委托给 subagents。攻击者可以控制部分输入 context，例如 PDF、网页、邮件、issue comment、MCP tool result、Skill instruction、script output 或 subagent summary。攻击目标是让 agent 超出用户当前意图：读取无关私有文件、向错误 sink 发送数据、创建错误 repository 的 issue、请求更宽 approval、修改策略、跳过检查，或将权限委托给恶意组件。
+\sys 面向可扩展 agent runtime。Agent 可以读取外部文档、加载 Skills、连接 MCP servers、运行本地脚本、调用工具，并将部分任务委托给 subagents。攻击者可以控制部分输入 context，例如 PDF、网页、邮件、issue comment、MCP tool result、Skill instruction、script output 或 subagent summary。主要攻击目标是让不可信 context 控制某个 authority lifecycle event，例如选择错误 sink、请求更宽 approval、修改 capability request 或扩大 delegation。读取无关私有文件、创建错误 repository 的 issue、修改策略、跳过检查或委托给恶意组件，是这些 unauthorized influence 在具体边界上的表现形式。
 
 我们不假设 LLM 会可靠遵守安全指令；不信任外部文档、工具结果、MCP annotations 或 unsigned Skill instructions；也不假设静态分析能完美理解任意脚本。\sys 依赖的 TCB 包括 intent certificate issuer、deterministic checker、provenance tracker、audit log 和已经接入的 enforcement adapters。这个 TCB statement 是 per-boundary 的：没有接入 adapter 的 side effect 不在安全性质覆盖范围内。OS sandbox 或 ActPlane-style monitor 可以作为执行后端，但不是本文的核心贡献；\sys 关注的是上游 policy synthesis 和 context-authority checking。
 
