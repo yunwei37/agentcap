@@ -41,8 +41,8 @@ It must be composed at runtime from multiple context sources that share one plan
 % 它必须在运行时从共享同一规划通道的多个上下文来源 (context source) 组合而成，每个来源拥有特定的决策字段。
 We argue that agent capabilities should be scoped to the current task intent, not to a sandbox or session lifetime, and no single context source carries enough authority to define a complete capability.
 % 我们认为智能体的能力应该限定在当前任务意图的范围内，而不是沙箱或会话生命周期，且没有任何单一上下文来源能定义完整的能力。
-\sys composes capabilities from four such sources, namely user intent, workflow instructions, tool schemas, and runtime data, with field-level ownership and monotonic narrowing.
-% IntentCap 从四个这样的来源——用户意图、工作流指令、工具模式和运行时数据——以字段级所有权和单调缩减来组合能力。
+\sys composes capabilities from four such sources, namely user intent, workflow instructions, tool schemas, and runtime environment, with field-level ownership and monotonic narrowing.
+% IntentCap 从四个这样的来源——用户意图、工作流指令、工具模式和运行时环境——以字段级所有权和单调缩减来组合能力。
 Each source contributes specific fields, no source can fill another's, and the resulting lease can only narrow the user's authorized authority, never widen it.
 % 每个来源贡献特定字段，任何来源都不能填充另一个来源的字段，由此产生的租约只能缩小用户授权的权限，不能扩大。
 \sys uses an LLM to generate short-lived capability leases from these sources, validated by a deterministic checker before any side effect commits, and enforced through tool-level and OS-level information flow policies.
@@ -56,12 +56,12 @@ Preliminary evaluation shows that \sys blocks tested violations without rejectin
 \section{Background}
 % 背景
 
-LLM agents are becoming extensible execution environments.
-% LLM 智能体正在成为可扩展的执行环境。
+LLM agents combine tools, documents, workflow instructions, and delegated subtasks to carry out real work.
+% LLM 智能体结合工具、文档、工作流指令和委托的子任务来执行实际工作。
 A modern agent can load Skills with workflow instructions, references, and optional scripts~\cite{openai-skills}; connect to MCP servers that expose resources, prompts, and tools~\cite{mcp-spec}; run local commands; and spawn subagents.
 % 现代智能体可以加载包含工作流指令、引用和可选脚本的 Skill~\cite{openai-skills}，连接暴露资源、提示和工具的 MCP 服务器~\cite{mcp-spec}，运行本地命令，以及生成子智能体。
-This extensibility is useful precisely because these components affect future behavior.
-% 这种可扩展性之所以有用，恰恰是因为这些组件会影响未来的行为。
+Each of these inputs is useful precisely because it affects future behavior.
+% 这些输入之所以有用，恰恰是因为它们会影响未来的行为。
 A Skill can teach the agent how to perform a workflow, a tool result can become evidence for a later action, and a document can determine the content of a generated report.
 % 一个 Skill 可以教会智能体如何执行某个工作流，一条工具结果可以成为后续操作的依据，一份文档可以决定生成报告的内容。
 
@@ -70,8 +70,8 @@ A Skill can teach the agent how to perform a workflow, a tool result can become 
 
 The same property creates a security and safety problem.
 % 同样的特性带来了安全与可靠性问题。
-In an agent, any input can influence any action, whether through adversarial injection~\cite{greshake-injection} or accidental scope widening, a generalized form of the confused deputy problem~\cite{confused-deputy}.
-% 在智能体中，任何输入都可以影响任何操作，无论是通过对抗性注入~\cite{greshake-injection}还是意外的范围扩大——混淆代理问题的泛化形式~\cite{confused-deputy}。
+In an agent, any input can influence any action, whether through adversarial injection~\cite{greshake-injection} or accidental scope widening.
+% 在智能体中，任何输入都可以影响任何操作，无论是通过对抗性注入~\cite{greshake-injection}还是意外的范围扩大。
 Most current defenses ask an operation-centric question: which tool may be called, which file may be read, which endpoint may be contacted, or which process may execute~\cite{isolategpt,progent,camel}?
 % 当前大多数防御机制提出的是以操作为中心的问题：哪个工具可以被调用，哪个文件可以被读取，哪个端点可以被访问，或者哪个进程可以执行~\cite{isolategpt,progent,camel}？
 That question is necessary but incomplete.
@@ -87,14 +87,23 @@ The same invariant breaks without an adversary.
 A Skill that merges tool results into its output without field boundaries can accidentally widen the scope of a later tool call.
 % 一个 Skill 如果在合并工具结果到输出时没有字段边界，就可能意外扩大后续工具调用的范围。
 
-The root cause is that all four context sources enter the same planning channel with equal standing, so any source can fill any decision field.
-% 根本原因是所有四个上下文来源以同等地位进入同一个规划通道，因此任何来源都可以填充任何决策字段。
+The root cause is that all \emph{context sources} the agent consumes, what the user asked for, how a Skill defines the workflow, what a tool's API accepts, and what previous tools returned, enter the same planning channel with equal standing, so any source can fill any decision field.
+% 根本原因是智能体所消耗的所有上下文来源 (context source)——用户要求做什么、Skill 如何定义工作流、工具的 API 接受什么、以及之前的工具返回了什么——以同等地位进入同一个规划通道，因此任何来源都可以填充任何决策字段。
+Unlike traditional systems, where a programmer declares capabilities at compile time and a type system enforces them, an agent's planning channel offers no static structure to distinguish sources.
+% 与传统系统不同，在传统系统中程序员在编译时声明能力并由类型系统强制执行，而智能体的规划通道没有提供静态结构来区分来源。
+These sources are not interchangeable because each carries only part of the information needed to define a capability. The user's request specifies the goal and authorized destinations but not the workflow steps. A Skill's procedure defines the steps but not the user's specific targets. A tool's schema declares what parameters it accepts but not the goal. A tool's output provides values but not which decision fields those values should fill. A complete capability must be composed from all four.
+% 这些来源不可互换，因为每个来源只携带定义能力所需的部分信息。用户的请求指定目标和授权的目的地，但不包含工作流步骤。Skill 的流程定义步骤，但不包含用户的具体目标。工具的模式声明它接受什么参数，但不包含目标。工具的输出提供值，但不指定这些值应该填充哪些决策字段。完整的能力必须从四者组合而成。
 Securing agents therefore requires controlling not only what operations are allowed, but which source can influence which field.
 % 因此，保护智能体的安全不仅需要控制哪些操作被允许，还需要控制哪个来源可以影响哪个字段。
 
 \section{Design}
 \label{sec:design}
 % 设计
+
+Our key insight is that agent capabilities must be composed at runtime from multiple context sources with field-level ownership, because no single source carries enough authority to define a complete capability and no programmer exists to declare the composition statically.
+% 我们的关键洞察是智能体的能力必须在运行时从多个上下文来源以字段级所有权进行组合，因为没有单一来源能定义完整的能力，也没有程序员来静态声明这种组合。
+\sys realizes this by scoping each capability to the current task intent and composing it from four sources, each contributing specific fields with priority, so that no source can fill another's fields.
+% IntentCap 通过将每个能力限定在当前任务意图的范围内，并从四个来源组合，每个来源按优先级贡献特定字段，使得任何来源都不能填充另一个来源的字段来实现这一点。
 
 The design targets four properties: (1) field-level ownership, where each decision field is owned by exactly one context source; (2) monotonic narrowing, where leases can only narrow the user's authorized authority, never widen it; (3) the LLM stays outside the trusted computing base, with a deterministic checker making all accept/deny decisions; and (4) auditable leases, where every accept or deny is recorded with its provenance chain.
 % 设计目标四个属性：(1) 字段级所有权——每个决策字段由恰好一个上下文来源拥有；(2) 单调缩减——租约只能缩小用户授权的权限，不能扩大；(3) LLM 位于可信计算基之外——确定性检查器做出所有接受/拒绝决策；(4) 可审计租约——每个接受或拒绝都记录来源链。
@@ -141,8 +150,8 @@ Figure~\ref{fig:arch} shows the pipeline.
 % 图~\ref{fig:arch} 展示了该流水线。
 A source labeler classifies each input by position.
 % 来源标注器按位置分类每个输入。
-User messages are always user intent, tool responses are always runtime data, and Skill/MCP metadata is labeled at load time.
-% 用户消息始终是用户意图，工具响应始终是运行时数据，Skill/MCP 元数据在加载时标注。
+User messages are always user intent, tool responses are always runtime environment, and Skill/MCP metadata is labeled at load time.
+% 用户消息始终是用户意图，工具响应始终是运行时环境，Skill/MCP 元数据在加载时标注。
 Inputs with ambiguous provenance (e.g., documents pasted by the user) require additional classification, which the current prototype handles conservatively by denying authority fields from ambiguous sources.
 % 来源模糊的输入（如用户粘贴的文档）需要额外分类，当前原型保守地拒绝模糊来源的权限字段。
 At the OS level, this labeling maps to process-level isolation and IPC channel tagging, so each source's provenance is rooted in the process that produced it.
@@ -176,12 +185,12 @@ The four context sources each contribute specific fields.
 % \emph{工作流指令}（系统策略、Skill 流程或手册）提供过程范围。
 \emph{Tool schemas} (MCP definitions, registry entries, or command descriptors) supply the callable interface and credential scope.
 % \emph{工具模式}（MCP 定义、注册表条目或命令描述符）提供可调用接口和凭证范围。
-\emph{Runtime data} (tool results, file state, script outputs) supplies observed values.
-% \emph{运行时数据}（工具结果、文件状态、脚本输出）提供观测值。
+\emph{Runtime environment} (tool results, file state, script outputs) supplies observed values.
+% \emph{运行时环境}（工具结果、文件状态、脚本输出）提供观测值。
 No source can fill another's fields.
 % 任何来源都不能填充另一个来源的字段。
-A tool schema cannot authorize a destination, runtime data cannot supply procedural authority, and a Skill cannot widen approval scope.
-% 工具模式不能授权目标，运行时数据不能提供过程权限，Skill 不能扩大审批范围。
+A tool schema cannot authorize a destination, runtime environment cannot supply procedural authority, and a Skill cannot widen approval scope.
+% 工具模式不能授权目标，运行时环境不能提供过程权限，Skill 不能扩大审批范围。
 
 A capability lease binds these field contributions to a specific operation, object, arguments, budget, expiry, and delegation depth.
 % 能力租约将这些字段贡献绑定到特定的操作、对象、参数、预算、过期时间和委托深度。
@@ -242,7 +251,7 @@ It must be composed at runtime from context sources that share a single neural p
 % 它必须在运行时从共享同一个神经规划通道的上下文来源组合而成，其中任何来源都可以冒充其他来源——一种混淆代理场景~\cite{confused-deputy}，其中代理是一个神经规划器。
 CaMeL separates data from control to defeat prompt injections by design~\cite{camel}, while IsolateGPT~\cite{isolategpt} and Progent~\cite{progent} restrict which operations an agent may perform through execution isolation and policy languages, respectively.
 % CaMeL 将数据与控制分离，从设计上抵御提示注入~\cite{camel}，而 IsolateGPT~\cite{isolategpt} 和 Progent~\cite{progent} 分别通过执行隔离和策略语言限制智能体可执行的操作。
-At lower layers, EIM~\cite{eim-bpftime} and ActPlane~\cite{actplane} enforce constraints at the extension and OS level, and SkillGuard~\cite{skillguard} governs what a Skill package may access.
+At lower layers, EIM~\cite{eim-bpftime} and ActPlane~\cite{actplane} enforce constraints at the tool and OS level, and SkillGuard~\cite{skillguard} governs what a Skill package may access.
 % 在更低的层次，EIM~\cite{eim-bpftime} 和 ActPlane~\cite{actplane} 在扩展和 OS 层执行约束，SkillGuard~\cite{skillguard} 管控 Skill 包可以访问的内容。
 Unlike these systems, \sys asks which future decisions a given context source may influence, under a given user intent, and with what proof.
 % 与这些系统不同，IntentCap 探讨在给定用户意图下，给定上下文来源 (context source) 可以影响哪些未来决策，以及用什么证明。
