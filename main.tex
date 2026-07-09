@@ -30,15 +30,13 @@
 \begin{abstract}
 LLM agents take real actions, including executing code, modifying files, calling services, and delegating tasks, driven by context sources such as user requests, tool results, documents, shell outputs, Skill and MCP instructions, and memory.
 % LLM 智能体会执行真实操作——运行代码、修改文件、调用服务、委托任务——由上下文来源 (context source) 例如用户请求、工具结果、文档、Shell 输出、Skill 与 MCP 指令和记忆所驱动。
+Unlike traditional systems where a programmer declares each capability, an agent's capability cannot be predefined, because it depends on the agent's intent: what it wants to do and how it plans to accomplish it.
+% 与程序员声明每个能力的传统系统不同，智能体的能力无法预定义，因为它取决于用户想做什么、可用的工具和工作流如何完成它，以及运行时有哪些上下文可用。
 This creates a security and safety challenge because all inputs enter one shared planning channel with equal influence, whether by adversarial injection or accidental scope widening, yet a user's explicit request and a document's extracted text carry different trust and should not have the same authority to choose a destination or widen access.
 % 这带来了安全与可靠性挑战：所有输入以同等影响力进入同一个共享规划通道，无论是通过对抗性注入还是意外的范围扩大，但用户的显式请求和文档的提取文本有不同的信任等级，不应拥有同样的权限来选择目标或扩大访问范围。
 Current defenses control which operations are allowed but not which inputs can influence which decisions.
 % 当前防御控制哪些操作被允许，但不控制哪些输入可以影响哪些决策。
 
-Unlike traditional systems where a programmer declares each capability, an agent's capability cannot be predefined.
-% 与程序员声明每个能力的传统系统不同，智能体的能力无法预定义。
-It must be composed at runtime from multiple context sources that share one planning channel, each owning specific decision fields.
-% 它必须在运行时从共享同一规划通道的多个上下文来源 (context source) 组合而成，每个来源拥有特定的决策字段。
 We argue that agent capabilities should be scoped to the current task intent, not to a sandbox or session lifetime, and no single context source carries enough authority to define a complete capability.
 % 我们认为智能体的能力应该限定在当前任务意图的范围内，而不是沙箱或会话生命周期，且没有任何单一上下文来源能定义完整的能力。
 \sys composes capabilities from four such sources, namely user intent, workflow instructions, tool schemas, and runtime environment, with field-level ownership and monotonic narrowing.
@@ -171,8 +169,8 @@ Each delegation further attenuates, so a subtask receives only capabilities narr
 % 每次委托进一步衰减，子任务只接收比其父任务更窄的能力。
 The checker exposes a single transition, $\mathsf{check\_and\_consume}(e,\mathit{lease},\mathit{proofs},\sigma) \rightarrow \mathsf{allow}(\sigma') \mid \mathsf{deny}$, that adapters must call before any side effect commits.
 % 检查器暴露单一转换——$\mathsf{check\_and\_consume}(e,\mathit{lease},\mathit{proofs},\sigma) \rightarrow \mathsf{allow}(\sigma') \mid \mathsf{deny}$——适配器必须在任何副作用提交之前调用。
-Enforcement operates at two layers. At the tool level, boundary adapters intercept MCP calls and validate that each argument field comes from its owner source before the call executes. At the OS level, accepted leases compile to ActPlane~\cite{actplane} file, exec, and network policies enforced via eBPF.
-% 执行在两个层次运作。在工具层，边界适配器拦截 MCP 调用并在调用执行前验证每个参数字段来自其所有者来源。在 OS 层，被接受的租约编译为通过 eBPF 执行的 ActPlane~\cite{actplane} 文件、执行和网络策略。
+Enforcement operates at two layers. At the tool level, boundary adapters intercept MCP calls and validate that each argument field comes from its owner source before the call executes, similar to how Fides~\cite{fides} applies taint tracking at the planner level. At the OS level, accepted leases compile to ActPlane~\cite{actplane} file, exec, and network policies enforced via eBPF.
+% 执行在两个层次运作。在工具层，边界适配器拦截 MCP 调用并在调用执行前验证每个参数字段来自其所有者来源，类似于 Fides~\cite{fides} 在规划器层面应用污点追踪。在 OS 层，被接受的租约编译为通过 eBPF 执行的 ActPlane~\cite{actplane} 文件、执行和网络策略。
 
 A field is a named slot in a capability lease (e.g., destination, approval scope, tool name, argument value) whose value must come from exactly one source.
 % 字段是能力租约中的一个命名槽位（如目标、审批范围、工具名、参数值），其值必须来自恰好一个来源。
