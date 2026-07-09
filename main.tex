@@ -98,28 +98,18 @@ The resulting capability leases are scoped to the current task intent and valida
 \section{Design}
 % 设计
 
-\sys addresses issuer collapse by making the authorization unit a \emph{pre-effect commit record} rather than an action-level predicate.
-% IntentCap 通过将授权单元设为\emph{预效果提交记录} (pre-effect commit record) 而非操作级谓词来解决发行者合并问题。
-Figure~\ref{fig:arch} shows the pipeline.
-% 图~\ref{fig:arch} 展示了该流水线。
-A trusted issuer canonicalizes user intent into a structured certificate.
-% 受信任的发行者将用户意图规范化为结构化证书。
-A context labeler assigns provenance and influence modes.
-% 上下文标注器分配来源和影响模式。
-An untrusted LLM-assisted compiler proposes plans and candidate leases.
-% 不受信任的 LLM 辅助编译器提议计划和候选租约。
-A deterministic checker validates field-owner proofs and atomically consumes lease state via a single transition:
-% 确定性检查器通过单次转换原子地验证字段所有者证明并消耗租约状态：
+\sys composes each capability from four context sources grouped by origin (Figure~\ref{fig:arch}).
+% IntentCap 从按来源分组的四个上下文来源组合每个能力（图~\ref{fig:arch}）。
+An LLM-assisted compiler proposes task plans and candidate leases, but it is not trusted: a deterministic checker validates every lease before any side effect, context placement, or delegation handoff commits.
+% LLM 辅助编译器提议任务计划和候选租约，但它不被信任：确定性检查器在任何副作用、上下文放置或委托交接提交之前验证每个租约。
+The checker is the sole writer of lease state; adapters at each boundary submit field contributions from the relevant sources but cannot mint or widen leases on their own. The checker transition is:
+% 检查器是租约状态的唯一写入者；各边界的适配器提交来自相关来源的字段贡献，但不能自行铸造或扩大租约。检查器的转换为：
 \vspace{-2pt}
 \begin{small}
 \[\mathsf{check\_and\_consume}(e,\mathit{lease},\mathit{proofs},\mathit{prov},\sigma) \rightarrow \mathsf{allow}(\sigma'\!,\mathit{audit}) \mid \mathsf{deny}(\mathit{reason})\]
 \end{small}
 \vspace{-4pt}
 
-Every authority-changing boundary---tool call, local execution, context placement, Skill instruction slot, or delegation handoff---must submit this record \emph{before} the side effect commits.
-% 每个改变权限的边界——工具调用、本地执行、上下文放置、Skill 指令槽或委托交接——都必须在副作用提交\emph{之前}提交此记录。
-The checker is the sole writer of lease state; adapters cannot cache decisions or mutate budgets locally.
-% 检查器是租约状态的唯一写入者；适配器不能在本地缓存决策或修改预算。
 
 \begin{figure}[t]
 \centering
@@ -159,19 +149,15 @@ The checker is the sole writer of lease state; adapters cannot cache decisions o
 \vspace{-8pt}
 \end{figure}
 
-\sys partitions inputs into four issuer-owned proof boundaries: \emph{agent} context (user intent, selected objects/sinks, approvals), \emph{instruction} context (system policy, endorsed Skill/manual procedures), \emph{tool} context (MCP/registry schemas, credential scopes, sandbox contracts), and \emph{env} context (runtime observations, tool results, file state, script outputs).
-% IntentCap 将输入划分为四个发行者所有的证明边界：\emph{agent} 上下文（用户意图、选定对象/输出目标、批准），\emph{instruction} 上下文（系统策略、认可的 Skill/手动流程），\emph{tool} 上下文（MCP/注册表模式、凭证范围、沙箱合约），以及 \emph{env} 上下文（运行时观测、工具结果、文件状态、脚本输出）。
-The \emph{no-substitution rule} requires that each protected field be proven by its owner class: tool metadata cannot supply user-authorized sinks, runtime observations cannot supply instruction authority, and Skill text cannot widen approval scope.
-% \textbf{不可替代规则}要求每个受保护字段必须由其所有者类别来证明：工具元数据不能提供用户授权的输出目标，运行时观测不能提供指令权限，Skill 文本不能扩大审批范围。
-Two classes may merge only if issuer, forgeable surface, owned fields, and lifecycle authority are identical.
-% 两个类别仅在发行者、可伪造面、所有字段和生命周期权限完全相同时才可合并。
+The four context sources each contribute specific fields to a capability. \emph{User intent} supplies the goal, selected objects, authorized destinations, and approvals. \emph{Workflow instructions}---system policy, Skill procedures, or manuals---supply procedural scope. \emph{Tool schemas}---MCP definitions, registry entries, or command descriptors---supply the callable interface and credential scope. \emph{Runtime data}---tool results, file state, script outputs---supplies observed values. No source can fill another's fields: a tool schema cannot authorize a destination, runtime data cannot supply procedural authority, and a Skill cannot widen approval scope.
+% 四个上下文来源分别向能力贡献特定字段。\emph{用户意图}提供目标、选定对象、授权目标和批准。\emph{工作流指令}——系统策略、Skill 流程或手册——提供过程范围。\emph{工具模式}——MCP 定义、注册表条目或命令描述符——提供可调用接口和凭证范围。\emph{运行时数据}——工具结果、文件状态、脚本输出——提供观测值。任何来源都不能填充另一个来源的字段：工具模式不能授权目标，运行时数据不能提供过程权限，Skill 不能扩大审批范围。
 
-A lease binds operation, object, arguments, intent derivation, control/data provenance, temporal guards, budget, expiry, and delegation depth.
-% 一个租约绑定操作、对象、参数、意图推导、控制/数据来源、时序守卫、预算、过期时间和委托深度。
-Leases are short-lived, consumable, and non-self-widening: a one-shot issue lease is consumed on first use, and a child subagent receives only attenuated capabilities.
-% 租约是短生命周期、可消耗且不可自扩展的：一次性 issue 租约在首次使用时即被消耗，子智能体只接收衰减后的能力。
-The checker validates all of these atomically in a single transition, preventing the authority-state split where separate guards lose track of consumption or delegation across boundaries.
-% 检查器在单次转换中原子地验证所有这些属性，防止各独立守卫在边界之间丢失消耗或委托状态的权限-状态分裂问题。
+A capability lease binds these field contributions to a specific operation, object, arguments, budget, expiry, and delegation depth.
+% 能力租约将这些字段贡献绑定到特定的操作、对象、参数、预算、过期时间和委托深度。
+Leases are scoped to the current task intent, consumed on use, and cannot be self-widened: a one-shot issue lease expires after its first use, and a delegated subtask receives only narrower capabilities than its parent.
+% 租约限定在当前任务意图的范围内，使用即消耗，且不能自行扩大：一次性 issue 租约在首次使用后即过期，被委托的子任务只接收比其父任务更窄的能力。
+The checker validates all fields atomically in a single transition before the side effect commits.
+% 检查器在副作用提交之前，在单次转换中原子地验证所有字段。
 
 \section{Preliminary Evidence}
 % 初步证据
@@ -185,9 +171,8 @@ On the utility side, \sys covers all 3,813 benign reference actions in the tau2-
 
 \textbf{RQ2: Is the four-class partition a safety requirement or a naming choice?}
 % \textbf{RQ2：四类划分是安全要求还是命名选择？}
-The partition is load-bearing: removing issuer ownership entirely (collapsing all four classes into generic trusted context) causes 3,593 false accepts out of 3,823 checker-denied events (94\%).
-% 该划分承担关键安全作用：完全移除发行者所有权（将四个类别合并为通用受信任上下文）导致 3,823 个检查器拒绝事件中出现 3,593 个错误接受（94\%）。
-% 完全移除发行者所有权（将四个类别合并为通用受信任上下文）导致 3,593 个错误接受（94\%）。
+The partition is load-bearing: collapsing all four sources into one generic trusted context causes 3,593 false accepts out of 3,823 checker-denied events (94\%).
+% 该划分承担关键安全作用：将四个来源合并为一个通用受信任上下文导致 3,823 个检查器拒绝事件中出现 3,593 个错误接受（94\%）。
 Even the weakest single-edge collapse (tool$\rightarrow$agent) falsely accepts 1,928 events (50\%).
 % 即使最弱的单边合并（tool$\rightarrow$agent）也错误接受了 1,928 个事件（50\%）。
 On 7 controlled workflow residuals, a post-hoc policy DSL that checks predicates without field ownership falsely accepts 7/7; splitting lifecycle state across separate guards falsely accepts 5/7.
@@ -209,7 +194,7 @@ All \sys policy families achieve oracle distance~0 across 24 adjudicated lease l
 
 \sys asks a different question from adjacent work. EIM and bpftime ask how an extension can safely use host-provided resources~\cite{eim-bpftime}. ActPlane asks how policy can be enforced below the tool layer~\cite{actplane}. SkillGuard asks how a Skill package can be governed as a permission-bearing artifact~\cite{skillguard}. \sys asks which future decisions a given context may influence, under a given user intent, and with what proof. That distinction keeps the LLM outside the trusted computing base, treats the current user goal as the root of authority, and makes context influence a least-privilege capability rather than an implicit side effect of putting text in the prompt.
 
-Current evidence covers replay safety, issuer-collapse ablations, and local multi-boundary enforcement. End-to-end utility with a live user simulator, independent expert-oracle lease labels, and production OS-level enforcement remain open. Scaling the checker to real-time MCP broker integration and measuring approval burden are immediate next steps.
+Current evidence covers replay safety, four-class ablations, and local multi-boundary enforcement. End-to-end utility with a live user simulator, independent expert-oracle lease labels, and production OS-level enforcement remain open. Scaling the checker to real-time MCP broker integration and measuring approval burden are immediate next steps.
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}
