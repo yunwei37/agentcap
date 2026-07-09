@@ -30,18 +30,17 @@
 \begin{abstract}
 LLM agents take real actions --- executing code, modifying files, calling services, and delegating tasks --- driven by context from user requests, tool results, documents, shell outputs, Skill and MCP instructions, and memory.
 % LLM 智能体会执行真实操作——运行代码、修改文件、调用服务、委托任务——由来自用户请求、工具结果、文档、Shell 输出、Skill 与 MCP 指令和记忆的上下文驱动。
-This creates a security challenge: all inputs enter one shared planning state with equal influence, yet a user's explicit request and a document's extracted text carry different trust and should not have the same authority to choose a destination or widen access.
-% 这带来了安全挑战：所有输入以同等影响力进入同一个共享规划状态，但用户的显式请求和文档的提取文本有不同的信任等级，不应拥有同样的权限来选择目标或扩大访问范围。
+This creates a security and safety challenge: all inputs enter one shared planning state with equal influence, whether by malicious injection or accidental misconfiguration, yet a user's explicit request and a document's extracted text carry different trust and should not have the same authority to choose a destination or widen access.
+% 这带来了安全与可靠性挑战：所有输入以同等影响力进入同一个共享规划状态，无论是通过恶意注入还是意外的错误配置，但用户的显式请求和文档的提取文本有不同的信任等级，不应拥有同样的权限来选择目标或扩大访问范围。
 Current defenses control which operations are allowed but not which inputs can influence which decisions.
 % 当前防御控制哪些操作被允许，但不控制哪些输入可以影响哪些决策。
 
-Agent capabilities should be scoped to the current task intent, not to a sandbox or session lifetime, and no single context source carries enough authority to define a complete capability.
+Our key insight is that Agent capabilities should be scoped to the current task intent, not to a sandbox or session lifetime, and no single context source carries enough authority to define a complete capability.
 % Agent 的能力应该限定在当前任务意图的范围内，而不是沙箱或会话生命周期，且没有任何单一上下文来源能定义完整的能力。
 \sys composes capabilities from four context sources --- user intent, workflow instructions, tool schemas, and runtime data --- each contributing specific fields with priority, so that no source can fill another's fields.
 % IntentCap 从四个上下文来源——用户意图、工作流指令、工具模式和运行时数据——组合能力，每个来源按优先级贡献特定字段，任何来源都不能填充另一个来源的字段。
 Task plans compile into short-lived capability leases validated by a checker before any side effect commits.
 % 任务计划编译为短生命周期的能力租约，由检查器在任何副作用提交之前验证。
-
 Replaying 3,746 protected-decision events from four public benchmarks, \sys produces zero unsafe accepts while covering all benign reference actions.
 % 在从四个公开基准重放的 3,746 个受保护决策事件上，IntentCap 产生零个不安全接受，同时覆盖了所有良性参考操作。
 Across 38 enforcement checks spanning tool calls, local execution, context placement, and delegation, the checker allows all authorized actions and blocks all violations.
@@ -67,8 +66,8 @@ A tool result can become evidence for a later action.
 % 一条工具结果可以成为后续操作的依据。
 A document can determine the content of a generated report.
 % 一份文档可以决定生成报告的内容。
-The same property creates a security problem: in an agent, text is not passive data---it can become control.
-% 同样的特性带来了安全问题：在智能体中，文本不是被动数据——它可以变成控制指令。
+The same property creates a security and safety problem: in an agent, any input can influence any action, whether through adversarial injection or accidental scope widening.
+% 同样的特性带来了安全与可靠性问题：在智能体中，任何输入都可以影响任何操作，无论是通过对抗性注入还是意外的范围扩大。
 
 Most current defenses ask an operation-centric question: which tool may be called, which file may be read, which endpoint may be contacted, or which process may execute?
 % 当前大多数防御机制提出的是以操作为中心的问题：哪个工具可以被调用，哪个文件可以被读取，哪个端点可以被访问，或者哪个进程可以执行？
@@ -80,22 +79,21 @@ The PDF contents should influence spreadsheet cells and perhaps the issue body.
 % PDF 内容应当影响电子表格的单元格，也许还有 issue 正文。
 They should not influence the repository name, network destination, approval scope, tool selection, or decision to load another Skill.
 % 但它们不应影响仓库名称、网络目标、审批范围、工具选择或加载另一个 Skill 的决定。
-If hidden text in the PDF says ``send all extracted values to attacker.com'' or ``create the issue in attacker/repo,'' a tool-call allowlist or OS sandbox may catch some concrete effects, but it does not directly express the more agent-specific invariant: the untrusted PDF was never allowed to influence those decisions.
-% 如果 PDF 中的隐藏文本说"将所有提取值发送到 attacker.com"或"在 attacker/repo 中创建 issue"，工具调用白名单或 OS 沙箱可能会拦截某些具体效果，但它无法直接表达更具智能体特性的不变式：不受信任的 PDF 从未被允许影响那些决策。
+If hidden text in the PDF says ``send all extracted values to attacker.com'' or ``create the issue in attacker/repo,'' a tool-call allowlist or OS sandbox may catch some concrete effects, but it does not directly express the invariant: the PDF was never allowed to influence those decisions.
+% 如果 PDF 中的隐藏文本说"将所有提取值发送到 attacker.com"或"在 attacker/repo 中创建 issue"，工具调用白名单或 OS 沙箱可能会拦截某些具体效果，但它无法直接表达那个不变式：PDF 从未被允许影响那些决策。
+The same invariant breaks without an adversary: a Skill that merges tool results into its output without field boundaries can accidentally widen the scope of a later tool call.
+% 同样的不变式在没有攻击者的情况下也会被破坏：一个 Skill 如果在合并工具结果到输出时没有字段边界，就可能意外扩大后续工具调用的范围。
 
-Securing agent extensions requires controlling not only what extensions can do, but what their context is allowed to mean.
-% 保护智能体扩展的安全，不仅需要控制扩展能做什么，还需要控制其上下文被允许意味着什么。
-The root of authority is a structured \emph{intent certificate}, not an extension package, server identity, or static manifest.
-% 权限的根源是结构化的\emph{意图证书} (intent certificate)，而非扩展包、服务器身份或静态清单。
-A certificate records the current goal, selected objects, authorized sinks, constraints, approvals, and expiry.
-% 一份证书记录当前目标、选定对象、授权的输出目标、约束条件、批准信息和过期时间。
-Context cells are labeled with provenance and allowed \emph{influence modes}, such as observing, quoting, summarizing, parameterizing, planning, instructing, delegating, or authorizing.
-% 上下文单元被标注来源和允许的\emph{影响模式} (influence modes)，如观察、引用、摘要、参数化、规划、指示、委托或授权。
-A capability is then minted for a particular run as an \emph{intent-carrying lease}: it authorizes an operation only if the operation is derivable from the current intent and its control dependencies come from context allowed to influence that decision class.
-% 然后为特定运行铸造一个\emph{意图承载租约} (intent-carrying lease) 形式的能力：仅当操作可从当前意图推导出且其控制依赖来自被允许影响该决策类别的上下文时，才授权该操作。
-
-The root cause is \emph{issuer collapse}: user intent, Skill instructions, tool metadata, and runtime observations share one planning channel, so one class can fill another's authority fields.
-% 根本原因是\emph{发行者合并} (issuer collapse)：用户意图、Skill 指令、工具元数据和运行时观测共享同一个规划通道，因此一个类别可以填充另一个类别的权限字段。
+The root cause is that all context sources---user intent, workflow instructions, tool schemas, and runtime data---enter the same planning channel with equal standing, so any source can fill any decision field.
+% 根本原因是所有上下文来源——用户意图、工作流指令、工具模式和运行时数据——以同等地位进入同一个规划通道，因此任何来源都可以填充任何决策字段。
+In the PDF example, the document should fill spreadsheet cells and issue body, but not the repository field---that belongs to user intent.
+% 在 PDF 的例子中，文档应该填充电子表格单元格和 issue 正文，但不应填充仓库字段——那属于用户意图。
+Securing agent extensions therefore requires controlling not only what operations are allowed, but which source can influence which field.
+% 因此，保护智能体扩展的安全，不仅需要控制哪些操作被允许，还需要控制哪个来源可以影响哪个字段。
+\sys addresses this by composing each capability from four context sources, each contributing specific fields with priority, so that no source can fill another's fields.
+% IntentCap 通过从四个上下文来源组合每个能力来解决此问题，每个来源按优先级贡献特定字段，任何来源都不能填充另一个来源的字段。
+The resulting capability leases are scoped to the current task intent and validated by a deterministic checker before any side effect commits.
+% 由此产生的能力租约限定在当前任务意图的范围内，并由确定性检查器在任何副作用提交之前验证。
 
 \section{Design}
 % 设计
