@@ -270,7 +270,13 @@
   note = {Accessed: 2026-05-23},
 }
 
-% CaMeL / prompt injection
+% VERIFIED: 2026-07-09
+% REAL: yes
+% PDF: docs/reference/2025-debenedetti-camel.pdf
+% ABSTRACT: Defeats prompt injections by design: LLM generates a plan,
+%   a separate interpreter executes it with capability-based data/control
+%   separation. Prevents injected text from influencing control flow.
+% USED_FOR: Architectural prompt-injection defense in Motivation
 @misc{camel,
   author = {Debenedetti, Edoardo and Shumailov, Ilia and Fan, Tianqi and Hayes, Jamie and Carlini, Nicholas and Fabian, Daniel and Kern, Christoph and Shi, Chongyang and Terzis, Andreas and Tram\`{e}r, Florian},
   title = {Defeating Prompt Injections by Design},
@@ -296,7 +302,12 @@
   url       = {https://os-for-agent.github.io/asplos-2026.html},
 }
 
-% AgentDojo benchmark
+% VERIFIED: 2026-07-09
+% REAL: yes
+% PDF: docs/reference/2024-debenedetti-agentdojo.pdf
+% ABSTRACT: Dynamic environment for evaluating prompt injection attacks
+%   and defenses on LLM agents with realistic tool-use scenarios.
+% USED_FOR: One of four replay benchmarks for RQ1 safety evaluation
 @inproceedings{agentdojo,
   author    = {Debenedetti, Edoardo and Zhang, Jie and Balunovi\'{c}, Mislav and Beurer-Kellner, Luca and Fischer, Marc and Tram\`{e}r, Florian},
   title     = {{AgentDojo}: A Dynamic Environment to Evaluate Prompt Injection Attacks and Defenses for {LLM} Agents},
@@ -305,7 +316,13 @@
   doi       = {10.48550/arXiv.2406.13352},
 }
 
-% IsolateGPT: execution isolation for LLM agentic systems
+% VERIFIED: 2026-07-09
+% REAL: yes
+% PDF: docs/reference/2024-jimenez-swebench.pdf
+% ABSTRACT: Execution isolation architecture for LLM-based agentic
+%   systems. Isolates third-party app interactions via separate LLM
+%   instances to prevent cross-app data leakage.
+% USED_FOR: Example of operation-centric isolation defense in Motivation
 @inproceedings{isolategpt,
   author    = {Wu, Yuhao and Roesner, Franziska and Kohno, Tadayoshi and Zhang, Ning and Iqbal, Umar},
   title     = {{IsolateGPT}: An Execution Isolation Architecture for {LLM}-Based Agentic Systems},
@@ -313,10 +330,15 @@
   year      = {2025},
   publisher = {Internet Society},
   address   = {San Diego, CA, USA},
-  doi       = {10.48550/arXiv.2403.04960},
+  doi       = {10.14722/ndss.2025.241131},
 }
 
-% Progent: programmable privilege control for LLM agents
+% VERIFIED: 2026-07-09
+% REAL: yes
+% PDF: docs/reference/2025-shi-progent.pdf
+% ABSTRACT: Programmable privilege control for LLM agents. Policy language
+%   for fine-grained tool-call permissions enforced at framework level.
+% USED_FOR: Example of operation-centric defense in Motivation
 @misc{progent,
   author       = {Shi, Tianneng and He, Jingxuan and Wang, Zhun and Li, Hongwei and Wu, Linyu and Guo, Wenbo and Song, Dawn},
   title        = {{Progent}: Programmable Privilege Control for {LLM} Agents},
@@ -398,6 +420,12 @@
   year = {2023},
 }
 
+% VERIFIED: 2026-07-09
+% REAL: yes
+% PDF: not available
+% ABSTRACT: Documents OpenAI Codex agent skills: reusable workflow
+%   instructions with references, scripts, and tool access.
+% USED_FOR: Background example of Skill-based agent extensibility
 @misc{openai-skills,
   author       = {{OpenAI}},
   title        = {Agent Skills},
@@ -406,6 +434,12 @@
   note         = {Accessed: 2026-07-02},
 }
 
+% VERIFIED: 2026-07-09
+% REAL: yes
+% PDF: not available
+% ABSTRACT: Specification for the Model Context Protocol, defining how
+%   LLM agents connect to servers that expose resources, prompts, and tools.
+% USED_FOR: Background reference for MCP-based agent extensibility
 @misc{mcp-spec,
   author       = {{Model Context Protocol}},
   title        = {Specification},
@@ -420,6 +454,12 @@
   year         = {2025},
 }
 
+% VERIFIED: 2026-07-09
+% REAL: yes
+% PDF: docs/reference/2025-zheng-eim-bpftime.pdf
+% ABSTRACT: Shows how eBPF-based extension isolation enables host
+%   applications to safely and efficiently load third-party extensions.
+% USED_FOR: Related work on safe extension use in Discussion
 @inproceedings{eim-bpftime,
   author    = {Zheng, Yusheng and Yu, Tong and Yang, Yiwei and Hu, Yanpeng and Lai, Xiaozheng and Williams, Dan and Quinn, Andi},
   title     = {Extending Applications Safely and Efficiently},
@@ -430,18 +470,83 @@
   url       = {https://www.usenix.org/conference/osdi25/presentation/zheng-yusheng},
 }
 
+% VERIFIED: 2026-07-09
+% REAL: yes
+% PDF: docs/reference/2026-zheng-actplane.pdf
+% ABSTRACT: OS-level policy enforcement for agent harnesses using eBPF.
+%   Intercepts syscalls below the tool layer to enforce security policies.
+% USED_FOR: Related work on sub-tool-layer enforcement in Discussion
 @misc{actplane,
-  author       = {Zheng, Yusheng and Wu, Tianyuan and Fu, Quanzhi and Yu, Tong and Mao, Wenan and Wang, Wei and Williams, Dan and Quinn, Andi},
+  author       = {Zheng, Yusheng and Wu, Tianyuan and Fu, Quanzhi and Yu, Tong and Mao, Wenan and Ma, Tao and Williams, Dan and Wang, Wei and Quinn, Andi},
   title        = {{ActPlane}: Programmable {OS}-Level Policy Enforcement for Agent Harnesses},
   howpublished = {arXiv preprint arXiv:2606.25189},
   year         = {2026},
   doi          = {10.48550/arXiv.2606.25189},
 }
 
+% VERIFIED: 2026-07-09
+% REAL: yes
+% PDF: docs/reference/2026-pan-skillguard.pdf
+% ABSTRACT: Permission framework treating agent Skills as permission-bearing
+%   artifacts. Governs what a Skill package may access.
+% USED_FOR: Related work on Skill-level governance in Discussion
 @misc{skillguard,
   author       = {Pan, Shidong and Sun, Xiaoyu and Zhang, Tianyi and Liao, Dianshu and Si, Meixue and Xing, Zhenchang},
   title        = {{SkillGuard}: A Permission Framework for Agent Skills},
   howpublished = {arXiv preprint arXiv:2606.03024},
   year         = {2026},
   doi          = {10.48550/arXiv.2606.03024},
+}
+
+% VERIFIED: 2026-07-09
+% REAL: yes
+% PDF: not available
+% ABSTRACT: Enumerates design principles for computer security including
+%   least privilege, complete mediation, economy of mechanism, and
+%   fail-safe defaults.
+% USED_FOR: Classic least-privilege principle cited in Discussion
+@article{saltzer-schroeder,
+  author    = {Saltzer, Jerome H. and Schroeder, Michael D.},
+  title     = {The Protection of Information in Computer Systems},
+  journal   = {Proceedings of the IEEE},
+  volume    = {63},
+  number    = {9},
+  pages     = {1278--1308},
+  year      = {1975},
+  doi       = {10.1109/PROC.1975.9939},
+}
+
+% VERIFIED: 2026-07-09
+% REAL: yes
+% PDF: not available
+% ABSTRACT: Describes the confused deputy problem: a privileged program
+%   tricked into misusing its authority on behalf of a less-privileged
+%   caller. Motivates capability-based security.
+% USED_FOR: Confused deputy analogy in Motivation
+@article{confused-deputy,
+  author    = {Hardy, Norm},
+  title     = {The Confused Deputy: (or why capabilities might have been invented)},
+  journal   = {ACM SIGOPS Operating Systems Review},
+  volume    = {22},
+  number    = {4},
+  pages     = {36--38},
+  year      = {1988},
+  doi       = {10.1145/54289.871709},
+}
+
+% VERIFIED: 2026-07-09
+% REAL: yes
+% PDF: not available
+% ABSTRACT: Demonstrates indirect prompt injection attacks on
+%   LLM-integrated applications by injecting prompts into data likely
+%   to be retrieved. Shows attackers can remotely control LLM behavior
+%   through retrieved content.
+% USED_FOR: Seminal reference for indirect prompt injection in Motivation
+@inproceedings{greshake-injection,
+  author    = {Greshake, Kai and Abdelnabi, Sahar and Mishra, Shailesh and Endres, Christoph and Holz, Thorsten and Fritz, Mario},
+  title     = {Not What You've Signed Up For: Compromising Real-World {LLM}-Integrated Applications with Indirect Prompt Injection},
+  booktitle = {Proceedings of the 16th ACM Workshop on Artificial Intelligence and Security},
+  series    = {AISec '23},
+  year      = {2023},
+  doi       = {10.1145/3605764.3623985},
 }
