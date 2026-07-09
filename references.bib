@@ -1,28 +1,55 @@
-% tau2-bench
-@inproceedings{tau2bench,
-  author    = {Yao, Shunyu and others},
+% VERIFIED: 2026-07-09
+% REAL: yes
+% PDF: docs/reference/2025-tau2-bench.pdf
+% ABSTRACT: Benchmarks LLM agents on tool use and user interaction in
+%   real-world domains (airline, retail). Shows even GPT-4o succeeds <50%.
+% USED_FOR: One of four replay benchmarks for RQ1 safety evaluation
+@misc{tau2bench,
+  author    = {Yao, Shunyu and Shinn, Noah and Razavi, Pedram and Narasimhan, Karthik},
   title     = {$\tau$-bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains},
-  booktitle = {arXiv preprint arXiv:2406.12045},
+  howpublished = {arXiv preprint arXiv:2406.12045},
   year      = {2024},
+  doi       = {10.48550/arXiv.2406.12045},
 }
 
-% InjecAgent
+% VERIFIED: 2026-07-09
+% REAL: yes
+% PDF: docs/reference/2024-zhan-injecagent.pdf
+% ABSTRACT: Benchmark of 1,054 test cases for indirect prompt injection
+%   attacks on tool-integrated LLM agents, covering direct harm and data
+%   exfiltration. ReAct-prompted GPT-4 vulnerable 24% of the time.
+% USED_FOR: One of four replay benchmarks for RQ1 safety evaluation
 @inproceedings{injecagent,
-  author    = {Zhan, Qiusi and others},
+  author    = {Zhan, Qiusi and Liang, Zhixiang and Ying, Zifan and Kang, Daniel},
   title     = {{InjecAgent}: Benchmarking Indirect Prompt Injections in Tool-Integrated {LLM} Agents},
-  booktitle = {Findings of ACL},
+  booktitle = {Findings of the Association for Computational Linguistics: ACL 2024},
+  pages     = {10471--10506},
   year      = {2024},
+  doi       = {10.18653/v1/2024.findings-acl.624},
 }
 
-% MCPTox
+% VERIFIED: 2026-07-09
+% REAL: yes
+% PDF: docs/reference/2025-wang-mcptox.pdf
+% ABSTRACT: First benchmark for tool-poisoning attacks on real-world MCP
+%   servers. 45 servers, 353 tools, 1,312 malicious test cases across 11
+%   risk categories. Attack success rates up to 72.8%.
+% USED_FOR: One of four replay benchmarks for RQ1 safety evaluation
 @misc{mcptox,
-  author    = {Liao, Wentao and others},
-  title     = {{MCPTox}: Probing Toxicity of Model Context Protocol Servers for {LLM} Agents},
-  howpublished = {arXiv preprint arXiv:2504.01559},
+  author    = {Wang, Zhiqiang and Gao, Yichao and Wang, Yanting and Liu, Suyuan and Sun, Haifeng and Cheng, Haoran and Shi, Guanquan and Du, Haohua and Li, Xiangyang},
+  title     = {{MCPTox}: A Benchmark for Tool Poisoning Attack on Real-World {MCP} Servers},
+  howpublished = {arXiv preprint arXiv:2508.14925},
   year      = {2025},
+  doi       = {10.48550/arXiv.2508.14925},
 }
 
-% Dennis and Van Horn capabilities
+% VERIFIED: 2026-07-09
+% REAL: yes
+% PDF: not available
+% ABSTRACT: Defines semantics for multiprogrammed systems including the
+%   capability concept: an unforgeable token coupling a designation with
+%   authorized operations.
+% USED_FOR: Foundation for capability-based security in Discussion
 @article{dennis-vanhorn,
   author    = {Dennis, Jack B. and Van Horn, Earl C.},
   title     = {Programming Semantics for Multiprogrammed Computations},
@@ -31,9 +58,16 @@
   number    = {3},
   pages     = {143--155},
   year      = {1966},
+  doi       = {10.1145/365230.365252},
 }
 
-% Denning lattice model
+% VERIFIED: 2026-07-09
+% REAL: yes
+% PDF: not available
+% ABSTRACT: Formalizes secure information flow using a lattice of security
+%   classes; shows how to certify that programs do not leak information
+%   across class boundaries.
+% USED_FOR: Foundation for information flow control in Discussion
 @article{denning-lattice,
   author    = {Denning, Dorothy E.},
   title     = {A Lattice Model of Secure Information Flow},
@@ -42,6 +76,7 @@
   number    = {5},
   pages     = {236--243},
   year      = {1976},
+  doi       = {10.1145/360051.360056},
 }
 
 % Landlock
