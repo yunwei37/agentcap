@@ -1,1 +1,0 @@
-python scripts/build_e1_utility_wrapper_matrix.py --run-id R203E1U --authority-summary results/tau2/R022/authority_summary.json --oracle-summary results/tau2/R024/oracle_summary.json --output-dir results/eval/R203E1U

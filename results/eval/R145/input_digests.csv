@@ -1,4 +1,0 @@
-path,sha256,bytes
-benchmarks/tau2-bench/data/tau2/domains/airline/tasks.json,ccd8ba737b4cc371415af70151187788f728d6108d0916e73bb4317b40542052,155528
-benchmarks/tau2-bench/data/tau2/domains/retail/tasks.json,8e03ebce7901bd6218e7a7dc3105faa9324091a68058f7fe61c65262868812e8,345982
-benchmarks/tau2-bench/data/tau2/domains/telecom/tasks.json,37e562e1ae3242577407e1303b1548bc64e7ea68e37d36173e6747990ceaf8a4,13977063

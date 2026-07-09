@@ -1,1 +1,0 @@
-PYTHONPATH=src python scripts/run_live_gateway_smoke.py --output-dir results/live/R013

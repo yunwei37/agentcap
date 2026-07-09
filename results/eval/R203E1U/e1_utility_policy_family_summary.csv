@@ -1,6 +1,0 @@
-policy_family,rows,policies,min_reference_action_coverage_rate,max_reference_action_coverage_rate,min_mean_exposed_tools_per_task,max_mean_exposed_tools_per_task,min_extra_tool_slots_vs_intentcap,max_extra_tool_slots_vs_intentcap,any_direct_intentcap_reference_replay,all_rows_check_control_provenance
-domain_allowlist,2,domain_assistant_all|domain_assistant_regular,1.0,1.0,13.383802816901408,15.205399061032864,30396,35052,False,False
-exact_or_task_tool_acl,1,task_reference_tools,1.0,1.0,1.1823161189358373,1.1823161189358373,-791,-791,False,False
-global_catalog_acl,1,global_all_tools,1.0,1.0,152.0,152.0,384699,384699,False,False
-global_static_acl,1,global_assistant_regular,1.0,1.0,67.0,67.0,167439,167439,False,False
-intentcap,1,intentcap_reference_events,1.0,1.0,1.4917840375586855,1.4917840375586855,0,0,True,True

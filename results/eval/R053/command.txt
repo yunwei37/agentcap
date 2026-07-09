@@ -1,1 +1,0 @@
-PYTHONPATH=src /usr/bin/python scripts/analyze_tau2_residual_completion.py --run-id R053 --run-dir results/eval/R051 --output-dir results/eval/R053

@@ -1,2 +1,0 @@
-run_id,source_run_id,domain,task_id,reference_index,event_id,tool,args_json,visibility,feasibility,invalid_reason,db_entity_exists,schema_example_present,db_checked
-R060,R057,retail,2,1,retail:2:2_1,get_product_details,"{""product_id"": ""6086499569""}",hidden,invalid_schema_example_reference,product_id_not_in_retail_db,False,True,True

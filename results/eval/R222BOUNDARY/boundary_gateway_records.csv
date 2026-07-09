@@ -1,6 +1,0 @@
-boundary,event_id,object,mode,decision,allowed,effect_applied,reason
-context,script_output_parameterizes_cells,script.output,parameterize,xlsx.cells,True,True,allowed
-context,script_output_promotes_instruction,script.output,instruct,skill.load,False,False,script_output_cells_only: control source 'script_output' not allowed by lease
-context,review_complete,pdf.review.summary,summarize,github.issue_body,True,True,allowed
-delegation,calendar_subagent_summary_only,calendar_summary_subagent,delegate,calendar_subagent.capabilities,True,True,allowed
-delegation,calendar_subagent_overdelegates_email,calendar_summary_subagent,delegate,calendar_subagent.capabilities,False,False,"calendar_summary_subagent_only: delegated capability exceeds lease attenuation: {'op': 'mcp.call', 'object': 'email.send', 'mode': 'sink_select'}"

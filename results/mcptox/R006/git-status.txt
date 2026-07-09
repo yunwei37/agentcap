@@ -1,2 +1,0 @@
-?? results/mcptox/R006/
-?? scripts/export_mcptox_intentcap.py

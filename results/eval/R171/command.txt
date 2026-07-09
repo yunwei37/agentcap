@@ -1,1 +1,0 @@
-python scripts/analyze_tau2_residual_recovery_plan.py --run-id R171 --actionability-csv results/eval/R170/remaining_missing_actionability.csv --task-residual-csv results/eval/R170/task_repair_residuals.csv --candidate-csv results/eval/R131/runtime_evidence_candidate_correctness.csv --run-dir results/eval/R169 --output-dir results/eval/R171

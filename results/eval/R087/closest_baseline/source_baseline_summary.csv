@@ -1,2 +1,0 @@
-source,source_path,events,checker_allowed,checker_denied,denied_explained_by_authgraph_pact_airguard,denied_explained_by_ifc_taint,denied_explained_by_policy_dsl,denied_residual_after_closest_baselines,policy_dsl_false_accept,static_tool_acl_false_accept,authgraph_pact_airguard_false_accept,ifc_taint_false_accept
-examples:residual_workflow_suite,examples/residual_workflow_suite.json,8,2,6,0,0,0,6,6,6,6,6

@@ -1,1 +1,0 @@
-PYTHONPATH=src /usr/bin/python scripts/replay_tau2_compiler_leases_gateway.py --run-id R075 --source-run-dir results/eval/R074 --output-dir results/eval/R075 --domains airline retail telecom --max-tasks-per-domain 5

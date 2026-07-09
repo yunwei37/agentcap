@@ -1,5 +1,0 @@
-path,sha256,bytes
-results/eval/R054/samples.jsonl,3166ea085526912ecdfce69e12f33bcf387d383054ef05dde0fd6f95668614b1,207013
-results/eval/R054/task_gateway_summary.json,398a6acceacc3cee077c0bb52e28d66927deccb0fd863cd20752f2e2deddd339,5239
-results/eval/R054/action_results.csv,736402b27c6450a3d74f5e74666fb07bbb093518da8a79d329234a4d6aeb4e94,22840
-results/eval/R054/task_results.csv,2d62cf7e3a90d0e8cae699ace7887f2e9f03b45abec67ec17cfe5394da4ab253,5144

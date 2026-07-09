@@ -1,2 +1,0 @@
-source_run_id,domain,task_id,event_id,tool,args_json,actionability_class,next_experiment_target,residual_blocker
-R180,retail,2,retail:2:2_11,return_delivered_order_items,"{""item_ids"": [""4602305039"", ""4202497723"", ""9408160950""], ""order_id"": ""#W2378156"", ""payment_method_id"": ""credit_card_9513926""}",tool_activation_gap,activate_or_compile_missing_tool_from_visible_argument_evidence,tool_not_active_or_not_compiled

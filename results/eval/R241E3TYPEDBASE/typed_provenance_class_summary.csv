@@ -1,8 +1,0 @@
-classification,events,checker_denied,typed_baseline_blocks,typed_baseline_false_accepts
-allowed,2,0,0,0
-approval_mint_state,1,1,1,0
-budget_consumption,1,1,1,0
-control_provenance_or_influence,2,2,2,0
-delegation_attenuation_without_parent_lease_commit,1,1,0,1
-holder_scope,1,1,1,0
-temporal_state,1,1,1,0

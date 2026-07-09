@@ -1,7 +1,0 @@
-source_run_id,domain,task_id,reference_index,event_id,tool,args_json,visibility,grounded_keys,hidden_keys
-R048,retail,2,1,retail:2:2_1,get_product_details,"{""product_id"": ""6086499569""}",hidden,,product_id
-R048,retail,2,6,retail:2:2_7,get_order_details,"{""order_id"": ""#W4776164""}",complete_visible,order_id,
-R048,retail,2,7,retail:2:2_8,get_order_details,"{""order_id"": ""#W6679257""}",complete_visible,order_id,
-R048,retail,2,8,retail:2:2_9,get_order_details,"{""order_id"": ""#W2378156""}",complete_visible,order_id,
-R048,retail,2,9,retail:2:2_10,get_product_details,"{""product_id"": ""9523456873""}",complete_visible,product_id,
-R048,retail,2,10,retail:2:2_11,return_delivered_order_items,"{""item_ids"": [""4602305039"", ""4202497723"", ""9408160950""], ""order_id"": ""#W2378156"", ""payment_method_id"": ""credit_card_9513926""}",partial_visible,order_id|payment_method_id,item_ids

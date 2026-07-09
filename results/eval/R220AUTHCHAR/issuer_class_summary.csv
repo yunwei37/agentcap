@@ -1,5 +1,0 @@
-class_name,required_events,control_source_events,data_source_events,denied_substitution_attempts
-agent,8693,3827,3813,0
-instruction,1064,1064,1054,2
-tool,8689,2149,2148,1928
-env,198,1664,1681,1663

@@ -1,2 +1,0 @@
-run_id,tasks,unsupported_tasks,reference_actions,model_calls,exact_executed_calls,off_lease_calls,same_tool_wrong_args_calls,wrong_or_hallucinated_tool_calls,repeated_or_consumed_exact_args_calls,tool_oracle_pass_tasks,tool_oracle_pass_rate,dominant_off_lease_category
-R175,11,4,61,56,44,12,5,4,3,0,0.0,off_lease_same_tool_wrong_args

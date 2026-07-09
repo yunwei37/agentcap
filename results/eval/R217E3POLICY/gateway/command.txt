@@ -1,1 +1,0 @@
-PYTHONPATH=src /usr/bin/python scripts/replay_intentcap_gateway.py examples/residual_workflow_policy_suite.json --output-dir results/eval/R217E3POLICY/gateway --run-id R217E3POLICY
