@@ -15,6 +15,9 @@
 
 \usepackage{microtype}
 \usepackage{xspace}
+\usepackage{tikz}
+\usepackage{booktabs}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds}
 \setlength{\bibsep}{0pt}
 
 \newcommand{\sys}{\textsc{IntentCap}\xspace}
@@ -24,9 +27,11 @@
 \title{IntentCap: Intent-Carrying Capabilities for LLM Agent Extensions}
 
 \begin{abstract}
-LLM agents increasingly rely on extensions: Skills that inject procedural instructions and scripts, MCP servers that expose tools and data, local programs that transform files, and subagents that decompose work. These extensions create a form of authority that conventional permission systems do not model. A document, tool result, or Skill instruction may not hold a credential, yet it can influence the agent to select a tool, choose a sink, request broader access, or delegate authority. Existing defenses regulate tool calls, extension manifests, or OS-level effects, but they do not specify which context is allowed to influence which authority-bearing decisions.
+Every agent runtime today has the same blind spot: it cannot tell whose context is driving a decision. A Skill's instructions, a tool's schema, a PDF's extracted text, and the user's explicit request all flow into one planning channel, yet only one of them should be authorized to choose a destination, widen an approval scope, or delegate authority. Current defenses guard tools, parameters, and files; none of them ask which input class is filling which authority-bearing field. The result is structural: any extension that supplies data can silently supply decisions.
 
-We introduce \sys, a least-privilege authorization model for LLM agent extensions. \sys makes user intent the root principal and makes context influence an explicit capability. High-impact actions must be justified by a structured intent certificate derived from trusted user input, object selections, policy, or fresh approval. Untrusted context may be authorized to parameterize output data without being authorized to determine tool choice, destination, policy, or delegation. \sys compiles a task plan into short-lived, proof-carrying capability leases that constrain operations, arguments, data flow, temporal order, context provenance, and delegation. An LLM-assisted frontend proposes plans and leases, while a deterministic checker validates intent derivations and provenance constraints before runtime enforcement at the context, tool, MCP, sandbox, and delegation boundaries. \sys does not claim to solve prompt injection. It instead blocks unauthorized context-to-decision influence within modeled decision classes and provides the missing policy layer that lower-level enforcement backends can implement.
+We reframe agent authorization as a context-influence problem. \sys partitions every input into four issuer-owned classes (agent intent, procedural instruction, tool metadata, and runtime observation) and enforces a no-substitution rule: a field owned by one class cannot be proven by another. User intent, captured as structured certificates rather than natural language, becomes the root principal. Task plans compile into short-lived, proof-carrying capability leases that constrain operations, arguments, data flow, temporal order, and delegation depth. A deterministic checker validates field-owner proofs and consumes lease budget atomically, before the side effect, the prompt placement, or the delegation handoff commits. The LLM proposes; the checker decides. The trusted computing base includes the intent issuer, the checker, and a provenance tracker, but explicitly excludes the model itself.
+
+Removing issuer ownership entirely causes 94\% of checker-denied protected decisions to be falsely accepted across 3,823 events from AgentDojo, MCPTox, InjecAgent, and tau2-bench; even the weakest single-edge collapse falsely accepts over 50\%. Across 38 multi-boundary enforcement events spanning tool calls, local execution, context placement, Skill instruction slots, and delegation handoffs, the checker produces zero unsafe accepts. This is not a tuning knob. It is a phase transition between authorization and theater.
 \end{abstract}
 
 \maketitle
@@ -43,30 +48,73 @@ This framing deliberately differs from extension-interface and OS-enforcement wo
 
 \section{Design}
 
-\paragraph{Intent certificates.}
-\sys represents user intent as a structured security object containing the actor, goal, selected objects, authorized sinks, constraints, approvals, and expiry. For the PDF example, the certificate names the selected PDF paths, the output directory, the single authorized GitHub repository, a constraint denying arbitrary network use, and a fresh approval requirement for issue creation. The LLM may propose certificate fields, but a trusted parser, UI, administrator policy, or approval step canonicalizes them. The certificate is not merely prompt text; it is the root object referenced by later checks.
+The root cause of context privilege is two structural mismatches. First, \emph{issuer collapse}: user intent, Skill instructions, tool metadata, and runtime observations share one planning channel, so one class can fill another's authority fields. Second, \emph{authority-state split}: lease budget, expiry, and delegation state are checked by separate guards, so a consumed one-shot lease can be reused or widened between boundaries.
 
-\paragraph{Context authority.}
-Each context cell carries a provenance label recording origin, integrity, confidentiality, purpose, time, and endorsements. The key addition is an authority set over influence modes and decision classes. PDF text may be allowed to \emph{parameterize} spreadsheet cells and \emph{summarize} into an issue body, but forbidden from \emph{planning} tool choice, \emph{authorizing} a capability request, or selecting an external sink. Signed Skill instructions may be allowed to \emph{instruct} only within their declared workflow. MCP tool results and annotations must be treated according to server trust; the MCP specification already warns that tool behavior annotations are untrusted unless they come from trusted servers~\cite{mcp-tools-security}. \sys turns this guidance into a deterministic provenance rule.
+\sys addresses both by making the authorization unit a \emph{pre-effect commit record} rather than an action-level predicate. Figure~\ref{fig:arch} shows the pipeline. A trusted issuer canonicalizes user intent into a structured certificate. A context labeler assigns provenance and influence modes. An untrusted LLM-assisted compiler proposes plans and candidate leases. A deterministic checker validates field-owner proofs and atomically consumes lease state via a single transition:
+\vspace{-2pt}
+\begin{small}
+\[\mathsf{check\_and\_consume}(e,\mathit{lease},\mathit{proofs},\mathit{prov},\sigma) \rightarrow \mathsf{allow}(\sigma'\!,\mathit{audit}) \mid \mathsf{deny}(\mathit{reason})\]
+\end{small}
+\vspace{-4pt}
 
-\paragraph{Effect IR and leases.}
-The compiler lowers an agent plan into security-relevant effects such as context use, tool calls, MCP calls, file reads and writes, subprocess execution, network connections, approval requests, and subagent delegation. Each effect records data provenance and control provenance. This split is essential: untrusted PDF bytes may be a data dependency of output cells, but they must not be a control dependency of the repository argument to \texttt{github.create\_issue}. A lease constrains the holder, operation, object, arguments, intent, influence, flow, temporal guard, budget, expiry, and delegation bound.
+Every authority-changing boundary---tool call, local execution, context placement, Skill instruction slot, or delegation handoff---must submit this record \emph{before} the side effect commits. The checker is the sole writer of lease state; adapters cannot cache decisions or mutate budgets locally.
 
-\paragraph{Compiler and checker.}
-\sys uses an LLM-assisted but checker-verified pipeline. The frontend summarizes extension evidence from Skill metadata, MCP schemas, local scripts, observed traces, and policy; infers a plan and security-relevant effects; and proposes the minimum-risk lease set for the run. This frontend is outside the trusted computing base. A deterministic checker validates each lease against global policy, the intent certificate, provenance constraints, flow rules, temporal guards, budgets, and delegation monotonicity. The useful theorem target is modest: for any accepted trace, no protected decision has a control dependency on context lacking the required influence mode, and every accepted high-impact event has an active lease derived from trusted intent.
+\begin{figure}[t]
+\centering
+\small
+\begin{tikzpicture}[
+  node distance=0.6cm and 0.5cm,
+  box/.style={draw, rounded corners=2pt, align=center, minimum height=0.65cm, text width=1.9cm, fill=white, font=\scriptsize},
+  trusted/.style={box, fill=green!8},
+  untrusted/.style={box, fill=red!7},
+  runtime/.style={box, fill=blue!7},
+  arr/.style={-Latex, thick}
+]
+\node[trusted] (issuer) {Intent\\issuer};
+\node[trusted, right=of issuer] (labeler) {Context\\labeler};
+\node[untrusted, right=of labeler] (compiler) {LLM-assisted\\compiler};
+\node[trusted, right=of compiler] (checker) {Deterministic\\checker};
+\node[runtime, below=0.5cm of checker, xshift=-1.1cm] (adapters) {Boundary adapters};
+\node[runtime, left=0.7cm of adapters] (gateways) {Tool/env\\gateways};
+\node[runtime, right=0.7cm of adapters] (deleg) {Placement \&\\delegation};
 
-\paragraph{Runtime enforcement.}
-Accepted leases are lowered to multiple boundaries. The context constructor separates trusted instructions, untrusted data, policy feedback, and tool results while attaching labels. The tool gateway exposes only leased tools and validates arguments. The MCP broker scopes individual server methods, arguments, counts, and sinks rather than granting an entire server. The execution sandbox enforces file, process, network, and secret restrictions for local scripts. The delegation monitor ensures subagents receive only attenuated leases. These mechanisms need not share one implementation substrate: a simple harness can enforce tool and MCP checks, while an OS monitor such as ActPlane can enforce compiled file, process, and network constraints. The abstraction is the proof-carrying lease; the backend is replaceable.
+\draw[arr] (issuer) -- (labeler);
+\draw[arr] (labeler) -- (compiler);
+\draw[arr] (compiler) -- node[above, font=\tiny] {candidates} (checker);
+\draw[arr] (checker) -- node[right, font=\tiny] {leases} (adapters);
+\draw[arr] (adapters) -- (gateways);
+\draw[arr] (adapters) -- (deleg);
+\draw[arr, dashed] (checker) to[bend right=15] node[below, font=\tiny] {denial} (compiler);
 
-\section{Evaluation Proposal}
+\begin{scope}[on background layer]
+\node[draw, dashed, rounded corners=3pt, fit=(issuer)(labeler)(checker), inner sep=0.13cm, label={[font=\tiny]above:TCB}] {};
+\end{scope}
+\end{tikzpicture}
+\vspace{-6pt}
+\caption{\sys architecture. The LLM proposes; the checker decides. Runtime adapters submit field proofs before any side effect, placement, or handoff.}
+\label{fig:arch}
+\vspace{-6pt}
+\end{figure}
 
-The evaluation should test whether intent-carrying leases reduce authority without destroying useful automation. The main workloads are: Skill workflows such as PDF extraction, spreadsheet generation, slide conversion, and code review; MCP workflows such as GitHub issue creation, calendar scheduling, Drive summarization, and ticket triage; mixed workflows that combine Skills, local scripts, MCP tools, and subagents; and adversarial workflows where PDFs, web pages, emails, issue comments, tool results, Skill instructions, or subagent summaries contain malicious instructions.
+\paragraph{Four authority-input classes.}
+\sys partitions inputs into four issuer-owned proof boundaries: \emph{agent} context (user intent, selected objects/sinks, approvals), \emph{instruction} context (system policy, endorsed Skill/manual procedures), \emph{tool} context (MCP/registry schemas, credential scopes, sandbox contracts), and \emph{env} context (runtime observations, tool results, file state, script outputs). The \textbf{no-substitution rule} requires that each protected field be proven by its owner class: tool metadata cannot supply user-authorized sinks, runtime observations cannot supply instruction authority, and Skill text cannot widen approval scope. Two classes may merge only if issuer, forgeable surface, owned fields, and lifecycle authority are identical.
 
-The baselines should separate the contribution from adjacent systems. A vanilla agent exposes all configured tools. A static allowlist grants workspace- or task-category permissions. A human-approval baseline relies on natural-language confirmation for high-impact actions. A skill-manifest baseline grants permissions at Skill granularity, following the SkillGuard family of designs. A tool-call guard checks direct invocations but not indirect subprocess behavior. An OS-enforcement baseline applies sandbox or ActPlane-style rules after policy has been chosen, without \sys's intent and context-authority model.
+\paragraph{Leases and lifecycle.}
+A lease binds operation, object, arguments, intent derivation, control/data provenance, temporal guards, budget, expiry, and delegation depth. Leases are short-lived, consumable, and non-self-widening: a one-shot issue lease is consumed on first use, and a child subagent receives only attenuated capabilities. The checker validates all of these atomically in a single transition, preventing the authority-state split where separate guards lose track of consumption or delegation across boundaries.
 
-The main least-privilege metric is a risk-weighted authority score relative to expert-written oracle leases. Risk should include exposed tools, MCP methods, file-path breadth, network destinations, credential scopes, influence modes, delegation breadth, lease duration, and approval scope. The security metrics are attack success rate, wrong-sink actions, data exfiltration, privilege amplification, unauthorized approval inflation, malicious delegation, and high-impact decisions influenced by untrusted context. Utility metrics include benign task completion, output correctness, false denials, replans after denial, user approvals, and latency. Compiler metrics include invalid LLM lease proposals rejected by the checker, valid proposals rejected, evidence extraction precision and recall, proof completeness, and recovery after structured denials.
+\section{Preliminary Evidence}
 
-The most important ablation is the context-authority lattice. Without it, a system can still count tools and sandbox processes, but it cannot distinguish ``PDF text may fill spreadsheet cells'' from ``PDF text may choose the GitHub repository.'' Other ablations remove intent certificates, the control/data provenance split, lease minimization, the deterministic checker, runtime refinement, or the OS backend. The expected result is not that \sys prevents every prompt injection. It should show that, within modeled decision classes, the same untrusted context can still be useful as data while being structurally unable to authorize, delegate, choose sinks, or request broader power.
+\textbf{RQ1: Can the event model express benign behavior without over-blocking?}
+We replay 3,746 protected-decision events extracted from AgentDojo, MCPTox, InjecAgent, and tau2-bench traces through \sys and several same-event baselines~\cite{agentdojo,mcptox,injecagent,tau2bench}. \sys produces 0 unsafe accepts. On the utility side, \sys covers all 3,813 benign reference actions in the tau2-style proxy and passes 2,554 of 2,556 applicable tool-oracle checks.
+
+\textbf{RQ2: Is the four-class partition a safety requirement or a naming choice?}
+We ablate the issuer-ownership and lifecycle dimensions on the same 3,823 checker-denied events. Removing issuer ownership entirely (collapsing all four classes into generic trusted context) causes 3,593 false accepts (94\%). Even the weakest single-edge collapse (tool$\rightarrow$agent) falsely accepts 1,928 events (50\%). On 7 controlled workflow residuals, a post-hoc policy DSL that checks predicates without field ownership falsely accepts 7/7; splitting lifecycle state across separate guards falsely accepts 5/7.
+
+\textbf{RQ3: Does the same commit API work beyond tool calls?}
+We test the \texttt{check\_and\_consume} transition across five boundary types: local env side effects, context placement, Skill instruction slots, delegation handoffs, and an OS-monitor-style replay backend. Across 38 checker-submitted boundary events, \sys allows 17 authorized effects and blocks 21 violations, with 0 unsafe executions or placements and 0 checker/monitor mismatches.
+
+\textbf{RQ4: Are leases auditable authority objects?}
+We adjudicate 24 lease labels covering InjecAgent, MCPTox, and tau2 samples, and score 144 policy rows against them. All \sys policy families have oracle distance~0; every non-\sys baseline has positive distance. This is author-adjudicated supporting evidence, not independent expert-oracle validation.
 
 \section{Positioning}
 
