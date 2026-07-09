@@ -28,36 +28,22 @@
 % IntentCap：面向 LLM 智能体扩展的意图承载能力模型
 
 \begin{abstract}
-Existing agent runtimes share a common blind spot: they cannot tell whose context is driving a decision.
-% 现有的智能体运行时有一个共同的盲区：它们无法分辨是谁的上下文在驱动决策。
-A Skill's instructions, a tool's schema, a PDF's extracted text, and the user's explicit request all flow into one planning channel, yet only one of them should be authorized to choose a destination, widen an approval scope, or delegate authority.
-% Skill 的指令、工具的模式定义、PDF 的提取文本和用户的显式请求都流入同一个规划通道，但其中只有一个应被授权选择目标、扩大审批范围或委托权限。
-Current defenses guard tools, parameters, and files, but to our knowledge none of them ask which input class is filling which authority-bearing field.
-% 当前的防御机制保护工具、参数和文件，但据我们所知，没有一个追问哪类输入正在填充哪个涉及权限的字段。
-The result is structural: an extension that supplies data may also supply decisions.
-% 结果是结构性的：提供数据的扩展也可能同时提供决策。
+LLM agents act through tool calls, shell commands, file I/O, MCP servers, subagents, and memory, and each channel brings context into one shared planning state.
+% LLM 智能体通过工具调用、Shell 命令、文件读写、MCP 服务器、子智能体和记忆来行动，每个通道都把上下文送入同一个共享规划状态。
+A user's request, a Skill's instructions, a tool result, and a file's content all enter this state with equal influence over every decision, yet they carry different trust and should govern different fields.
+% 用户的请求、Skill 的指令、工具的返回结果和文件的内容都以同等影响力进入这个状态来左右每个决策，但它们的信任等级不同，应该管辖不同的字段。
+Current defenses control which operations are allowed but not which inputs can influence which authority-bearing decisions.
+% 当前防御控制哪些操作被允许，但不控制哪些输入可以影响哪些涉及权限的决策。
 
-We reframe agent authorization as a context-influence problem.
-% 我们将智能体授权重新定义为上下文影响力问题。
-\sys partitions every input into four issuer-owned classes (agent intent, procedural instruction, tool metadata, and runtime observation) and enforces a no-substitution rule: a field owned by one class cannot be proven by another.
-% IntentCap 将每个输入划分为四个发行者所有的类别（智能体意图、过程式指令、工具元数据和运行时观测），并执行不可替代规则：一个类别所有的字段不能由另一个类别来证明。
-User intent, captured as structured certificates rather than natural language, becomes the root principal.
-% 用户意图以结构化证书而非自然语言的形式捕获，成为根主体。
-Task plans compile into short-lived, proof-carrying capability leases that constrain operations, arguments, data flow, temporal order, and delegation depth.
-% 任务计划编译为短生命周期、携带证明的能力租约，约束操作、参数、数据流、时序和委托深度。
-A deterministic checker validates field-owner proofs and consumes lease budget atomically, before the side effect, the prompt placement, or the delegation handoff commits.
-% 确定性检查器在副作用、提示放置或委托交接提交之前，原子地验证字段所有者证明并消耗租约预算。
-The LLM proposes; the checker decides.
-% LLM 提议，检查器决策。
-The trusted computing base includes the intent issuer, the checker, and a provenance tracker, but explicitly excludes the model itself.
-% 可信计算基 (TCB) 包括意图发行者、检查器和来源追踪器，但明确排除模型本身。
+\sys makes user intent the root principal and turns context influence into an explicit capability: each input class is authorized to influence specific decision fields, and no class can prove another's authority.
+% IntentCap 将用户意图设为根主体，并将上下文影响力转化为显式能力：每类输入被授权影响特定的决策字段，任何类别都不能证明另一个类别的权限。
+Task plans compile into proof-carrying capability leases over four issuer-owned input classes, validated by a deterministic checker before any side effect commits.
+% 任务计划编译为覆盖四个发行者所有的输入类别的携带证明的能力租约，由确定性检查器在任何副作用提交之前验证。
 
-Removing issuer ownership entirely causes 94\% of checker-denied protected decisions to be falsely accepted across 3,823 events from AgentDojo, MCPTox, InjecAgent, and tau2-bench; even the weakest single-edge collapse falsely accepts over 50\%.
-% 完全移除发行者所有权会导致来自 AgentDojo、MCPTox、InjecAgent 和 tau2-bench 的 3,823 个事件中 94\% 的检查器拒绝的受保护决策被错误接受；即使最弱的单边合并也会错误接受超过 50\%。
-Across 38 multi-boundary enforcement events spanning tool calls, local execution, context placement, Skill instruction slots, and delegation handoffs, the checker produces zero unsafe accepts.
-% 在涵盖工具调用、本地执行、上下文放置、Skill 指令槽和委托交接的 38 个多边界执行事件中，检查器产生零个不安全接受。
-The ablation shows that issuer ownership is load-bearing: removing it collapses nearly all enforcement.
-% 消融实验表明发行者所有权是承重结构：移除它会导致几乎所有执行失效。
+Across 38 multi-boundary enforcement events spanning tool calls, local execution, context placement, and delegation, the checker produces zero unsafe accepts.
+% 在涵盖工具调用、本地执行、上下文放置和委托的 38 个多边界事件中，检查器产生零个不安全接受。
+Ablations show the four-class partition is structural: collapsing it causes 94\% of protected decisions to be falsely accepted.
+% 消融实验表明四类分区是结构性必要的：合并它会导致 94\% 的受保护决策被错误接受。
 \end{abstract}
 
 \maketitle
