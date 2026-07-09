@@ -108,18 +108,6 @@ Context cells are labeled with provenance and allowed \emph{influence modes}, su
 A capability is then minted for a particular run as an \emph{intent-carrying lease}: it authorizes an operation only if the operation is derivable from the current intent and its control dependencies come from context allowed to influence that decision class.
 % 然后为特定运行铸造一个\emph{意图承载租约} (intent-carrying lease) 形式的能力：仅当操作可从当前意图推导出且其控制依赖来自被允许影响该决策类别的上下文时，才授权该操作。
 
-This framing deliberately differs from extension-interface and OS-enforcement work.
-% 这一框架刻意区别于扩展接口和操作系统执行层面的工作。
-EIM and bpftime model application extensions by representing extension features as resources and granting capabilities at extension entries~\cite{eim-bpftime}.
-% EIM 和 bpftime 通过将扩展功能表示为资源并在扩展入口授予能力来建模应用扩展~\cite{eim-bpftime}。
-\sys instead protects future agent decisions: tool choice, sink selection, authority request, policy update, and delegation.
-% IntentCap 转而保护智能体的未来决策：工具选择、输出目标选定、权限请求、策略更新和委托。
-ActPlane enforces agent policies below the tool layer using OS-level information-flow checks and eBPF-style monitoring~\cite{actplane}.
-% ActPlane 使用操作系统级信息流检查和 eBPF 风格的监控在工具层之下执行智能体策略~\cite{actplane}。
-\sys instead decides which policy is justified by the user intent and context provenance; ActPlane is a possible backend, not the conceptual center.
-% IntentCap 转而决定哪些策略可由用户意图和上下文来源证明其合理性；ActPlane 是一个可能的后端，而非概念核心。
-SkillGuard is closer because it treats Skills as permission-bearing artifacts and jointly regulates context and action behavior~\cite{skillguard}; \sys is run-centric and cross-extension, asking what this run may allow this Skill, this MCP server, this document, and this subagent to influence.
-% SkillGuard 更为接近，因为它将 Skill 视为承载权限的制品，并联合管控上下文和行为~\cite{skillguard}；IntentCap 是以运行为中心且跨扩展的，追问本次运行可以允许该 Skill、该 MCP 服务器、该文档和该子智能体影响什么。
 
 \section{Design}
 % 设计
@@ -192,8 +180,6 @@ The checker is the sole writer of lease state; adapters cannot cache decisions o
 \vspace{-8pt}
 \end{figure}
 
-\paragraph{Four authority-input classes.}
-% 四类权限输入。
 \sys partitions inputs into four issuer-owned proof boundaries: \emph{agent} context (user intent, selected objects/sinks, approvals), \emph{instruction} context (system policy, endorsed Skill/manual procedures), \emph{tool} context (MCP/registry schemas, credential scopes, sandbox contracts), and \emph{env} context (runtime observations, tool results, file state, script outputs).
 % IntentCap 将输入划分为四个发行者所有的证明边界：\emph{agent} 上下文（用户意图、选定对象/输出目标、批准），\emph{instruction} 上下文（系统策略、认可的 Skill/手动流程），\emph{tool} 上下文（MCP/注册表模式、凭证范围、沙箱合约），以及 \emph{env} 上下文（运行时观测、工具结果、文件状态、脚本输出）。
 The \textbf{no-substitution rule} requires that each protected field be proven by its owner class: tool metadata cannot supply user-authorized sinks, runtime observations cannot supply instruction authority, and Skill text cannot widen approval scope.
@@ -201,8 +187,6 @@ The \textbf{no-substitution rule} requires that each protected field be proven b
 Two classes may merge only if issuer, forgeable surface, owned fields, and lifecycle authority are identical.
 % 两个类别仅在发行者、可伪造面、所有字段和生命周期权限完全相同时才可合并。
 
-\paragraph{Leases and lifecycle.}
-% 租约与生命周期。
 A lease binds operation, object, arguments, intent derivation, control/data provenance, temporal guards, budget, expiry, and delegation depth.
 % 一个租约绑定操作、对象、参数、意图推导、控制/数据来源、时序守卫、预算、过期时间和委托深度。
 Leases are short-lived, consumable, and non-self-widening: a one-shot issue lease is consumed on first use, and a child subagent receives only attenuated capabilities.
@@ -214,7 +198,6 @@ The checker validates all of these atomically in a single transition, preventing
 % 初步证据
 
 \textbf{RQ1: Can the event model express benign behavior without over-blocking?}
-% \textbf{RQ1：事件模型能否在不过度阻断的情况下表达良性行为？}
 We replay 3,746 protected-decision events extracted from AgentDojo, MCPTox, InjecAgent, and tau2-bench traces through \sys and several same-event baselines~\cite{agentdojo,mcptox,injecagent,tau2bench}.
 % 我们将从 AgentDojo、MCPTox、InjecAgent 和 tau2-bench 追踪中提取的 3,746 个受保护决策事件通过 IntentCap 和多个同事件基线进行重放~\cite{agentdojo,mcptox,injecagent,tau2bench}。
 \sys produces 0 unsafe accepts.
@@ -222,9 +205,7 @@ We replay 3,746 protected-decision events extracted from AgentDojo, MCPTox, Inje
 On the utility side, \sys covers all 3,813 benign reference actions in the tau2-style proxy and passes 2,554 of 2,556 applicable tool-oracle checks.
 % 在可用性方面，IntentCap 覆盖了 tau2 风格代理中全部 3,813 个良性参考操作，并通过了 2,556 个适用工具预言检查中的 2,554 个。
 
-\textbf{RQ2: Is the four-class partition a safety requirement or a naming choice?}
-% \textbf{RQ2：四类划分是安全要求还是命名选择？}
-We ablate the issuer-ownership and lifecycle dimensions on the same 3,823 checker-denied events.
+To test whether the four-class partition is a safety requirement rather than a naming choice, we ablate the issuer-ownership and lifecycle dimensions on the same 3,823 checker-denied events.
 % 我们在同样的 3,823 个检查器拒绝事件上消融发行者所有权和生命周期维度。
 Removing issuer ownership entirely (collapsing all four classes into generic trusted context) causes 3,593 false accepts (94\%).
 % 完全移除发行者所有权（将四个类别合并为通用受信任上下文）导致 3,593 个错误接受（94\%）。
@@ -233,39 +214,23 @@ Even the weakest single-edge collapse (tool$\rightarrow$agent) falsely accepts 1
 On 7 controlled workflow residuals, a post-hoc policy DSL that checks predicates without field ownership falsely accepts 7/7; splitting lifecycle state across separate guards falsely accepts 5/7.
 % 在 7 个受控工作流残差上，一个不检查字段所有权只检查谓词的事后策略 DSL 错误接受了 7/7；将生命周期状态拆分到各独立守卫则错误接受了 5/7。
 
-\textbf{RQ3: Does the same commit API work beyond tool calls?}
-% \textbf{RQ3：同一提交 API 能否超越工具调用生效？}
-We test the \texttt{check\_and\_consume} transition across five boundary types: local env side effects, context placement, Skill instruction slots, delegation handoffs, and an OS-monitor-style replay backend.
+To test whether the same commit API works beyond tool calls, we apply the \texttt{check\_and\_consume} transition across five boundary types: local env side effects, context placement, Skill instruction slots, delegation handoffs, and an OS-monitor-style replay backend.
 % 我们在五种边界类型上测试 \texttt{check\_and\_consume} 转换：本地环境副作用、上下文放置、Skill 指令槽、委托交接和 OS 监视器风格的重放后端。
 Across 38 checker-submitted boundary events, \sys allows 17 authorized effects and blocks 21 violations, with 0 unsafe executions or placements and 0 checker/monitor mismatches.
 % 在 38 个提交给检查器的边界事件中，IntentCap 允许了 17 个授权效果并阻断了 21 个违规，0 个不安全执行或放置，0 个检查器/监视器不匹配。
 
-\textbf{RQ4: Are leases auditable authority objects?}
-% \textbf{RQ4：租约是否为可审计的权限对象？}
-We adjudicate 24 lease labels covering InjecAgent, MCPTox, and tau2 samples, and score 144 policy rows against them.
+To test whether leases are auditable authority objects, we adjudicate 24 lease labels covering InjecAgent, MCPTox, and tau2 samples, and score 144 policy rows against them.
 % 我们裁定了覆盖 InjecAgent、MCPTox 和 tau2 样本的 24 个租约标签，并据此对 144 个策略行进行评分。
 All \sys policy families have oracle distance~0; every non-\sys baseline has positive distance.
 % 所有 IntentCap 策略族的预言距离为 0；每个非 IntentCap 基线都有正距离。
 This is author-adjudicated supporting evidence, not independent expert-oracle validation.
 % 这是作者裁定的辅助证据，而非独立的专家预言验证。
 
-\section{Positioning}
-% 定位
+\section{Discussion}
 
-\sys should be read as a capability compiler and checker for agent decisions.
-% IntentCap 应被理解为面向智能体决策的能力编译器和检查器。
-EIM and bpftime ask how an extension can safely use host-provided resources.
-% EIM 和 bpftime 探讨的是扩展如何安全地使用宿主提供的资源。
-ActPlane asks how policy can be enforced below the tool layer.
-% ActPlane 探讨的是如何在工具层之下执行策略。
-SkillGuard asks how a Skill package can be governed as a permission-bearing artifact.
-% SkillGuard 探讨的是如何将 Skill 包作为承载权限的制品进行治理。
-\sys asks a different question: which future decisions may this context influence, under this user intent, and with what proof?
-% IntentCap 提出了一个不同的问题：在当前用户意图下，此上下文可以影响哪些未来决策，并以何种证明？
-That distinction is the paper's center of gravity.
-% 这一区分是本文的核心要义。
-It keeps the LLM outside the trusted computing base, treats the current user goal as the root of authority, and makes context influence a least-privilege capability rather than an implicit side effect of putting text in the prompt.
-% 它将 LLM 保持在可信计算基之外，将当前用户目标视为权限的根源，并将上下文影响力设为最小权限能力，而非将文本放入提示中的隐式副作用。
+\sys asks a different question from adjacent work. EIM and bpftime ask how an extension can safely use host-provided resources~\cite{eim-bpftime}. ActPlane asks how policy can be enforced below the tool layer~\cite{actplane}. SkillGuard asks how a Skill package can be governed as a permission-bearing artifact~\cite{skillguard}. \sys asks which future decisions a given context may influence, under a given user intent, and with what proof. That distinction keeps the LLM outside the trusted computing base, treats the current user goal as the root of authority, and makes context influence a least-privilege capability rather than an implicit side effect of putting text in the prompt.
+
+Current evidence covers replay safety, issuer-collapse ablations, and local multi-boundary enforcement. End-to-end utility with a live user simulator, independent expert-oracle lease labels, and production OS-level enforcement remain open. Scaling the checker to real-time MCP broker integration and measuring approval burden are immediate next steps.
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}
