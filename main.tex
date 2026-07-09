@@ -28,22 +28,26 @@
 % IntentCap：面向 LLM 智能体扩展的意图承载能力模型
 
 \begin{abstract}
-LLM agents act through tool calls, shell commands, file I/O, MCP servers, subagents, and memory, and each channel brings context into one shared planning state.
-% LLM 智能体通过工具调用、Shell 命令、文件读写、MCP 服务器、子智能体和记忆来行动，每个通道都把上下文送入同一个共享规划状态。
-A user's request, a Skill's instructions, a tool result, and a file's content all enter this state with equal influence over every decision, yet they carry different trust and should govern different fields.
-% 用户的请求、Skill 的指令、工具的返回结果和文件的内容都以同等影响力进入这个状态来左右每个决策，但它们的信任等级不同，应该管辖不同的字段。
-Current defenses control which operations are allowed but not which inputs can influence which authority-bearing decisions.
-% 当前防御控制哪些操作被允许，但不控制哪些输入可以影响哪些涉及权限的决策。
+LLM agents take real actions --- executing code, modifying files, calling services, and delegating tasks --- driven by context from user requests, tool results, documents, shell outputs, Skill and MCP instructions, and memory.
+% LLM 智能体会执行真实操作——运行代码、修改文件、调用服务、委托任务——由来自用户请求、工具结果、文档、Shell 输出、Skill 与 MCP 指令和记忆的上下文驱动。
+This creates a security challenge: all inputs enter one shared planning state with equal influence, yet a user's explicit request and a document's extracted text carry different trust and should not have the same authority to choose a destination or widen access.
+% 这带来了安全挑战：所有输入以同等影响力进入同一个共享规划状态，但用户的显式请求和文档的提取文本有不同的信任等级，不应拥有同样的权限来选择目标或扩大访问范围。
+Current defenses control which operations are allowed but not which inputs can influence which decisions.
+% 当前防御控制哪些操作被允许，但不控制哪些输入可以影响哪些决策。
 
-\sys makes user intent the root principal and turns context influence into an explicit capability: each input class is authorized to influence specific decision fields, and no class can prove another's authority.
-% IntentCap 将用户意图设为根主体，并将上下文影响力转化为显式能力：每类输入被授权影响特定的决策字段，任何类别都不能证明另一个类别的权限。
-Task plans compile into proof-carrying capability leases over four issuer-owned input classes, validated by a deterministic checker before any side effect commits.
-% 任务计划编译为覆盖四个发行者所有的输入类别的携带证明的能力租约，由确定性检查器在任何副作用提交之前验证。
+Agent capabilities should be scoped to the current task intent, not to a sandbox or session lifetime, and no single context source carries enough authority to define a complete capability.
+% Agent 的能力应该限定在当前任务意图的范围内，而不是沙箱或会话生命周期，且没有任何单一上下文来源能定义完整的能力。
+\sys composes capabilities from four context sources --- user intent, workflow instructions, tool schemas, and runtime data --- each contributing specific fields with priority, so that no source can fill another's fields.
+% IntentCap 从四个上下文来源——用户意图、工作流指令、工具模式和运行时数据——组合能力，每个来源按优先级贡献特定字段，任何来源都不能填充另一个来源的字段。
+Task plans compile into short-lived capability leases validated by a checker before any side effect commits.
+% 任务计划编译为短生命周期的能力租约，由检查器在任何副作用提交之前验证。
 
-Across 38 multi-boundary enforcement events spanning tool calls, local execution, context placement, and delegation, the checker produces zero unsafe accepts.
-% 在涵盖工具调用、本地执行、上下文放置和委托的 38 个多边界事件中，检查器产生零个不安全接受。
-Ablations show the four-class partition is structural: collapsing it causes 94\% of protected decisions to be falsely accepted.
-% 消融实验表明四类分区是结构性必要的：合并它会导致 94\% 的受保护决策被错误接受。
+Replaying 3,746 protected-decision events from four public benchmarks, \sys produces zero unsafe accepts while covering all benign reference actions.
+% 在从四个公开基准重放的 3,746 个受保护决策事件上，IntentCap 产生零个不安全接受，同时覆盖了所有良性参考操作。
+Across 38 enforcement checks spanning tool calls, local execution, context placement, and delegation, the checker allows all authorized actions and blocks all violations.
+% 在涵盖工具调用、本地执行、上下文放置和委托的 38 个执行检查中，检查器允许了所有授权操作并阻断了所有违规。
+Ablations show the four-class partition is necessary: collapsing it causes 94\% of blocked violations to be wrongly allowed.
+% 消融实验表明四类分区是必要的：合并它会导致 94\% 的已阻断违规被错误放行。
 \end{abstract}
 
 \maketitle
@@ -98,7 +102,6 @@ The root cause is \emph{issuer collapse}: user intent, Skill instructions, tool 
 
 \sys addresses issuer collapse by making the authorization unit a \emph{pre-effect commit record} rather than an action-level predicate.
 % IntentCap 通过将授权单元设为\emph{预效果提交记录} (pre-effect commit record) 而非操作级谓词来解决发行者合并问题。
-% IntentCap 通过将授权单元设为\emph{预效果提交记录} (pre-effect commit record) 而非操作级谓词来解决这两个问题。
 Figure~\ref{fig:arch} shows the pipeline.
 % 图~\ref{fig:arch} 展示了该流水线。
 A trusted issuer canonicalizes user intent into a structured certificate.
