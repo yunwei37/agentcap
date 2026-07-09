@@ -1,1 +1,0 @@
-python scripts/adjudicate_expert_oracle_labels_codex.py --run-id R204E2 --manifest results/eval/R199/expert_oracle_task_manifest.csv --output-dir results/eval/R204E2

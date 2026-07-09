@@ -1,1 +1,0 @@
-python scripts/score_expert_oracle_policy_distance.py --run-id R205E2S --oracle results/eval/R204E2/adjudicated_expert_oracle.csv --policies results/eval/R201P/expert_oracle_policy_rows.csv --output-dir results/eval/R205E2S

@@ -1,9 +1,0 @@
-source_run_id,domain,task_id,event_id,tool,args_json,actionability_class,next_experiment_target,residual_blocker
-R148,airline,3,airline:3:3_1,get_user_details,"{""user_id"": ""anya_garcia_5901""}",tool_activation_gap,activate_or_compile_missing_tool_from_visible_argument_evidence,tool_not_active_or_not_compiled
-R148,airline,4,airline:4:4_0,get_user_details,"{""user_id"": ""sophia_silva_7557""}",tool_activation_gap,activate_or_compile_missing_tool_from_visible_argument_evidence,tool_not_active_or_not_compiled
-R148,airline,4,airline:4:4_1,get_reservation_details,"{""reservation_id"": ""NM1VX1""}",upstream_planning_gap,improve_upstream_plan_and_evidence_discovery,upstream_action_needed_before_candidate_can_be_grounded
-R148,airline,4,airline:4:4_2,get_reservation_details,"{""reservation_id"": ""KC18K6""}",upstream_planning_gap,improve_upstream_plan_and_evidence_discovery,upstream_action_needed_before_candidate_can_be_grounded
-R148,airline,4,airline:4:4_3,get_reservation_details,"{""reservation_id"": ""S61CZX""}",upstream_planning_gap,improve_upstream_plan_and_evidence_discovery,upstream_action_needed_before_candidate_can_be_grounded
-R148,airline,4,airline:4:4_4,get_reservation_details,"{""reservation_id"": ""H8Q05L""}",upstream_planning_gap,improve_upstream_plan_and_evidence_discovery,upstream_action_needed_before_candidate_can_be_grounded
-R148,airline,4,airline:4:4_5,get_reservation_details,"{""reservation_id"": ""WUNA5K""}",upstream_planning_gap,improve_upstream_plan_and_evidence_discovery,upstream_action_needed_before_candidate_can_be_grounded
-R148,retail,2,retail:2:2_11,return_delivered_order_items,"{""item_ids"": [""4602305039"", ""4202497723"", ""9408160950""], ""order_id"": ""#W2378156"", ""payment_method_id"": ""credit_card_9513926""}",tool_activation_gap,activate_or_compile_missing_tool_from_visible_argument_evidence,tool_not_active_or_not_compiled

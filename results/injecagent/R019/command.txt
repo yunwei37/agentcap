@@ -1,1 +1,0 @@
-PYTHONPATH=src /usr/bin/python scripts/analyze_injecagent_authority_minimization.py --trace results/online/R010/export/intentcap_trace.json --tool-catalog benchmarks/injecagent/data/tools.json --output-dir results/injecagent/R019

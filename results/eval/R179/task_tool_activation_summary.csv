@@ -1,3 +1,0 @@
-source_run_id,domain,task_id,tool_activation_gaps,eligible_read_activation_candidates,write_or_high_impact_activation_blockers,missing_visibility_blockers,activation_event_ids
-R175,airline,4,5,5,0,0,airline:4:4_1|airline:4:4_2|airline:4:4_3|airline:4:4_4|airline:4:4_5
-R175,retail,2,1,0,1,0,

@@ -1,5 +1,0 @@
-baseline,accept,block,false_accept,false_reject,denied_explained,interpretation
-authgraph_pact_airguard_style,8,0,6,0,0,Blocks protected decisions whose control provenance is untrusted.
-ifc_taint_style,8,0,6,0,0,Blocks untrusted control over protected decisions and untrusted data into sensitive authority/sink modes.
-policy_dsl_access_control_style,8,0,6,0,0,Matches saved operation/object/argument constraints but ignores provenance and influence modes.
-static_tool_acl_style,8,0,6,0,0,Matches only exposed operation/object pairs.

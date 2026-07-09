@@ -1,3 +1,0 @@
-domain,task_id,reason
-airline,0,no_assistant_reference_actions
-telecom,[mobile_data_issue]user_abroad_roaming_enabled_off[PERSONA:None],no_assistant_reference_actions

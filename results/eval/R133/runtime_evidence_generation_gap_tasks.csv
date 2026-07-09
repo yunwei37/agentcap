@@ -1,3 +1,0 @@
-source_run_id,domain,task_id,steps,steps_with_existing_exact_next_candidate,steps_without_exact_next_candidate,visible_evidence_generation_gap,runtime_evidence_generation_gap,tool_exposure_gap,argument_evidence_gap,tool_and_argument_gap,invalid_exact_next_reference,generator_upper_bound_exact_next_steps,runtime_evidence_upper_bound_exact_next_steps,db_feasible_generator_upper_bound_exact_next_steps,db_feasible_runtime_evidence_upper_bound_exact_next_steps
-R125,airline,1,5,5,0,0,0,0,0,0,0,5,5,5,5
-R125,retail,3,10,0,10,0,0,0,0,0,10,0,0,0,0

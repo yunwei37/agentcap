@@ -1,2 +1,0 @@
-source,source_path,events,leases,labels,checker_allowed,checker_denied,object_only_accept,object_only_false_accept,lease_constraints_no_provenance_accept,lease_constraints_no_provenance_false_accept,full_event_args_no_provenance_accept,full_event_args_no_provenance_false_accept
-examples:env_adapter_side_effect_suite,examples/env_adapter_side_effect_suite.json,10,4,4,4,6,8,4,6,2,10,6

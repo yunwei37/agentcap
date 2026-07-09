@@ -1,2 +1,0 @@
-source_run_id,domain,task_id,tool_activation_gaps,eligible_read_activation_candidates,write_or_high_impact_activation_blockers,missing_visibility_blockers,activation_event_ids
-R180,retail,2,1,0,1,0,

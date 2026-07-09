@@ -1,1 +1,0 @@
-python scripts/merge_tau2_repair_maps.py --run-id R193 --output-dir results/eval/R193 --output-csv results/eval/R193/cumulative_repair_map.csv results/eval/R168/cumulative_repair_map.csv results/eval/R189/candidate_generation_repair_map.csv
