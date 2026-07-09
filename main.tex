@@ -92,8 +92,8 @@ Unlike traditional systems, where a programmer declares capabilities at compile 
 % 与传统系统不同，在传统系统中程序员在编译时声明能力并由类型系统强制执行，而智能体的规划通道没有提供静态结构来区分来源。
 These sources are not interchangeable because each carries only part of the information needed to define a capability. The user's request specifies the goal and authorized destinations but not the workflow steps. A Skill's procedure offers candidate steps but not the user's specific targets, and the user may adopt only part of it. A tool's schema declares what parameters it accepts but not the goal. A tool's output provides values but not which decision fields those values should fill. A complete capability must be composed from all four.
 % 这些来源不可互换，因为每个来源只携带定义能力所需的部分信息。用户的请求指定目标和授权的目的地，但不包含工作流步骤。Skill 的流程提供候选步骤，但不包含用户的具体目标，且用户可能只采用其中一部分。工具的模式声明它接受什么参数，但不包含目标。工具的输出提供值，但不指定这些值应该填充哪些决策字段。完整的能力必须从四者组合而成。
-Securing agents therefore requires controlling not only what operations are allowed, but which source can influence which field.
-% 因此，保护智能体的安全不仅需要控制哪些操作被允许，还需要控制哪个来源可以影响哪个字段。
+Securing agents therefore requires an information flow policy that controls not only what operations are allowed, but which source may flow into which decision field.
+% 因此，保护智能体的安全需要一种信息流策略 (information flow policy)，不仅控制哪些操作被允许，还控制哪个来源可以流入哪个决策字段。
 
 \section{Design}
 \label{sec:design}
@@ -190,6 +190,8 @@ No source can fill another's fields.
 % 任何来源都不能填充另一个来源的字段。
 A tool schema cannot authorize a destination, runtime environment cannot supply procedural authority, and a Skill cannot widen approval scope.
 % 工具模式不能授权目标，运行时环境不能提供过程权限，Skill 不能扩大审批范围。
+Together, these ownership rules form an information flow policy for agent decisions: they specify which information may flow from which source into which field of a capability lease.
+% 这些所有权规则共同构成了智能体决策的信息流策略：它们指定哪些信息可以从哪个来源流入能力租约的哪个字段。
 
 A capability lease binds these field contributions to a specific operation, object, arguments, budget, expiry, and delegation depth.
 % 能力租约将这些字段贡献绑定到特定的操作、对象、参数、预算、过期时间和委托深度。
