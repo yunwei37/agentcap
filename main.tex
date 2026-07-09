@@ -72,10 +72,10 @@ The same property creates a security and safety problem.
 % 同样的特性带来了安全与可靠性问题。
 In an agent, any input can influence any action, whether through adversarial injection~\cite{greshake-injection} or accidental scope widening.
 % 在智能体中，任何输入都可以影响任何操作，无论是通过对抗性注入~\cite{greshake-injection}还是意外的范围扩大。
-Current defenses, including prompt-level guardrails~\cite{camel,dualllm}, tool-level permission guards~\cite{progent}, execution sandboxes~\cite{isolategpt}, and OS-level policy engines~\cite{actplane}, all ask the same operation-centric question: which tool may be called, which file may be read, or which process may execute.
-% 当前防御——包括提示级护栏~\cite{camel,dualllm}、工具级权限守卫~\cite{progent}、执行沙箱~\cite{isolategpt} 和 OS 级策略引擎~\cite{actplane}——都在问同一个以操作为中心的问题：哪个工具可以调用，哪个文件可以读取，或者哪个进程可以执行。
-None of them asks which input source drove the tool selection or filled a particular argument value.
-% 没有一个追问是哪个输入来源驱动了工具选择或填充了某个特定的参数值。
+Current defenses, including prompt-level guardrails~\cite{camel,dualllm}, tool-level permission guards~\cite{progent}, execution sandboxes~\cite{isolategpt}, and OS-level policy engines~\cite{actplane}, all control what the agent may do: which tool may be called, which file may be read, or which process may execute.
+% 当前防御——包括提示级护栏~\cite{camel,dualllm}、工具级权限守卫~\cite{progent}、执行沙箱~\cite{isolategpt} 和 OS 级策略引擎~\cite{actplane}——都控制智能体可以做什么：哪个工具可以调用，哪个文件可以读取，或者哪个进程可以执行。
+None of them controls what drove the agent to do it, that is, which input source selected the tool or filled a particular argument value.
+% 没有一个控制是什么驱动了智能体这么做，即哪个输入来源选择了工具或填充了某个特定的参数值。
 
 Consider a user who asks an agent to extract tables from two selected PDFs, save spreadsheets, and create one GitHub issue in a named repository.
 % 考虑一个用户要求智能体从两个选定的 PDF 中提取表格、保存为电子表格，并在指定仓库中创建一个 GitHub issue 的场景。
