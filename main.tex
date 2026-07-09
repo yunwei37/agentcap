@@ -31,7 +31,7 @@
 LLM agents take real actions, including executing code, modifying files, calling services, and delegating tasks, driven by context sources such as user requests, tool results, documents, shell outputs, Skill and MCP instructions, and memory.
 % LLM 智能体会执行真实操作——运行代码、修改文件、调用服务、委托任务——由上下文来源 (context source) 例如用户请求、工具结果、文档、Shell 输出、Skill 与 MCP 指令和记忆所驱动。
 Unlike traditional systems where capability is deterministic and predefined, the least-privilege capability an agent needs is dynamic and depends on the agent's intent for the task: what it wants to do and how it plans to accomplish it.
-% 与能力是确定性且预定义的传统系统不同，智能体的最小能力是动态的，取决于智能体对任务的意图：它想做什么以及它计划如何完成。
+% 与能力是确定性且预定义的传统系统不同，智能体所需的最小权限能力是动态的，取决于智能体对任务的意图：它想做什么以及它计划如何完成。
 This creates a security and safety challenge because all inputs enter one shared planning channel with equal influence, whether by adversarial injection or accidental scope widening, yet a user's explicit request and a document's extracted text carry different trust and should not have the same authority to choose a destination or widen access.
 % 这带来了安全与可靠性挑战：所有输入以同等影响力进入同一个共享规划通道，无论是通过对抗性注入还是意外的范围扩大，但用户的显式请求和文档的提取文本有不同的信任等级，不应拥有同样的权限来选择目标或扩大访问范围。
 Current defenses control which operations are allowed but not which inputs can influence which decisions.
