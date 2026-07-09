@@ -99,6 +99,44 @@ Securing agents therefore requires controlling not only what operations are allo
 The design targets four properties: (1) field-level ownership, where each decision field is owned by exactly one context source; (2) monotonic narrowing, where leases can only narrow the user's authorized authority, never widen it; (3) the LLM stays outside the trusted computing base, with a deterministic checker making all accept/deny decisions; and (4) auditable leases, where every accept or deny is recorded with its provenance chain.
 % 设计目标四个属性：(1) 字段级所有权——每个决策字段由恰好一个上下文来源拥有；(2) 单调缩减——租约只能缩小用户授权的权限，不能扩大；(3) LLM 位于可信计算基之外——确定性检查器做出所有接受/拒绝决策；(4) 可审计租约——每个接受或拒绝都记录来源链。
 
+\begin{figure*}[t!]
+\centering
+\resizebox{0.7\textwidth}{!}{%
+\begin{tikzpicture}[
+  node distance=1.2cm and 1.5cm,
+  box/.style={draw, rounded corners=2pt, align=center, minimum height=1.0cm, text width=2.8cm, fill=white, font=\normalsize},
+  trusted/.style={box, fill=green!8},
+  untrusted/.style={box, fill=red!7},
+  runtime/.style={box, fill=blue!7},
+  arr/.style={-Latex, semithick}
+]
+\node[trusted] (issuer) {Intent\\issuer};
+\node[trusted, right=of issuer] (labeler) {Source\\labeler};
+\node[untrusted, right=of labeler] (compiler) {LLM-assisted\\compiler};
+\node[trusted, right=of compiler] (checker) {Deterministic\\checker};
+\node[runtime, below=1.0cm of checker, xshift=-1.5cm] (adapters) {Enforcement\\hooks};
+\node[runtime, left=1.2cm of adapters] (gateways) {MCP\\gateway};
+\node[runtime, right=1.2cm of adapters] (deleg) {OS-level\\enforcer};
+
+\draw[arr] (issuer) -- (labeler);
+\draw[arr] (labeler) -- (compiler);
+\draw[arr] (compiler) -- node[above, font=\normalsize] {candidates} (checker);
+\draw[arr] (checker) -- node[right, font=\normalsize] {leases} (adapters);
+\draw[arr] (adapters) -- (gateways);
+\draw[arr] (adapters) -- (deleg);
+\draw[arr, dashed] (checker) to[bend right=15] node[above, font=\normalsize] {denial} (compiler);
+
+\begin{scope}[on background layer]
+\node[draw, dashed, rounded corners=3pt, fit=(issuer)(labeler)(checker), inner sep=0.22cm, label={[font=\normalsize]above:TCB}] {};
+\end{scope}
+\end{tikzpicture}%
+}
+\vspace{-6pt}
+\caption{\sys architecture. The source labeler tags inputs by origin, the LLM compiler proposes candidate leases, and the deterministic checker (TCB) validates field proofs before any side effect commits. Enforcement hooks lower accepted leases to the MCP gateway and OS-level enforcer. Denied candidates return to the compiler.}
+\label{fig:arch}
+\vspace{-8pt}
+\end{figure*}
+
 Figure~\ref{fig:arch} shows the pipeline.
 % 图~\ref{fig:arch} 展示了该流水线。
 A source labeler classifies each input by position.
@@ -128,45 +166,6 @@ The checker exposes a single transition, $\mathsf{check\_and\_consume}(e,\mathit
 Enforcement operates at two layers. At the tool level, boundary adapters intercept MCP calls and validate that each argument field comes from its owner source before the call executes. At the OS level, accepted leases compile to ActPlane~\cite{actplane} file, exec, and network policies enforced via eBPF.
 % 执行在两个层次运作。在工具层，边界适配器拦截 MCP 调用并在调用执行前验证每个参数字段来自其所有者来源。在 OS 层，被接受的租约编译为通过 eBPF 执行的 ActPlane~\cite{actplane} 文件、执行和网络策略。
 
-
-\begin{figure*}[t]
-\centering
-\resizebox{0.7\textwidth}{!}{%
-\begin{tikzpicture}[
-  node distance=0.8cm and 1.0cm,
-  box/.style={draw, rounded corners=2pt, align=center, minimum height=0.7cm, text width=2.0cm, fill=white, font=\scriptsize},
-  trusted/.style={box, fill=green!8},
-  untrusted/.style={box, fill=red!7},
-  runtime/.style={box, fill=blue!7},
-  arr/.style={-Latex, semithick}
-]
-\node[trusted] (issuer) {Intent\\issuer};
-\node[trusted, right=of issuer] (labeler) {Source\\labeler};
-\node[untrusted, right=of labeler] (compiler) {LLM-assisted\\compiler};
-\node[trusted, right=of compiler] (checker) {Deterministic\\checker};
-\node[runtime, below=0.7cm of checker, xshift=-1.2cm] (adapters) {Enforcement\\hooks};
-\node[runtime, left=0.9cm of adapters] (gateways) {MCP\\gateway};
-\node[runtime, right=0.9cm of adapters] (deleg) {OS-level\\enforcer};
-
-\draw[arr] (issuer) -- (labeler);
-\draw[arr] (labeler) -- (compiler);
-\draw[arr] (compiler) -- node[above, font=\scriptsize] {candidates} (checker);
-\draw[arr] (checker) -- node[right, font=\scriptsize] {leases} (adapters);
-\draw[arr] (adapters) -- (gateways);
-\draw[arr] (adapters) -- (deleg);
-\draw[arr, dashed] (checker) to[bend right=15] node[below, font=\scriptsize] {denial} (compiler);
-
-\begin{scope}[on background layer]
-\node[draw, dashed, rounded corners=3pt, fit=(issuer)(labeler)(checker), inner sep=0.18cm, label={[font=\scriptsize]above:TCB}] {};
-\end{scope}
-\end{tikzpicture}%
-}
-\vspace{-6pt}
-\caption{\sys architecture. The source labeler tags inputs by origin, the LLM compiler proposes candidate leases, and the deterministic checker (TCB) validates field proofs before any side effect commits. Enforcement hooks lower accepted leases to the MCP gateway and OS-level enforcer. Denied candidates return to the compiler.}
-\label{fig:arch}
-\vspace{-8pt}
-\end{figure*}
-
 A field is a named slot in a capability lease (e.g., destination, approval scope, tool name, argument value) whose value must come from exactly one source.
 % 字段是能力租约中的一个命名槽位（如目标、审批范围、工具名、参数值），其值必须来自恰好一个来源。
 The four context sources each contribute specific fields.
@@ -193,7 +192,7 @@ An issue lease expires after its first use, and a delegated subtask receives onl
 The checker validates all fields atomically in a single transition before the side effect commits.
 % 检查器在副作用提交之前，在单次转换中原子地验证所有字段。
 
-\section{Preliminary Evidence}
+\section{Preliminary Evaluation}
 % 初步证据
 
 \textbf{RQ1: Does \sys block violations without rejecting benign actions?}
@@ -248,12 +247,6 @@ At lower layers, EIM~\cite{eim-bpftime} and ActPlane~\cite{actplane} enforce con
 Unlike these systems, \sys asks which future decisions a given context source may influence, under a given user intent, and with what proof.
 % 与这些系统不同，IntentCap 探讨在给定用户意图下，给定上下文来源 (context source) 可以影响哪些未来决策，以及用什么证明。
 
-Current evidence covers replay safety, four-source ablations, and local enforcement across multiple boundaries.
-% 当前证据覆盖重放安全性、四来源消融和跨多种边界的本地执行。
-Three areas remain open, namely end-to-end utility with a live user simulator, independent expert labeling of leases, and production OS-level enforcement.
-% 三个领域仍然开放，即使用实时用户模拟器的端到端可用性、独立专家对租约的标注以及生产级 OS 层执行。
-Immediate next steps include scaling the checker to live MCP broker integration and measuring the approval burden.
-% 直接后续步骤包括将检查器扩展到实时 MCP 代理集成，以及衡量审批负担。
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}
