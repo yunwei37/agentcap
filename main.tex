@@ -154,9 +154,9 @@ The checker validates all fields atomically in a single transition before the si
 
 \textbf{RQ1: Does the model block violations without rejecting benign actions?}
 % \textbf{RQ1：事件模型能否在不过度阻断的情况下表达良性行为？}
-\sys produces 0 unsafe accepts across 3,746 protected-decision events replayed from AgentDojo, MCPTox, InjecAgent, and tau2-bench~\cite{agentdojo,mcptox,injecagent,tau2bench}.
+\sys produces 0 unsafe accepts across 3,746 security-sensitive events replayed from AgentDojo, MCPTox, InjecAgent, and tau2-bench~\cite{agentdojo,mcptox,injecagent,tau2bench}.
 % IntentCap 在从 AgentDojo、MCPTox、InjecAgent 和 tau2-bench 重放的 3,746 个受保护决策事件中产生 0 个不安全接受~\cite{agentdojo,mcptox,injecagent,tau2bench}。
-On the utility side, \sys covers all 3,813 benign reference actions in the tau2-style proxy and passes 2,554 of 2,556 applicable tool-oracle checks.
+On the utility side, \sys covers all 3,813 benign reference actions in the tau2-style proxy and passes 2,554 of 2,556 applicable ground-truth checks.
 % 在可用性方面，IntentCap 覆盖了 tau2 风格代理中全部 3,813 个良性参考操作，并通过了 2,556 个适用工具预言检查中的 2,554 个。
 
 \textbf{RQ2: Is the four-source partition a safety requirement or a naming choice?}
