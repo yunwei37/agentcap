@@ -1,1 +1,0 @@
-PYTHONPATH=src /usr/bin/python scripts/audit_mcptox_reconciliation.py --benchmark-dir benchmarks/mcptox --trace results/mcptox/R007/intentcap_trace.json --verdicts results/mcptox/R007/intentcap_verdicts.json --output-dir results/mcptox/R015

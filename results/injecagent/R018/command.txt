@@ -1,1 +1,0 @@
-PYTHONPATH=src /usr/bin/python scripts/aggregate_injecagent_cached_outputs_gateway.py --results-zip benchmarks/injecagent/results.zip --setting all --include-counterfactual-stage2 --output-dir results/injecagent/R018
