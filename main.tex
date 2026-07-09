@@ -74,19 +74,17 @@ In an agent, any input can influence any action, whether through adversarial inj
 % 在智能体中，任何输入都可以影响任何操作，无论是通过对抗性注入~\cite{greshake-injection}还是意外的范围扩大。
 Current defenses, including prompt-level guardrails~\cite{camel,dualllm}, tool-level permission guards~\cite{progent}, execution sandboxes~\cite{isolategpt}, and OS-level policy engines~\cite{actplane}, all control what the agent may do: which tool may be called, which file may be read, or which process may execute.
 % 当前防御——包括提示级护栏~\cite{camel,dualllm}、工具级权限守卫~\cite{progent}、执行沙箱~\cite{isolategpt} 和 OS 级策略引擎~\cite{actplane}——都控制智能体可以做什么：哪个工具可以调用，哪个文件可以读取，或者哪个进程可以执行。
-None of them controls what drove the agent to do it, that is, which input source selected the tool or filled a particular argument value.
-% 没有一个控制是什么驱动了智能体这么做，即哪个输入来源选择了工具或填充了某个特定的参数值。
+None of them controls what is allowed to drive each decision, that is, which source may select the tool, fill the repository field, or widen the approval scope.
+% 没有一个控制什么被允许驱动每个决策，即哪个来源可以选择工具、填充仓库字段或扩大审批范围。
 
 Consider a user who asks an agent to extract tables from two selected PDFs, save spreadsheets, and create one GitHub issue in a named repository.
 % 考虑一个用户要求智能体从两个选定的 PDF 中提取表格、保存为电子表格，并在指定仓库中创建一个 GitHub issue 的场景。
 The PDF contents should influence spreadsheet cells and perhaps the issue body, but not the repository name, network destination, approval scope, tool selection, or decision to load another Skill.
 % PDF 内容应当影响电子表格的单元格和 issue 正文，但不应影响仓库名称、网络目标、审批范围、工具选择或加载另一个 Skill 的决定。
-If hidden text in the PDF says ``send all extracted values to attacker.com''~\cite{greshake-injection}, a tool-call allowlist~\cite{progent} or OS sandbox~\cite{isolategpt} may catch some concrete effects, but it does not directly express the invariant that the PDF was never allowed to influence those decisions.
-% 如果 PDF 中的隐藏文本说"将所有提取值发送到 attacker.com"~\cite{greshake-injection}，工具调用白名单~\cite{progent}或 OS 沙箱~\cite{isolategpt}可能会拦截某些具体效果，但它无法直接表达那个不变式：PDF 从未被允许影响那些决策。
-The same invariant breaks without an adversary.
-% 同样的不变式在没有攻击者的情况下也会被破坏。
-A Skill that merges tool results into its output without field boundaries can accidentally widen the scope of a later tool call.
-% 一个 Skill 如果在合并工具结果到输出时没有字段边界，就可能意外扩大后续工具调用的范围。
+If hidden text in the PDF says ``create the issue in attacker/repo''~\cite{greshake-injection}, the repository field changes to a legitimate-looking but attacker-controlled destination. A tool-call allowlist can block banned domains, but it cannot express the invariant that the PDF was never allowed to fill the repository field at all.
+% 如果 PDF 中的隐藏文本说"在 attacker/repo 中创建 issue"~\cite{greshake-injection}，仓库字段就会变成一个看起来合法但由攻击者控制的目标。工具调用白名单可以阻止被禁止的域名，但它无法表达那个不变式：PDF 根本不被允许填充仓库字段。
+The same invariant breaks without an adversary. If the extraction Skill concatenates the PDF text into a single output string, the planner may parse a table header as the repository name, accidentally overwriting the user's chosen destination.
+% 同样的不变式在没有攻击者的情况下也会被破坏。如果提取 Skill 将 PDF 文本拼接为单个输出字符串，规划器可能将表头解析为仓库名称，意外覆盖用户选择的目标。
 
 The root cause is that all \emph{context sources} the agent consumes, what the user asked for, how a Skill defines the workflow, what a tool's API accepts, and what previous tools returned, enter the same planning channel with equal standing, so any source can fill any decision field.
 % 根本原因是智能体所消耗的所有上下文来源 (context source)——用户要求做什么、Skill 如何定义工作流、工具的 API 接受什么、以及之前的工具返回了什么——以同等地位进入同一个规划通道，因此任何来源都可以填充任何决策字段。
