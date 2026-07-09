@@ -56,10 +56,8 @@ Removing issuer ownership entirely causes 94\% of checker-denied protected decis
 % 完全移除发行者所有权会导致来自 AgentDojo、MCPTox、InjecAgent 和 tau2-bench 的 3,823 个事件中 94\% 的检查器拒绝的受保护决策被错误接受；即使最弱的单边合并也会错误接受超过 50\%。
 Across 38 multi-boundary enforcement events spanning tool calls, local execution, context placement, Skill instruction slots, and delegation handoffs, the checker produces zero unsafe accepts.
 % 在涵盖工具调用、本地执行、上下文放置、Skill 指令槽和委托交接的 38 个多边界执行事件中，检查器产生零个不安全接受。
-This is not a tuning knob.
-% 这不是一个调节旋钮。
-It is a phase transition between authorization and theater.
-% 这是授权与形式之间的相变。
+The ablation shows that issuer ownership is load-bearing: removing it collapses nearly all enforcement.
+% 消融实验表明发行者所有权是承重结构：移除它会导致几乎所有执行失效。
 \end{abstract}
 
 \maketitle
@@ -99,8 +97,8 @@ If hidden text in the PDF says ``send all extracted values to attacker.com'' or 
 
 \sys starts from that invariant.
 % IntentCap 从这个不变式出发。
-Its thesis is that securing agent extensions requires controlling not only what extensions can do, but what their context is allowed to mean.
-% 其核心论点是：保护智能体扩展的安全，不仅需要控制扩展能做什么，还需要控制其上下文被允许意味着什么。
+Its thesis is that securing agent extensions should also control what their context is allowed to mean, not only what extensions can do.
+% 其核心论点是：保护智能体扩展的安全，不仅要控制扩展能做什么，还应控制其上下文被允许意味着什么。
 The root of authority is a structured \emph{intent certificate}, not an extension package, server identity, or static manifest.
 % 权限的根源是结构化的\emph{意图证书} (intent certificate)，而非扩展包、服务器身份或静态清单。
 A certificate records the current goal, selected objects, authorized sinks, constraints, approvals, and expiry.
