@@ -28,14 +28,14 @@
 % IntentCap：面向 LLM 智能体扩展的意图承载能力模型
 
 \begin{abstract}
-Every agent runtime today has the same blind spot: it cannot tell whose context is driving a decision.
-% 当今每个智能体运行时都有同一个盲区：它无法分辨是谁的上下文在驱动决策。
+Existing agent runtimes share a common blind spot: they cannot tell whose context is driving a decision.
+% 现有的智能体运行时有一个共同的盲区：它们无法分辨是谁的上下文在驱动决策。
 A Skill's instructions, a tool's schema, a PDF's extracted text, and the user's explicit request all flow into one planning channel, yet only one of them should be authorized to choose a destination, widen an approval scope, or delegate authority.
 % Skill 的指令、工具的模式定义、PDF 的提取文本和用户的显式请求都流入同一个规划通道，但其中只有一个应被授权选择目标、扩大审批范围或委托权限。
-Current defenses guard tools, parameters, and files; none of them ask which input class is filling which authority-bearing field.
-% 当前的防御机制保护工具、参数和文件，但没有一个追问哪类输入正在填充哪个涉及权限的字段。
-The result is structural: any extension that supplies data can silently supply decisions.
-% 结果是结构性的：任何提供数据的扩展都可以悄然提供决策。
+Current defenses guard tools, parameters, and files, but to our knowledge none of them ask which input class is filling which authority-bearing field.
+% 当前的防御机制保护工具、参数和文件，但据我们所知，没有一个追问哪类输入正在填充哪个涉及权限的字段。
+The result is structural: an extension that supplies data may also supply decisions.
+% 结果是结构性的：提供数据的扩展也可能同时提供决策。
 
 We reframe agent authorization as a context-influence problem.
 % 我们将智能体授权重新定义为上下文影响力问题。
@@ -158,22 +158,22 @@ The checker is the sole writer of lease state; adapters cannot cache decisions o
 
 \begin{figure}[t]
 \centering
-\small
+\resizebox{\columnwidth}{!}{%
 \begin{tikzpicture}[
-  node distance=0.6cm and 0.5cm,
-  box/.style={draw, rounded corners=2pt, align=center, minimum height=0.65cm, text width=1.9cm, fill=white, font=\scriptsize},
+  node distance=0.5cm and 0.4cm,
+  box/.style={draw, rounded corners=2pt, align=center, minimum height=0.6cm, text width=1.7cm, fill=white, font=\scriptsize},
   trusted/.style={box, fill=green!8},
   untrusted/.style={box, fill=red!7},
   runtime/.style={box, fill=blue!7},
-  arr/.style={-Latex, thick}
+  arr/.style={-Latex, semithick}
 ]
 \node[trusted] (issuer) {Intent\\issuer};
 \node[trusted, right=of issuer] (labeler) {Context\\labeler};
 \node[untrusted, right=of labeler] (compiler) {LLM-assisted\\compiler};
 \node[trusted, right=of compiler] (checker) {Deterministic\\checker};
-\node[runtime, below=0.5cm of checker, xshift=-1.1cm] (adapters) {Boundary adapters};
-\node[runtime, left=0.7cm of adapters] (gateways) {Tool/env\\gateways};
-\node[runtime, right=0.7cm of adapters] (deleg) {Placement \&\\delegation};
+\node[runtime, below=0.45cm of checker, xshift=-1.0cm] (adapters) {Boundary adapters};
+\node[runtime, left=0.6cm of adapters] (gateways) {Tool/env\\gateways};
+\node[runtime, right=0.6cm of adapters] (deleg) {Placement \&\\delegation};
 
 \draw[arr] (issuer) -- (labeler);
 \draw[arr] (labeler) -- (compiler);
@@ -184,13 +184,14 @@ The checker is the sole writer of lease state; adapters cannot cache decisions o
 \draw[arr, dashed] (checker) to[bend right=15] node[below, font=\tiny] {denial} (compiler);
 
 \begin{scope}[on background layer]
-\node[draw, dashed, rounded corners=3pt, fit=(issuer)(labeler)(checker), inner sep=0.13cm, label={[font=\tiny]above:TCB}] {};
+\node[draw, dashed, rounded corners=3pt, fit=(issuer)(labeler)(checker), inner sep=0.12cm, label={[font=\tiny]above:TCB}] {};
 \end{scope}
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \vspace{-6pt}
-\caption{\sys architecture. The LLM proposes; the checker decides. Runtime adapters submit field proofs before any side effect, placement, or handoff.}
+\caption{\sys architecture. The LLM proposes; the checker decides. Adapters submit field proofs before any side effect, placement, or handoff.}
 \label{fig:arch}
-\vspace{-6pt}
+\vspace{-8pt}
 \end{figure}
 
 \paragraph{Four authority-input classes.}
