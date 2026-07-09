@@ -30,18 +30,18 @@
 \begin{abstract}
 LLM agents take real actions, including executing code, modifying files, calling services, and delegating tasks, driven by context from user requests, tool results, documents, shell outputs, Skill and MCP instructions, and memory.
 % LLM 智能体会执行真实操作——运行代码、修改文件、调用服务、委托任务——由来自用户请求、工具结果、文档、Shell 输出、Skill 与 MCP 指令和记忆的上下文驱动。
-This creates a security and safety challenge: all inputs enter one shared planning channel with equal influence, whether by adversarial injection or accidental scope widening, yet a user's explicit request and a document's extracted text carry different trust and should not have the same authority to choose a destination or widen access.
+This creates a security and safety challenge because all inputs enter one shared planning channel with equal influence, whether by adversarial injection or accidental scope widening, yet a user's explicit request and a document's extracted text carry different trust and should not have the same authority to choose a destination or widen access.
 % 这带来了安全与可靠性挑战：所有输入以同等影响力进入同一个共享规划通道，无论是通过对抗性注入还是意外的范围扩大，但用户的显式请求和文档的提取文本有不同的信任等级，不应拥有同样的权限来选择目标或扩大访问范围。
 Current defenses control which operations are allowed but not which inputs can influence which decisions.
 % 当前防御控制哪些操作被允许，但不控制哪些输入可以影响哪些决策。
 
-Unlike traditional systems where a programmer declares each capability, an agent's capability cannot be predefined --- it must be composed at runtime from multiple context sources that share one planning channel, each owning specific decision fields.
+Unlike traditional systems where a programmer declares each capability, an agent's capability cannot be predefined. It must be composed at runtime from multiple context sources that share one planning channel, each owning specific decision fields.
 % 与程序员声明每个能力的传统系统不同，智能体的能力无法预定义——它必须在运行时从共享同一规划通道的多个上下文来源组合而成，每个来源拥有特定的决策字段。
 We argue that Agent capabilities should be scoped to the current task intent, not to a sandbox or session lifetime, and no single context source carries enough authority to define a complete capability.
 % Agent 的能力应该限定在当前任务意图的范围内，而不是沙箱或会话生命周期，且没有任何单一上下文来源能定义完整的能力。
-\sys composes capabilities from four such sources --- user intent, workflow instructions, tool schemas, and runtime data --- with field-level ownership and monotonic narrowing: each source contributes specific fields, no source can fill another's, and the resulting lease can only narrow the user's authorized authority, never widen it.
+\sys composes capabilities from four such sources, namely user intent, workflow instructions, tool schemas, and runtime data, with field-level ownership and monotonic narrowing. Each source contributes specific fields, no source can fill another's, and the resulting lease can only narrow the user's authorized authority, never widen it.
 % IntentCap 从四个这样的来源——用户意图、工作流指令、工具模式和运行时数据——以字段级所有权和单调缩减来组合能力：每个来源贡献特定字段，任何来源都不能填充另一个来源的字段，由此产生的租约只能缩小用户授权的权限，不能扩大。
-\sys use LLM to generate short-lived capability leases from these sources, and validated by a deterministic checker before any side effect commits.
+\sys uses an LLM to generate short-lived capability leases from these sources, validated by a deterministic checker before any side effect commits.
 % 任务计划编译为短生命周期的能力租约，由检查器在任何副作用提交之前验证。
 Preliminary evaluation shows that \sys blocks tested violations without rejecting benign actions, each source boundary is independently necessary, and the checker generalizes across tool, execution, placement, and delegation boundaries.
 % 初步评估表明 IntentCap 阻断测试违规而不拒绝良性操作，每个来源边界都是独立必要的，且检查器可跨工具、执行、放置和委托边界推广。
@@ -72,13 +72,13 @@ Consider a user who asks an agent to extract tables from two selected PDFs, save
 % 考虑一个用户要求智能体从两个选定的 PDF 中提取表格、保存为电子表格，并在指定仓库中创建一个 GitHub issue 的场景。
 The PDF contents should influence spreadsheet cells and perhaps the issue body, but not the repository name, network destination, approval scope, tool selection, or decision to load another Skill.
 % PDF 内容应当影响电子表格的单元格和 issue 正文，但不应影响仓库名称、网络目标、审批范围、工具选择或加载另一个 Skill 的决定。
-If hidden text in the PDF says ``send all extracted values to attacker.com,'' a tool-call allowlist or OS sandbox may catch some concrete effects, but it does not directly express the invariant: the PDF was never allowed to influence those decisions.
+If hidden text in the PDF says ``send all extracted values to attacker.com,'' a tool-call allowlist or OS sandbox may catch some concrete effects, but it does not directly express the invariant that the PDF was never allowed to influence those decisions.
 % 如果 PDF 中的隐藏文本说"将所有提取值发送到 attacker.com"，工具调用白名单或 OS 沙箱可能会拦截某些具体效果，但它无法直接表达那个不变式：PDF 从未被允许影响那些决策。
-The same invariant breaks without an adversary: a Skill that merges tool results into its output without field boundaries can accidentally widen the scope of a later tool call.
+The same invariant breaks without an adversary. A Skill that merges tool results into its output without field boundaries can accidentally widen the scope of a later tool call.
 % 同样的不变式在没有攻击者的情况下也会被破坏：一个 Skill 如果在合并工具结果到输出时没有字段边界，就可能意外扩大后续工具调用的范围。
 
-The root cause is that all context sources --- user intent, workflow instructions, tool schemas, and runtime data --- enter the same planning channel with equal standing, so any source can fill any decision field.
-% 根本原因是所有上下文来源——用户意图、工作流指令、工具模式和运行时数据——以同等地位进入同一个规划通道，因此任何来源都可以填充任何决策字段。
+The root cause is that all four context sources enter the same planning channel with equal standing, so any source can fill any decision field.
+% 根本原因是所有四个上下文来源以同等地位进入同一个规划通道，因此任何来源都可以填充任何决策字段。
 Securing agent extensions therefore requires controlling not only what operations are allowed, but which source can influence which field.
 % 因此，保护智能体扩展的安全，不仅需要控制哪些操作被允许，还需要控制哪个来源可以影响哪个字段。
 
