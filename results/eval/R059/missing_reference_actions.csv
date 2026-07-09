@@ -1,2 +1,0 @@
-source_run_id,domain,task_id,reference_index,event_id,tool,args_json,visibility,grounded_keys,hidden_keys
-R057,retail,2,1,retail:2:2_1,get_product_details,"{""product_id"": ""6086499569""}",hidden,,product_id

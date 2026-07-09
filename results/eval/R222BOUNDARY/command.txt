@@ -1,1 +1,0 @@
-PYTHONPATH=.:src /usr/bin/python scripts/run_boundary_gateway_probe.py --output-dir results/eval/R222BOUNDARY

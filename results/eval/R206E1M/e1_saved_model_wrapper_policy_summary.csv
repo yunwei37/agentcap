@@ -1,5 +1,0 @@
-policy,policy_family,total_model_calls,exact_reference_calls,off_reference_calls,allowed_calls,blocked_calls,exact_reference_accepted,off_reference_accepted,same_tool_wrong_args_accepted,wrong_or_hallucinated_tool_accepted,repeated_or_consumed_exact_args_accepted,blocked_off_reference_calls,exact_proposal_preservation_rate,off_reference_accept_rate,false_accept_ratio_among_allowed,tasks_with_off_reference_accepted,notes
-intentcap_saved_gateway,intentcap,58,11,47,11,47,11,0,0,0,0,47,1.0,0.0,0.0,0,Observed saved gateway behavior: only accepted calls that matched an active one-shot lease.
-intentcap_exact_lease,intentcap,58,11,47,11,47,11,0,0,0,0,47,1.0,0.0,0.0,0,Counterfactual exact event lease: accepts exact reference operation and arguments only.
-task_reference_tool_acl,tool_only_task_acl,58,11,47,33,25,11,22,22,0,0,25,1.0,0.46808511,0.66666667,15,Tool-only task ACL: accepts correct task tools even when arguments or event budget are wrong.
-broad_proposed_tool_acl,broad_tool_acl,58,11,47,58,0,11,47,22,25,0,0,1.0,1.0,0.81034483,27,Broad proposed-tool ACL: accepts all saved model-proposed calls; upper-bounds permissive tool exposure.

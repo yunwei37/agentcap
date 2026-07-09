@@ -1,2 +1,0 @@
-PYTHONPATH=src python scripts/export_injecagent_intentcap.py --benchmark-dir benchmarks/injecagent --setting enhanced --attack-family all --include-user-tool-events --output-dir results/injecagent/R012/export --check
-PYTHONPATH=src python scripts/replay_intentcap_gateway.py results/injecagent/R012/export/intentcap_trace.json --output-dir results/injecagent/R012/gateway

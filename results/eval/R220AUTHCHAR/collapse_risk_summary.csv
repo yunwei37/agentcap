@@ -1,5 +1,0 @@
-substitution_edge,events,example_event_ids
-env->agent,1663,net_connect_attacker|injection_task_0:0:send_email|injection_task_1:0:delete_file|injection_task_2:0:create_calendar_event|injection_task_3:0:search_emails
-env->tool,1662,injection_task_0:0:send_email|injection_task_1:0:delete_file|injection_task_2:0:create_calendar_event|injection_task_3:0:search_emails|injection_task_3:1:send_email
-instruction->agent,2,calendar_subagent_overdelegates_email|signed_skill_selects_github_repo
-tool->agent,1928,tool_metadata_updates_policy|FileSystem:4:7:Phi-4-Think:0:read_file|FileSystem:4:7:Phi-4-Think:1:read_multiple_files|FileSystem:6:9:Qwen3-8b-Think:0:read_file|FileSystem:6:9:Qwen3-14b-Think:0:read_file

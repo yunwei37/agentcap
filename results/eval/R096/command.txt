@@ -1,1 +1,0 @@
-PYTHONPATH=src /usr/bin/python scripts/analyze_tau2_task_gateway_mismatches.py --run-id R096 --output-dir results/eval/R096 --run-dir results/eval/R095

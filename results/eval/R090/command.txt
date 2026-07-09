@@ -1,1 +1,0 @@
-PYTHONPATH=src /usr/bin/python scripts/analyze_tau2_compiler_validity.py --output-dir results/eval/R090 --run-id R090 --compiler-run results/eval/R074 --compiler-run results/eval/R077 --replay-run results/eval/R075 --replay-run results/eval/R076 --replay-run results/eval/R078 --task-mismatch-run results/eval/R080

@@ -1,1 +1,0 @@
-python scripts/analyze_e3_weak_variant_ablation.py --output-dir results/eval/R239E3WEAKABL --run-id R239E3WEAKABL

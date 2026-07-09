@@ -1,1 +1,0 @@
-PYTHONPATH=src /usr/bin/python scripts/run_injecagent_cached_outputs_gateway.py --results-zip benchmarks/injecagent/results.zip --model-result-dir results/prompted_GPT_gpt-4-0613_hwchase17_react --setting base --attack-family all --include-counterfactual-stage2 --output-dir results/injecagent/R017

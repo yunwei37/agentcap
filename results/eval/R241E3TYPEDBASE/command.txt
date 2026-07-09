@@ -1,1 +1,0 @@
-scripts/analyze_e3_typed_provenance_baseline.py --run-id R241E3TYPEDBASE --output-dir results/eval/R241E3TYPEDBASE

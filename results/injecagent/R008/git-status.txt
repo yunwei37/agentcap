@@ -1,2 +1,0 @@
-?? results/injecagent/
-?? scripts/export_injecagent_intentcap.py

@@ -10,7 +10,7 @@
 \pagestyle{plain}
 
 \AtBeginDocument{%
-  \providecommand\BibTeX{{%
+\providecommand\BibTeX{{%
     Bib\TeX}}}
 
 \usepackage{microtype}
@@ -24,9 +24,11 @@
 \title{IntentCap: Intent-Carrying Capabilities for LLM Agent Extensions}
 
 \begin{abstract}
-LLM agents increasingly rely on extensions: Skills that inject procedural instructions and scripts, MCP servers that expose tools and data, local programs that transform files, and subagents that decompose work. These extensions create a form of authority that conventional permission systems do not model. A document, tool result, or Skill instruction may not hold a credential, yet it can influence the agent to select a tool, choose a sink, request broader access, or delegate authority. Existing defenses regulate tool calls, extension manifests, or OS-level effects, but they do not specify which context is allowed to influence which authority-bearing decisions.
+Every agent runtime today has the same blind spot: it cannot tell whose context is driving a decision. A Skill's instructions, a tool's schema, a PDF's extracted text, and the user's explicit request all flow into one planning channel, yet only one of them should be authorized to choose a destination, widen an approval scope, or delegate authority. Current defenses guard tools, parameters, and files; none of them ask which input class is filling which authority-bearing field. The result is structural: any extension that supplies data can silently supply decisions.
 
-We introduce \sys, a least-privilege authorization model for LLM agent extensions. \sys makes user intent the root principal and makes context influence an explicit capability. High-impact actions must be justified by a structured intent certificate derived from trusted user input, object selections, policy, or fresh approval. Untrusted context may be authorized to parameterize output data without being authorized to determine tool choice, destination, policy, or delegation. \sys compiles a task plan into short-lived, proof-carrying capability leases that constrain operations, arguments, data flow, temporal order, context provenance, and delegation. An LLM-assisted frontend proposes plans and leases, while a deterministic checker validates intent derivations and provenance constraints before runtime enforcement at the context, tool, MCP, sandbox, and delegation boundaries. \sys does not claim to solve prompt injection. It instead blocks unauthorized context-to-decision influence within modeled decision classes and provides the missing policy layer that lower-level enforcement backends can implement.
+We reframe agent authorization as a context-influence problem. IntentCap partitions every input into four issuer-owned classes (agent intent, procedural instruction, tool metadata, and runtime observation) and enforces a no-substitution rule: a field owned by one class cannot be proven by another. User intent, captured as structured certificates rather than natural language, becomes the root principal. Task plans compile into short-lived, proof-carrying capability leases that constrain operations, arguments, data flow, temporal order, and delegation depth. A deterministic checker validates field-owner proofs and consumes lease budget atomically, before the side effect, the prompt placement, or the delegation handoff commits. The LLM proposes; the checker decides. The trusted computing base includes the intent issuer, the checker, and a provenance tracker, but explicitly excludes the model itself.
+
+Collapsing any single issuer boundary into another causes 94\% of protected decisions to be falsely accepted across 3,823 adversarial events from AgentDojo, MCPTox, InjecAgent, and tau2-bench, evidence of an empirically minimal partition rather than a uniqueness claim. Across 38 multi-boundary enforcement events spanning tool calls, local execution, context placement, Skill instruction slots, and delegation handoffs, the checker produces zero unsafe accepts. This is not a tuning knob. It is a phase transition between authorization and theater.
 \end{abstract}
 
 \maketitle

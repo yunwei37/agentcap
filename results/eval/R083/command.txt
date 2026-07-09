@@ -1,1 +1,0 @@
-PYTHONPATH=src /usr/bin/python scripts/analyze_closest_baseline_labelers.py --run-id R083 --output-dir results/eval/R083 --trace examples/residual_closest_baseline_suite.json

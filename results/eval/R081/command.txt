@@ -1,1 +1,0 @@
-/usr/bin/python scripts/analyze_topconf_claim_evidence.py --run-id R081 --output-dir results/eval/R081

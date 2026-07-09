@@ -1,6 +1,0 @@
-policy_family,rows,benchmarks,matched_event_count,dangerous_accepted,dangerous_blocked,dangerous_accept_rate,mean_exposed_tools_weighted,max_exposed_tools,all_rows_check_control_provenance
-benchmark_or_observed_static_acl,4,InjecAgent|MCPTox,7492,5821,1671,0.77696209,203.107848,353.0,False
-exact_or_task_tool_acl,2,InjecAgent|MCPTox,3746,2149,1597,0.57367859,1.0,1.0,False
-global_catalog_acl,1,InjecAgent,1598,1598,0,1.0,330.0,330.0,False
-intentcap,2,InjecAgent|MCPTox,3746,0,3746,0.0,1.0,1.0,True
-toolkit_or_server_allowlist,3,InjecAgent|MCPTox,5894,4283,1611,0.72667119,9.736003,25.0,False

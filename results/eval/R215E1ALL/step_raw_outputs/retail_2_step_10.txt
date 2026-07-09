@@ -1,5 +1,0 @@
-{
-  "returncode": 1,
-  "stderr": "0.00.068.800 I llama_completion: llama backend init\n0.00.068.818 I llama_completion: load the model and apply lora adapter, if any\n0.02.007.009 I llama_completion: llama threadpool init, n_threads = 4\n0.02.007.854 I llama_completion: chat template is available, enabling conversation mode (disable it with -no-cnv)\n0.02.007.854 W *** User-specified prompt will pre-start conversation, did you mean to set --system-prompt (-sys) instead?\n0.02.007.924 I llama_completion: chat template example:\n<|im_start|>system\nYou are a helpful assistant<|im_end|>\n<|im_start|>user\nHello<|im_end|>\n<|im_start|>assistant\nHi there<|im_end|>\n<|im_start|>user\nHow are you?<|im_end|>\n<|im_start|>assistant\n\n0.02.007.924 I \n0.02.007.975 I system_info: n_threads = 4 (n_threads_batch = 4) / 24 | CUDA : ARCHS = 1200 | USE_GRAPHS = 1 | PEER_MAX_BATCH_SIZE = 128 | BLACKWELL_NATIVE_FP4 = 1 | CPU : SSE3 = 1 | SSSE3 = 1 | AVX = 1 | AVX_VNNI = 1 | AVX2 = 1 | F16C = 1 | FMA = 1 | BMI2 = 1 | LLAMAFILE = 1 | OPENMP = 1 | REPACK = 1 | \n0.02.007.976 I \n0.02.014.225 E llama_completion: prompt is too long (9708 tokens, max 8188)\n",
-  "stdout": ""
-}

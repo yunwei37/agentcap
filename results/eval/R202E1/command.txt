@@ -1,1 +1,0 @@
-python scripts/build_e1_security_wrapper_matrix.py --run-id R202E1 --injecagent-summary results/injecagent/R019/authority_summary.json --mcptox-summary results/mcptox/R020/authority_summary.json --output-dir results/eval/R202E1

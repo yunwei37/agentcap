@@ -1,1 +1,0 @@
-PYTHONPATH=src /usr/bin/python scripts/analyze_mcptox_authority_minimization.py --trace results/mcptox/R007/intentcap_trace.json --response-all benchmarks/mcptox/response_all.json --output-dir results/mcptox/R020

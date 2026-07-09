@@ -1,1 +1,0 @@
-PYTHONPATH=src /usr/bin/python scripts/analyze_tau2_reference_feasibility.py --run-id R060 --run-dir results/eval/R057 --output-dir results/eval/R060

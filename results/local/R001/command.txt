@@ -1,1 +1,0 @@
-PYTHONPATH=src python -m intentcap.checker examples/local_pdf_wrong_sink.json > results/local/R001/verdicts.json

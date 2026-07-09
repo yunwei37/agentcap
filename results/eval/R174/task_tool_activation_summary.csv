@@ -1,4 +1,0 @@
-source_run_id,domain,task_id,tool_activation_gaps,eligible_read_activation_candidates,write_or_high_impact_activation_blockers,missing_visibility_blockers,activation_event_ids
-R169,airline,3,1,1,0,0,airline:3:3_1
-R169,airline,4,1,1,0,0,airline:4:4_0
-R169,retail,2,1,0,0,1,
