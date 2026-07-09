@@ -25,39 +25,136 @@
 \begin{document}
 
 \title{IntentCap: Intent-Carrying Capabilities for LLM Agent Extensions}
+% IntentCap：面向 LLM 智能体扩展的意图承载能力模型
 
 \begin{abstract}
-Every agent runtime today has the same blind spot: it cannot tell whose context is driving a decision. A Skill's instructions, a tool's schema, a PDF's extracted text, and the user's explicit request all flow into one planning channel, yet only one of them should be authorized to choose a destination, widen an approval scope, or delegate authority. Current defenses guard tools, parameters, and files; none of them ask which input class is filling which authority-bearing field. The result is structural: any extension that supplies data can silently supply decisions.
+Every agent runtime today has the same blind spot: it cannot tell whose context is driving a decision.
+% 当今每个智能体运行时都有同一个盲区：它无法分辨是谁的上下文在驱动决策。
+A Skill's instructions, a tool's schema, a PDF's extracted text, and the user's explicit request all flow into one planning channel, yet only one of them should be authorized to choose a destination, widen an approval scope, or delegate authority.
+% Skill 的指令、工具的模式定义、PDF 的提取文本和用户的显式请求都流入同一个规划通道，但其中只有一个应被授权选择目标、扩大审批范围或委托权限。
+Current defenses guard tools, parameters, and files; none of them ask which input class is filling which authority-bearing field.
+% 当前的防御机制保护工具、参数和文件，但没有一个追问哪类输入正在填充哪个涉及权限的字段。
+The result is structural: any extension that supplies data can silently supply decisions.
+% 结果是结构性的：任何提供数据的扩展都可以悄然提供决策。
 
-We reframe agent authorization as a context-influence problem. \sys partitions every input into four issuer-owned classes (agent intent, procedural instruction, tool metadata, and runtime observation) and enforces a no-substitution rule: a field owned by one class cannot be proven by another. User intent, captured as structured certificates rather than natural language, becomes the root principal. Task plans compile into short-lived, proof-carrying capability leases that constrain operations, arguments, data flow, temporal order, and delegation depth. A deterministic checker validates field-owner proofs and consumes lease budget atomically, before the side effect, the prompt placement, or the delegation handoff commits. The LLM proposes; the checker decides. The trusted computing base includes the intent issuer, the checker, and a provenance tracker, but explicitly excludes the model itself.
+We reframe agent authorization as a context-influence problem.
+% 我们将智能体授权重新定义为上下文影响力问题。
+\sys partitions every input into four issuer-owned classes (agent intent, procedural instruction, tool metadata, and runtime observation) and enforces a no-substitution rule: a field owned by one class cannot be proven by another.
+% IntentCap 将每个输入划分为四个发行者所有的类别（智能体意图、过程式指令、工具元数据和运行时观测），并执行不可替代规则：一个类别所有的字段不能由另一个类别来证明。
+User intent, captured as structured certificates rather than natural language, becomes the root principal.
+% 用户意图以结构化证书而非自然语言的形式捕获，成为根主体。
+Task plans compile into short-lived, proof-carrying capability leases that constrain operations, arguments, data flow, temporal order, and delegation depth.
+% 任务计划编译为短生命周期、携带证明的能力租约，约束操作、参数、数据流、时序和委托深度。
+A deterministic checker validates field-owner proofs and consumes lease budget atomically, before the side effect, the prompt placement, or the delegation handoff commits.
+% 确定性检查器在副作用、提示放置或委托交接提交之前，原子地验证字段所有者证明并消耗租约预算。
+The LLM proposes; the checker decides.
+% LLM 提议，检查器决策。
+The trusted computing base includes the intent issuer, the checker, and a provenance tracker, but explicitly excludes the model itself.
+% 可信计算基 (TCB) 包括意图发行者、检查器和来源追踪器，但明确排除模型本身。
 
-Removing issuer ownership entirely causes 94\% of checker-denied protected decisions to be falsely accepted across 3,823 events from AgentDojo, MCPTox, InjecAgent, and tau2-bench; even the weakest single-edge collapse falsely accepts over 50\%. Across 38 multi-boundary enforcement events spanning tool calls, local execution, context placement, Skill instruction slots, and delegation handoffs, the checker produces zero unsafe accepts. This is not a tuning knob. It is a phase transition between authorization and theater.
+Removing issuer ownership entirely causes 94\% of checker-denied protected decisions to be falsely accepted across 3,823 events from AgentDojo, MCPTox, InjecAgent, and tau2-bench; even the weakest single-edge collapse falsely accepts over 50\%.
+% 完全移除发行者所有权会导致来自 AgentDojo、MCPTox、InjecAgent 和 tau2-bench 的 3,823 个事件中 94\% 的检查器拒绝的受保护决策被错误接受；即使最弱的单边合并也会错误接受超过 50\%。
+Across 38 multi-boundary enforcement events spanning tool calls, local execution, context placement, Skill instruction slots, and delegation handoffs, the checker produces zero unsafe accepts.
+% 在涵盖工具调用、本地执行、上下文放置、Skill 指令槽和委托交接的 38 个多边界执行事件中，检查器产生零个不安全接受。
+This is not a tuning knob.
+% 这不是一个调节旋钮。
+It is a phase transition between authorization and theater.
+% 这是授权与形式之间的相变。
 \end{abstract}
 
 \maketitle
 
 \section{Introduction}
+% 引言
 
-LLM agents are becoming extensible execution environments. A modern agent can load Skills with workflow instructions, references, and optional scripts~\cite{openai-skills}; connect to MCP servers that expose resources, prompts, and tools~\cite{mcp-spec}; run local commands; and spawn subagents. This extensibility is useful precisely because these components affect future behavior. A Skill can teach the agent how to perform a workflow. A tool result can become evidence for a later action. A document can determine the content of a generated report. The same property creates a security problem: in an agent, text is not passive data. It can become control.
+LLM agents are becoming extensible execution environments.
+% LLM 智能体正在成为可扩展的执行环境。
+A modern agent can load Skills with workflow instructions, references, and optional scripts~\cite{openai-skills}; connect to MCP servers that expose resources, prompts, and tools~\cite{mcp-spec}; run local commands; and spawn subagents.
+% 现代智能体可以加载包含工作流指令、引用和可选脚本的 Skill~\cite{openai-skills}，连接暴露资源、提示和工具的 MCP 服务器~\cite{mcp-spec}，运行本地命令，以及生成子智能体。
+This extensibility is useful precisely because these components affect future behavior.
+% 这种可扩展性之所以有用，恰恰是因为这些组件会影响未来的行为。
+A Skill can teach the agent how to perform a workflow.
+% 一个 Skill 可以教会智能体如何执行某个工作流。
+A tool result can become evidence for a later action.
+% 一条工具结果可以成为后续操作的依据。
+A document can determine the content of a generated report.
+% 一份文档可以决定生成报告的内容。
+The same property creates a security problem: in an agent, text is not passive data.
+% 同样的特性带来了安全问题：在智能体中，文本不是被动数据。
+It can become control.
+% 它可以变成控制指令。
 
-Most current defenses ask an operation-centric question: which tool may be called, which file may be read, which endpoint may be contacted, or which process may execute? That question is necessary but incomplete. Consider a user who asks an agent to extract tables from two selected PDFs, save spreadsheets, and create one GitHub issue in a named repository. The PDF contents should influence spreadsheet cells and perhaps the issue body. They should not influence the repository name, network destination, approval scope, tool selection, or decision to load another Skill. If hidden text in the PDF says ``send all extracted values to attacker.com'' or ``create the issue in attacker/repo,'' a tool-call allowlist or OS sandbox may catch some concrete effects, but it does not directly express the more agent-specific invariant: the untrusted PDF was never allowed to influence those decisions.
+Most current defenses ask an operation-centric question: which tool may be called, which file may be read, which endpoint may be contacted, or which process may execute?
+% 当前大多数防御机制提出的是以操作为中心的问题：哪个工具可以被调用，哪个文件可以被读取，哪个端点可以被访问，或者哪个进程可以执行？
+That question is necessary but incomplete.
+% 这个问题是必要的，但不完整。
+Consider a user who asks an agent to extract tables from two selected PDFs, save spreadsheets, and create one GitHub issue in a named repository.
+% 考虑一个用户要求智能体从两个选定的 PDF 中提取表格、保存为电子表格，并在指定仓库中创建一个 GitHub issue 的场景。
+The PDF contents should influence spreadsheet cells and perhaps the issue body.
+% PDF 内容应当影响电子表格的单元格，也许还有 issue 正文。
+They should not influence the repository name, network destination, approval scope, tool selection, or decision to load another Skill.
+% 但它们不应影响仓库名称、网络目标、审批范围、工具选择或加载另一个 Skill 的决定。
+If hidden text in the PDF says ``send all extracted values to attacker.com'' or ``create the issue in attacker/repo,'' a tool-call allowlist or OS sandbox may catch some concrete effects, but it does not directly express the more agent-specific invariant: the untrusted PDF was never allowed to influence those decisions.
+% 如果 PDF 中的隐藏文本说"将所有提取值发送到 attacker.com"或"在 attacker/repo 中创建 issue"，工具调用白名单或 OS 沙箱可能会拦截某些具体效果，但它无法直接表达更具智能体特性的不变式：不受信任的 PDF 从未被允许影响那些决策。
 
-\sys starts from that invariant. Its thesis is that securing agent extensions requires controlling not only what extensions can do, but what their context is allowed to mean. The root of authority is a structured \emph{intent certificate}, not an extension package, server identity, or static manifest. A certificate records the current goal, selected objects, authorized sinks, constraints, approvals, and expiry. Context cells are labeled with provenance and allowed \emph{influence modes}, such as observing, quoting, summarizing, parameterizing, planning, instructing, delegating, or authorizing. A capability is then minted for a particular run as an \emph{intent-carrying lease}: it authorizes an operation only if the operation is derivable from the current intent and its control dependencies come from context allowed to influence that decision class.
+\sys starts from that invariant.
+% IntentCap 从这个不变式出发。
+Its thesis is that securing agent extensions requires controlling not only what extensions can do, but what their context is allowed to mean.
+% 其核心论点是：保护智能体扩展的安全，不仅需要控制扩展能做什么，还需要控制其上下文被允许意味着什么。
+The root of authority is a structured \emph{intent certificate}, not an extension package, server identity, or static manifest.
+% 权限的根源是结构化的\emph{意图证书} (intent certificate)，而非扩展包、服务器身份或静态清单。
+A certificate records the current goal, selected objects, authorized sinks, constraints, approvals, and expiry.
+% 一份证书记录当前目标、选定对象、授权的输出目标、约束条件、批准信息和过期时间。
+Context cells are labeled with provenance and allowed \emph{influence modes}, such as observing, quoting, summarizing, parameterizing, planning, instructing, delegating, or authorizing.
+% 上下文单元被标注来源和允许的\emph{影响模式} (influence modes)，如观察、引用、摘要、参数化、规划、指示、委托或授权。
+A capability is then minted for a particular run as an \emph{intent-carrying lease}: it authorizes an operation only if the operation is derivable from the current intent and its control dependencies come from context allowed to influence that decision class.
+% 然后为特定运行铸造一个\emph{意图承载租约} (intent-carrying lease) 形式的能力：仅当操作可从当前意图推导出且其控制依赖来自被允许影响该决策类别的上下文时，才授权该操作。
 
-This framing deliberately differs from extension-interface and OS-enforcement work. EIM and bpftime model application extensions by representing extension features as resources and granting capabilities at extension entries~\cite{eim-bpftime}. \sys instead protects future agent decisions: tool choice, sink selection, authority request, policy update, and delegation. ActPlane enforces agent policies below the tool layer using OS-level information-flow checks and eBPF-style monitoring~\cite{actplane}. \sys instead decides which policy is justified by the user intent and context provenance; ActPlane is a possible backend, not the conceptual center. SkillGuard is closer because it treats Skills as permission-bearing artifacts and jointly regulates context and action behavior~\cite{skillguard}; \sys is run-centric and cross-extension, asking what this run may allow this Skill, this MCP server, this document, and this subagent to influence.
+This framing deliberately differs from extension-interface and OS-enforcement work.
+% 这一框架刻意区别于扩展接口和操作系统执行层面的工作。
+EIM and bpftime model application extensions by representing extension features as resources and granting capabilities at extension entries~\cite{eim-bpftime}.
+% EIM 和 bpftime 通过将扩展功能表示为资源并在扩展入口授予能力来建模应用扩展~\cite{eim-bpftime}。
+\sys instead protects future agent decisions: tool choice, sink selection, authority request, policy update, and delegation.
+% IntentCap 转而保护智能体的未来决策：工具选择、输出目标选定、权限请求、策略更新和委托。
+ActPlane enforces agent policies below the tool layer using OS-level information-flow checks and eBPF-style monitoring~\cite{actplane}.
+% ActPlane 使用操作系统级信息流检查和 eBPF 风格的监控在工具层之下执行智能体策略~\cite{actplane}。
+\sys instead decides which policy is justified by the user intent and context provenance; ActPlane is a possible backend, not the conceptual center.
+% IntentCap 转而决定哪些策略可由用户意图和上下文来源证明其合理性；ActPlane 是一个可能的后端，而非概念核心。
+SkillGuard is closer because it treats Skills as permission-bearing artifacts and jointly regulates context and action behavior~\cite{skillguard}; \sys is run-centric and cross-extension, asking what this run may allow this Skill, this MCP server, this document, and this subagent to influence.
+% SkillGuard 更为接近，因为它将 Skill 视为承载权限的制品，并联合管控上下文和行为~\cite{skillguard}；IntentCap 是以运行为中心且跨扩展的，追问本次运行可以允许该 Skill、该 MCP 服务器、该文档和该子智能体影响什么。
 
 \section{Design}
+% 设计
 
-The root cause of context privilege is two structural mismatches. First, \emph{issuer collapse}: user intent, Skill instructions, tool metadata, and runtime observations share one planning channel, so one class can fill another's authority fields. Second, \emph{authority-state split}: lease budget, expiry, and delegation state are checked by separate guards, so a consumed one-shot lease can be reused or widened between boundaries.
+The root cause of context privilege is two structural mismatches.
+% 上下文权限的根本原因是两个结构性不匹配。
+First, \emph{issuer collapse}: user intent, Skill instructions, tool metadata, and runtime observations share one planning channel, so one class can fill another's authority fields.
+% 第一，\emph{发行者合并} (issuer collapse)：用户意图、Skill 指令、工具元数据和运行时观测共享同一个规划通道，因此一个类别可以填充另一个类别的权限字段。
+Second, \emph{authority-state split}: lease budget, expiry, and delegation state are checked by separate guards, so a consumed one-shot lease can be reused or widened between boundaries.
+% 第二，\emph{权限-状态分裂} (authority-state split)：租约预算、过期时间和委托状态由各自独立的守卫检查，因此已消耗的一次性租约可以在边界之间被重用或扩大。
 
-\sys addresses both by making the authorization unit a \emph{pre-effect commit record} rather than an action-level predicate. Figure~\ref{fig:arch} shows the pipeline. A trusted issuer canonicalizes user intent into a structured certificate. A context labeler assigns provenance and influence modes. An untrusted LLM-assisted compiler proposes plans and candidate leases. A deterministic checker validates field-owner proofs and atomically consumes lease state via a single transition:
+\sys addresses both by making the authorization unit a \emph{pre-effect commit record} rather than an action-level predicate.
+% IntentCap 通过将授权单元设为\emph{预效果提交记录} (pre-effect commit record) 而非操作级谓词来解决这两个问题。
+Figure~\ref{fig:arch} shows the pipeline.
+% 图~\ref{fig:arch} 展示了该流水线。
+A trusted issuer canonicalizes user intent into a structured certificate.
+% 受信任的发行者将用户意图规范化为结构化证书。
+A context labeler assigns provenance and influence modes.
+% 上下文标注器分配来源和影响模式。
+An untrusted LLM-assisted compiler proposes plans and candidate leases.
+% 不受信任的 LLM 辅助编译器提议计划和候选租约。
+A deterministic checker validates field-owner proofs and atomically consumes lease state via a single transition:
+% 确定性检查器通过单次转换原子地验证字段所有者证明并消耗租约状态：
 \vspace{-2pt}
 \begin{small}
 \[\mathsf{check\_and\_consume}(e,\mathit{lease},\mathit{proofs},\mathit{prov},\sigma) \rightarrow \mathsf{allow}(\sigma'\!,\mathit{audit}) \mid \mathsf{deny}(\mathit{reason})\]
 \end{small}
 \vspace{-4pt}
 
-Every authority-changing boundary---tool call, local execution, context placement, Skill instruction slot, or delegation handoff---must submit this record \emph{before} the side effect commits. The checker is the sole writer of lease state; adapters cannot cache decisions or mutate budgets locally.
+Every authority-changing boundary---tool call, local execution, context placement, Skill instruction slot, or delegation handoff---must submit this record \emph{before} the side effect commits.
+% 每个改变权限的边界——工具调用、本地执行、上下文放置、Skill 指令槽或委托交接——都必须在副作用提交\emph{之前}提交此记录。
+The checker is the sole writer of lease state; adapters cannot cache decisions or mutate budgets locally.
+% 检查器是租约状态的唯一写入者；适配器不能在本地缓存决策或修改预算。
 
 \begin{figure}[t]
 \centering
@@ -97,28 +194,79 @@ Every authority-changing boundary---tool call, local execution, context placemen
 \end{figure}
 
 \paragraph{Four authority-input classes.}
-\sys partitions inputs into four issuer-owned proof boundaries: \emph{agent} context (user intent, selected objects/sinks, approvals), \emph{instruction} context (system policy, endorsed Skill/manual procedures), \emph{tool} context (MCP/registry schemas, credential scopes, sandbox contracts), and \emph{env} context (runtime observations, tool results, file state, script outputs). The \textbf{no-substitution rule} requires that each protected field be proven by its owner class: tool metadata cannot supply user-authorized sinks, runtime observations cannot supply instruction authority, and Skill text cannot widen approval scope. Two classes may merge only if issuer, forgeable surface, owned fields, and lifecycle authority are identical.
+% 四类权限输入。
+\sys partitions inputs into four issuer-owned proof boundaries: \emph{agent} context (user intent, selected objects/sinks, approvals), \emph{instruction} context (system policy, endorsed Skill/manual procedures), \emph{tool} context (MCP/registry schemas, credential scopes, sandbox contracts), and \emph{env} context (runtime observations, tool results, file state, script outputs).
+% IntentCap 将输入划分为四个发行者所有的证明边界：\emph{agent} 上下文（用户意图、选定对象/输出目标、批准），\emph{instruction} 上下文（系统策略、认可的 Skill/手动流程），\emph{tool} 上下文（MCP/注册表模式、凭证范围、沙箱合约），以及 \emph{env} 上下文（运行时观测、工具结果、文件状态、脚本输出）。
+The \textbf{no-substitution rule} requires that each protected field be proven by its owner class: tool metadata cannot supply user-authorized sinks, runtime observations cannot supply instruction authority, and Skill text cannot widen approval scope.
+% \textbf{不可替代规则}要求每个受保护字段必须由其所有者类别来证明：工具元数据不能提供用户授权的输出目标，运行时观测不能提供指令权限，Skill 文本不能扩大审批范围。
+Two classes may merge only if issuer, forgeable surface, owned fields, and lifecycle authority are identical.
+% 两个类别仅在发行者、可伪造面、所有字段和生命周期权限完全相同时才可合并。
 
 \paragraph{Leases and lifecycle.}
-A lease binds operation, object, arguments, intent derivation, control/data provenance, temporal guards, budget, expiry, and delegation depth. Leases are short-lived, consumable, and non-self-widening: a one-shot issue lease is consumed on first use, and a child subagent receives only attenuated capabilities. The checker validates all of these atomically in a single transition, preventing the authority-state split where separate guards lose track of consumption or delegation across boundaries.
+% 租约与生命周期。
+A lease binds operation, object, arguments, intent derivation, control/data provenance, temporal guards, budget, expiry, and delegation depth.
+% 一个租约绑定操作、对象、参数、意图推导、控制/数据来源、时序守卫、预算、过期时间和委托深度。
+Leases are short-lived, consumable, and non-self-widening: a one-shot issue lease is consumed on first use, and a child subagent receives only attenuated capabilities.
+% 租约是短生命周期、可消耗且不可自扩展的：一次性 issue 租约在首次使用时即被消耗，子智能体只接收衰减后的能力。
+The checker validates all of these atomically in a single transition, preventing the authority-state split where separate guards lose track of consumption or delegation across boundaries.
+% 检查器在单次转换中原子地验证所有这些属性，防止各独立守卫在边界之间丢失消耗或委托状态的权限-状态分裂问题。
 
 \section{Preliminary Evidence}
+% 初步证据
 
 \textbf{RQ1: Can the event model express benign behavior without over-blocking?}
-We replay 3,746 protected-decision events extracted from AgentDojo, MCPTox, InjecAgent, and tau2-bench traces through \sys and several same-event baselines~\cite{agentdojo,mcptox,injecagent,tau2bench}. \sys produces 0 unsafe accepts. On the utility side, \sys covers all 3,813 benign reference actions in the tau2-style proxy and passes 2,554 of 2,556 applicable tool-oracle checks.
+% \textbf{RQ1：事件模型能否在不过度阻断的情况下表达良性行为？}
+We replay 3,746 protected-decision events extracted from AgentDojo, MCPTox, InjecAgent, and tau2-bench traces through \sys and several same-event baselines~\cite{agentdojo,mcptox,injecagent,tau2bench}.
+% 我们将从 AgentDojo、MCPTox、InjecAgent 和 tau2-bench 追踪中提取的 3,746 个受保护决策事件通过 IntentCap 和多个同事件基线进行重放~\cite{agentdojo,mcptox,injecagent,tau2bench}。
+\sys produces 0 unsafe accepts.
+% IntentCap 产生 0 个不安全接受。
+On the utility side, \sys covers all 3,813 benign reference actions in the tau2-style proxy and passes 2,554 of 2,556 applicable tool-oracle checks.
+% 在可用性方面，IntentCap 覆盖了 tau2 风格代理中全部 3,813 个良性参考操作，并通过了 2,556 个适用工具预言检查中的 2,554 个。
 
 \textbf{RQ2: Is the four-class partition a safety requirement or a naming choice?}
-We ablate the issuer-ownership and lifecycle dimensions on the same 3,823 checker-denied events. Removing issuer ownership entirely (collapsing all four classes into generic trusted context) causes 3,593 false accepts (94\%). Even the weakest single-edge collapse (tool$\rightarrow$agent) falsely accepts 1,928 events (50\%). On 7 controlled workflow residuals, a post-hoc policy DSL that checks predicates without field ownership falsely accepts 7/7; splitting lifecycle state across separate guards falsely accepts 5/7.
+% \textbf{RQ2：四类划分是安全要求还是命名选择？}
+We ablate the issuer-ownership and lifecycle dimensions on the same 3,823 checker-denied events.
+% 我们在同样的 3,823 个检查器拒绝事件上消融发行者所有权和生命周期维度。
+Removing issuer ownership entirely (collapsing all four classes into generic trusted context) causes 3,593 false accepts (94\%).
+% 完全移除发行者所有权（将四个类别合并为通用受信任上下文）导致 3,593 个错误接受（94\%）。
+Even the weakest single-edge collapse (tool$\rightarrow$agent) falsely accepts 1,928 events (50\%).
+% 即使最弱的单边合并（tool$\rightarrow$agent）也错误接受了 1,928 个事件（50\%）。
+On 7 controlled workflow residuals, a post-hoc policy DSL that checks predicates without field ownership falsely accepts 7/7; splitting lifecycle state across separate guards falsely accepts 5/7.
+% 在 7 个受控工作流残差上，一个不检查字段所有权只检查谓词的事后策略 DSL 错误接受了 7/7；将生命周期状态拆分到各独立守卫则错误接受了 5/7。
 
 \textbf{RQ3: Does the same commit API work beyond tool calls?}
-We test the \texttt{check\_and\_consume} transition across five boundary types: local env side effects, context placement, Skill instruction slots, delegation handoffs, and an OS-monitor-style replay backend. Across 38 checker-submitted boundary events, \sys allows 17 authorized effects and blocks 21 violations, with 0 unsafe executions or placements and 0 checker/monitor mismatches.
+% \textbf{RQ3：同一提交 API 能否超越工具调用生效？}
+We test the \texttt{check\_and\_consume} transition across five boundary types: local env side effects, context placement, Skill instruction slots, delegation handoffs, and an OS-monitor-style replay backend.
+% 我们在五种边界类型上测试 \texttt{check\_and\_consume} 转换：本地环境副作用、上下文放置、Skill 指令槽、委托交接和 OS 监视器风格的重放后端。
+Across 38 checker-submitted boundary events, \sys allows 17 authorized effects and blocks 21 violations, with 0 unsafe executions or placements and 0 checker/monitor mismatches.
+% 在 38 个提交给检查器的边界事件中，IntentCap 允许了 17 个授权效果并阻断了 21 个违规，0 个不安全执行或放置，0 个检查器/监视器不匹配。
 
 \textbf{RQ4: Are leases auditable authority objects?}
-We adjudicate 24 lease labels covering InjecAgent, MCPTox, and tau2 samples, and score 144 policy rows against them. All \sys policy families have oracle distance~0; every non-\sys baseline has positive distance. This is author-adjudicated supporting evidence, not independent expert-oracle validation.
+% \textbf{RQ4：租约是否为可审计的权限对象？}
+We adjudicate 24 lease labels covering InjecAgent, MCPTox, and tau2 samples, and score 144 policy rows against them.
+% 我们裁定了覆盖 InjecAgent、MCPTox 和 tau2 样本的 24 个租约标签，并据此对 144 个策略行进行评分。
+All \sys policy families have oracle distance~0; every non-\sys baseline has positive distance.
+% 所有 IntentCap 策略族的预言距离为 0；每个非 IntentCap 基线都有正距离。
+This is author-adjudicated supporting evidence, not independent expert-oracle validation.
+% 这是作者裁定的辅助证据，而非独立的专家预言验证。
 
 \section{Positioning}
+% 定位
 
-\sys should be read as a capability compiler and checker for agent decisions. EIM and bpftime ask how an extension can safely use host-provided resources. ActPlane asks how policy can be enforced below the tool layer. SkillGuard asks how a Skill package can be governed as a permission-bearing artifact. \sys asks a different question: which future decisions may this context influence, under this user intent, and with what proof? That distinction is the paper's center of gravity. It keeps the LLM outside the trusted computing base, treats the current user goal as the root of authority, and makes context influence a least-privilege capability rather than an implicit side effect of putting text in the prompt.
+\sys should be read as a capability compiler and checker for agent decisions.
+% IntentCap 应被理解为面向智能体决策的能力编译器和检查器。
+EIM and bpftime ask how an extension can safely use host-provided resources.
+% EIM 和 bpftime 探讨的是扩展如何安全地使用宿主提供的资源。
+ActPlane asks how policy can be enforced below the tool layer.
+% ActPlane 探讨的是如何在工具层之下执行策略。
+SkillGuard asks how a Skill package can be governed as a permission-bearing artifact.
+% SkillGuard 探讨的是如何将 Skill 包作为承载权限的制品进行治理。
+\sys asks a different question: which future decisions may this context influence, under this user intent, and with what proof?
+% IntentCap 提出了一个不同的问题：在当前用户意图下，此上下文可以影响哪些未来决策，并以何种证明？
+That distinction is the paper's center of gravity.
+% 这一区分是本文的核心要义。
+It keeps the LLM outside the trusted computing base, treats the current user goal as the root of authority, and makes context influence a least-privilege capability rather than an implicit side effect of putting text in the prompt.
+% 它将 LLM 保持在可信计算基之外，将当前用户目标视为权限的根源，并将上下文影响力设为最小权限能力，而非将文本放入提示中的隐式副作用。
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}
