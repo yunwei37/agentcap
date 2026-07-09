@@ -62,7 +62,7 @@ This extensibility is useful precisely because these components affect future be
 \section{Motivation}
 % 动机
 
-The same property creates a security and safety problem: in an agent, any input can influence any action, whether through adversarial injection~\cite{greshake-injection} or accidental scope widening, a generalized form of the confused deputy problem~\cite{confused-deputy}.
+The same property creates a security and safety problem. In an agent, any input can influence any action, whether through adversarial injection~\cite{greshake-injection} or accidental scope widening, a generalized form of the confused deputy problem~\cite{confused-deputy}.
 % 同样的特性带来了安全与可靠性问题：在智能体中，任何输入都可以影响任何操作，无论是通过对抗性注入~\cite{greshake-injection}还是意外的范围扩大——混淆代理问题的泛化形式~\cite{confused-deputy}。
 Most current defenses ask an operation-centric question: which tool may be called, which file may be read, which endpoint may be contacted, or which process may execute~\cite{isolategpt,progent,camel}?
 % 当前大多数防御机制提出的是以操作为中心的问题：哪个工具可以被调用，哪个文件可以被读取，哪个端点可以被访问，或者哪个进程可以执行~\cite{isolategpt,progent,camel}？
@@ -91,9 +91,9 @@ The design targets four properties: (1) field-level ownership, where each decisi
 
 Figure~\ref{fig:arch} shows the pipeline.
 % 图~\ref{fig:arch} 展示了该流水线。
-A source labeler classifies each input by position: user messages are always user intent, tool responses are always runtime data, and Skill/MCP metadata is labeled at load time. Inputs with ambiguous provenance (e.g., documents pasted by the user) require additional classification, which the current prototype handles conservatively by denying authority fields from ambiguous sources.
+A source labeler classifies each input by position. User messages are always user intent, tool responses are always runtime data, and Skill/MCP metadata is labeled at load time. Inputs with ambiguous provenance (e.g., documents pasted by the user) require additional classification, which the current prototype handles conservatively by denying authority fields from ambiguous sources.
 % 来源标注器按位置分类每个输入：用户消息始终是用户意图，工具响应始终是运行时数据，Skill/MCP 元数据在加载时标注。来源模糊的输入（如用户粘贴的文档）需要额外分类，当前原型保守地拒绝模糊来源的权限字段。
-The intent issuer extracts the user's maximum authority from structured fields in the user message (selected files, named destinations, explicit approvals). The compiler takes this structured intent and the active schemas as input and emits candidate leases whose fields are populated from the labeled sources. Candidate leases can only narrow the user's authority, never widen it. The compiler may select a subset of authorized destinations or request a shorter budget, but it cannot add destinations, raise approval scope, or grant fields that the user intent does not cover.
+The intent issuer extracts the user's maximum authority from structured fields in the user message, such as selected files, named destinations, and explicit approvals. The compiler takes this structured intent and the active schemas as input and emits candidate leases whose fields are populated from the labeled sources. Candidate leases can only narrow the user's authority, never widen it. The compiler may select a subset of authorized destinations or request a shorter budget, but it cannot add destinations, raise approval scope, or grant fields that the user intent does not cover.
 % 来源分类是位置性的：用户消息始终是用户意图，工具响应始终是运行时数据，Skill/MCP 元数据在加载时标注。编译器以用户请求和活跃模式为输入，输出候选租约，其字段从已标注的来源填充。用户意图定义任务的最大权限，候选租约只能缩小该权限，不能扩大：编译器可以选择授权目标的子集或请求更短的预算，但不能添加目标、提高审批范围或授予用户意图未涵盖的字段。
 
 
@@ -170,7 +170,7 @@ On 7 crafted multi-step workflow scenarios, a policy DSL that checks predicates 
 
 \textbf{RQ3: Does the same commit API work beyond tool calls?}
 % \textbf{RQ3：同一提交 API 能否超越工具调用生效？}
-The \texttt{check\_and\_consume} transition generalizes across five boundary types: local env side effects, context placement, Skill instruction slots, delegation handoffs, and an OS monitor replay backend.
+The \texttt{check\_and\_consume} transition generalizes across five boundary types, including local env side effects, context placement, Skill instruction slots, delegation handoffs, and an OS monitor replay backend.
 % \texttt{check\_and\_consume} 转换可推广到五种边界类型：本地环境副作用、上下文放置、Skill 指令槽、委托交接和 OS 监视器风格的重放后端。
 Across 38 enforcement checks, \sys allows 17 authorized effects and blocks 21 violations, with 0 unsafe executions or placements and 0 checker/monitor mismatches. This demonstrates functional correctness across boundary types, not production coverage.
 % 在 38 个提交给检查器的边界事件中，IntentCap 允许了 17 个授权效果并阻断了 21 个违规，0 个不安全执行或放置，0 个检查器/监视器不匹配。这展示了跨边界类型的功能正确性，而非生产规模的覆盖。
@@ -182,7 +182,7 @@ Across 24 manually labeled leases covering InjecAgent, MCPTox, and tau2 samples,
 
 \section{Discussion}
 
-\sys draws on capability-based security~\cite{dennis-vanhorn}, least privilege~\cite{saltzer-schroeder}, and information flow control~\cite{denning-lattice}, but addresses a problem those systems do not face: in an agent, the capability cannot be declared by a programmer at compile time. It must be composed at runtime from context sources that share a single neural planning channel, where any source can impersonate any other---a confused deputy scenario~\cite{confused-deputy} in which the deputy is a neural planner.
+\sys draws on capability-based security~\cite{dennis-vanhorn}, least privilege~\cite{saltzer-schroeder}, and information flow control~\cite{denning-lattice}, but addresses a problem those systems do not face. In an agent, the capability cannot be declared by a programmer at compile time. It must be composed at runtime from context sources that share a single neural planning channel, where any source can impersonate any other, a confused deputy scenario~\cite{confused-deputy} in which the deputy is a neural planner.
 % IntentCap 借鉴了基于能力的安全~\cite{dennis-vanhorn}、最小权限原则~\cite{saltzer-schroeder}和信息流控制~\cite{denning-lattice}，但解决了这些系统不面对的问题：在智能体中，能力无法由程序员在编译时声明——它必须在运行时从共享同一个神经规划通道的上下文来源组合而成，其中任何来源都可以冒充其他来源——一种混淆代理场景~\cite{confused-deputy}，其中代理是一个神经规划器。
 CaMeL separates data from control to defeat prompt injections by design~\cite{camel}. IsolateGPT isolates third-party app interactions via separate LLM instances~\cite{isolategpt}. Progent defines a policy language for fine-grained tool-call permissions~\cite{progent}. EIM and bpftime ask how an extension can safely use host-provided resources~\cite{eim-bpftime}. ActPlane asks how policy can be enforced below the tool layer~\cite{actplane}. SkillGuard asks how a Skill package can carry and enforce its own permissions~\cite{skillguard}. \sys asks which future decisions a given context may influence, under a given user intent, and with what proof.
 
