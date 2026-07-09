@@ -133,7 +133,7 @@ Enforcement operates at two layers. At the tool level, boundary adapters interce
 \centering
 \resizebox{0.7\textwidth}{!}{%
 \begin{tikzpicture}[
-  node distance=0.8cm and 0.7cm,
+  node distance=0.8cm and 1.0cm,
   box/.style={draw, rounded corners=2pt, align=center, minimum height=0.7cm, text width=2.0cm, fill=white, font=\scriptsize},
   trusted/.style={box, fill=green!8},
   untrusted/.style={box, fill=red!7},
@@ -144,9 +144,9 @@ Enforcement operates at two layers. At the tool level, boundary adapters interce
 \node[trusted, right=of issuer] (labeler) {Source\\labeler};
 \node[untrusted, right=of labeler] (compiler) {LLM-assisted\\compiler};
 \node[trusted, right=of compiler] (checker) {Deterministic\\checker};
-\node[runtime, below=0.7cm of checker, xshift=-1.2cm] (adapters) {Boundary adapters};
-\node[runtime, left=0.9cm of adapters] (gateways) {Tool/env\\boundaries};
-\node[runtime, right=0.9cm of adapters] (deleg) {Placement \&\\delegation};
+\node[runtime, below=0.7cm of checker, xshift=-1.2cm] (adapters) {Enforcement\\hooks};
+\node[runtime, left=0.9cm of adapters] (gateways) {MCP\\gateway};
+\node[runtime, right=0.9cm of adapters] (deleg) {OS-level\\enforcer};
 
 \draw[arr] (issuer) -- (labeler);
 \draw[arr] (labeler) -- (compiler);
@@ -162,7 +162,7 @@ Enforcement operates at two layers. At the tool level, boundary adapters interce
 \end{tikzpicture}%
 }
 \vspace{-6pt}
-\caption{\sys architecture. The source labeler tags inputs by origin, the LLM compiler proposes candidate leases, and the deterministic checker (TCB) validates field proofs before any side effect commits. Denied candidates return to the compiler.}
+\caption{\sys architecture. The source labeler tags inputs by origin, the LLM compiler proposes candidate leases, and the deterministic checker (TCB) validates field proofs before any side effect commits. Enforcement hooks lower accepted leases to the MCP gateway and OS-level enforcer. Denied candidates return to the compiler.}
 \label{fig:arch}
 \vspace{-8pt}
 \end{figure*}
@@ -218,12 +218,12 @@ On 7 crafted multi-step workflow scenarios, a policy DSL that checks predicates 
 
 \textbf{RQ3: Does the same commit API work beyond tool calls?}
 % \textbf{RQ3：同一提交 API 能否超越工具调用生效？}
-The \texttt{check\_and\_consume} transition generalizes across five boundary types, including local env side effects, context placement, Skill instruction slots, delegation handoffs, and an OS monitor replay backend.
-% \texttt{check\_and\_consume} 转换可推广到五种边界类型，包括本地环境副作用、上下文放置、Skill 指令槽、委托交接和 OS 监视器风格的重放后端。
+The \texttt{check\_and\_consume} transition generalizes across five enforcement points, including local env side effects, context placement, Skill instruction slots, delegation handoffs, and an OS monitor replay backend.
+% \texttt{check\_and\_consume} 转换可推广到五种执行点，包括本地环境副作用、上下文放置、Skill 指令槽、委托交接和 OS 监视器风格的重放后端。
 Across 38 enforcement checks, \sys allows 17 authorized effects and blocks 21 violations, with 0 unsafe executions or placements and 0 checker/monitor mismatches.
 % 在 38 个执行检查中，IntentCap 允许了 17 个授权效果并阻断了 21 个违规，0 个不安全执行或放置，0 个检查器/监视器不匹配。
-This demonstrates functional correctness across boundary types, not production coverage.
-% 这展示了跨边界类型的功能正确性，而非生产规模的覆盖。
+This demonstrates functional correctness across enforcement points.
+% 这展示了跨执行点的功能正确性。
 
 \textbf{RQ4: Are leases auditable authority objects?}
 % \textbf{RQ4：租约是否为可审计的权限对象？}
