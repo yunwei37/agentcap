@@ -30,8 +30,8 @@
 \begin{abstract}
 LLM agents take real actions, including executing code, modifying files, calling services, and delegating tasks, driven by context sources such as user requests, tool results, documents, shell outputs, Skill and MCP instructions, and memory.
 % LLM 智能体会执行真实操作——运行代码、修改文件、调用服务、委托任务——由上下文来源 (context source) 例如用户请求、工具结果、文档、Shell 输出、Skill 与 MCP 指令和记忆所驱动。
-Unlike traditional systems where a programmer declares each capability, an agent's capability cannot be predefined, because it depends on the agent's intent: what it wants to do and how it plans to accomplish it.
-% 与程序员声明每个能力的传统系统不同，智能体的能力无法预定义，因为它取决于用户想做什么、可用的工具和工作流如何完成它，以及运行时有哪些上下文可用。
+Unlike traditional systems where capability is deterministic and predefined, the least-privilege capability an agent needs is dynamic and depends on the agent's intent for the task: what it wants to do and how it plans to accomplish it.
+% 与能力是确定性且预定义的传统系统不同，智能体的最小能力是动态的，取决于智能体对任务的意图：它想做什么以及它计划如何完成。
 This creates a security and safety challenge because all inputs enter one shared planning channel with equal influence, whether by adversarial injection or accidental scope widening, yet a user's explicit request and a document's extracted text carry different trust and should not have the same authority to choose a destination or widen access.
 % 这带来了安全与可靠性挑战：所有输入以同等影响力进入同一个共享规划通道，无论是通过对抗性注入还是意外的范围扩大，但用户的显式请求和文档的提取文本有不同的信任等级，不应拥有同样的权限来选择目标或扩大访问范围。
 Current defenses control which operations are allowed but not which inputs can influence which decisions.
@@ -44,7 +44,7 @@ We argue that agent capabilities should be scoped to the current task intent, no
 Each source contributes specific fields, no source can fill another's, and the resulting lease can only narrow the user's authorized authority, never widen it.
 % 每个来源贡献特定字段，任何来源都不能填充另一个来源的字段，由此产生的租约只能缩小用户授权的权限，不能扩大。
 \sys uses an LLM to generate short-lived capability leases from these sources, validated by a deterministic checker before any side effect commits, and enforced through tool-level and OS-level information flow policies.
-% IntentCap 使用 LLM 从这些来源生成短生命周期的能力租约，由确定性检查器在任何副作用提交之前验证，并通过 MCP 级和 OS 级信息流策略执行。
+% IntentCap 使用 LLM 从这些来源生成短生命周期的能力租约，由确定性检查器在任何副作用提交之前验证，并通过工具级和 OS 级信息流策略执行。
 Preliminary evaluation shows that \sys blocks tested violations without rejecting benign actions, each source boundary is independently necessary, and the checker generalizes across tool, execution, placement, and delegation boundaries.
 % 初步评估表明 IntentCap 阻断测试违规而不拒绝良性操作，每个来源边界都是独立必要的，且检查器可跨工具、执行、放置和委托边界推广。
 \end{abstract}
@@ -201,7 +201,7 @@ The checker validates all fields atomically in a single transition before the si
 % 检查器在副作用提交之前，在单次转换中原子地验证所有字段。
 
 \section{Preliminary Evaluation}
-% 初步证据
+% 初步评估
 
 \textbf{RQ1: Does \sys block violations without rejecting benign actions?}
 % \textbf{RQ1：IntentCap 能否阻断违规而不拒绝良性操作？}
