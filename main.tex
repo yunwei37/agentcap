@@ -86,14 +86,14 @@ Securing agents therefore requires controlling not only what operations are allo
 \label{sec:design}
 % 设计
 
-The design targets four properties: (1) field-level ownership, where each decision field is owned by exactly one context source; (2) monotonic narrowing, where leases can only restrict the user's authorized authority, never widen it; (3) the LLM stays outside the trusted computing base, with a deterministic checker making all accept/deny decisions; and (4) auditable leases, where every accept or deny is recorded with the causal provenance chain.
-% 设计目标四个属性：(1) 字段级所有权——每个决策字段由恰好一个上下文来源拥有；(2) 单调缩减——租约只能限制用户授权的权限，不能扩大；(3) LLM 位于可信计算基之外——确定性检查器做出所有接受/拒绝决策；(4) 可审计租约——每个接受或拒绝都记录因果来源链。
+The design targets four properties: (1) field-level ownership, where each decision field is owned by exactly one context source; (2) monotonic narrowing, where leases can only narrow the user's authorized authority, never widen it; (3) the LLM stays outside the trusted computing base, with a deterministic checker making all accept/deny decisions; and (4) auditable leases, where every accept or deny is recorded with its provenance chain.
+% 设计目标四个属性：(1) 字段级所有权——每个决策字段由恰好一个上下文来源拥有；(2) 单调缩减——租约只能缩小用户授权的权限，不能扩大；(3) LLM 位于可信计算基之外——确定性检查器做出所有接受/拒绝决策；(4) 可审计租约——每个接受或拒绝都记录来源链。
 
 Figure~\ref{fig:arch} shows the pipeline.
 % 图~\ref{fig:arch} 展示了该流水线。
-A source labeler classifies each input by position: user messages are always user intent, tool responses are always runtime data, and Skill/MCP metadata is labeled at load time. Inputs with ambiguous provenance (e.g., documents pasted by the user) require additional classification, which the current prototype handles conservatively by denying authority-bearing fields from ambiguous sources.
-% 来源分类是位置性的：用户消息始终是用户意图，工具响应始终是运行时数据，Skill/MCP 元数据在加载时标注。混合来源的输入（如用户粘贴的文档）需要额外分类，当前原型通过保守地拒绝来自模糊来源的权限字段来处理。
-The intent issuer extracts the maximum-authority set from user messages using structured fields (selected files, named destinations, explicit approvals). The compiler takes this structured intent and the active schemas as input and emits candidate leases whose fields are populated from the labeled sources. Candidate leases can only narrow the user's authority, never widen it. The compiler may select a subset of authorized destinations or request a shorter budget, but it cannot add destinations, raise approval scope, or grant fields that the user intent does not cover.
+A source labeler classifies each input by position: user messages are always user intent, tool responses are always runtime data, and Skill/MCP metadata is labeled at load time. Inputs with ambiguous provenance (e.g., documents pasted by the user) require additional classification, which the current prototype handles conservatively by denying authority fields from ambiguous sources.
+% 来源标注器按位置分类每个输入：用户消息始终是用户意图，工具响应始终是运行时数据，Skill/MCP 元数据在加载时标注。来源模糊的输入（如用户粘贴的文档）需要额外分类，当前原型保守地拒绝模糊来源的权限字段。
+The intent issuer extracts the user's maximum authority from structured fields in the user message (selected files, named destinations, explicit approvals). The compiler takes this structured intent and the active schemas as input and emits candidate leases whose fields are populated from the labeled sources. Candidate leases can only narrow the user's authority, never widen it. The compiler may select a subset of authorized destinations or request a shorter budget, but it cannot add destinations, raise approval scope, or grant fields that the user intent does not cover.
 % 来源分类是位置性的：用户消息始终是用户意图，工具响应始终是运行时数据，Skill/MCP 元数据在加载时标注。编译器以用户请求和活跃模式为输入，输出候选租约，其字段从已标注的来源填充。用户意图定义任务的最大权限，候选租约只能缩小该权限，不能扩大：编译器可以选择授权目标的子集或请求更短的预算，但不能添加目标、提高审批范围或授予用户意图未涵盖的字段。
 
 
@@ -152,8 +152,8 @@ The checker validates all fields atomically in a single transition before the si
 \section{Preliminary Evidence}
 % 初步证据
 
-\textbf{RQ1: Does the model block violations without rejecting benign actions?}
-% \textbf{RQ1：事件模型能否在不过度阻断的情况下表达良性行为？}
+\textbf{RQ1: Does \sys block violations without rejecting benign actions?}
+% \textbf{RQ1：IntentCap 能否在不过度阻断的情况下阻断违规？}
 \sys produces 0 unsafe accepts across 3,746 security-sensitive events replayed from AgentDojo, MCPTox, InjecAgent, and tau2-bench~\cite{agentdojo,mcptox,injecagent,tau2bench}.
 % IntentCap 在从 AgentDojo、MCPTox、InjecAgent 和 tau2-bench 重放的 3,746 个受保护决策事件中产生 0 个不安全接受~\cite{agentdojo,mcptox,injecagent,tau2bench}。
 On the utility side, \sys covers all 3,813 benign reference actions in the tau2-style proxy and passes 2,554 of 2,556 applicable ground-truth checks.
@@ -161,12 +161,12 @@ On the utility side, \sys covers all 3,813 benign reference actions in the tau2-
 
 \textbf{RQ2: Is the four-source partition a safety requirement or a naming choice?}
 % \textbf{RQ2：四来源划分是安全要求还是命名选择？}
-The partition is necessary. Collapsing all four sources into one generic trusted context causes 3,593 false accepts out of 3,823 checker-denied events (94\%).
+The partition is necessary. Collapsing all four sources into one generic trusted context causes 3,593 false accepts out of 3,823 events that the checker should deny (94\%).
 % 该划分承担关键安全作用：将四个来源合并为一个通用受信任上下文导致 3,823 个检查器拒绝事件中出现 3,593 个错误接受（94\%）。
 Each pairwise collapse is independently necessary. For example, tool$\rightarrow$agent falsely accepts 1,928 events (50\%), env$\rightarrow$agent 1,663 (43\%), and env$\rightarrow$tool 1,662 (43\%).
 % 每个成对合并都承担独立的安全作用：tool$\rightarrow$agent 错误接受 1,928 个事件（50\%），env$\rightarrow$agent 1,663（43\%），env$\rightarrow$tool 1,662（43\%）。
-On 7 controlled workflow residuals, a policy DSL that checks predicates without field ownership falsely accepts 7/7. Splitting lifecycle state across separate guards falsely accepts 5/7.
-% 在 7 个受控工作流残差上，一个不检查字段所有权只检查谓词的事后策略 DSL 错误接受了 7/7。将生命周期状态拆分到各独立守卫则错误接受了 5/7。
+On 7 crafted multi-step workflow scenarios, a policy DSL that checks predicates without field ownership falsely accepts 7/7, and splitting state across independent guards falsely accepts 5/7.
+% 在 7 个手工构造的多步工作流场景上，一个不检查字段所有权只检查谓词的策略 DSL 错误接受了 7/7，将状态拆分到各独立守卫则错误接受了 5/7。
 
 \textbf{RQ3: Does the same commit API work beyond tool calls?}
 % \textbf{RQ3：同一提交 API 能否超越工具调用生效？}
@@ -177,16 +177,16 @@ Across 38 enforcement checks, \sys allows 17 authorized effects and blocks 21 vi
 
 \textbf{RQ4: Are leases auditable authority objects?}
 % \textbf{RQ4：租约是否为可审计的权限对象？}
-Across 24 author-adjudicated lease labels covering InjecAgent, MCPTox, and tau2 samples, all \sys policies match the adjudicated authority scope. Every non-\sys baseline grants excess authority on at least some of the 144 scored policy rows.
-% 在覆盖 InjecAgent、MCPTox 和 tau2 样本的 24 个裁定租约标签上，所有 IntentCap 策略与裁定的权限范围完全匹配。每个非 IntentCap 基线在 144 个评分策略行中的至少部分行上过度授权。
+Across 24 manually labeled leases covering InjecAgent, MCPTox, and tau2 samples, all \sys policies match the labeled authority scope. Every non-\sys baseline over-grants authority on at least some of the 144 scored policy entries.
+% 在覆盖 InjecAgent、MCPTox 和 tau2 样本的 24 个人工标注的租约上，所有 IntentCap 策略与标注的权限范围完全匹配。每个非 IntentCap 基线在 144 个评分策略条目中的至少部分条目上过度授权。
 
 \section{Discussion}
 
 \sys draws on capability-based security~\cite{dennis-vanhorn}, least privilege~\cite{saltzer-schroeder}, and information flow control~\cite{denning-lattice}, but addresses a problem those systems do not face: in an agent, the capability cannot be declared by a programmer at compile time. It must be composed at runtime from context sources that share a single neural planning channel, where any source can impersonate any other---a confused deputy scenario~\cite{confused-deputy} in which the deputy is a neural planner.
 % IntentCap 借鉴了基于能力的安全~\cite{dennis-vanhorn}、最小权限原则~\cite{saltzer-schroeder}和信息流控制~\cite{denning-lattice}，但解决了这些系统不面对的问题：在智能体中，能力无法由程序员在编译时声明——它必须在运行时从共享同一个神经规划通道的上下文来源组合而成，其中任何来源都可以冒充其他来源——一种混淆代理场景~\cite{confused-deputy}，其中代理是一个神经规划器。
-CaMeL separates data from control to defeat prompt injections by design~\cite{camel}. IsolateGPT isolates third-party app interactions via separate LLM instances~\cite{isolategpt}. Progent defines a policy language for fine-grained tool-call permissions~\cite{progent}. EIM and bpftime ask how an extension can safely use host-provided resources~\cite{eim-bpftime}. ActPlane asks how policy can be enforced below the tool layer~\cite{actplane}. SkillGuard asks how a Skill package can be governed as a permission-bearing artifact~\cite{skillguard}. \sys asks which future decisions a given context may influence, under a given user intent, and with what proof.
+CaMeL separates data from control to defeat prompt injections by design~\cite{camel}. IsolateGPT isolates third-party app interactions via separate LLM instances~\cite{isolategpt}. Progent defines a policy language for fine-grained tool-call permissions~\cite{progent}. EIM and bpftime ask how an extension can safely use host-provided resources~\cite{eim-bpftime}. ActPlane asks how policy can be enforced below the tool layer~\cite{actplane}. SkillGuard asks how a Skill package can carry and enforce its own permissions~\cite{skillguard}. \sys asks which future decisions a given context may influence, under a given user intent, and with what proof.
 
-Current evidence covers replay safety, four-source ablations, and local enforcement across multiple boundaries. Three areas remain open: end-to-end utility with a live user simulator, independent expert-oracle lease labels, and production OS-level enforcement. Immediate next steps include scaling the checker to live MCP broker integration and measuring the approval burden.
+Current evidence covers replay safety, four-source ablations, and local enforcement across multiple boundaries. Three areas remain open: end-to-end utility with a live user simulator, independent expert labeling of leases, and production OS-level enforcement. Immediate next steps include scaling the checker to live MCP broker integration and measuring the approval burden.
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}
