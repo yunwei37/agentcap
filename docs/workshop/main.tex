@@ -1,0 +1,262 @@
+%%
+%% IntentCap extended abstract
+%%
+
+\documentclass[sigconf,nonacm]{acmart}
+
+\setcopyright{none}
+\settopmatter{printacmref=false,printccs=false}
+\renewcommand\footnotetextcopyrightpermission[1]{}
+\pagestyle{plain}
+
+\AtBeginDocument{%
+  \providecommand\BibTeX{{%
+    Bib\TeX}}}
+
+\usepackage{microtype}
+\usepackage{xspace}
+\usepackage{tikz}
+\usepackage{booktabs}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds}
+\setlength{\bibsep}{0pt}
+
+\newcommand{\sys}{\textsc{IntentCap}\xspace}
+
+\begin{document}
+
+\title{LLM Agent Capabilities Should Follow Task Intent and Context Source}
+% LLM 智能体的能力应该跟随任务意图和上下文来源
+
+\begin{abstract}
+LLM agents take real actions, including executing code, modifying files, calling services, and delegating tasks, driven by context sources such as user requests, tool results, documents, shell outputs, Skill and MCP instructions, and memory.
+% LLM 智能体会执行真实操作——运行代码、修改文件、调用服务、委托任务——由上下文来源 (context source) 例如用户请求、工具结果、文档、Shell 输出、Skill 与 MCP 指令和记忆所驱动。
+Unlike traditional systems where capability is deterministic and predefined, the least-privilege capability an agent needs is dynamic and depends on the agent's intent for the task: what it wants to do and how it plans to accomplish it.
+% 与能力是确定性且预定义的传统系统不同，智能体所需的最小权限能力是动态的，取决于智能体对任务的意图：它想做什么以及它计划如何完成。
+This creates a security and safety challenge because all inputs enter one shared planning channel with equal influence, whether by adversarial injection or accidental scope widening, yet a user's explicit request and a document's extracted text carry different trust and should not have the same authority to choose a destination or widen access.
+% 这带来了安全与可靠性挑战：所有输入以同等影响力进入同一个共享规划通道，无论是通过对抗性注入还是意外的范围扩大，但用户的显式请求和文档的提取文本有不同的信任等级，不应拥有同样的权限来选择目标或扩大访问范围。
+Current defenses control which operations are allowed but not which inputs can influence which decisions.
+% 当前防御控制哪些操作被允许，但不控制哪些输入可以影响哪些决策。
+
+We argue that agent capabilities should be scoped to the current task intent, not to a sandbox or session lifetime, and no single context source carries enough authority to define a complete capability.
+% 我们认为智能体的能力应该限定在当前任务意图的范围内，而不是沙箱或会话生命周期，且没有任何单一上下文来源能定义完整的能力。
+\sys composes capabilities from four such sources, namely user intent, workflow instructions, tool schemas, and runtime environment, with field-level ownership and monotonic narrowing.
+% IntentCap 从四个这样的来源——用户意图、工作流指令、工具模式和运行时环境——以字段级所有权和单调缩减来组合能力。
+Each source contributes specific fields, no source can fill another's, and the resulting lease can only narrow the user's authorized authority, never widen it.
+% 每个来源贡献特定字段，任何来源都不能填充另一个来源的字段，由此产生的租约只能缩小用户授权的权限，不能扩大。
+\sys uses an LLM to generate short-lived capability leases from these sources, validated by a deterministic checker before any side effect commits, and enforced through tool-level and OS-level information flow policies.
+% IntentCap 使用 LLM 从这些来源生成短生命周期的能力租约，由确定性检查器在任何副作用提交之前验证，并通过工具级和 OS 级信息流策略执行。
+Preliminary evaluation shows that \sys blocks tested violations without rejecting benign actions, each source boundary is independently necessary, and the checker generalizes across tool, execution, placement, and delegation boundaries.
+% 初步评估表明 IntentCap 阻断测试违规而不拒绝良性操作，每个来源边界都是独立必要的，且检查器可跨工具、执行、放置和委托边界推广。
+\end{abstract}
+
+\maketitle
+
+\section{Background}
+% 背景
+
+LLM agents combine tools, documents, workflow instructions, and delegated subtasks to carry out real work.
+% LLM 智能体结合工具、文档、工作流指令和委托的子任务来执行实际工作。
+A modern agent can load Skills with workflow instructions, references, and optional scripts~\cite{openai-skills}; connect to MCP servers that expose resources, prompts, and tools~\cite{mcp-spec}; run local commands; and spawn subagents.
+% 现代智能体可以加载包含工作流指令、引用和可选脚本的 Skill~\cite{openai-skills}，连接暴露资源、提示和工具的 MCP 服务器~\cite{mcp-spec}，运行本地命令，以及生成子智能体。
+Each of these inputs is useful precisely because it affects future behavior.
+% 这些输入之所以有用，恰恰是因为它们会影响未来的行为。
+A Skill can teach the agent how to perform a workflow, a tool result can become evidence for a later action, and a document can determine the content of a generated report.
+% 一个 Skill 可以教会智能体如何执行某个工作流，一条工具结果可以成为后续操作的依据，一份文档可以决定生成报告的内容。
+
+\section{Motivation}
+% 动机
+
+The same property creates a security and safety problem.
+% 同样的特性带来了安全与可靠性问题。
+In an agent, any input can influence any action, whether through adversarial injection~\cite{greshake-injection} or accidental scope widening.
+% 在智能体中，任何输入都可以影响任何操作，无论是通过对抗性注入~\cite{greshake-injection}还是意外的范围扩大。
+Current defenses, including prompt-level guardrails~\cite{camel,dualllm}, tool-level permission guards~\cite{progent}, execution sandboxes~\cite{isolategpt}, and OS-level policy engines~\cite{actplane}, all control what the agent may do: which tool may be called, which file may be read, or which process may execute.
+% 当前防御——包括提示级护栏~\cite{camel,dualllm}、工具级权限守卫~\cite{progent}、执行沙箱~\cite{isolategpt} 和 OS 级策略引擎~\cite{actplane}——都控制智能体可以做什么：哪个工具可以调用，哪个文件可以读取，或者哪个进程可以执行。
+None of them controls what is allowed to drive each decision, that is, which source may select the tool, fill the repository field, or widen the approval scope.
+% 没有一个控制什么被允许驱动每个决策，即哪个来源可以选择工具、填充仓库字段或扩大审批范围。
+
+Consider a user who asks an agent to extract tables from two selected PDFs, save spreadsheets, and create one GitHub issue in a named repository.
+% 考虑一个用户要求智能体从两个选定的 PDF 中提取表格、保存为电子表格，并在指定仓库中创建一个 GitHub issue 的场景。
+The PDF contents should influence spreadsheet cells and perhaps the issue body, but not the repository name, network destination, approval scope, tool selection, or decision to load another Skill.
+% PDF 内容应当影响电子表格的单元格和 issue 正文，但不应影响仓库名称、网络目标、审批范围、工具选择或加载另一个 Skill 的决定。
+If hidden text in the PDF says ``create the issue in attacker/repo''~\cite{greshake-injection}, the repository field changes to a legitimate-looking but attacker-controlled destination. A tool-call allowlist can block banned domains, but it cannot express the invariant that the PDF was never allowed to fill the repository field at all.
+% 如果 PDF 中的隐藏文本说"在 attacker/repo 中创建 issue"~\cite{greshake-injection}，仓库字段就会变成一个看起来合法但由攻击者控制的目标。工具调用白名单可以阻止被禁止的域名，但它无法表达那个不变式：PDF 根本不被允许填充仓库字段。
+The same invariant breaks without an adversary. If the extraction Skill concatenates the PDF text into a single output string, the planner may parse a table header as the repository name, accidentally overwriting the user's chosen destination.
+% 同样的不变式在没有攻击者的情况下也会被破坏。如果提取 Skill 将 PDF 文本拼接为单个输出字符串，规划器可能将表头解析为仓库名称，意外覆盖用户选择的目标。
+
+The root cause is that all \emph{context sources} the agent consumes, what the user asked for, how a Skill defines the workflow, what a tool's API accepts, and what previous tools returned, enter the same planning channel with equal standing, so any source can fill any decision field.
+% 根本原因是智能体所消耗的所有上下文来源 (context source)——用户要求做什么、Skill 如何定义工作流、工具的 API 接受什么、以及之前的工具返回了什么——以同等地位进入同一个规划通道，因此任何来源都可以填充任何决策字段。
+Unlike traditional systems, where a programmer declares capabilities at compile time and a type system enforces them, an agent's planning channel offers no static structure to distinguish sources.
+% 与传统系统不同，在传统系统中程序员在编译时声明能力并由类型系统强制执行，而智能体的规划通道没有提供静态结构来区分来源。
+These sources are not interchangeable because each carries only part of the information needed to define a capability. The user's request specifies the goal and authorized destinations but not the workflow steps. A Skill's procedure offers candidate steps but not the user's specific targets, and the user may adopt only part of it. A tool's schema declares what parameters it accepts but not the goal. A tool's output provides values but not which decision fields those values should fill. A complete capability must be composed from all four.
+% 这些来源不可互换，因为每个来源只携带定义能力所需的部分信息。用户的请求指定目标和授权的目的地，但不包含工作流步骤。Skill 的流程提供候选步骤，但不包含用户的具体目标，且用户可能只采用其中一部分。工具的模式声明它接受什么参数，但不包含目标。工具的输出提供值，但不指定这些值应该填充哪些决策字段。完整的能力必须从四者组合而成。
+Securing agents therefore requires an information flow policy that controls not only what operations are allowed, but which source may flow into which decision field.
+% 因此，保护智能体的安全需要一种信息流策略 (information flow policy)，不仅控制哪些操作被允许，还控制哪个来源可以流入哪个决策字段。
+
+\section{Design}
+\label{sec:design}
+% 设计
+
+Our key insight is that agent capabilities must be composed at runtime from multiple context sources with field-level ownership, because no single source carries enough authority to define a complete capability and no programmer exists to declare the composition statically.
+% 我们的关键洞察是智能体的能力必须在运行时从多个上下文来源以字段级所有权进行组合，因为没有单一来源能定义完整的能力，也没有程序员来静态声明这种组合。
+\sys realizes this by scoping each capability to the current task intent and composing it from four sources, each contributing specific fields with priority, so that no source can fill another's fields.
+% IntentCap 通过将每个能力限定在当前任务意图的范围内，并从四个来源组合，每个来源按优先级贡献特定字段，使得任何来源都不能填充另一个来源的字段来实现这一点。
+
+The design targets four properties: (1) field-level ownership, where each decision field is owned by exactly one context source; (2) monotonic narrowing, where leases can only narrow the user's authorized authority, never widen it; (3) the LLM stays outside the trusted computing base, with a deterministic checker making all accept/deny decisions; and (4) auditable leases, where every accept or deny is recorded with its provenance chain.
+% 设计目标四个属性：(1) 字段级所有权——每个决策字段由恰好一个上下文来源拥有；(2) 单调缩减——租约只能缩小用户授权的权限，不能扩大；(3) LLM 位于可信计算基之外——确定性检查器做出所有接受/拒绝决策；(4) 可审计租约——每个接受或拒绝都记录来源链。
+
+\begin{figure*}[t!]
+\centering
+\resizebox{0.7\textwidth}{!}{%
+\begin{tikzpicture}[
+  node distance=1.2cm and 1.5cm,
+  box/.style={draw, rounded corners=2pt, align=center, minimum height=1.0cm, text width=2.8cm, fill=white, font=\normalsize},
+  trusted/.style={box, fill=green!8},
+  untrusted/.style={box, fill=red!7},
+  runtime/.style={box, fill=blue!7},
+  arr/.style={-Latex, semithick}
+]
+\node[trusted] (issuer) {Intent\\issuer};
+\node[trusted, right=of issuer] (labeler) {Source\\labeler};
+\node[untrusted, right=of labeler] (compiler) {LLM-assisted\\compiler};
+\node[trusted, right=of compiler] (checker) {Deterministic\\checker};
+\node[runtime, below=1.0cm of checker, xshift=-1.5cm] (adapters) {Enforcement\\hooks};
+\node[runtime, left=1.2cm of adapters] (gateways) {MCP\\gateway};
+\node[runtime, right=1.2cm of adapters] (deleg) {OS-level\\enforcer};
+
+\draw[arr] (issuer) -- (labeler);
+\draw[arr] (labeler) -- (compiler);
+\draw[arr] (compiler) -- node[above, font=\normalsize] {candidates} (checker);
+\draw[arr] (checker) -- node[right, font=\normalsize] {leases} (adapters);
+\draw[arr] (adapters) -- (gateways);
+\draw[arr] (adapters) -- (deleg);
+\draw[arr, dashed] (checker) to[bend right=15] node[above, font=\normalsize] {denial} (compiler);
+
+\begin{scope}[on background layer]
+\node[draw, dashed, rounded corners=3pt, fit=(issuer)(labeler)(checker), inner sep=0.22cm, label={[font=\normalsize]above:TCB}] {};
+\end{scope}
+\end{tikzpicture}%
+}
+\vspace{-6pt}
+\caption{\sys architecture. The source labeler tags inputs by origin, the LLM compiler proposes candidate leases, and the deterministic checker (TCB) validates field proofs before any side effect commits. Enforcement hooks lower accepted leases to the MCP gateway and OS-level enforcer. Denied candidates return to the compiler.}
+\label{fig:arch}
+\vspace{-8pt}
+\end{figure*}
+
+Figure~\ref{fig:arch} shows the pipeline.
+% 图~\ref{fig:arch} 展示了该流水线。
+A source labeler classifies each input by position.
+% 来源标注器按位置分类每个输入。
+User messages are always user intent, tool responses are always runtime environment, and Skill/MCP metadata is labeled at load time.
+% 用户消息始终是用户意图，工具响应始终是运行时环境，Skill/MCP 元数据在加载时标注。
+Inputs with ambiguous provenance (e.g., documents pasted by the user) require additional classification, which the current prototype handles conservatively by denying authority fields from ambiguous sources.
+% 来源模糊的输入（如用户粘贴的文档）需要额外分类，当前原型保守地拒绝模糊来源的权限字段。
+At the OS level, this labeling maps to process-level isolation and IPC channel tagging, so each source's provenance is rooted in the process that produced it.
+% 在 OS 层面，这种标注映射到进程级隔离和 IPC 通道标记，每个来源的出处都根植于产生它的进程。
+The intent issuer extracts the user's maximum authority from structured fields in the user message, such as selected files, named destinations, and explicit approvals.
+% 意图签发器从用户消息的结构化字段中提取用户的最大权限，例如选定文件、命名目标和显式批准。
+The compiler takes this structured intent and the active schemas as input and emits candidate leases whose fields are populated from the labeled sources.
+% 编译器以该结构化意图和活跃模式为输入，输出候选租约，其字段从已标注的来源填充。
+Candidate leases can only narrow the user's authority, never widen it.
+% 候选租约只能缩小用户的权限，不能扩大。
+The compiler may select a subset of authorized destinations or request a shorter budget, but it cannot add destinations, raise approval scope, or grant fields that the user intent does not cover.
+% 编译器可以选择授权目标的子集或请求更短的预算，但不能添加目标、提高审批范围或授予用户意图未涵盖的字段。
+
+
+A deterministic checker enforces this monotonic narrowing before any side effect, context placement, or delegation handoff commits.
+% 确定性检查器在任何副作用、上下文放置或委托交接提交之前强制执行这种单调缩减。
+Each delegation further attenuates, so a subtask receives only capabilities narrower than its parent.
+% 每次委托进一步衰减，子任务只接收比其父任务更窄的能力。
+The checker exposes a single transition, $\mathsf{check\_and\_consume}(e,\mathit{lease},\mathit{proofs},\sigma) \rightarrow \mathsf{allow}(\sigma') \mid \mathsf{deny}$, that adapters must call before any side effect commits.
+% 检查器暴露单一转换——$\mathsf{check\_and\_consume}(e,\mathit{lease},\mathit{proofs},\sigma) \rightarrow \mathsf{allow}(\sigma') \mid \mathsf{deny}$——适配器必须在任何副作用提交之前调用。
+Enforcement operates at two layers. At the tool level, boundary adapters intercept MCP calls and validate that each argument field comes from its owner source before the call executes, similar to how Fides~\cite{fides} applies taint tracking at the planner level. At the OS level, accepted leases compile to ActPlane~\cite{actplane} file, exec, and network policies enforced via eBPF.
+% 执行在两个层次运作。在工具层，边界适配器拦截 MCP 调用并在调用执行前验证每个参数字段来自其所有者来源，类似于 Fides~\cite{fides} 在规划器层面应用污点追踪。在 OS 层，被接受的租约编译为通过 eBPF 执行的 ActPlane~\cite{actplane} 文件、执行和网络策略。
+
+A field is a named slot in a capability lease (e.g., destination, approval scope, tool name, argument value) whose value must come from exactly one source.
+% 字段是能力租约中的一个命名槽位（如目标、审批范围、工具名、参数值），其值必须来自恰好一个来源。
+The four context sources each contribute specific fields.
+% 四个上下文来源各自贡献特定字段。
+\emph{User intent} supplies the goal, selected objects, authorized destinations, and approvals.
+% \emph{用户意图}提供目标、选定对象、授权目标和批准。
+\emph{Workflow instructions} (system policy, Skill procedures, or manuals) supply procedural scope.
+% \emph{工作流指令}（系统策略、Skill 流程或手册）提供过程范围。
+\emph{Tool schemas} (MCP definitions, registry entries, or command descriptors) supply the callable interface and credential scope.
+% \emph{工具模式}（MCP 定义、注册表条目或命令描述符）提供可调用接口和凭证范围。
+\emph{Runtime environment} (tool results, file state, script outputs) supplies observed values.
+% \emph{运行时环境}（工具结果、文件状态、脚本输出）提供观测值。
+No source can fill another's fields.
+% 任何来源都不能填充另一个来源的字段。
+A tool schema cannot authorize a destination, runtime environment cannot supply procedural authority, and a Skill cannot widen approval scope.
+% 工具模式不能授权目标，运行时环境不能提供过程权限，Skill 不能扩大审批范围。
+Together, these ownership rules form an information flow policy for agent decisions: they specify which information may flow from which source into which field of a capability lease.
+% 这些所有权规则共同构成了智能体决策的信息流策略：它们指定哪些信息可以从哪个来源流入能力租约的哪个字段。
+
+A capability lease binds these field contributions to a specific operation, object, arguments, budget, expiry, and delegation depth.
+% 能力租约将这些字段贡献绑定到特定的操作、对象、参数、预算、过期时间和委托深度。
+Leases are scoped to the current task intent, consumed on use, and cannot widen themselves.
+% 租约限定在当前任务意图的范围内，使用即消耗，且不能自行扩大。
+An issue lease expires after its first use, and a delegated subtask receives only narrower capabilities than its parent.
+% 一次性 issue 租约在首次使用后即过期，被委托的子任务只接收比其父任务更窄的能力。
+The checker validates all fields atomically in a single transition before the side effect commits.
+% 检查器在副作用提交之前，在单次转换中原子地验证所有字段。
+
+\section{Preliminary Evaluation}
+% 初步评估
+
+\textbf{RQ1: Does \sys block violations without rejecting benign actions?}
+% \textbf{RQ1：IntentCap 能否阻断违规而不拒绝良性操作？}
+\sys produces 0 unsafe accepts across 3,746 security-sensitive events replayed from AgentDojo, MCPTox, InjecAgent, and tau2-bench~\cite{agentdojo,mcptox,injecagent,tau2bench}.
+% IntentCap 在从 AgentDojo、MCPTox、InjecAgent 和 tau2-bench 重放的 3,746 个安全敏感 (security-sensitive) 事件中产生 0 个不安全接受~\cite{agentdojo,mcptox,injecagent,tau2bench}。
+On the utility side, \sys covers all 3,813 benign reference actions in the tau2-style proxy and passes 2,554 of 2,556 applicable ground-truth checks.
+% 在可用性方面，IntentCap 覆盖了 tau2 风格代理中全部 3,813 个良性参考操作，并通过了 2,556 个适用的真实标签 (ground-truth) 检查中的 2,554 个。
+
+\textbf{RQ2: Is the four-source partition a safety requirement or a naming choice?}
+% \textbf{RQ2：四来源划分是安全要求还是命名选择？}
+The partition is necessary.
+% 该划分是必要的。
+Collapsing all four sources into one generic trusted context causes 3,593 false accepts out of 3,823 events that the checker should deny (94\%).
+% 将四个来源合并为一个通用受信任上下文导致 3,823 个检查器应拒绝事件中出现 3,593 个错误接受（94\%）。
+Each pairwise collapse is independently necessary.
+% 每个成对合并都是独立必要的。
+For example, tool$\rightarrow$agent falsely accepts 1,928 events (50\%), env$\rightarrow$agent 1,663 (43\%), and env$\rightarrow$tool 1,662 (43\%).
+% 例如，tool$\rightarrow$agent 错误接受 1,928 个事件（50\%），env$\rightarrow$agent 1,663（43\%），env$\rightarrow$tool 1,662（43\%）。
+On 7 crafted multi-step workflow scenarios, a policy DSL that checks predicates without field ownership falsely accepts 7/7, and splitting state across independent guards falsely accepts 5/7.
+% 在 7 个手工构造的多步工作流场景上，一个不检查字段所有权只检查谓词的策略 DSL 错误接受了 7/7，将状态拆分到各独立守卫则错误接受了 5/7。
+
+\textbf{RQ3: Does the same commit API work beyond tool calls?}
+% \textbf{RQ3：同一提交 API 能否超越工具调用生效？}
+The \texttt{check\_and\_consume} transition generalizes across five enforcement points, including local env side effects, context placement, Skill instruction slots, delegation handoffs, and an OS monitor replay backend.
+% \texttt{check\_and\_consume} 转换可推广到五种执行点，包括本地环境副作用、上下文放置、Skill 指令槽、委托交接和 OS 监视器风格的重放后端。
+Across 38 enforcement checks, \sys allows 17 authorized effects and blocks 21 violations, with 0 unsafe executions or placements and 0 checker/monitor mismatches.
+% 在 38 个执行检查中，IntentCap 允许了 17 个授权效果并阻断了 21 个违规，0 个不安全执行或放置，0 个检查器/监视器不匹配。
+This demonstrates functional correctness across enforcement points.
+% 这展示了跨执行点的功能正确性。
+
+\textbf{RQ4: Are leases auditable authority objects?}
+% \textbf{RQ4：租约是否为可审计的权限对象？}
+Across 24 manually labeled leases covering InjecAgent, MCPTox, and tau2 samples, all \sys policies match the labeled authority scope.
+% 在覆盖 InjecAgent、MCPTox 和 tau2 样本的 24 个人工标注的租约上，所有 IntentCap 策略与标注的权限范围完全匹配。
+Every non-\sys baseline over-grants authority on at least some of the 144 scored policy entries.
+% 每个非 IntentCap 基线在 144 个评分策略条目中的至少部分条目上过度授权。
+
+\section{Discussion}
+% 讨论
+
+\sys draws on capability-based security~\cite{dennis-vanhorn}, least privilege~\cite{saltzer-schroeder}, and information flow control~\cite{denning-lattice}, but addresses a problem those systems do not face.
+% IntentCap 借鉴了基于能力的安全~\cite{dennis-vanhorn}、最小权限原则~\cite{saltzer-schroeder}和信息流控制~\cite{denning-lattice}，但解决了这些系统不面对的问题。
+In an agent, the capability cannot be declared by a programmer at compile time, as it can with Capsicum~\cite{capsicum} file descriptors or seccomp filters.
+% 在智能体中，能力无法像 Capsicum~\cite{capsicum} 文件描述符或 seccomp 过滤器那样由程序员在编译时声明。
+It must be composed at runtime from context sources that share a single neural planning channel, where any source can impersonate any other, a confused deputy scenario~\cite{confused-deputy} in which the deputy is a neural planner.
+% 它必须在运行时从共享同一个神经规划通道的上下文来源组合而成，其中任何来源都可以冒充其他来源——一种混淆代理场景~\cite{confused-deputy}，其中代理是一个神经规划器。
+CaMeL separates data from control to defeat prompt injections by design~\cite{camel}, while IsolateGPT~\cite{isolategpt} and Progent~\cite{progent} restrict which operations an agent may perform through execution isolation and policy languages, respectively.
+% CaMeL 将数据与控制分离，从设计上抵御提示注入~\cite{camel}，而 IsolateGPT~\cite{isolategpt} 和 Progent~\cite{progent} 分别通过执行隔离和策略语言限制智能体可执行的操作。
+At lower layers, EIM~\cite{eim-bpftime} and ActPlane~\cite{actplane} enforce constraints at the tool and OS level, and SkillGuard~\cite{skillguard} governs what a Skill package may access.
+% 在更低的层次，EIM~\cite{eim-bpftime} 和 ActPlane~\cite{actplane} 在扩展和 OS 层执行约束，SkillGuard~\cite{skillguard} 管控 Skill 包可以访问的内容。
+Unlike these systems, \sys asks which future decisions a given context source may influence, under a given user intent, and with what proof.
+% 与这些系统不同，IntentCap 探讨在给定用户意图下，给定上下文来源 (context source) 可以影响哪些未来决策，以及用什么证明。
+
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+
+\end{document}
