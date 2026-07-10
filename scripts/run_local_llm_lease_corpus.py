@@ -662,8 +662,10 @@ def _llama_command(
     n_predict: int,
     ctx_size: int,
     gpu_layers: int,
+    json_schema_file: Path | None = None,
+    reasoning_off: bool = False,
 ) -> list[str]:
-    return [
+    command = [
         str(llama_bin),
         "-m",
         str(model),
@@ -683,6 +685,11 @@ def _llama_command(
         "--single-turn",
         "--no-warmup",
     ]
+    if json_schema_file is not None:
+        command.extend(["--json-schema-file", str(json_schema_file)])
+    if reasoning_off:
+        command.extend(["--reasoning", "off", "--reasoning-budget", "0"])
+    return command
 
 
 def _run_llama(command: list[str], timeout_seconds: int) -> tuple[str, str, int, float]:

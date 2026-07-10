@@ -17,6 +17,26 @@ def _load_runner():
     return module
 
 
+def test_llama_command_can_add_schema_and_reasoning_controls():
+    runner = _load_runner()
+
+    command = runner._llama_command(
+        llama_bin=Path("/tmp/llama-completion"),
+        model=Path("/tmp/model.gguf"),
+        prompt_path=Path("/tmp/prompt.txt"),
+        n_predict=128,
+        ctx_size=4096,
+        gpu_layers=48,
+        json_schema_file=Path("/tmp/schema.json"),
+        reasoning_off=True,
+    )
+
+    assert command[0] == "/tmp/llama-completion"
+    assert command[command.index("--json-schema-file") + 1] == "/tmp/schema.json"
+    assert command[command.index("--reasoning") + 1] == "off"
+    assert command[command.index("--reasoning-budget") + 1] == "0"
+
+
 def test_parse_model_json_extracts_first_json_object():
     runner = _load_runner()
     parsed = runner.parse_model_json(

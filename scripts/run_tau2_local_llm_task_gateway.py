@@ -264,6 +264,64 @@ SUPPORTING_RUNTIME_PROOF_ARG_KEYWORDS = (
 )
 
 
+def llama_actions_output_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["actions"],
+        "properties": {
+            "actions": {
+                "type": "array",
+                "maxItems": 1,
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": ["tool", "arguments"],
+                    "properties": {
+                        "tool": {"type": "string"},
+                        "arguments": {"type": "object"},
+                    },
+                },
+            }
+        },
+    }
+
+
+def llama_hint_choice_output_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["selected_hint_id"],
+        "properties": {
+            "selected_hint_id": {
+                "anyOf": [
+                    {"type": "string"},
+                    {"type": "null"},
+                ]
+            }
+        },
+    }
+
+
+def write_llama_output_schemas(
+    output_dir: Path,
+    enabled: bool,
+) -> tuple[Path | None, Path | None]:
+    if not enabled:
+        return None, None
+    schema_dir = output_dir / "schemas"
+    schema_dir.mkdir(parents=True, exist_ok=True)
+    actions_path = schema_dir / "llama_actions_output_schema.json"
+    hint_choice_path = schema_dir / "llama_hint_choice_output_schema.json"
+    actions_path.write_text(
+        json.dumps(llama_actions_output_schema(), indent=2, sort_keys=True)
+    )
+    hint_choice_path.write_text(
+        json.dumps(llama_hint_choice_output_schema(), indent=2, sort_keys=True)
+    )
+    return actions_path, hint_choice_path
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Run local Qwen tau2 task proposals through IntentCap LiveToolGateway"
@@ -290,6 +348,23 @@ def main() -> int:
     parser.add_argument("--ctx-size", type=int, default=4096)
     parser.add_argument("--gpu-layers", type=int, default=999)
     parser.add_argument("--timeout-seconds", type=int, default=120)
+    parser.add_argument(
+        "--llama-json-schema-actions",
+        action="store_true",
+        help=(
+            "Constrain llama.cpp JSON outputs with schema files. Normal task, "
+            "stepwise, and feedback prompts use an actions schema; hint-choice "
+            "fallback prompts use a selected_hint_id schema."
+        ),
+    )
+    parser.add_argument(
+        "--llama-reasoning-off",
+        action="store_true",
+        help=(
+            "Pass --reasoning off --reasoning-budget 0 to llama.cpp for local "
+            "Qwen protocol-control runs."
+        ),
+    )
     parser.add_argument("--feedback-rounds", type=int, default=0)
     parser.add_argument(
         "--feedback-compact-json-prompts",
@@ -581,6 +656,8 @@ def main() -> int:
         ctx_size=args.ctx_size,
         gpu_layers=args.gpu_layers,
         timeout_seconds=args.timeout_seconds,
+        llama_json_schema_actions=args.llama_json_schema_actions,
+        llama_reasoning_off=args.llama_reasoning_off,
         feedback_rounds=args.feedback_rounds,
         feedback_compact_json_prompts=args.feedback_compact_json_prompts,
         lease_source=args.lease_source,
@@ -639,6 +716,8 @@ def run_experiment(
     ctx_size: int = 4096,
     gpu_layers: int = 999,
     timeout_seconds: int = 120,
+    llama_json_schema_actions: bool = False,
+    llama_reasoning_off: bool = False,
     feedback_rounds: int = 0,
     feedback_compact_json_prompts: bool = False,
     lease_source: str = "exact-reference",
@@ -797,6 +876,10 @@ def run_experiment(
         )
 
     output_dir.mkdir(parents=True, exist_ok=True)
+    llama_action_schema_file, llama_hint_choice_schema_file = write_llama_output_schemas(
+        output_dir,
+        llama_json_schema_actions,
+    )
     prompt_dir = output_dir / "prompts"
     raw_dir = output_dir / "raw_outputs"
     feedback_prompt_dir = output_dir / "feedback_prompts"
@@ -888,6 +971,9 @@ def run_experiment(
                     ctx_size=ctx_size,
                     gpu_layers=gpu_layers,
                     timeout_seconds=timeout_seconds,
+                    llama_action_schema_file=llama_action_schema_file,
+                    llama_hint_choice_schema_file=llama_hint_choice_schema_file,
+                    llama_reasoning_off=llama_reasoning_off,
                     feedback_rounds=feedback_rounds,
                     feedback_compact_json_prompts=feedback_compact_json_prompts,
                     lease_source=lease_source,
@@ -965,6 +1051,10 @@ def run_experiment(
         ctx_size=ctx_size,
         gpu_layers=gpu_layers,
         timeout_seconds=timeout_seconds,
+        llama_json_schema_actions=llama_json_schema_actions,
+        llama_reasoning_off=llama_reasoning_off,
+        llama_action_schema_file=llama_action_schema_file,
+        llama_hint_choice_schema_file=llama_hint_choice_schema_file,
         max_tasks_per_domain=max_tasks_per_domain,
         selected_task_ids=selected_task_ids,
         feedback_rounds=feedback_rounds,
@@ -1055,6 +1145,9 @@ def _run_task(
     ctx_size: int,
     gpu_layers: int,
     timeout_seconds: int,
+    llama_action_schema_file: Path | None,
+    llama_hint_choice_schema_file: Path | None,
+    llama_reasoning_off: bool,
     feedback_rounds: int,
     feedback_compact_json_prompts: bool,
     lease_source: str,
@@ -1210,6 +1303,9 @@ def _run_task(
             ctx_size=ctx_size,
             gpu_layers=gpu_layers,
             timeout_seconds=timeout_seconds,
+            llama_action_schema_file=llama_action_schema_file,
+            llama_hint_choice_schema_file=llama_hint_choice_schema_file,
+            llama_reasoning_off=llama_reasoning_off,
             feedback_rounds=feedback_rounds,
             feedback_prompt_dir=feedback_prompt_dir,
             feedback_raw_dir=feedback_raw_dir,
@@ -1281,6 +1377,8 @@ def _run_task(
                 n_predict=n_predict,
                 ctx_size=ctx_size,
                 gpu_layers=gpu_layers,
+                json_schema_file=llama_action_schema_file,
+                reasoning_off=llama_reasoning_off,
             )
             stdout, stderr, returncode, latency = runner(command, timeout_seconds)
         raw_payload = _raw_payload(stdout, stderr, returncode)
@@ -1338,6 +1436,8 @@ def _run_task(
                 n_predict=n_predict,
                 ctx_size=ctx_size,
                 gpu_layers=gpu_layers,
+                json_schema_file=llama_action_schema_file,
+                reasoning_off=llama_reasoning_off,
             )
             feedback_stdout, feedback_stderr, feedback_returncode, _ = runner(
                 command,
@@ -1680,6 +1780,9 @@ def run_stepwise_model_loop(
     ctx_size: int,
     gpu_layers: int,
     timeout_seconds: int,
+    llama_action_schema_file: Path | None = None,
+    llama_hint_choice_schema_file: Path | None = None,
+    llama_reasoning_off: bool = False,
     dry_run: bool,
     runner: Callable[[list[str], int], tuple[str, str, int, float]],
     single_hint_fallback: bool,
@@ -1815,6 +1918,8 @@ def run_stepwise_model_loop(
                 n_predict=n_predict,
                 ctx_size=ctx_size,
                 gpu_layers=gpu_layers,
+                json_schema_file=llama_action_schema_file,
+                reasoning_off=llama_reasoning_off,
             )
             stdout, stderr, returncode, latency = runner(command, timeout_seconds)
         last_returncode = returncode
@@ -1902,6 +2007,8 @@ def run_stepwise_model_loop(
                     n_predict=n_predict,
                     ctx_size=ctx_size,
                     gpu_layers=gpu_layers,
+                    json_schema_file=llama_hint_choice_schema_file,
+                    reasoning_off=llama_reasoning_off,
                 )
                 choice_stdout, choice_stderr, choice_returncode, choice_latency = runner(
                     command,
@@ -1953,6 +2060,8 @@ def run_stepwise_model_loop(
                     n_predict=n_predict,
                     ctx_size=ctx_size,
                     gpu_layers=gpu_layers,
+                    json_schema_file=llama_hint_choice_schema_file,
+                    reasoning_off=llama_reasoning_off,
                 )
                 choice_stdout, choice_stderr, choice_returncode, choice_latency = runner(
                     command,
@@ -2058,6 +2167,8 @@ def run_stepwise_model_loop(
                     n_predict=n_predict,
                     ctx_size=ctx_size,
                     gpu_layers=gpu_layers,
+                    json_schema_file=llama_action_schema_file,
+                    reasoning_off=llama_reasoning_off,
                 )
                 feedback_stdout, feedback_stderr, feedback_returncode, feedback_latency = runner(
                     command,
@@ -5087,6 +5198,10 @@ def summarize(
     ctx_size: int,
     gpu_layers: int,
     timeout_seconds: int,
+    llama_json_schema_actions: bool = False,
+    llama_reasoning_off: bool = False,
+    llama_action_schema_file: Path | None = None,
+    llama_hint_choice_schema_file: Path | None = None,
     max_tasks_per_domain: int | None,
     feedback_rounds: int,
     feedback_compact_json_prompts: bool,
@@ -5165,6 +5280,14 @@ def summarize(
     if feedback_compact_json_prompts:
         notes.append(
             "Feedback compact JSON prompts shrink denial-recovery prompts without changing initial task prompts."
+        )
+    if llama_json_schema_actions:
+        notes.append(
+            "llama.cpp JSON schema decoding constrains output protocol only: action prompts use an actions schema and hint-choice prompts use a selected_hint_id schema; leases and gateway checks are unchanged."
+        )
+    if llama_reasoning_off:
+        notes.append(
+            "llama.cpp reasoning suppression is used as a protocol-control setting only; it is not an authorization mechanism."
         )
     if selected_task_ids:
         notes.append(
@@ -5480,6 +5603,21 @@ def summarize(
         "ctx_size": ctx_size,
         "gpu_layers": gpu_layers,
         "timeout_seconds": timeout_seconds,
+        "llama_json_schema_actions": llama_json_schema_actions,
+        "llama_reasoning_off": llama_reasoning_off,
+        "llama_action_schema_file": str(llama_action_schema_file or ""),
+        "llama_action_schema_digest": (
+            _file_digest(llama_action_schema_file)
+            if llama_action_schema_file is not None and llama_action_schema_file.exists()
+            else None
+        ),
+        "llama_hint_choice_schema_file": str(llama_hint_choice_schema_file or ""),
+        "llama_hint_choice_schema_digest": (
+            _file_digest(llama_hint_choice_schema_file)
+            if llama_hint_choice_schema_file is not None
+            and llama_hint_choice_schema_file.exists()
+            else None
+        ),
         "python": sys.version.split()[0],
         "platform": platform.platform(),
         "script_sha256": _sha256(Path(__file__).read_bytes()),
