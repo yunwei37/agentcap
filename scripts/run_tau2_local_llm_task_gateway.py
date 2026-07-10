@@ -749,8 +749,6 @@ def run_experiment(
             "stepwise_write_activation_proof_csv does not exist: "
             f"{stepwise_write_activation_proof_csv}"
         )
-    if feedback_rounds > 0 and stepwise_max_steps > 0:
-        raise ValueError("feedback_rounds and stepwise_max_steps are mutually exclusive")
     if stepwise_tool_activation_priority and stepwise_max_steps <= 0:
         raise ValueError("stepwise_tool_activation_priority requires stepwise_max_steps")
     if tool_exposure not in TOOL_EXPOSURE_MODES:
@@ -1199,6 +1197,9 @@ def _run_task(
             ctx_size=ctx_size,
             gpu_layers=gpu_layers,
             timeout_seconds=timeout_seconds,
+            feedback_rounds=feedback_rounds,
+            feedback_prompt_dir=feedback_prompt_dir,
+            feedback_raw_dir=feedback_raw_dir,
             dry_run=dry_run,
             runner=runner,
             single_hint_fallback=stepwise_single_hint_fallback,
@@ -1369,6 +1370,18 @@ def _run_task(
         )
 
     stepwise_model_calls = list(stepwise_result["model_calls"])
+    stepwise_feedback_model_calls = list(stepwise_result.get("feedback_model_calls", []))
+    stepwise_feedback_attempted = bool(stepwise_result.get("feedback_attempted", False))
+    stepwise_feedback_prompt_paths = [
+        str(record["prompt_path"])
+        for step in stepwise_result["steps"]
+        for record in step.get("feedback_records", [])
+    ]
+    stepwise_feedback_raw_paths = [
+        str(record["raw_output_path"])
+        for step in stepwise_result["steps"]
+        for record in step.get("feedback_records", [])
+    ]
     all_model_calls = model_calls + feedback_model_calls + stepwise_model_calls
 
     action_reward_info = action_evaluator.calculate_reward(task, trajectory)
@@ -1432,10 +1445,18 @@ def _run_task(
         "parse_ok": parsed is not None or bool(stepwise_result["parse_ok"]),
         "model_calls": len(all_model_calls),
         "initial_model_calls": len(model_calls),
-        "feedback_model_calls": len(feedback_model_calls),
-        "feedback_attempted": feedback_attempted,
-        "feedback_prompt_path": str(feedback_prompt_path) if feedback_attempted else "",
-        "feedback_raw_output_path": str(feedback_raw_path) if feedback_attempted else "",
+        "feedback_model_calls": len(feedback_model_calls) + len(stepwise_feedback_model_calls),
+        "feedback_attempted": feedback_attempted or stepwise_feedback_attempted,
+        "feedback_prompt_path": (
+            str(feedback_prompt_path)
+            if feedback_attempted
+            else "|".join(stepwise_feedback_prompt_paths)
+        ),
+        "feedback_raw_output_path": (
+            str(feedback_raw_path)
+            if feedback_attempted
+            else "|".join(stepwise_feedback_raw_paths)
+        ),
         "stepwise_max_steps": stepwise_max_steps,
         "stepwise_empty_retries": stepwise_empty_retries,
         "stepwise_empty_retry_steps": sum(
@@ -1672,6 +1693,9 @@ def run_stepwise_model_loop(
     compiler_runtime_value_proof: bool = False,
     tool_activation_candidates: list[dict[str, Any]] | None = None,
     tool_activation_priority: bool = False,
+    feedback_rounds: int = 0,
+    feedback_prompt_dir: Path | None = None,
+    feedback_raw_dir: Path | None = None,
 ) -> dict[str, Any]:
     task_id = str(raw_task.get("id", ""))
     steps: list[dict[str, Any]] = []
@@ -1683,6 +1707,8 @@ def run_stepwise_model_loop(
     reference_event_set = set(reference_event_ids)
     empty_retry_count = 0
     tool_activation_candidates = tool_activation_candidates or []
+    feedback_model_calls_all: list[dict[str, Any]] = []
+    feedback_attempted_any = False
 
     for step_index in range(1, max_steps + 1):
         visible_tools = select_tool_schemas(
@@ -1983,6 +2009,90 @@ def run_stepwise_model_loop(
             compiler_runtime_value_proof=compiler_runtime_value_proof,
             raw_task=raw_task,
         )
+        step_feedback_records = []
+        latest_blocked_calls = blocked_calls
+        if feedback_rounds > 0 and latest_blocked_calls and not dry_run:
+            if feedback_prompt_dir is None or feedback_raw_dir is None:
+                raise ValueError("stepwise feedback requires feedback prompt/raw directories")
+            for feedback_index in range(1, feedback_rounds + 1):
+                if not latest_blocked_calls:
+                    break
+                feedback_attempted_any = True
+                feedback_prompt = build_feedback_prompt(
+                    domain=domain,
+                    raw_task=raw_task,
+                    tools=visible_tools,
+                    blocked_calls=latest_blocked_calls,
+                    action_rows=action_rows,
+                )
+                feedback_prompt_path = (
+                    feedback_prompt_dir
+                    / f"{_safe_id(domain, task_id)}_step_{step_index}_feedback_{feedback_index}.txt"
+                )
+                feedback_raw_path = (
+                    feedback_raw_dir
+                    / f"{_safe_id(domain, task_id)}_step_{step_index}_feedback_{feedback_index}.txt"
+                )
+                feedback_prompt_path.write_text(feedback_prompt)
+                command = _llama_command(
+                    llama_bin=llama_bin,
+                    model=model,
+                    prompt_path=feedback_prompt_path,
+                    n_predict=n_predict,
+                    ctx_size=ctx_size,
+                    gpu_layers=gpu_layers,
+                )
+                feedback_stdout, feedback_stderr, feedback_returncode, feedback_latency = runner(
+                    command,
+                    timeout_seconds,
+                )
+                latency_seconds += feedback_latency
+                feedback_raw_payload = _raw_payload(
+                    feedback_stdout,
+                    feedback_stderr,
+                    feedback_returncode,
+                )
+                feedback_raw_path.write_text(feedback_raw_payload)
+                feedback_parsed = parse_model_json(feedback_stdout)
+                parse_ok = parse_ok or feedback_parsed is not None
+                feedback_calls = normalize_model_calls(feedback_parsed)
+                feedback_model_calls_all.extend(feedback_calls)
+                all_calls.extend(feedback_calls)
+                before_feedback_row_count = len(action_rows)
+                latest_blocked_calls = execute_model_calls(
+                    round_name=f"step_{step_index}_feedback_{feedback_index}",
+                    model_calls=feedback_calls,
+                    domain=domain,
+                    task_id=task_id,
+                    start_index=len(action_rows),
+                    pending_reference_actions=pending_reference_actions,
+                    reference_by_event=reference_by_event,
+                    gateway=gateway,
+                    trajectory=trajectory,
+                    tool_call_cls=tool_call_cls,
+                    assistant_message_cls=assistant_message_cls,
+                    action_rows=action_rows,
+                    executed_reference_ids=executed_reference_ids,
+                    bound_reference_ids=bound_reference_ids,
+                    include_reference_event_ids=include_reference_event_ids,
+                    compiler_runtime_binding=compiler_runtime_binding,
+                    compiler_runtime_value_proof=compiler_runtime_value_proof,
+                    raw_task=raw_task,
+                )
+                step_feedback_records.append(
+                    {
+                        "feedback_round": feedback_index,
+                        "prompt_path": str(feedback_prompt_path),
+                        "raw_output_path": str(feedback_raw_path),
+                        "raw_output_sha256": _sha256(feedback_raw_payload.encode()),
+                        "returncode": feedback_returncode,
+                        "latency_seconds": feedback_latency,
+                        "parsed": feedback_parsed,
+                        "model_calls": feedback_calls,
+                        "blocked_calls": latest_blocked_calls,
+                        "new_action_rows": action_rows[before_feedback_row_count:],
+                    }
+                )
         steps.append(
             {
                 "step": step_index,
@@ -1994,6 +2104,8 @@ def run_stepwise_model_loop(
                 "parsed": parsed,
                 "model_calls": model_calls,
                 "blocked_calls": blocked_calls,
+                "feedback_attempted": bool(step_feedback_records),
+                "feedback_records": step_feedback_records,
                 "empty_retry": bool(empty_retry_count > 0),
                 "state_grounded_arg_hints": arg_hints,
                 "compiler_lease_hints": compiler_hints,
@@ -2036,6 +2148,8 @@ def run_stepwise_model_loop(
     return {
         "steps": steps,
         "model_calls": all_calls,
+        "feedback_model_calls": feedback_model_calls_all,
+        "feedback_attempted": feedback_attempted_any,
         "parse_ok": parse_ok,
         "latency_seconds": latency_seconds,
         "returncode": last_returncode,
@@ -4948,7 +5062,12 @@ def summarize(
     tool_oracle_rows = [row for row in task_rows if row["tool_oracle_applicable"]]
     tool_schema_counts = [int(row.get("tool_schema_count", 0)) for row in task_rows]
     initial_rows = [row for row in action_rows if row.get("round") == "initial"]
-    feedback_rows = [row for row in action_rows if str(row.get("round", "")).startswith("feedback")]
+    feedback_rows = [
+        row
+        for row in action_rows
+        if str(row.get("round", "")).startswith("feedback")
+        or "_feedback_" in str(row.get("round", ""))
+    ]
     stepwise_rows = [row for row in action_rows if str(row.get("round", "")).startswith("step_")]
     notes = [
         "This run uses the existing local tau2-bench artifact only; it does not clone, sync, or download datasets.",

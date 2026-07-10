@@ -2893,7 +2893,134 @@ def test_repair_map_priority_executes_visible_candidate_without_model(tmp_path: 
     assert result["steps"][0]["repair_map_priority"] is True
     assert result["steps"][0]["repair_map_fallback"] is False
     assert result["steps"][0]["new_action_rows"][0]["executed"] is True
-    assert result["steps"][0]["new_action_rows"][0]["bound_reference_event_id"] == "mock:t:create_1"
+
+
+def test_stepwise_feedback_recovers_blocked_call_without_reference_leak(tmp_path: Path):
+    action = ReferenceAction(
+        event_id="mock:t:create_1",
+        domain="mock",
+        task_id="t",
+        action_id="create_1",
+        index=0,
+        name="create_task",
+        requestor="assistant",
+        args={"user_id": "user_1", "title": "Important Meeting"},
+        reward_basis=("ACTION",),
+        object_name="tau2.mock.assistant.create_task",
+    )
+    trace = runner.build_task_trace("mock", "t", [action])
+    gateway = LiveToolGateway(
+        trace,
+        {
+            "tau2.mock.assistant.create_task": lambda **kwargs: {
+                "ok": True,
+                "kwargs": kwargs,
+            }
+        },
+    )
+    responses = iter(
+        [
+            '{"actions":[{"tool":"create_task","arguments":{"user_id":"user_1","title":"Wrong"}}]}',
+            '{"actions":[{"tool":"create_task","arguments":{"user_id":"user_1","title":"Important Meeting"}}]}',
+        ]
+    )
+
+    def fake_runner(command, timeout):
+        return next(responses), "", 0, 0.0
+
+    prompt_dir = tmp_path / "prompts"
+    raw_dir = tmp_path / "raw"
+    feedback_prompt_dir = tmp_path / "feedback_prompts"
+    feedback_raw_dir = tmp_path / "feedback_raw"
+    prompt_dir.mkdir()
+    raw_dir.mkdir()
+    feedback_prompt_dir.mkdir()
+    feedback_raw_dir.mkdir()
+    action_rows: list[dict[str, object]] = []
+    executed_reference_ids: list[str] = []
+    bound_reference_ids: list[str] = []
+
+    result = runner.run_stepwise_model_loop(
+        domain="mock",
+        raw_task={
+            "id": "t",
+            "instruction": "Create the important meeting task for user_1.",
+            "evaluation_criteria": {
+                "actions": [
+                    {
+                        "name": "create_task",
+                        "arguments": {
+                            "user_id": "user_1",
+                            "title": "Important Meeting",
+                        },
+                    }
+                ]
+            },
+        },
+        tools=[{"name": "create_task", "parameters": {}}],
+        tool_exposure="leased",
+        active_tool_names={"create_task"},
+        max_steps=1,
+        empty_retries=0,
+        state_grounded_arg_hints=False,
+        compiler_lease_hints=False,
+        runtime_evidence_lease_hints=False,
+        runtime_evidence_rank_hints=False,
+        compact_json_prompts=False,
+        step_prompt_dir=prompt_dir,
+        step_raw_dir=raw_dir,
+        llama_bin=Path("llama"),
+        model=Path("model.gguf"),
+        n_predict=16,
+        ctx_size=128,
+        gpu_layers=0,
+        timeout_seconds=1,
+        feedback_rounds=1,
+        feedback_prompt_dir=feedback_prompt_dir,
+        feedback_raw_dir=feedback_raw_dir,
+        dry_run=False,
+        runner=fake_runner,
+        single_hint_fallback=False,
+        hint_choice_fallback=False,
+        compiler_lease_fallback=False,
+        runtime_evidence_fallback=False,
+        runtime_evidence_ranked_fallback=False,
+        runtime_evidence_ranked_fallback_min_score=50,
+        runtime_evidence_ranked_fallback_margin=0,
+        runtime_evidence_hint_choice_fallback=False,
+        repair_map_candidates=[],
+        repair_map_fallback=False,
+        repair_map_priority=False,
+        pending_reference_actions=[action],
+        reference_by_event={action.event_id: action},
+        reference_event_ids=[action.event_id],
+        gateway=gateway,
+        trajectory=[],
+        tool_call_cls=SimpleNamespace,
+        assistant_message_cls=SimpleNamespace,
+        action_rows=action_rows,
+        executed_reference_ids=executed_reference_ids,
+        bound_reference_ids=bound_reference_ids,
+        include_reference_event_ids=True,
+        compiler_runtime_binding=False,
+    )
+
+    assert result["feedback_attempted"] is True
+    assert result["feedback_model_calls"] == [
+        {
+            "tool": "create_task",
+            "arguments": {"user_id": "user_1", "title": "Important Meeting"},
+        }
+    ]
+    assert [row["round"] for row in action_rows] == ["step_1", "step_1_feedback_1"]
+    assert action_rows[0]["gateway_allowed"] is False
+    assert action_rows[1]["gateway_allowed"] is True
+    assert action_rows[1]["executed"] is True
+    feedback_prompt = next(feedback_prompt_dir.glob("*_feedback_1.txt")).read_text()
+    assert "Wrong" in feedback_prompt
+    assert "Hidden reference" not in feedback_prompt
+    assert "evaluation_criteria" not in feedback_prompt
+    assert result["steps"][0]["new_action_rows"][1]["bound_reference_event_id"] == "mock:t:create_1"
 
 
 def test_step_prompt_can_include_state_grounded_arg_hints_without_reference_actions():
