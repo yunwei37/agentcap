@@ -205,7 +205,7 @@ def _checks() -> list[dict[str, Any]]:
         _json("E4.aggregate.no_prov_baseline", "5 个 unsafe accepts", "results/eval/R294BOUNDARYCOVERAGE/multiboundary_system_summary.json", "no_provenance_unsafe_accepts_observed", 5),
         _text("E4.scope.not_production", "不是 production backend"),
         _text("E4.scope.not_benchmark_utility", "不是 benchmark-scale utility 结果"),
-        _text("E4.scope.r331_extended", "R331 extended proof audit now covers 64/64 adapter verdicts"),
+        _text("E4.scope.r331_extended", "R331 扩展 proof audit 覆盖 64/64 个 adapter verdicts"),
         _json("E3.integrated.events", "9 个 events", "results/eval/R274INTEGRATED/integrated_workflow_summary.json", "events", 9),
         _json("E3.integrated.boundaries", "5 个边界", "results/eval/R274INTEGRATED/integrated_workflow_summary.json", "boundary_count", 5),
         _json("E3.integrated.allowed", "允许 5 个 authorized effects/placements", "results/eval/R274INTEGRATED/integrated_workflow_summary.json", "intentcap_allowed", 5),
