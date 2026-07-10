@@ -1,0 +1,60 @@
+{
+  "analysis": "prompt-builder context placement adapter",
+  "authority_section_count": 4,
+  "authority_sections": [
+    "prompt.delegation_section",
+    "prompt.instruction_section",
+    "prompt.policy_section",
+    "prompt.tool_section"
+  ],
+  "events": 10,
+  "git_status": "## main...origin/main\n M docs/autopaper/intentcap-paper-zh.tex\n M docs/evaluation.md\n M scripts/audit_paper_evidence_numbers.py\n?? examples/prompt_builder_context_suite.json\n?? results/eval/R293PAPERAUDIT/\n?? scripts/run_prompt_builder_context_probe.py\n?? tests/test_run_prompt_builder_context_probe.py",
+  "input_suite_sha256": "850f4549b9eb238c0ad210e0db6aa5a7b2aa06414cd0a6b6155d94a05e6d0cb7",
+  "intentcap_authority_section_placements": 3,
+  "intentcap_blocked": 4,
+  "intentcap_blocked_unsafe_promotions": 4,
+  "intentcap_placed": 6,
+  "intentcap_sections": {
+    "prompt.data_section": 3,
+    "prompt.instruction_section": 1,
+    "prompt.policy_section": 1,
+    "prompt.tool_section": 1
+  },
+  "intentcap_unsafe_authority_placements": 0,
+  "max_intentcap_latency_ms": 0.015,
+  "mean_intentcap_latency_ms": 0.005,
+  "no_dataset_sync": true,
+  "not_a_model_run": true,
+  "notes": [
+    "IntentCap checks every prompt cell before writing it into a section.",
+    "Object-only prompt assembly ignores destination, mode, and owner-aware lease constraints.",
+    "The probe is a deterministic prompt-builder adapter, not a production prompt runtime."
+  ],
+  "object_only_authority_section_placements": 7,
+  "object_only_paired_promotions_unsafe": 4,
+  "object_only_placed": 10,
+  "object_only_sections": {
+    "prompt.data_section": 3,
+    "prompt.delegation_section": 1,
+    "prompt.instruction_section": 2,
+    "prompt.policy_section": 3,
+    "prompt.tool_section": 1
+  },
+  "object_only_unsafe_authority_placements": 4,
+  "output_dir": "results/eval/R292PROMPTBUILDER",
+  "owner_class_count": 4,
+  "owner_classes_exercised": [
+    "agent",
+    "env",
+    "instruction",
+    "tool"
+  ],
+  "paired_source_promotions": 4,
+  "paired_source_promotions_blocked": 4,
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "0a47a959e0474cd9bfdfcf724bce47ba64393702",
+  "python": "3.12.3",
+  "run_id": "R292PROMPTBUILDER",
+  "script_sha256": "0ba9cfbf88dcc32c684c5c89fe2bebb50d865e47073bb9c13813a7dac1513807",
+  "suite_path": "examples/prompt_builder_context_suite.json"
+}

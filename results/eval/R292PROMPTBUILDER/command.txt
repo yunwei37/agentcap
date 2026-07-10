@@ -1,0 +1,1 @@
+PYTHONPATH=src /usr/bin/python3 scripts/run_prompt_builder_context_probe.py --run-id R292PROMPTBUILDER --suite examples/prompt_builder_context_suite.json --output-dir results/eval/R292PROMPTBUILDER
