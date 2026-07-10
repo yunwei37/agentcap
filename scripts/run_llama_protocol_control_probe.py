@@ -133,6 +133,7 @@ def run_probe(
     runner: Callable[[list[str], int], tuple[str, str, int, float]] | None = None,
 ) -> dict[str, Any]:
     output_dir.mkdir(parents=True, exist_ok=True)
+    pre_run_git_status = _git(["status", "--short"])
     raw_dir = output_dir / "raw_outputs"
     raw_dir.mkdir(exist_ok=True)
     schema_path = output_dir / "actions_schema.json"
@@ -194,6 +195,7 @@ def run_probe(
         n_predict=n_predict,
         ctx_size=ctx_size,
         gpu_layers=gpu_layers,
+        git_status=pre_run_git_status,
     )
     _write_csv(output_dir / "protocol_control_rows.csv", ROW_FIELDS, rows)
     _write_csv(output_dir / "protocol_control_mode_summary.csv", MODE_FIELDS, mode_rows)
@@ -358,6 +360,7 @@ def build_summary(
     n_predict: int,
     ctx_size: int,
     gpu_layers: int,
+    git_status: str,
 ) -> dict[str, Any]:
     row_counts = Counter(str(row["mode"]) for row in rows)
     constrained = [
@@ -400,7 +403,7 @@ def build_summary(
         "python": platform.python_version(),
         "platform": platform.platform(),
         "project_head": _git(["rev-parse", "HEAD"]),
-        "git_status": _git(["status", "--short"]),
+        "git_status": git_status,
     }
 
 
