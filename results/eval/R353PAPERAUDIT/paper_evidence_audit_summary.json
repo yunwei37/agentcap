@@ -1,0 +1,263 @@
+{
+  "analysis": "paper-facing evidence number audit",
+  "audit_status": "ok",
+  "checks_failed": 0,
+  "checks_passed": 251,
+  "checks_total": 251,
+  "failed_claims": [],
+  "input_digests": [
+    {
+      "bytes": 194769,
+      "path": "docs/autopaper/intentcap-paper-zh.tex",
+      "sha256": "f249a240cd15ce4a8816fb85a14f3f292551d30d5bf7a2c581cb1039649f6384"
+    },
+    {
+      "bytes": 1437,
+      "path": "results/eval/R202E1/e1_security_wrapper_summary.json",
+      "sha256": "c990a481fcd306e60542ed238584274880669357efb34fda8910174ee57996ca"
+    },
+    {
+      "bytes": 1746,
+      "path": "results/eval/R203E1U/e1_utility_wrapper_summary.json",
+      "sha256": "3d2836c1590ab4993d821806d46f1e7297b36e8ecc47e7ab93b0a390ecbafc38"
+    },
+    {
+      "bytes": 2440,
+      "path": "results/eval/R206E1M/e1_saved_model_wrapper_summary.json",
+      "sha256": "0c884cd7b6868b363af1aa069786b68a6422e5490bf4cbe67d2186546ac625cf"
+    },
+    {
+      "bytes": 7716,
+      "path": "results/eval/R207E2A/e2_expert_adjudication_audit_summary.json",
+      "sha256": "80a8af99410de383da8b0a4d03ce57209a853f7c88760720275a948842fe4232"
+    },
+    {
+      "bytes": 1593,
+      "path": "results/eval/R211ENVBACKEND/env_backend_summary.json",
+      "sha256": "bea514deb488da0818da80e8c3741836952f488bcccf49114fe84f69675565e9"
+    },
+    {
+      "bytes": 2231,
+      "path": "results/eval/R212ENVLLM/env_llm_backend_summary.json",
+      "sha256": "c6ba1ea23b5ea32527f6281f9f844ae4401c38441567f07dc3d6e9a4f8a6f45b"
+    },
+    {
+      "bytes": 2787,
+      "path": "results/eval/R217E3POLICY/closest_baseline/closest_baseline_labeler_summary.json",
+      "sha256": "7d36bfe95bf7b1ff5e70a3241a30921de1c1ef96433c1303c445e2826e78743d"
+    },
+    {
+      "bytes": 988,
+      "path": "results/eval/R217E3POLICY/gateway/gateway_summary.json",
+      "sha256": "b2108b68baa1e9b3880542115f7e5717ad408348494f0c9ad4a3e812b01a4da5"
+    },
+    {
+      "bytes": 1379,
+      "path": "results/eval/R218ACTLOWER/actplane_lowering_summary.json",
+      "sha256": "0b95c14f28fdf50134f0d07c1f67dfd890b10acbc8cc0507c55049f8b5214659"
+    },
+    {
+      "bytes": 1670,
+      "path": "results/eval/R219E3LIFT/benchmark_residual_lift_summary.json",
+      "sha256": "bd90204bf759ebc84dc5800bc50acddf50558769572b6f9b25c37503f7be7bc4"
+    },
+    {
+      "bytes": 10255,
+      "path": "results/eval/R220AUTHCHAR/authority_input_characterization_summary.json",
+      "sha256": "5be969560570c366d4c07eb5c094b56f7f9995ddc6666c0518cc4a398eed6713"
+    },
+    {
+      "bytes": 1164,
+      "path": "results/eval/R224SKILLBOUNDARY/skill_instruction_boundary_summary.json",
+      "sha256": "f237a7d38331dc8e4ef329f17a8680047e1dbaca74fb7734f6384018209a5f66"
+    },
+    {
+      "bytes": 2411,
+      "path": "results/eval/R238RECOVPOLICYBLINDQWEN36/residual_llm_gateway_summary.json",
+      "sha256": "14a8919e432bff85b4b01d46db6a152bfd4d60fa9addb1d28c3ad8ee95689b7f"
+    },
+    {
+      "bytes": 2111,
+      "path": "results/eval/R239E3WEAKABL/e3_weak_variant_summary.json",
+      "sha256": "8e08f95b791560c17e4c34316fc34887c0f56e5994bd4106eae435b654475f5e"
+    },
+    {
+      "bytes": 3543,
+      "path": "results/eval/R240ADAPTERPROOF/adapter_proof_completeness_summary.json",
+      "sha256": "03be010be1b7727c770de0a55609e40d1c5f669a885e6ba215d921dae10c66da"
+    },
+    {
+      "bytes": 1793,
+      "path": "results/eval/R241E3TYPEDBASE/typed_provenance_baseline_summary.json",
+      "sha256": "d3efacee5f236cba0341575c6471a17c882f670d5b054b1029f38f68a9a4bb3f"
+    },
+    {
+      "bytes": 2750,
+      "path": "results/eval/R244E1MATCH214215/matched_online_summary.json",
+      "sha256": "f9796d9f6ea9e7175257023d6aa24affcf79b2f94aa90c1e9541c0ac4468c073"
+    },
+    {
+      "bytes": 2291,
+      "path": "results/eval/R263RECOVERY/closed_loop_recovery_summary.json",
+      "sha256": "d2facc46634dcf3f2a2575e0b1f2fdfa8bb2ba07de1f4a3386988e72d6e1dd61"
+    },
+    {
+      "bytes": 2501,
+      "path": "results/eval/R264BLINDRECOVERY/closed_loop_recovery_summary.json",
+      "sha256": "38c71bebb97f17a12750b77b2dbf5804996032dea399f5f949d4f4d06a31d8bd"
+    },
+    {
+      "bytes": 2474,
+      "path": "results/eval/R265BLINDRECOVERY768/closed_loop_recovery_summary.json",
+      "sha256": "3443897da7248cde62cc9c297926bfad9ad990cbe77e08fab0831bbc4c90b60f"
+    },
+    {
+      "bytes": 2518,
+      "path": "results/eval/R266NOFEEDBACK/closed_loop_recovery_summary.json",
+      "sha256": "73a1ebc410099390b970c7b6ba92734e890ca769592bedf13b0b97dd26f090c3"
+    },
+    {
+      "bytes": 2624,
+      "path": "results/eval/R267GENERICFEEDBACK/closed_loop_recovery_summary.json",
+      "sha256": "368951e1c11c542105bd100371d8c6f080cec8b75019544ac6a9af185decb4fe"
+    },
+    {
+      "bytes": 2614,
+      "path": "results/eval/R268CANDIDATEONLY/closed_loop_recovery_summary.json",
+      "sha256": "e426457a48fde9f66dfa15553c4a37c4480d80ddac1804cd768705c0394e1f90"
+    },
+    {
+      "bytes": 1294,
+      "path": "results/eval/R270COMMITMIN/commit_object_minimality_summary.json",
+      "sha256": "d5efe7ab5b509558bffd40e9f95b6ec9796a8c333bf939d7b4370508b2773c48"
+    },
+    {
+      "bytes": 1741,
+      "path": "results/eval/R274INTEGRATED/integrated_workflow_summary.json",
+      "sha256": "737ea8553087d651d66680e46fdf7f4312c2490add2396e424fc81ce1edbaf29"
+    },
+    {
+      "bytes": 1792,
+      "path": "results/eval/R281MERGECOV/three_class_merge_coverage_summary.json",
+      "sha256": "44e882f43958dfad50387bf545b01b03d1893ac735262c27239411ac181bc944"
+    },
+    {
+      "bytes": 2086,
+      "path": "results/eval/R289PAIRED/integrated_workflow_summary.json",
+      "sha256": "b0a99c8217380743fc11f956ef79bde5d2cfa32c87b6cadfe50854dca3615e90"
+    },
+    {
+      "bytes": 2383,
+      "path": "results/eval/R292PROMPTBUILDER/prompt_builder_context_summary.json",
+      "sha256": "215727f814d22b34955b4c087756c6f1f2770340269a7e17b0b3daae077628b3"
+    },
+    {
+      "bytes": 2139,
+      "path": "results/eval/R294BOUNDARYCOVERAGE/multiboundary_system_summary.json",
+      "sha256": "a3422a90c81d2a53f153b22bafe00aad67f692685c26fd56a2ead82e894d8eae"
+    },
+    {
+      "bytes": 2704,
+      "path": "results/eval/R296LOWERINGCONTRACT/lowered_policy_contract_summary.json",
+      "sha256": "46449b7ddd2433bbced9aeb7df5c7a1601dce06a867c891b55a94b1e0adec0dd"
+    },
+    {
+      "bytes": 2725,
+      "path": "results/eval/R298BWRAP/bwrap_env_sandbox_summary.json",
+      "sha256": "f915e146c5b0483c65fbb4337a37c36db35a92c9e84dd5dd9abff8e7e52a8d49"
+    },
+    {
+      "bytes": 4111,
+      "path": "results/eval/R303MCPBROKERCLEAN/mcp_broker_summary.json",
+      "sha256": "539a43d59a9aeef46ba1085b2aba32300cda5ad2409b6820aab6f9921f4add1e"
+    },
+    {
+      "bytes": 4333,
+      "path": "results/eval/R305MULTIBOUNDARYRECOVERY/closed_loop_recovery_summary.json",
+      "sha256": "0876d938218e41b5737e629fe57679ac2619bd8be655dfb7878a0c7046c5fb46"
+    },
+    {
+      "bytes": 3793,
+      "path": "results/eval/R307OWNERMATRIX/context_owner_matrix_summary.json",
+      "sha256": "7423bc8e38d2b528279c4c37c530b721288962f6b63711c26327286aaa6e4379"
+    },
+    {
+      "bytes": 6483,
+      "path": "results/eval/R311E1ORACLEFEEDBACKSHARD/task_gateway_summary.json",
+      "sha256": "5925d1d9b8b4bca11721a886a37aa2c9ae3c99be4777db926f4fe4dc4f15e383"
+    },
+    {
+      "bytes": 3085,
+      "path": "results/eval/R313RETAILCOMPILER/llm_visible_lease_compiler_summary.json",
+      "sha256": "ae81a0babbccb5ea999c8555dc429b2352d7e0a70efad17014e7a48d1a9954a1"
+    },
+    {
+      "bytes": 5152,
+      "path": "results/eval/R331ADAPTERPROOFEXT/adapter_proof_completeness_summary.json",
+      "sha256": "50c02767890412b3f8afe055c6381fd48bd2352dd325b23f7273382571450683"
+    },
+    {
+      "bytes": 2520,
+      "path": "results/eval/R335NATPD96/natural_pd_labeling_summary.json",
+      "sha256": "c77754fe1a46456d6a6345c338c90cb01f60c1e4b9ad6fb911fba467ae3a697c"
+    },
+    {
+      "bytes": 3462,
+      "path": "results/eval/R336NATPDAUDIT/natural_pd_label_audit_summary.json",
+      "sha256": "4df99b6efd70776a1d2fbf204f0242ccd58730727ecf19a65ebd4619fa272ccf"
+    },
+    {
+      "bytes": 8132,
+      "path": "results/eval/R340RETAILCOMPILERFEEDBACK5/task_gateway_summary.json",
+      "sha256": "fcbe10ca256c4463ec6a31b15e7aaba43e5249b593208f7d1d650638f1de2427"
+    },
+    {
+      "bytes": 6174,
+      "path": "results/eval/R341BENCHRECOVERYGATE/benchmark_recovery_gate_summary.json",
+      "sha256": "856ca3b9c52d1f036b29dff29cdfa30c59ff50d405441f9da50e5e2c24233304"
+    },
+    {
+      "bytes": 1925,
+      "path": "results/eval/R344PROTOCOLGAP/benchmark_protocol_gap_summary.json",
+      "sha256": "a04909d659ed813df65a13248a5b0c3e5ffd3f730eb7fcac7755790aa26ba00b"
+    },
+    {
+      "bytes": 1731,
+      "path": "results/eval/R346PROTOCOLCONTROL1/protocol_control_summary.json",
+      "sha256": "07e7443e66cb917cdaee9dadaf6cfb19f745ddbb7c697eafff46102a05e9d778"
+    },
+    {
+      "bytes": 8995,
+      "path": "results/eval/R348SCHEMASTEP1/task_gateway_summary.json",
+      "sha256": "691dfd12c483da3735355783f82dbddac59aa2b9ccf4b6d10975f1138fa4f556"
+    },
+    {
+      "bytes": 2155,
+      "path": "results/eval/R349SCHEMASTEP1GAP/benchmark_protocol_gap_summary.json",
+      "sha256": "39358ba49998e3e413bbc92e381f9e51f3b524328b19796e69ffd997a731ea57"
+    },
+    {
+      "bytes": 9355,
+      "path": "results/eval/R351SCHEMARETAIL5/task_gateway_summary.json",
+      "sha256": "45a021a96beeb4f957f077dcc23c2eed2c1020b4618bf43e22e899cc9cf32990"
+    },
+    {
+      "bytes": 2381,
+      "path": "results/eval/R352SCHEMARETAIL5GAP/benchmark_protocol_gap_summary.json",
+      "sha256": "c7c3d67a785c5b497a6237c525616fd1b4a3be3026f3da5624c7c58fd7e9d586"
+    }
+  ],
+  "machine": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "no_dataset_sync": true,
+  "not_a_model_run": true,
+  "not_a_new_experiment": true,
+  "notes": [
+    "The audit reads the paper and saved result summaries only.",
+    "It does not execute tools, call models, clone repositories, sync datasets, or download data.",
+    "Some source artifacts still use historical field names such as dangerous_accepted; the paper-facing terminology is unsafe accept/execution."
+  ],
+  "paper": "docs/autopaper/intentcap-paper-zh.tex",
+  "project_head": "0610720c71ebf8a9f7feb935ee40db469f98db3d",
+  "python": "3.12.3",
+  "run_id": "R353PAPERAUDIT"
+}

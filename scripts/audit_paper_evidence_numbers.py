@@ -341,6 +341,23 @@ def _checks() -> list[dict[str, Any]]:
         _json("ProtocolTaskLoop.reward", "0/1", "results/eval/R348SCHEMASTEP1/task_gateway_summary.json", "action_reward_pass_tasks", 0),
         _json("ProtocolTaskLoop.tasks", "0/1", "results/eval/R348SCHEMASTEP1/task_gateway_summary.json", "tasks_evaluated", 1),
         _json("ProtocolTaskLoop.status", "\\texttt{controlled\\_on\\_source\\_shard}", "results/eval/R349SCHEMASTEP1GAP/benchmark_protocol_gap_summary.json", "protocol_gap_status", "controlled_on_source_shard"),
+        _json("ProtocolRetail5.tasks", "5-task retail compiler-corpus slice", "results/eval/R351SCHEMARETAIL5/task_gateway_summary.json", "tasks_evaluated", 5),
+        _json("ProtocolRetail5.step_outputs", "48 个 step raw outputs", "results/eval/R352SCHEMARETAIL5GAP/benchmark_protocol_gap_summary.json", "step_raw_outputs", 48),
+        _json("ProtocolRetail5.allowed", "37 个 gateway-allowed executions", "results/eval/R351SCHEMARETAIL5/task_gateway_summary.json", "gateway_allowed", 37),
+        _json("ProtocolRetail5.blocks", "2 个 gateway blocks", "results/eval/R351SCHEMARETAIL5/task_gateway_summary.json", "gateway_blocked", 2),
+        _json("ProtocolRetail5.bound_refs", "21/46 bound reference calls", "results/eval/R351SCHEMARETAIL5/task_gateway_summary.json", "bound_reference_calls", 21),
+        _json("ProtocolRetail5.reference_actions", "21/46 bound reference calls", "results/eval/R351SCHEMARETAIL5/task_gateway_summary.json", "reference_actions", 46),
+        _json("ProtocolRetail5.off_lease", "1 个 off-lease block", "results/eval/R351SCHEMARETAIL5/task_gateway_summary.json", "off_lease_calls_blocked", 1),
+        _json("ProtocolRetail5.tool_errors", "0 个 tool errors", "results/eval/R351SCHEMARETAIL5/task_gateway_summary.json", "tool_error_calls", 0),
+        _json("ProtocolRetail5.action_reward", "0/5", "results/eval/R351SCHEMARETAIL5/task_gateway_summary.json", "action_reward_pass_tasks", 0),
+        _json("ProtocolRetail5.tool_oracle", "0/5", "results/eval/R351SCHEMARETAIL5/task_gateway_summary.json", "tool_oracle_pass_tasks", 0),
+        _json("ProtocolRetail5.nonempty_clean", "39 个 completed/nonempty outputs", "results/eval/R352SCHEMARETAIL5GAP/benchmark_protocol_gap_summary.json", "step_outputs_nonempty_clean_end", 39),
+        _json("ProtocolRetail5.no_think", "0 个 \\texttt{<think>}", "results/eval/R352SCHEMARETAIL5GAP/benchmark_protocol_gap_summary.json", "step_outputs_with_think", 0),
+        _json("ProtocolRetail5.no_truncation", "0 likely truncation", "results/eval/R352SCHEMARETAIL5GAP/benchmark_protocol_gap_summary.json", "step_outputs_likely_truncated", 0),
+        _json("ProtocolRetail5.prompt_too_long", "8 次 prompt-too-long", "results/eval/R352SCHEMARETAIL5GAP/benchmark_protocol_gap_summary.json", "step_outputs_prompt_too_long", 8),
+        _json("ProtocolRetail5.backend_crash", "1 次 backend crash", "results/eval/R352SCHEMARETAIL5GAP/benchmark_protocol_gap_summary.json", "step_outputs_backend_crash", 1),
+        _json("ProtocolRetail5.nonzero_returncodes", "9 个 nonzero returncode step outputs", "results/eval/R352SCHEMARETAIL5GAP/benchmark_protocol_gap_summary.json", "step_outputs_nonzero_returncode", 9),
+        _json("ProtocolRetail5.status", "\\texttt{context\\_capacity\\_or\\_backend\\_error\\_open}", "results/eval/R352SCHEMARETAIL5GAP/benchmark_protocol_gap_summary.json", "protocol_gap_status", "context_capacity_or_backend_error_open"),
     ]
 
 

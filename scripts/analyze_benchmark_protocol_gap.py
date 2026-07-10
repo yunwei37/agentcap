@@ -38,6 +38,7 @@ RAW_ROW_FIELDS = [
     "task_id",
     "step",
     "path",
+    "returncode",
     "stdout_chars",
     "empty_stdout",
     "contains_think",
@@ -48,6 +49,9 @@ RAW_ROW_FIELDS = [
     "mentions_actions",
     "mentions_tool",
     "likely_truncated",
+    "nonzero_returncode",
+    "prompt_too_long",
+    "backend_crash",
 ]
 TASK_ROW_FIELDS = [
     "domain",
@@ -125,7 +129,10 @@ def _raw_rows(raw_dir: Path, *, kind: str) -> list[dict[str, Any]]:
     if not raw_dir.exists():
         return rows
     for path in sorted(raw_dir.glob("*.txt")):
+        payload = _raw_payload(path)
         stdout = _stdout(path)
+        stderr = str(payload.get("stderr", "")) if isinstance(payload, dict) else ""
+        returncode = payload.get("returncode", "") if isinstance(payload, dict) else ""
         parsed = parse_model_json(stdout)
         calls = normalize_model_calls(parsed)
         task_key = _task_key(path.stem)
@@ -142,6 +149,7 @@ def _raw_rows(raw_dir: Path, *, kind: str) -> list[dict[str, Any]]:
                 "task_id": task_key["task_id"],
                 "step": task_key["step"],
                 "path": str(path),
+                "returncode": returncode,
                 "stdout_chars": len(stdout),
                 "empty_stdout": not bool(stdout),
                 "contains_think": "<think>" in stdout,
@@ -152,6 +160,9 @@ def _raw_rows(raw_dir: Path, *, kind: str) -> list[dict[str, Any]]:
                 "mentions_actions": mentions_actions,
                 "mentions_tool": mentions_tool,
                 "likely_truncated": likely_truncated,
+                "nonzero_returncode": _returncode_nonzero(returncode),
+                "prompt_too_long": "prompt is too long" in stderr,
+                "backend_crash": _returncode_negative(returncode),
             }
         )
     return rows
@@ -226,6 +237,19 @@ def _summary(
     step_outputs_likely_truncated = sum(
         1 for row in step_rows if row["likely_truncated"]
     )
+    step_outputs_nonzero_returncode = sum(
+        1 for row in step_rows if row["nonzero_returncode"]
+    )
+    step_outputs_prompt_too_long = sum(1 for row in step_rows if row["prompt_too_long"])
+    step_outputs_backend_crash = sum(1 for row in step_rows if row["backend_crash"])
+    step_outputs_nonempty_clean_end = sum(
+        1
+        for row in step_rows
+        if not row["empty_stdout"]
+        and not row["contains_think"]
+        and row["has_end_marker"]
+        and not row["likely_truncated"]
+    )
     schema_controls_enabled = bool(source_summary.get("llama_json_schema_actions")) and bool(
         source_summary.get("llama_reasoning_off")
     )
@@ -233,7 +257,13 @@ def _summary(
         step_outputs_empty == 0
         and step_outputs_with_think == 0
         and step_outputs_likely_truncated == 0
+        and step_outputs_nonzero_returncode == 0
         and step_outputs_with_parsed_calls == len(step_rows)
+    )
+    output_protocol_clean_for_completed_steps = schema_controls_enabled and bool(step_rows) and (
+        step_outputs_with_think == 0
+        and step_outputs_likely_truncated == 0
+        and step_outputs_nonempty_clean_end == len(step_rows) - step_outputs_empty
     )
     protocol_controlled = schema_controls_enabled and step_protocol_clean
     if protocol_controlled:
@@ -245,6 +275,21 @@ def _summary(
             "issues, not observed checker bypasses."
         )
         missing_for_stronger_utility_claim = [
+            "persistent or batch local model serving to avoid per-step cold starts",
+            "larger non-oracle compiler/refinement task loop with task-level reward",
+            "approval-burden and recovery measurements on benchmark-derived denials",
+        ]
+    elif output_protocol_clean_for_completed_steps and (
+        step_outputs_prompt_too_long > 0 or step_outputs_backend_crash > 0
+    ):
+        protocol_gap_status = "context_capacity_or_backend_error_open"
+        claim_interpretation = (
+            "Schema-constrained reasoning-off outputs are clean for completed "
+            "steps, but the source shard is now limited by context capacity or "
+            "backend reliability rather than by observed thinking/truncation."
+        )
+        missing_for_stronger_utility_claim = [
+            "context compaction or larger-context local serving for long tool-result histories",
             "persistent or batch local model serving to avoid per-step cold starts",
             "larger non-oracle compiler/refinement task loop with task-level reward",
             "approval-burden and recovery measurements on benchmark-derived denials",
@@ -294,6 +339,10 @@ def _summary(
         "step_outputs_with_parsed_json": sum(1 for row in step_rows if row["parsed_json"]),
         "step_outputs_with_parsed_calls": step_outputs_with_parsed_calls,
         "step_outputs_likely_truncated": step_outputs_likely_truncated,
+        "step_outputs_nonzero_returncode": step_outputs_nonzero_returncode,
+        "step_outputs_prompt_too_long": step_outputs_prompt_too_long,
+        "step_outputs_backend_crash": step_outputs_backend_crash,
+        "step_outputs_nonempty_clean_end": step_outputs_nonempty_clean_end,
         "tasks_with_likely_truncated_step_outputs": sum(
             1 for row in per_task if int(row["likely_truncated_step_outputs"]) > 0
         ),
@@ -337,11 +386,18 @@ def _task_key(stem: str) -> dict[str, str]:
 
 
 def _stdout(path: Path) -> str:
+    payload = _raw_payload(path)
+    if isinstance(payload, dict):
+        return str(payload.get("stdout", ""))
+    return path.read_text(errors="replace")
+
+
+def _raw_payload(path: Path) -> dict[str, Any] | None:
     try:
-        payload = json.loads(path.read_text())
+        value = json.loads(path.read_text())
     except json.JSONDecodeError:
-        return path.read_text(errors="replace")
-    return str(payload.get("stdout", ""))
+        return None
+    return value if isinstance(value, dict) else None
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -365,6 +421,20 @@ def _bool(value: Any) -> bool:
     if isinstance(value, bool):
         return value
     return str(value).strip().lower() == "true"
+
+
+def _returncode_nonzero(value: Any) -> bool:
+    try:
+        return int(value) != 0
+    except (TypeError, ValueError):
+        return False
+
+
+def _returncode_negative(value: Any) -> bool:
+    try:
+        return int(value) < 0
+    except (TypeError, ValueError):
+        return False
 
 
 def _digest_row(path: Path) -> dict[str, Any]:

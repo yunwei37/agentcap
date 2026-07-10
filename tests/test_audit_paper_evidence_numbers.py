@@ -115,6 +115,13 @@ def test_paper_evidence_audit_matches_saved_results(tmp_path):
     assert any(row["claim_id"] == "ProtocolControl.schema_parsed_calls" for row in rows)
     assert any(row["claim_id"] == "ProtocolTaskLoop.parsed_calls" for row in rows)
     assert any(row["claim_id"] == "ProtocolTaskLoop.status" for row in rows)
+    assert any(row["claim_id"] == "ProtocolRetail5.step_outputs" for row in rows)
+    assert any(row["claim_id"] == "ProtocolRetail5.allowed" for row in rows)
+    assert any(row["claim_id"] == "ProtocolRetail5.bound_refs" for row in rows)
+    assert any(row["claim_id"] == "ProtocolRetail5.nonempty_clean" for row in rows)
+    assert any(row["claim_id"] == "ProtocolRetail5.prompt_too_long" for row in rows)
+    assert any(row["claim_id"] == "ProtocolRetail5.backend_crash" for row in rows)
+    assert any(row["claim_id"] == "ProtocolRetail5.status" for row in rows)
 
     digests = list(csv.DictReader((output_dir / "input_digests.csv").open()))
     assert any(row["path"] == "docs/autopaper/intentcap-paper-zh.tex" for row in digests)
