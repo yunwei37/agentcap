@@ -329,7 +329,18 @@ def _checks() -> list[dict[str, Any]]:
         _json("ProtocolControl.schema_think", "0 个 \\texttt{<think>}", "results/eval/R346PROTOCOLCONTROL1/protocol_control_summary.json", "mode_summary.1.contains_think", 0),
         _json("ProtocolControl.schema_truncated", "0 个 likely truncated", "results/eval/R346PROTOCOLCONTROL1/protocol_control_summary.json", "mode_summary.1.likely_truncated", 0),
         _json("ProtocolControl.schema_parsed_calls", "1 个 parsed call", "results/eval/R346PROTOCOLCONTROL1/protocol_control_summary.json", "mode_summary.1.parsed_calls_outputs", 1),
-        _json("ProtocolControl.status", "constrained decoding 是下一轮 task-loop integration 的合理方向", "results/eval/R346PROTOCOLCONTROL1/protocol_control_summary.json", "protocol_control_status", "schema_reasoning_control_improved"),
+        _json("ProtocolControl.status", "schema+reasoning-off decoding", "results/eval/R346PROTOCOLCONTROL1/protocol_control_summary.json", "protocol_control_status", "schema_reasoning_control_improved"),
+        _json("ProtocolTaskLoop.parsed_json", "2/2 step outputs parsed JSON", "results/eval/R349SCHEMASTEP1GAP/benchmark_protocol_gap_summary.json", "step_outputs_with_parsed_json", 2),
+        _json("ProtocolTaskLoop.parsed_calls", "2/2 parsed bounded tool calls", "results/eval/R349SCHEMASTEP1GAP/benchmark_protocol_gap_summary.json", "step_outputs_with_parsed_calls", 2),
+        _json("ProtocolTaskLoop.no_think", "0 \\texttt{<think>}", "results/eval/R349SCHEMASTEP1GAP/benchmark_protocol_gap_summary.json", "step_outputs_with_think", 0),
+        _json("ProtocolTaskLoop.no_truncation", "0 likely truncated", "results/eval/R349SCHEMASTEP1GAP/benchmark_protocol_gap_summary.json", "step_outputs_likely_truncated", 0),
+        _json("ProtocolTaskLoop.allowed", "2 gateway-allowed executions", "results/eval/R348SCHEMASTEP1/task_gateway_summary.json", "gateway_allowed", 2),
+        _json("ProtocolTaskLoop.blocks", "0 gateway blocks", "results/eval/R348SCHEMASTEP1/task_gateway_summary.json", "gateway_blocked", 0),
+        _json("ProtocolTaskLoop.bound_refs", "2/5 bound reference calls", "results/eval/R348SCHEMASTEP1/task_gateway_summary.json", "bound_reference_calls", 2),
+        _json("ProtocolTaskLoop.reference_actions", "2/5 bound reference calls", "results/eval/R348SCHEMASTEP1/task_gateway_summary.json", "reference_actions", 5),
+        _json("ProtocolTaskLoop.reward", "0/1", "results/eval/R348SCHEMASTEP1/task_gateway_summary.json", "action_reward_pass_tasks", 0),
+        _json("ProtocolTaskLoop.tasks", "0/1", "results/eval/R348SCHEMASTEP1/task_gateway_summary.json", "tasks_evaluated", 1),
+        _json("ProtocolTaskLoop.status", "\\texttt{controlled\\_on\\_source\\_shard}", "results/eval/R349SCHEMASTEP1GAP/benchmark_protocol_gap_summary.json", "protocol_gap_status", "controlled_on_source_shard"),
     ]
 
 

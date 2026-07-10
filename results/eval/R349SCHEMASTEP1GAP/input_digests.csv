@@ -1,0 +1,4 @@
+path,bytes,sha256
+results/eval/R348SCHEMASTEP1/task_gateway_summary.json,8995,691dfd12c483da3735355783f82dbddac59aa2b9ccf4b6d10975f1138fa4f556
+results/eval/R348SCHEMASTEP1/task_results.csv,2418,f94c76c07ec3b2c55cc2d5ce1dfe4d9fba818dbb8d7c1930c5c07984bbad3e71
+results/eval/R348SCHEMASTEP1/action_results.csv,5354,ebf64f9010490e07606ede5906f626cb9062bb1df1feabe6d8a13d7eb7ad87b0

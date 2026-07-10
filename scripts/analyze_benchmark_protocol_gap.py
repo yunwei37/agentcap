@@ -218,6 +218,50 @@ def _summary(
     action_step_rows = [
         row for row in action_rows if str(row.get("round", "")).startswith("step_")
     ]
+    step_outputs_empty = sum(1 for row in step_rows if row["empty_stdout"])
+    step_outputs_with_think = sum(1 for row in step_rows if row["contains_think"])
+    step_outputs_with_parsed_calls = sum(
+        1 for row in step_rows if int(row["parsed_calls"]) > 0
+    )
+    step_outputs_likely_truncated = sum(
+        1 for row in step_rows if row["likely_truncated"]
+    )
+    schema_controls_enabled = bool(source_summary.get("llama_json_schema_actions")) and bool(
+        source_summary.get("llama_reasoning_off")
+    )
+    step_protocol_clean = bool(step_rows) and (
+        step_outputs_empty == 0
+        and step_outputs_with_think == 0
+        and step_outputs_likely_truncated == 0
+        and step_outputs_with_parsed_calls == len(step_rows)
+    )
+    protocol_controlled = schema_controls_enabled and step_protocol_clean
+    if protocol_controlled:
+        protocol_gap_status = "controlled_on_source_shard"
+        claim_interpretation = (
+            "The source shard no longer shows a local output-protocol failure: "
+            "schema-constrained reasoning-off step outputs are parseable bounded "
+            "tool calls. Remaining utility gaps are task-planning/compiler-recall "
+            "issues, not observed checker bypasses."
+        )
+        missing_for_stronger_utility_claim = [
+            "persistent or batch local model serving to avoid per-step cold starts",
+            "larger non-oracle compiler/refinement task loop with task-level reward",
+            "approval-burden and recovery measurements on benchmark-derived denials",
+        ]
+    else:
+        protocol_gap_status = "open"
+        claim_interpretation = (
+            "The saved benchmark-derived recovery shard is bottlenecked by local "
+            "planner/output protocol and compiler recall, not by observed tool "
+            "errors or unsafe checker bypasses."
+        )
+        missing_for_stronger_utility_claim = [
+            "persistent or batch local model serving to avoid per-step cold starts",
+            "reliable no-thinking JSON output protocol or constrained decoding",
+            "larger non-oracle compiler/refinement task loop with task-level reward",
+            "approval-burden and recovery measurements on benchmark-derived denials",
+        ]
     return {
         "run_id": run_id,
         "analysis": "benchmark task-loop model-output protocol gap over saved artifacts",
@@ -241,19 +285,15 @@ def _summary(
         "source_tool_oracle_pass_tasks": int(source_summary["tool_oracle_pass_tasks"]),
         "step_raw_outputs": len(step_rows),
         "feedback_raw_outputs": len(feedback_rows),
-        "step_outputs_empty": sum(1 for row in step_rows if row["empty_stdout"]),
-        "step_outputs_with_think": sum(1 for row in step_rows if row["contains_think"]),
+        "step_outputs_empty": step_outputs_empty,
+        "step_outputs_with_think": step_outputs_with_think,
         "step_outputs_with_json_fence": sum(
             1 for row in step_rows if row["contains_output_json_fence"]
         ),
         "step_outputs_with_end_marker": sum(1 for row in step_rows if row["has_end_marker"]),
         "step_outputs_with_parsed_json": sum(1 for row in step_rows if row["parsed_json"]),
-        "step_outputs_with_parsed_calls": sum(
-            1 for row in step_rows if int(row["parsed_calls"]) > 0
-        ),
-        "step_outputs_likely_truncated": sum(
-            1 for row in step_rows if row["likely_truncated"]
-        ),
+        "step_outputs_with_parsed_calls": step_outputs_with_parsed_calls,
+        "step_outputs_likely_truncated": step_outputs_likely_truncated,
         "tasks_with_likely_truncated_step_outputs": sum(
             1 for row in per_task if int(row["likely_truncated_step_outputs"]) > 0
         ),
@@ -268,18 +308,14 @@ def _summary(
             1 for row in action_step_rows if not _bool(row.get("gateway_allowed", ""))
         ),
         "task_rows": len(task_rows),
-        "protocol_gap_status": "open",
-        "claim_interpretation": (
-            "The saved benchmark-derived recovery shard is bottlenecked by local "
-            "planner/output protocol and compiler recall, not by observed tool "
-            "errors or unsafe checker bypasses."
+        "source_llama_json_schema_actions": bool(
+            source_summary.get("llama_json_schema_actions")
         ),
-        "missing_for_stronger_utility_claim": [
-            "persistent or batch local model serving to avoid per-step cold starts",
-            "reliable no-thinking JSON output protocol or constrained decoding",
-            "larger non-oracle compiler/refinement task loop with task-level reward",
-            "approval-burden and recovery measurements on benchmark-derived denials",
-        ],
+        "source_llama_reasoning_off": bool(source_summary.get("llama_reasoning_off")),
+        "step_protocol_clean": step_protocol_clean,
+        "protocol_gap_status": protocol_gap_status,
+        "claim_interpretation": claim_interpretation,
+        "missing_for_stronger_utility_claim": missing_for_stronger_utility_claim,
         "no_dataset_sync": True,
         "not_a_model_run": True,
         "not_a_new_benchmark": True,

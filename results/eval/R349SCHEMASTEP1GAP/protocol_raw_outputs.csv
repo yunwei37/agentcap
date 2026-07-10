@@ -1,0 +1,3 @@
+kind,domain,task_id,step,path,stdout_chars,empty_stdout,contains_think,contains_output_json_fence,has_end_marker,parsed_json,parsed_calls,mentions_actions,mentions_tool,likely_truncated
+step,retail,0,1,results/eval/R348SCHEMASTEP1/step_raw_outputs/retail_0_step_1.txt,135,False,False,False,True,True,1,True,True,False
+step,retail,0,2,results/eval/R348SCHEMASTEP1/step_raw_outputs/retail_0_step_2.txt,96,False,False,False,True,True,1,True,True,False

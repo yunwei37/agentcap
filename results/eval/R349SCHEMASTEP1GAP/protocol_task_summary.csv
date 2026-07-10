@@ -1,0 +1,2 @@
+domain,task_id,step_outputs,feedback_outputs,empty_step_outputs,step_outputs_with_think,step_outputs_with_parsed_calls,likely_truncated_step_outputs,gateway_allowed,gateway_blocked,feedback_attempted,feedback_model_calls,feedback_gateway_allowed,action_reward,tool_oracle_pass
+retail,0,2,0,0,0,2,0,2,0,False,0,0,0.0,False

@@ -1,0 +1,19 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "selected_hint_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "selected_hint_id"
+  ],
+  "type": "object"
+}
