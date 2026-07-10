@@ -278,6 +278,10 @@ def _checks() -> list[dict[str, Any]]:
         _json("BenchRecovery.recovered_benchmark", "recovered benchmark tasks are still 0", "results/eval/R309BENCHRECOVERYGATE/benchmark_recovery_gate_summary.json", "benchmark_recovered_tasks", 0),
         _json("BenchRecovery.handwritten", "14/14 recovery result", "results/eval/R309BENCHRECOVERYGATE/benchmark_recovery_gate_summary.json", "handwritten_recovered_tasks", 14),
         _json("BenchRecovery.gate_status", "recovery gate", "results/eval/R309BENCHRECOVERYGATE/benchmark_recovery_gate_summary.json", "gate_status", "open"),
+        _json("OracleFeedbackShard.tasks", "2-task oracle-lease shard", "results/eval/R311E1ORACLEFEEDBACKSHARD/task_gateway_summary.json", "tasks_evaluated", 2),
+        _json("OracleFeedbackShard.gateway_blocks", "0 gateway blocks", "results/eval/R311E1ORACLEFEEDBACKSHARD/task_gateway_summary.json", "gateway_blocked", 0),
+        _json("OracleFeedbackShard.feedback_tasks", "0 feedback-attempted tasks", "results/eval/R311E1ORACLEFEEDBACKSHARD/task_gateway_summary.json", "feedback_attempted_tasks", 0),
+        _json("OracleFeedbackShard.tool_oracle", "0/2 tool-oracle passes", "results/eval/R311E1ORACLEFEEDBACKSHARD/task_gateway_summary.json", "tool_oracle_pass_tasks", 0),
     ]
 
 

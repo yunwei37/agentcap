@@ -90,6 +90,10 @@ def test_paper_evidence_audit_matches_saved_results(tmp_path):
     assert any(row["claim_id"] == "BenchRecovery.recovered_benchmark" for row in rows)
     assert any(row["claim_id"] == "BenchRecovery.handwritten" for row in rows)
     assert any(row["claim_id"] == "BenchRecovery.gate_status" for row in rows)
+    assert any(row["claim_id"] == "OracleFeedbackShard.tasks" for row in rows)
+    assert any(row["claim_id"] == "OracleFeedbackShard.gateway_blocks" for row in rows)
+    assert any(row["claim_id"] == "OracleFeedbackShard.feedback_tasks" for row in rows)
+    assert any(row["claim_id"] == "OracleFeedbackShard.tool_oracle" for row in rows)
 
     digests = list(csv.DictReader((output_dir / "input_digests.csv").open()))
     assert any(row["path"] == "docs/autopaper/intentcap-paper-zh.tex" for row in digests)
