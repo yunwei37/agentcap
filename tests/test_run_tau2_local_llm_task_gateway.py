@@ -253,6 +253,69 @@ def test_feedback_prompt_reports_blocks_without_reference_actions():
     assert "evaluation_criteria" not in prompt
 
 
+def test_compact_feedback_prompt_includes_visible_tool_results_without_final_response():
+    prompt = runner.build_feedback_prompt(
+        domain="retail",
+        raw_task={
+            "id": "t",
+            "instruction": "Modify the pending tshirt.",
+            "evaluation_criteria": {
+                "actions": [
+                    {
+                        "name": "modify_pending_order_items",
+                        "arguments": {"order_id": "SECRET_ORDER_ID"},
+                    }
+                ]
+            },
+        },
+        tools=[
+            {
+                "name": "get_order_details",
+                "description": "Get order details.",
+                "parameters": {
+                    "type": "object",
+                    "required": ["order_id"],
+                    "properties": {
+                        "order_id": {
+                            "type": "string",
+                            "description": "The order id.",
+                        }
+                    },
+                },
+            }
+        ],
+        blocked_calls=[
+            {
+                "round": "step_2",
+                "index": 1,
+                "tool": "list_all_product_types",
+                "arguments": {},
+                "reason": "no matching lease",
+                "object": "tau2.retail.assistant.list_all_product_types",
+            }
+        ],
+        action_rows=[
+            {
+                "round": "step_1",
+                "model_tool": "get_user_details",
+                "model_args_json": '{"user_id":"u"}',
+                "gateway_action": "execute",
+                "gateway_reason": "allowed",
+                "executed": True,
+                "tool_result_preview": '{"orders":["#W6247578"]}',
+            }
+        ],
+        compact_json_prompt=True,
+    )
+
+    assert "JSON-only tau2 recovery step" in prompt
+    assert "tool_result_preview" in prompt
+    assert "#W6247578" in prompt
+    assert '"final_response"' not in prompt
+    assert "SECRET_ORDER_ID" not in prompt
+    assert "evaluation_criteria" not in prompt
+
+
 def test_select_tool_schemas_can_expose_only_leased_tools():
     actions = [
         ReferenceAction(
