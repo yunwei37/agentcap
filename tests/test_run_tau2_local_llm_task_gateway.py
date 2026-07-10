@@ -953,6 +953,7 @@ def test_summary_counts_feedback_rounds():
         timeout_seconds=1,
         max_tasks_per_domain=1,
         feedback_rounds=1,
+        feedback_compact_json_prompts=False,
         lease_source="exact-reference",
         compiler_run_dir=None,
         tool_exposure="leased",

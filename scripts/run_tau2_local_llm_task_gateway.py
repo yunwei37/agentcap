@@ -292,6 +292,14 @@ def main() -> int:
     parser.add_argument("--timeout-seconds", type=int, default=120)
     parser.add_argument("--feedback-rounds", type=int, default=0)
     parser.add_argument(
+        "--feedback-compact-json-prompts",
+        action="store_true",
+        help=(
+            "Use compact JSON-only prompts for denial feedback rounds without "
+            "changing the initial or stepwise task prompts."
+        ),
+    )
+    parser.add_argument(
         "--lease-source",
         choices=LEASE_SOURCE_MODES,
         default="exact-reference",
@@ -574,6 +582,7 @@ def main() -> int:
         gpu_layers=args.gpu_layers,
         timeout_seconds=args.timeout_seconds,
         feedback_rounds=args.feedback_rounds,
+        feedback_compact_json_prompts=args.feedback_compact_json_prompts,
         lease_source=args.lease_source,
         compiler_run_dir=args.compiler_run_dir,
         tool_exposure=args.tool_exposure,
@@ -631,6 +640,7 @@ def run_experiment(
     gpu_layers: int = 999,
     timeout_seconds: int = 120,
     feedback_rounds: int = 0,
+    feedback_compact_json_prompts: bool = False,
     lease_source: str = "exact-reference",
     compiler_run_dir: Path | list[Path] | tuple[Path, ...] | None = None,
     tool_exposure: str = "all",
@@ -879,6 +889,7 @@ def run_experiment(
                     gpu_layers=gpu_layers,
                     timeout_seconds=timeout_seconds,
                     feedback_rounds=feedback_rounds,
+                    feedback_compact_json_prompts=feedback_compact_json_prompts,
                     lease_source=lease_source,
                     compiler_record=compiler_records.get((domain, task_id), {}),
                     compiler_tools_by_name=compiler_tools_by_domain.get(domain, {}),
@@ -957,6 +968,7 @@ def run_experiment(
         max_tasks_per_domain=max_tasks_per_domain,
         selected_task_ids=selected_task_ids,
         feedback_rounds=feedback_rounds,
+        feedback_compact_json_prompts=feedback_compact_json_prompts,
         lease_source=lease_source,
         compiler_run_dir=compiler_run_dirs,
         tool_exposure=tool_exposure,
@@ -1044,6 +1056,7 @@ def _run_task(
     gpu_layers: int,
     timeout_seconds: int,
     feedback_rounds: int,
+    feedback_compact_json_prompts: bool,
     lease_source: str,
     compiler_record: dict[str, Any],
     compiler_tools_by_name: dict[str, Any],
@@ -1200,6 +1213,7 @@ def _run_task(
             feedback_rounds=feedback_rounds,
             feedback_prompt_dir=feedback_prompt_dir,
             feedback_raw_dir=feedback_raw_dir,
+            feedback_compact_json_prompts=feedback_compact_json_prompts,
             dry_run=dry_run,
             runner=runner,
             single_hint_fallback=stepwise_single_hint_fallback,
@@ -1312,6 +1326,7 @@ def _run_task(
                 ),
                 blocked_calls=initial_blocked,
                 action_rows=action_rows,
+                compact_json_prompt=feedback_compact_json_prompts,
             )
             feedback_prompt_path = feedback_prompt_dir / f"{_safe_id(domain, task_id)}_feedback_1.txt"
             feedback_raw_path = feedback_raw_dir / f"{_safe_id(domain, task_id)}_feedback_1.txt"
@@ -1696,6 +1711,7 @@ def run_stepwise_model_loop(
     feedback_rounds: int = 0,
     feedback_prompt_dir: Path | None = None,
     feedback_raw_dir: Path | None = None,
+    feedback_compact_json_prompts: bool = False,
 ) -> dict[str, Any]:
     task_id = str(raw_task.get("id", ""))
     steps: list[dict[str, Any]] = []
@@ -2024,7 +2040,7 @@ def run_stepwise_model_loop(
                     tools=visible_tools,
                     blocked_calls=latest_blocked_calls,
                     action_rows=action_rows,
-                    compact_json_prompt=compact_json_prompts,
+                    compact_json_prompt=feedback_compact_json_prompts,
                 )
                 feedback_prompt_path = (
                     feedback_prompt_dir
@@ -5073,6 +5089,7 @@ def summarize(
     timeout_seconds: int,
     max_tasks_per_domain: int | None,
     feedback_rounds: int,
+    feedback_compact_json_prompts: bool,
     lease_source: str,
     compiler_run_dir: Path | list[Path] | tuple[Path, ...] | None,
     tool_exposure: str,
@@ -5144,6 +5161,10 @@ def summarize(
     if feedback_rounds > 0:
         notes.append(
             "Feedback prompts include blocked calls and gateway reasons but still do not reveal evaluation_criteria.actions."
+        )
+    if feedback_compact_json_prompts:
+        notes.append(
+            "Feedback compact JSON prompts shrink denial-recovery prompts without changing initial task prompts."
         )
     if selected_task_ids:
         notes.append(
@@ -5249,6 +5270,7 @@ def summarize(
         "max_tasks_per_domain": max_tasks_per_domain,
         "selected_task_ids": list(selected_task_ids),
         "feedback_rounds": feedback_rounds,
+        "feedback_compact_json_prompts": feedback_compact_json_prompts,
         "lease_source": lease_source,
         "compiler_run_dir": " | ".join(str(path) for path in compiler_run_dirs),
         "compiler_run_dirs": [str(path) for path in compiler_run_dirs],
