@@ -28,6 +28,15 @@ DEFAULT_INPUTS = {
     "leased_actions": Path("results/eval/R214E1LEASED/action_results.csv"),
     "all_tasks": Path("results/eval/R215E1ALL/task_results.csv"),
     "all_actions": Path("results/eval/R215E1ALL/action_results.csv"),
+    "compiler_feedback_summary": Path(
+        "results/eval/R314RETAILCOMPILERFEEDBACK/task_gateway_summary.json"
+    ),
+    "compiler_feedback_tasks": Path(
+        "results/eval/R314RETAILCOMPILERFEEDBACK/task_results.csv"
+    ),
+    "compiler_feedback_actions": Path(
+        "results/eval/R314RETAILCOMPILERFEEDBACK/action_results.csv"
+    ),
     "six_task_recovery": Path("results/eval/R263RECOVERY/closed_loop_recovery_summary.json"),
     "multiboundary_recovery": Path(
         "results/eval/R305MULTIBOUNDARYRECOVERY/closed_loop_recovery_summary.json"
@@ -94,14 +103,24 @@ def analyze(*, output_dir: Path, inputs: dict[str, Path], run_id: str) -> dict[s
     leased_actions = _read_rows(inputs["leased_actions"])
     all_tasks = _read_rows(inputs["all_tasks"])
     all_actions = _read_rows(inputs["all_actions"])
+    compiler_feedback = _read_json(inputs["compiler_feedback_summary"])
+    compiler_feedback_tasks = _read_rows(inputs["compiler_feedback_tasks"])
+    compiler_feedback_actions = _read_rows(inputs["compiler_feedback_actions"])
     six = _read_json(inputs["six_task_recovery"])
     multi = _read_json(inputs["multiboundary_recovery"])
 
     _validate_matched_summary(matched, leased_tasks, leased_actions, all_tasks, all_actions)
+    _validate_compiler_feedback_summary(
+        compiler_feedback,
+        compiler_feedback_tasks,
+        compiler_feedback_actions,
+    )
     gate_rows = _gate_rows(
         matched=matched,
         leased_tasks=leased_tasks,
         all_tasks=all_tasks,
+        compiler_feedback=compiler_feedback,
+        compiler_feedback_tasks=compiler_feedback_tasks,
         six=six,
         multi=multi,
     )
@@ -114,6 +133,8 @@ def analyze(*, output_dir: Path, inputs: dict[str, Path], run_id: str) -> dict[s
         matched=matched,
         leased_tasks=leased_tasks,
         all_tasks=all_tasks,
+        compiler_feedback=compiler_feedback,
+        compiler_feedback_tasks=compiler_feedback_tasks,
         six=six,
         multi=multi,
         denial_rows=denial_rows,
@@ -136,6 +157,8 @@ def _gate_rows(
     matched: dict[str, Any],
     leased_tasks: list[dict[str, str]],
     all_tasks: list[dict[str, str]],
+    compiler_feedback: dict[str, Any],
+    compiler_feedback_tasks: list[dict[str, str]],
     six: dict[str, Any],
     multi: dict[str, Any],
 ) -> list[dict[str, Any]]:
@@ -171,6 +194,25 @@ def _gate_rows(
             "benchmark_derived": True,
             "free_form_replanning": False,
             "scope_note": "broader tool exposure increases blocks/off-lease calls without improving reward",
+        },
+        {
+            "evidence_class": "benchmark_compiler_feedback_shard",
+            "source_run": str(compiler_feedback["run_id"]),
+            "tasks": int(compiler_feedback["tasks_evaluated"]),
+            "gateway_blocks": int(compiler_feedback["gateway_blocked"]),
+            "tasks_with_gateway_blocks": _tasks_with_blocks(compiler_feedback_tasks),
+            "feedback_attempted_tasks": int(compiler_feedback["feedback_attempted_tasks"]),
+            "recovered_tasks": int(compiler_feedback["feedback_gateway_allowed"]),
+            "action_reward_tasks": int(compiler_feedback["action_reward_pass_tasks"]),
+            "tool_oracle_tasks": int(compiler_feedback["tool_oracle_pass_tasks"]),
+            "dangerous_executions": "",
+            "benchmark_derived": True,
+            "free_form_replanning": True,
+            "scope_note": (
+                "2-task retail compiler-corpus shard; one blocked benchmark step "
+                "triggers structured feedback and the replacement call is allowed, "
+                "but task-level reward remains 0/2"
+            ),
         },
         {
             "evidence_class": "handwritten_closed_loop_recovery",
@@ -234,6 +276,8 @@ def _summary(
     matched: dict[str, Any],
     leased_tasks: list[dict[str, str]],
     all_tasks: list[dict[str, str]],
+    compiler_feedback: dict[str, Any],
+    compiler_feedback_tasks: list[dict[str, str]],
     six: dict[str, Any],
     multi: dict[str, Any],
     denial_rows: list[dict[str, Any]],
@@ -244,6 +288,8 @@ def _summary(
     natural_feedback_tasks = sum(
         1 for row in leased_tasks + all_tasks if _truthy(row["feedback_attempted"])
     )
+    compiler_feedback_attempted_tasks = int(compiler_feedback["feedback_attempted_tasks"])
+    compiler_feedback_allowed_calls = int(compiler_feedback["feedback_gateway_allowed"])
     handwritten_tasks = int(six["tasks"]) + int(multi["tasks"])
     handwritten_recovered = int(six["recovered_to_allowed_alternative"]) + int(
         multi["recovered_to_allowed_alternative"]
@@ -258,7 +304,33 @@ def _summary(
         "benchmark_leased_tasks_with_blocks": leased_blocked_tasks,
         "benchmark_all_tools_tasks_with_blocks": all_blocked_tasks,
         "benchmark_denial_task_rows": len(denial_rows),
-        "benchmark_feedback_attempted_tasks": natural_feedback_tasks,
+        "benchmark_feedback_attempted_tasks": (
+            natural_feedback_tasks + compiler_feedback_attempted_tasks
+        ),
+        "benchmark_matched_feedback_attempted_tasks": natural_feedback_tasks,
+        "benchmark_compiler_feedback_tasks": int(compiler_feedback["tasks_evaluated"]),
+        "benchmark_compiler_feedback_gateway_blocks": int(
+            compiler_feedback["gateway_blocked"]
+        ),
+        "benchmark_compiler_feedback_tasks_with_blocks": _tasks_with_blocks(
+            compiler_feedback_tasks
+        ),
+        "benchmark_compiler_feedback_attempted_tasks": (
+            compiler_feedback_attempted_tasks
+        ),
+        "benchmark_compiler_feedback_model_calls": int(
+            compiler_feedback["feedback_model_calls"]
+        ),
+        "benchmark_compiler_feedback_allowed_calls": compiler_feedback_allowed_calls,
+        "benchmark_compiler_feedback_bound_reference_calls": int(
+            compiler_feedback["bound_reference_calls"]
+        ),
+        "benchmark_compiler_feedback_action_reward_tasks": int(
+            compiler_feedback["action_reward_pass_tasks"]
+        ),
+        "benchmark_compiler_feedback_tool_oracle_tasks": int(
+            compiler_feedback["tool_oracle_pass_tasks"]
+        ),
         "benchmark_recovered_tasks": 0,
         "benchmark_leased_action_reward_tasks": int(
             matched["leased"]["action_reward_pass_tasks"]
@@ -281,10 +353,10 @@ def _summary(
         "handwritten_multiboundary_owner_classes": list(multi["owner_classes_covered"]),
         "gate_status": "open",
         "missing_for_full_claim": [
-            "benchmark-derived denied-benign recovery run",
-            "free-form or non-enumerated replanning after checker denial",
+            "larger benchmark-derived denied-benign recovery run",
             "task-level utility improvement or preservation under recovery",
             "approval-burden measurement",
+            "broader non-enumerated recovery beyond the 2-task compiler-feedback shard",
         ],
         "no_dataset_sync": True,
         "not_a_model_run": True,
@@ -299,7 +371,7 @@ def _summary(
             "This is a read-only gate audit over saved local result artifacts.",
             "It does not run a model, execute tools, replay traces, clone repositories, sync datasets, or download data.",
             "The result separates benchmark-derived utility evidence from hand-written denial-targeted recovery diagnostics.",
-            "The gate remains open because the benchmark-derived slice has denial tasks but no natural feedback/recovery run and no task-level reward improvement.",
+            "The gate remains open because current benchmark-derived feedback recovers an allowed call in a 2-task shard but has no task-level reward improvement.",
         ],
     }
 
@@ -330,6 +402,44 @@ def _validate_matched_summary(
     mismatches = [name for name, actual, expected in checks if actual != expected]
     if mismatches:
         raise ValueError(f"matched summary/CSV mismatch: {', '.join(mismatches)}")
+
+
+def _validate_compiler_feedback_summary(
+    summary: dict[str, Any],
+    task_rows: list[dict[str, str]],
+    action_rows: list[dict[str, str]],
+) -> None:
+    feedback_rows = [
+        row
+        for row in action_rows
+        if "_feedback_" in str(row.get("round", ""))
+        or str(row.get("round", "")).startswith("feedback")
+    ]
+    checks = [
+        ("tasks_evaluated", len(task_rows), int(summary["tasks_evaluated"])),
+        ("model_calls", len(action_rows), int(summary["model_calls"])),
+        ("gateway_blocked", _sum_int(task_rows, "gateway_blocked"), int(summary["gateway_blocked"])),
+        (
+            "feedback_attempted_tasks",
+            sum(1 for row in task_rows if _truthy(row["feedback_attempted"])),
+            int(summary["feedback_attempted_tasks"]),
+        ),
+        (
+            "feedback_model_calls",
+            len(feedback_rows),
+            int(summary["feedback_model_calls"]),
+        ),
+        (
+            "feedback_gateway_allowed",
+            sum(1 for row in feedback_rows if _truthy(row["gateway_allowed"])),
+            int(summary["feedback_gateway_allowed"]),
+        ),
+    ]
+    mismatches = [name for name, actual, expected in checks if actual != expected]
+    if mismatches:
+        raise ValueError(
+            f"compiler-feedback summary/CSV mismatch: {', '.join(mismatches)}"
+        )
 
 
 def _tasks_with_blocks(rows: list[dict[str, str]]) -> int:

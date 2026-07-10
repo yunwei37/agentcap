@@ -1,0 +1,121 @@
+{
+  "analysis": "benchmark-derived recovery gate over saved local artifacts",
+  "analyzer_sha256": "28a40c47045dbc6d77b198bc9194a5e94dd722f574a69b2be8392453a40c8ff3",
+  "benchmark_action_reward_improvement_all_minus_leased": 0,
+  "benchmark_all_tools_action_reward_tasks": 8,
+  "benchmark_all_tools_gateway_blocks": 18,
+  "benchmark_all_tools_tasks_with_blocks": 9,
+  "benchmark_all_tools_tool_oracle_tasks": 0,
+  "benchmark_compiler_feedback_action_reward_tasks": 0,
+  "benchmark_compiler_feedback_allowed_calls": 1,
+  "benchmark_compiler_feedback_attempted_tasks": 1,
+  "benchmark_compiler_feedback_bound_reference_calls": 5,
+  "benchmark_compiler_feedback_gateway_blocks": 1,
+  "benchmark_compiler_feedback_model_calls": 1,
+  "benchmark_compiler_feedback_tasks": 2,
+  "benchmark_compiler_feedback_tasks_with_blocks": 1,
+  "benchmark_compiler_feedback_tool_oracle_tasks": 0,
+  "benchmark_denial_task_rows": 11,
+  "benchmark_feedback_attempted_tasks": 1,
+  "benchmark_leased_action_reward_tasks": 8,
+  "benchmark_leased_gateway_blocks": 2,
+  "benchmark_leased_tasks_with_blocks": 2,
+  "benchmark_leased_tool_oracle_tasks": 0,
+  "benchmark_matched_feedback_attempted_tasks": 0,
+  "benchmark_matched_tasks": 18,
+  "benchmark_recovered_tasks": 0,
+  "benchmark_runs": 2,
+  "gate_status": "open",
+  "git_status": "## main...origin/main\n M scripts/analyze_benchmark_recovery_gate.py\n M tests/test_analyze_benchmark_recovery_gate.py",
+  "handwritten_dangerous_executions": 0,
+  "handwritten_multiboundary_owner_classes": [
+    "agent",
+    "env",
+    "instruction",
+    "tool"
+  ],
+  "handwritten_multiboundary_surfaces": 6,
+  "handwritten_recovered_tasks": 14,
+  "handwritten_recovery_tasks": 14,
+  "input_digests": [
+    {
+      "bytes": 189242,
+      "input_name": "all_actions",
+      "path": "results/eval/R215E1ALL/action_results.csv",
+      "sha256": "da2417028c6e893bdb1d58d9005bfbffb5da12bf071f807bda9ca479ab111b6a"
+    },
+    {
+      "bytes": 21035,
+      "input_name": "all_tasks",
+      "path": "results/eval/R215E1ALL/task_results.csv",
+      "sha256": "31f2f04611aa558b529684c2db1748b4f411e1bf5ff4848d39548100a78eb847"
+    },
+    {
+      "bytes": 11821,
+      "input_name": "compiler_feedback_actions",
+      "path": "results/eval/R314RETAILCOMPILERFEEDBACK/action_results.csv",
+      "sha256": "57f3751b8248f71b1029888248ab562efdb292f50b105dc0c0943bb648384d1b"
+    },
+    {
+      "bytes": 8258,
+      "input_name": "compiler_feedback_summary",
+      "path": "results/eval/R314RETAILCOMPILERFEEDBACK/task_gateway_summary.json",
+      "sha256": "866422f9ff2eed7776266fa5284964a007c3bb328258671d3c8cde7561483ad2"
+    },
+    {
+      "bytes": 4252,
+      "input_name": "compiler_feedback_tasks",
+      "path": "results/eval/R314RETAILCOMPILERFEEDBACK/task_results.csv",
+      "sha256": "fce7a4688534fede3a644ee5d76d7fe5ce87c69cadcc12cababedd7d4a9c86e1"
+    },
+    {
+      "bytes": 199488,
+      "input_name": "leased_actions",
+      "path": "results/eval/R214E1LEASED/action_results.csv",
+      "sha256": "2b073ef23ec00bb6942ff6f44a321485407f013fca1dd55458551688a3dff95b"
+    },
+    {
+      "bytes": 18832,
+      "input_name": "leased_tasks",
+      "path": "results/eval/R214E1LEASED/task_results.csv",
+      "sha256": "2ddc3fc0871045dfd694461bf8a29901ca396c980b60ca324d6d370a6a31ef29"
+    },
+    {
+      "bytes": 2750,
+      "input_name": "matched_summary",
+      "path": "results/eval/R244E1MATCH214215/matched_online_summary.json",
+      "sha256": "f9796d9f6ea9e7175257023d6aa24affcf79b2f94aa90c1e9541c0ac4468c073"
+    },
+    {
+      "bytes": 4333,
+      "input_name": "multiboundary_recovery",
+      "path": "results/eval/R305MULTIBOUNDARYRECOVERY/closed_loop_recovery_summary.json",
+      "sha256": "0876d938218e41b5737e629fe57679ac2619bd8be655dfb7878a0c7046c5fb46"
+    },
+    {
+      "bytes": 2291,
+      "input_name": "six_task_recovery",
+      "path": "results/eval/R263RECOVERY/closed_loop_recovery_summary.json",
+      "sha256": "d2facc46634dcf3f2a2575e0b1f2fdfa8bb2ba07de1f4a3386988e72d6e1dd61"
+    }
+  ],
+  "missing_for_full_claim": [
+    "larger benchmark-derived denied-benign recovery run",
+    "task-level utility improvement or preservation under recovery",
+    "approval-burden measurement",
+    "broader non-enumerated recovery beyond the 2-task compiler-feedback shard"
+  ],
+  "no_dataset_sync": true,
+  "not_a_model_run": true,
+  "not_a_new_benchmark": true,
+  "notes": [
+    "This is a read-only gate audit over saved local result artifacts.",
+    "It does not run a model, execute tools, replay traces, clone repositories, sync datasets, or download data.",
+    "The result separates benchmark-derived utility evidence from hand-written denial-targeted recovery diagnostics.",
+    "The gate remains open because current benchmark-derived feedback recovers an allowed call in a 2-task shard but has no task-level reward improvement."
+  ],
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "35c0e1d13ca83be780d3e6a7797618178f19e75e",
+  "python": "3.12.3",
+  "run_id": "R338BENCHRECOVERYGATE"
+}
