@@ -27,7 +27,7 @@ LLM agents 正在从固定工具调用器演变为可扩展执行环境，可以
 现有权限机制主要约束已经成形的工具调用、参数、文件和网络端点，却难以表达哪类 context 可以证明一次 authority-bearing decision 的哪个字段。
 结果是 agent 可能发出参数合法、provenance 看似可信、OS sandbox 也无法区分的调用，但权限状态已经被错误扩大、复用或委托。
 \sys 的核心洞察是：LLM agent 的授权单位应是副作用、prompt placement 或 delegation 前提交的 protected-decision transition，而不是事后过滤的 tool call。
-\sys 将该 transition 表示为 field-owned lease，并通过 \(\mathsf{check\_and\_consume}\) 在同一原子步骤中验证 issuer-owned proofs、当前 intent、provenance、budget、expiry 和 delegation state。
+\sys 将该 transition 表示为 field-owned protected-decision lease，并通过 \(\mathsf{check\_and\_consume}\) 在同一原子步骤中验证 issuer-owned proofs、当前 intent、provenance、budget、expiry 和 delegation state。
 原型把这个 contract 接入 trace replay、local callable/env side effects、context and Skill placement、delegation handoff，以及 OS-monitor-style replay lowering；LLM 只提出 plans 和 candidate leases，不在 TCB 内。
 当前评估支持一个有界结论：在已 instrumented protected-decision boundaries 内，\sys 可以阻断 unauthorized context-to-decision influence，同时保留 benign reference-action expressiveness。
 Event-model guardrail 覆盖 3,813/3,813 个 tau2-style reference actions；same-event ablations 显示 no-owner collapse 会错误接受 3,593/3,823 个完整 checker 拒绝的 protected decisions；local boundary suite 在 38 个 checker-submitted events 上产生 0 个 unsafe executions/placements。
@@ -43,7 +43,7 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 现有防线分别覆盖了这个问题的一部分。Tool guards、argument validators 和 action-time authority controls 可以拒绝错误对象或非法参数~\cite{authgraph,pact,airguard}。Static allowlists 和 server-level policies 可以限制可见工具。Human approval gates 可以重新引入用户确认。OS sandbox 或 monitor 可以约束文件、网络和进程 side effects~\cite{actplane}。Provenance、taint 和 IFC-style defenses 可以表达部分 flow policy~\cite{camel,prompt-flow-integrity,fides,rtbas,neurotaint}。这些机制是必要的，但 agent runtime 默认把 field proofs、lease state 和 lifecycle update 分散在 prompt construction、tool gateway、approval UI、sandbox 和 subagent handoff 中。OS、sandbox 或 extension substrate 可以执行 local effects 的资源策略，但它们不决定哪个 issuer-owned field proof 可以改变 agent 的 authority state；EIM/bpftime 和 ActPlane 的细节留到相关工作讨论~\cite{eim-bpftime,actplane}。
 
-\sys 的核心洞察是把这些分散对象显式化为一个 pre-effect protected-decision transition。这个 transition 同时提交 issuer-owned field proofs、checker-owned lease state、same-transition consume/delegate update 和 audit commit id。本文比较的是 runtime 是否暴露这个 commit object，而不是某个 policy DSL 理论上能否写出相同布尔谓词；一个 DSL、IFC runtime 或 reference monitor 若暴露同一对象，就在覆盖的 fields 上实现了 \sys 的接口。
+\sys 的核心洞察是把这些分散对象显式化为一个 pre-effect protected-decision transition。这个 transition 同时提交 issuer-owned field proofs、checker-owned lease state、same-transition consume/delegate update 和 audit commit id；本文把这一 runtime-exposed linearization record 称为 commit object。本文比较的是 runtime 是否暴露这个 commit object，而不是某个 policy DSL 理论上能否写出相同布尔谓词；一个 DSL、IFC runtime 或 reference monitor 若暴露同一对象，就在覆盖的 fields 上实现了 \sys 的接口。
 
 实现这一洞察需要解决三个工程挑战。第一，checker 必须分离不同 authority fields 的证明来源：Skill/manual text 可以指导 workflow，但不能替代用户意图；MCP/tool metadata 可以描述接口和 credential scope，但不能授权 sink；script output、tool result 和文件状态可以提供 runtime evidence，但不能成为 instruction 或 approval reason。第二，lease table、budget counters 和 consumption state 必须属于 checker state \(\sigma\)，而不能被 env context 或 adapter 本地状态替代。第三，同一个授权对象必须出现在 tool call 之外的 prompt placement、Skill instruction placement、本地环境执行和 delegation handoff 边界，否则 untrusted context 仍可通过间接边界影响 authority。
 
