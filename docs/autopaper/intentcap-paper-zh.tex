@@ -47,7 +47,7 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 实现这一洞察需要解决三个工程挑战。第一，checker 必须分离不同 authority fields 的证明来源。Skill/manual text 可以指导 workflow，但不能替代用户意图。MCP/tool metadata 可以描述接口和 credential scope，但不能授权 sink。Script output、tool result 和文件状态可以提供 runtime evidence，但不能成为 instruction 或 approval reason。第二，lease table、budget counters 和 consumption state 必须属于 checker state \(\sigma\)，而不能被 env context 或 adapter 本地状态替代。第三，同一个授权对象必须出现在 tool call 之外的 prompt placement、Skill instruction placement、本地环境执行和 delegation handoff 边界，否则 untrusted context 仍可通过间接边界影响 authority。
 
-\sys 使用 field-owned protected-decision lease 实现这个授权单位。Lease 绑定 operation、object、arguments、intent derivation、control/data provenance、temporal state、budget 和 delegation，并从四类输入中取证。Agent context 证明用户授权的目标、对象、sink、approval 和 delegation root。Instruction context 证明被 endorsement 的 workflow scope。Tool context 证明 callable、schema、credential scope 和 sandbox contract。Runtime-observation/env context 证明本次运行实际观察到的路径、stdout、tool result、文件状态和 side-effect evidence。\sys 的核心 system API 是 \(\mathsf{check\_and\_consume}\)。Adapter 提交的不是“请求是否允许”，而是一条 authority-state transition 的 commit record。LLM-assisted compiler 只提出 plans 和 candidate leases，不能铸造最终权限。Runtime adapters 将通过的 leases 落到 context construction、Skill instruction placement、tool/MCP policy events、本地环境执行、delegation handoff 和 OS-monitor-style replay lowering。OS monitor 或 ActPlane-style backend 只接收 env/local-effect projection，即 file/process/network/object predicates、holder、budget 和 provenance/influence labels；它不能生成 agent-owned sink/approval proof、instruction endorsement、tool schema owner proof 或 delegation graph mutation。在 PDF workflow 中，\texttt{create\_issue(repo=org/repo-x)} 必须先提交 agent-owned repo/approval、instruction-owned workflow、tool-owned schema 和 env-owned summary evidence，并在 checker 接受后消耗 one-shot lease。
+\sys 使用 field-owned protected-decision lease 实现这个授权单位。Lease 绑定 operation、object、arguments、intent derivation、control/data provenance、temporal state、budget 和 delegation，并从四类输入中取证。Agent context 证明用户授权的目标、对象、sink、approval 和 delegation root。Instruction context 证明被 endorsement 的 workflow scope。Tool context 证明 callable、schema、credential scope 和 sandbox contract。Runtime-observation/env context 证明本次运行实际观察到的路径、stdout、tool result、文件状态和 side-effect evidence。\sys 的核心 system API 是 \(\mathsf{check\_and\_consume}\)。Adapter 提交的不是“请求是否允许”，而是一条 authority-state transition 的 commit record。LLM-assisted compiler 只提出 plans 和 candidate leases，不能铸造最终权限。Runtime adapters 将通过的 leases 落到 context construction、Skill instruction placement、tool/MCP policy events、本地环境执行、delegation handoff 和 env-projection replay lowering。OS monitor 或 ActPlane-style backend 只接收 env/local-effect projection，即 file/process/network/object predicates、holder、budget 和 provenance/influence labels；它不能生成 agent-owned sink/approval proof、instruction endorsement、tool schema owner proof 或 delegation graph mutation。在 PDF workflow 中，\texttt{create\_issue(repo=org/repo-x)} 必须先提交 agent-owned repo/approval、instruction-owned workflow、tool-owned schema 和 env-owned summary evidence，并在 checker 接受后消耗 one-shot lease。
 
 原型评估目标是 instrumented protected-decision boundaries 上的 safety 和 enforceability。E1 显示 event model 没有排除 benign reference behavior。E2 显示 issuer ownership 和 same-transition lifecycle update 不是命名偏好，因为 weakened variants 会重新接受完整 checker 拒绝的 protected decisions。E3 显示同一 commit API 可以放到 tool call 之外，并在本地 side-effect、prompt placement 和 delegation boundaries 上执行。因此，本文的安全 claim 是可证伪且有边界的。在已 instrumented protected-decision boundaries 内，checker 接受的事件必须满足 owner-field proof、active lease、intent derivation、provenance constraints 和同一次 transition 中的 lifecycle update。这个 claim 不覆盖未接入的 runtime boundary、LLM 内部因果归因、生产 sandbox 完整性、或所有 prompt injection 变体。
 
@@ -414,16 +414,19 @@ Intent-carrying lease 的抽象形式为：
 \kappa \in Solve_\Gamma(I,\sigma,d,C_{agent}, C_{inst}, C_{tool}, C_{env}) .
 \]
 
-其中 \(I\) 是当前 intent certificate，\(d\) 是本次 protected decision class，\(\sigma\) 是 checker-owned lifecycle state。\(C_{agent}\) 包含 intent certificate、authorized object/sink selections、approvals、plan stage、agent role 和 parent authority。\(C_{inst}\) 包含 system/developer/user instructions、Skill/manual workflow text、MCP prompts 和 trust endorsements。\(C_{tool}\) 包含 MCP/tool schemas、server identity、credential scope、command/script execution descriptors 和 sandbox contracts。\(C_{env}\) 包含 runtime object existence、cwd/filesystem state、concrete arguments、observed results、runtime evidence 和 resource availability。Active/exhausted lease table、per-lease counters 和 delegation graph 属于 checker state \(\sigma\)，不属于任何可由环境输出填充的 context class。
+其中 \(I\) 是当前 intent certificate，\(d\) 是本次 protected decision class，\(\sigma\) 是 checker-owned lifecycle state。\(C_{agent}\) 包含 intent certificate、authorized object/sink selections、approvals、plan stage、agent role 和 parent authority。\(C_{inst}\) 包含 system/developer instructions、被 trusted issuer canonicalize 为过程约束的用户 workflow preferences、Skill/manual workflow text、MCP prompts 和 trust endorsements。用户原始文本不会整体进入 \(C_{inst}\)：其中 goal、object、sink、approval 和 delegation root 进入 \(C_{agent}\)，只有格式偏好、过程偏好或 workflow constraints 在 canonicalization 后进入 \(C_{inst}\)。\(C_{tool}\) 包含 MCP/tool schemas、server identity、credential scope、command/script execution descriptors 和 sandbox contracts。\(C_{env}\) 包含 runtime object existence、cwd/filesystem state、concrete arguments、observed results、runtime evidence 和 resource availability。Active/exhausted lease table、per-lease counters 和 delegation graph 属于 checker state \(\sigma\)，不属于任何可由环境输出填充的 context class。
 
 \subsection{Issuer Ownership and Safe Merge}
 
-Owner projections 不是先验 taxonomy，而是从 protected fields 上的 safe-merge relation 推导出来的。设 \(F\) 是所有会出现在 protected transition 中的 authority fields。每个 field \(f\in F\) 有四个可审计来源属性：\(issuer(f)\) 指谁能签发该 field，\(forge(f)\) 指哪些输入能伪造或模仿该 field 的值，\(observe(f)\) 指 runtime 在哪个边界能观察该 field，\(write(f)\) 指哪个 state writer 可以创建、消费或更新该 field 对应的 authority state。两个 fields 只有在这些属性以及所需 lifecycle authority 完全等价时才可共享 owner：
+Owner projections 不是先验 taxonomy，而是从 protected fields 上的 safe-merge relation 推导出来的。设 \(F\) 是所有会出现在 protected transition 中的 authority fields。每个 field \(f\in F\) 有五个可审计来源属性：\(issuer(f)\) 指谁能签发该 field，\(forge(f)\) 指哪些输入能伪造或模仿该 field 的值，\(observe(f)\) 指 runtime 在哪个边界能观察该 field，\(write(f)\) 指哪个 state writer 可以创建或更新该 field 对应的 authority state，\(life(f)\) 指该 field 是否参与 mint、consume、expire 或 delegate。两个 fields 只有在这些属性完全等价时才可共享 owner：
 
 \[
+\begin{aligned}
 f_i \equiv_{merge} f_j
-\iff
-issuer_i=issuer_j \land forge_i=forge_j \land observe_i=observe_j \land write_i=write_j .
+\iff{}& issuer_i=issuer_j \land forge_i=forge_j\\
+&\land observe_i=observe_j \land write_i=write_j\\
+&\land life_i=life_j .
+\end{aligned}
 \]
 
 四类 owner 是本文 workloads 中 \(F/\!\equiv_{merge}\) 的默认合并结果，而不是按 artifact 名称手工分组。Agent、instruction、tool 和 env 分别回答四个不可互换的证明问题：用户授权了什么，过程如何被允许约束，接口声明了什么，以及本次运行实际观察到了什么。
@@ -679,11 +682,11 @@ Checker judgment is:
 \section{实现}
 \label{sec:implementation}
 
-我们的原型是一个 agent authorization runtime，用于验证三个边界性质：lease language 是否足以表达 intent/context authority，deterministic checker 是否能在统一 event model 上执行这些约束，以及这些约束能否落到 trace replay、live callable gateway、benchmark-derived workflows、context/delegation boundary experiments 和 env/OS-monitor-style replay backend。这里的系统贡献不是若干独立 adapter，而是一个统一的 pre-effect commit contract：任何 authority-changing boundary 都必须在副作用、prompt placement 或 handoff 前提交同一种 issuer-owned field-proof record，并由 checker 作为 lease-state sole writer 返回 audit commit id。原型实现 checker core、tool/live callable gateway、本地 env pre-side-effect gateway、live context-placement gateway、live delegation monitor、runtime binding 和结果分析脚本。OS-monitor-style replay backend 用于检查 local/env lease contract 能否被 lowered 为 monitor-style rules。生产级 MCP broker、prompt builder/subagent runtime、ActPlane integration 和 online user-simulator loop 是更强部署结论所需的接口。
+我们的原型是一个 agent authorization runtime，用于验证三个边界性质：lease language 是否足以表达 intent/context authority，deterministic checker 是否能在统一 event model 上执行这些约束，以及这些约束能否落到 trace replay、live callable gateway、benchmark-derived workflows、context/delegation boundary experiments 和 env-projection replay backend。这里的系统贡献不是若干独立 adapter，而是一个统一的 pre-effect commit contract：任何 authority-changing boundary 都必须在副作用、prompt placement 或 handoff 前提交同一种 issuer-owned field-proof record，并由 checker 作为 lease-state sole writer 返回 audit commit id。原型实现 checker core、tool/live callable gateway、本地 env pre-side-effect gateway、live context-placement gateway、live delegation monitor、runtime binding 和结果分析脚本。Env-projection replay backend 用于检查 local/env lease contract 能否被 lowered 为 monitor-style rules。生产级 MCP broker、prompt builder/subagent runtime、ActPlane integration 和 online user-simulator loop 是更强部署结论所需的接口。
 
 \subsection{实现规模与代码路径}
 
-原型用 Python 实现，并把论文中的 contract 拆成可审计的代码入口。表~\ref{tab:implementation-code-paths} 给出本文主张依赖的核心路径。Checker 和 gateways 是运行时路径；scripts 是实验与审计路径。这个划分也限定了当前系统 claim：本实现已经覆盖 trace replay、本地 callable、本地 env side effect、context placement、Skill instruction placement、delegation handoff 和 env/OS-monitor-style replay lowering，但没有把生产 MCP server、真实 prompt builder、真实 subagent runtime 或内核 ActPlane hook 纳入 TCB。
+原型用 Python 实现，并把论文中的 contract 拆成可审计的代码入口。表~\ref{tab:implementation-code-paths} 给出本文主张依赖的核心路径。Checker 和 gateways 是运行时路径；scripts 是实验与审计路径。这个划分也限定了当前系统 claim：本实现已经覆盖 trace replay、本地 callable、本地 env side effect、context placement、Skill instruction placement、delegation handoff 和 env-projection replay lowering，但没有把生产 MCP server、真实 prompt builder、真实 subagent runtime 或内核 ActPlane hook 纳入 TCB。
 
 \begin{table}[t]
 \centering
@@ -728,9 +731,31 @@ Checker state 显式保存 active/exhausted lease table、budget counters、temp
 
 这个 API 给出四个 runtime obligations。State ownership obligation 要求 active/exhausted leases、budgets、expiry 和 delegation graph 只有 checker 可以写。Linearization obligation 要求 field proof check、argument predicate、budget consume、expiry progress 和 delegation attenuation 在同一 state transition 内完成。Failure obligation 要求 deny 发生在 side effect、prompt authority placement 或 handoff 之前。Concurrency obligation 要求并发 tool calls 和 parallel subagents 通过 checker version 串行化或提供等价 compare-and-swap transition。E3 的每个 adapter 都按这四个 obligations 报告，而不是只报告某个本地测试是否通过。
 
+表~\ref{tab:runtime-interface-audit} 是本文使用的 runtime-interface audit rubric。它不声称已有系统无法扩展出这些字段，而是检查默认 agent/protocol boundary 暴露给 monitor 的对象、默认 state writer，以及是否已有一个 pre-effect transition 同时 consume 和 delegate authority。这个 audit 将“stateful ABAC + CAS 也能做”的反驳转化为等价条件：若某个 runtime 在对应 boundary 上暴露表中最后一列的对象，它就在该 boundary 上实现 \sys 的 commit interface；若没有暴露，就需要额外证明不会出现 E2/E3 中的 stale reuse、issuer substitution 或 over-delegation。
+
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{1.6pt}
+\caption{Runtime-interface audit rubric. The issue is not whether a policy language can encode a predicate, but whether the runtime exposes the state object and writer discipline needed to check it before side effects, prompt placement, or handoff.}
+\label{tab:runtime-interface-audit}
+\begin{tabular}{p{0.17\linewidth}p{0.22\linewidth}p{0.18\linewidth}p{0.30\linewidth}}
+\toprule
+Boundary & Default exposed object & Default writer & Missing object for \sys-equivalent transition \\
+\midrule
+MCP/tool schema & method name, JSON schema, annotations & server or tool registry & agent sink/approval proof, lease id, same-transition consume \\
+Skill/manual package & instruction text, files, optional scripts & package author or installer & signed workflow endorsement separated from agent authority and tool contract \\
+Tool gateway & action name and arguments & gateway policy & issuer-typed field proofs plus checker-owned budget/delegation state \\
+Prompt/context placement & prompt section and source text & prompt builder & proof that source may occupy instruction vs data slot before placement \\
+Subagent handoff & role prompt and context slice & parent agent/handoff code & parent active lease version, child lease set, same-transition attenuation update \\
+OS/local monitor & file/process/network event & OS monitor or sandbox & upstream agent/instruction/tool proofs and env projection of active lease \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \subsection{Implemented Contract Surfaces}
 
-表~\ref{tab:implemented-contract-surfaces} 按 contract surface 而不是 artifact 列出原型。每一行都回答同一个问题：adapter 在哪个 block point 前提交哪些 proof/state objects，checker 如何成为唯一 state writer，以及该 surface 在当前证据中承担什么角色。这个组织避免把系统贡献解释成脚本集合；系统贡献是多边界 transition API 和 adapter contract。OS-monitor-style replay backend 是 env adapter 的 reference lowering，不是生产级 ActPlane integration。
+表~\ref{tab:implemented-contract-surfaces} 按 contract surface 而不是 artifact 列出原型。每一行都回答同一个问题：adapter 在哪个 block point 前提交哪些 proof/state objects，checker 如何成为唯一 state writer，以及该 surface 在当前证据中承担什么角色。这个组织避免把系统贡献解释成脚本集合；系统贡献是多边界 transition API 和 adapter contract。Env-projection replay backend 是 env adapter 的 reference lowering，不是生产级 ActPlane integration。
 
 \begin{table}[t]
 \centering
@@ -747,7 +772,7 @@ Tool/local gateway & callable registry, schema, credential scope, command descri
 Env side-effect gateway & cwd, selected path, argv/env, file state, stdout/stderr, tool-result labels & before env handlers & E3 local env suite and Qwen diagnostic & implemented local env adapter \\
 Context/Skill placement & prompt section, source label, signed Skill/manual proof, data-vs-instruction label & before prompt-section or instruction-slot write & E3 placement and Skill substitution tests & implemented local placement gateway \\
 Delegation monitor & parent active lease set, child role, child capability set, context slice & before subagent handoff & E3 attenuation tests & implemented local monitor \\
-OS-monitor-style lowering & active env leases lowered to deny-by-default rules with provenance/influence predicates & deterministic replay monitor before effect decision & E3 lowering equivalence and mismatch audit & replay target, not ActPlane integration \\
+Env-projection lowering & active env leases lowered to deny-by-default rules with provenance/influence predicates & deterministic replay monitor before effect decision & E3 lowering equivalence and mismatch audit & replay target, not ActPlane integration \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -770,7 +795,7 @@ OS-monitor-style lowering & active env leases lowered to deny-by-default rules w
 
 原型还包含 local Qwen/llama.cpp compiler experiments 和本地 env backend experiments。Env backend 在隔离目录中真实执行 Python script、file read/write 和 context-use handlers，并在 side effect handler 之前调用 checker。被拒绝的 exec/read/write/net/ctx events 不会进入本地 side-effect handler。模型闭环版本使用 Qwen3.6/llama.cpp 作为不可信 action proposer。模型在 adversarial env-context prompt 下返回 call/abort，只有 call 事件会继续进入 checker 和本地 side-effect handler。
 
-原型还实现了一个 OS-monitor-style replay backend：从 active env leases 生成 deny-by-default monitor rules，并在 replay monitor 中检查 operation、object、holder、argument predicates、budget consumption、control/data provenance 和 context-label influence rules。该 lowering 证明 lease contract 可以被编码为 env/OS monitor policy 形态。当前 monitor 运行在 Python replay runtime 中，且 provenance labels 由 IntentCap adapter 提供。Lowering 只覆盖 env/local-effect projection：file/process/network/object predicates、holder、budget 和 provenance/influence labels 可以进入 monitor rules；agent-owned sink/approval proof、instruction endorsement、tool schema owner proof、lease mint/delegation graph update 仍由 checker 处理，不能由 OS monitor 或 ActPlane-style backend 推导。
+原型还实现了一个 env-projection replay backend：从 active env leases 生成 deny-by-default monitor rules，并在 replay monitor 中检查 operation、object、holder、argument predicates、budget consumption、control/data provenance 和 context-label influence rules。该 lowering 证明 lease contract 可以被编码为 env/OS monitor policy 形态。当前 monitor 运行在 Python replay runtime 中，且 provenance labels 由 IntentCap adapter 提供。Lowering 只覆盖 env/local-effect projection：file/process/network/object predicates、holder、budget 和 provenance/influence labels 可以进入 monitor rules；agent-owned sink/approval proof、instruction endorsement、tool schema owner proof、lease mint/delegation graph update 仍由 checker 处理，不能由 OS monitor 或 ActPlane-style backend 推导。
 
 这些实现支撑机制性结论：在已接入 checker 的边界上，\sys 能拒绝 unauthorized context-to-decision influence，run-time exact leases 可以缩小 object/tool authority surface，checker 可以阻止 LLM-proposed broad/runtime authority 直接进入执行路径，context/delegation boundary 可以在 placement/handoff 前调用同一 checker，并且同一 env lease contract 可以被降低为包含 provenance/influence checks 的 monitor rules。生产级 sandbox、完整 MCP broker、独立 human expert-oracle replication 和大规模 recovery evaluation 属于扩展结论所需的实验条件。
 
@@ -803,7 +828,7 @@ Exp. & Claim question & Evidence source & Primary metric & Scope \\
 \midrule
 E1 & Event-model feasibility and reference-action coverage & protected-event replay and benign reference actions & reference-action coverage, unsafe-accept sanity check & replay + utility proxy \\
 E2 & Mechanism necessity: issuer ownership and lifecycle commit & authority-input characterization, sampled protected-decision labels, workflow-policy counterexample suites, env cases, benchmark-derived counterexamples, and typed-provenance state guard & issuer-substitution false accept, split-state false accept, convergence boundary & trace annotation + author-adjudicated labels + controlled counterexamples \\
-E3 & Multi-boundary adapter enforcement & local env side-effect suite, context/delegation/Skill placement tests, OS-monitor-style replay backend, Qwen3.6 diagnostic & unsafe execution/placement, monitor/checker mismatch & local adapter feasibility + lowering target \\
+E3 & Multi-boundary adapter enforcement & local env side-effect suite, context/delegation/Skill placement tests, env-projection replay backend, Qwen3.6 diagnostic & unsafe execution/placement, monitor/checker mismatch & local adapter feasibility + lowering target \\
 Support & Lease auditability & 24 author-adjudicated lease labels, scored policy rows, audit checks & invariant pass rate, policy distance & supporting audit, not independent expert minimality \\
 \bottomrule
 \end{tabular}
@@ -825,13 +850,13 @@ E1 还包含一个已完成本地 Qwen3.6 matched slice，用来检查 live mode
 
 E2 是本文的机制必要性实验：它问移除 issuer ownership 或 same-transition lifecycle update 后，同一个 event/action/provenance record 是否会重新出现 unsafe accepting path。E2 的假设是：四类 authority-input fields 和 stateful lease lifecycle 共同形成一个不可拆开的 authority-state commit object。在本文测试的 no-owner 和 split-state variants 中，object/action guards、IFC/provenance guards 和 split-state counters 会 false-accept 某些事件，因为它们允许一类输入替另一类输入补齐 field，或把 budget/delegation/provenance 分散到不同状态中。因此，E2 是 issuer-collapse/lifecycle-split test，而不是完整自然频率证明，也不是声称所有 policy DSL 都无法表达相同 predicate。本文只声明 tested owner/lifecycle/local-boundary removal families 上的必要性：tested-removal matrix 中 10/10 个 removals 都有 same-event 或 local-boundary false-accept 反例；audit-id removal 仍是 1 个 gap，并且只作为 auditability gap 报告。
 
-为避免用 checker 结果反过来定义 owner class，E2 先执行 field-owner adjudication protocol，再执行 ablation。Adjudication 的输入不是 \sys 的 allow/deny，而是 task text、trusted object/sink selection、Skill/manual endorsement、tool or command schema、runtime observation 和 saved provenance label。标注者先为每个 protected field 选择 allowed issuer，并记录为什么其他 issuer 不能代填；只有之后，实验才把同一 event 交给 full checker 和 weakened variants。表~\ref{tab:field-owner-adjudication} 给出协议的代表性规则。这个协议把“哪个 owner 合法”绑定到外部证据源，而不是绑定到某个 baseline 是否失败。
+为避免用 checker 结果反过来定义 owner class，E2 先执行 field-owner adjudication protocol，再执行 ablation。Adjudication 的输入不是 \sys 的 allow/deny，而是 task text、trusted object/sink selection、Skill/manual endorsement、tool or command schema、runtime observation 和 saved provenance label。协议有四步。第一，标注者从事件中抽取 protected field family，例如 sink、approval、workflow scope、callable schema、observed path 或 child lease bound。第二，标注者只根据外部 evidence 选择 allowed issuer：用户选择或 trusted UI 可证明 agent field，signed Skill/manual 可证明 instruction field，registry/schema 可证明 tool field，gateway observation 可证明 env field。第三，标注者为至少一个 plausible disallowed issuer 写出不可替代理由，例如“tool metadata can quote a repo but cannot authorize it”。第四，若同一 raw artifact 同时包含多类信息，标注者必须拆成多个 proof cells；若 evidence 不足以决定 owner，则样本标为 ambiguous，不进入 necessity ablation。只有完成这一步后，实验才把同一 event 交给 full checker 和 weakened variants。表~\ref{tab:field-owner-adjudication} 给出协议的代表性规则和 label-sheet columns。这个协议把“哪个 owner 合法”绑定到外部证据源，而不是绑定到某个 baseline 是否失败。当前 labels 仍是 author-adjudicated；blinded second-pass 和 disagreement reporting 是表~\ref{tab:current-evidence} 中列出的顶会级扩展证据。
 
 \begin{table}[t]
 \centering
 \tiny
 \setlength{\tabcolsep}{1.4pt}
-\caption{Field-owner adjudication protocol. Owner labels are assigned from task text, endorsement records, tool schemas, and runtime observations before ablation, not from the checker result.}
+\caption{Field-owner adjudication protocol. Owner labels are assigned from task text, endorsement records, tool schemas, and runtime observations before ablation, not from the checker result. The label sheet records field family, allowed issuer, source evidence, disallowed issuer, and non-substitutability reason.}
 \label{tab:field-owner-adjudication}
 \begin{tabular}{p{0.17\linewidth}p{0.17\linewidth}p{0.25\linewidth}p{0.31\linewidth}}
 \toprule
@@ -992,7 +1017,7 @@ Context placement & before prompt write & 3 & 2 & 1 & object/no-prov.: 1 & place
 Delegation handoff & before child handoff & 2 & 1 & 1 & object/no-prov.: 1 & handoff \\
 Skill instruction slot & before instruction slot & 5 & 2 & 3 & object/no-prov.: 3 & placement \\
 Integrated PDF-to-issue workflow & shared checker session & 9 & 5 & 4 & object-only: 4 & integrated \\
-OS-monitor-style backend & monitor replay & 10 & 4 & 6 & mismatch: 0 & lowering target \\
+Env-projection replay backend & monitor replay & 10 & 4 & 6 & mismatch: 0 & lowering target \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1030,7 +1055,7 @@ Monitor lowering 在 replay runtime 中保持 checker 决策一致。Active env 
 
 Adapter proof-completeness audit 进一步检查同一批 E3 local records 是否真的经过 pre-side-effect field-proof contract，而不只是碰巧没有执行 unsafe action。Audit 覆盖 38/38 个 checker-submitted boundary events，并确认每个 event 都有可归因的 proof obligations：operation/object/argument contract、control provenance 和 data provenance 均出现 38/38 次，holder scope 出现 23 次，budget consumption 出现 9 次，delegation attenuation 出现 2 次，monitor lowering 出现 10 次。21 个 denied events 全部落入已建模 denial classes：6 个 control-provenance/influence violations，1 个 delegation attenuation violation，3 个 holder-scope violations，以及 11 个 operation/object/argument-or-no-lease violations。Audit 发现 0 个 unclassified denial，且 38/38 个 verdict 都有对应 proof obligation。这一结果支撑的是 adapter contract completeness，不是生产 prompt builder、MCP broker、subagent runtime 或 kernel/ActPlane mediation。
 
-合并这些本地系统边界和 Qwen diagnostic 后，记录覆盖 local env side effects、Qwen proposer、OS-monitor-style env backend、context placement、delegation handoff 和 Skill instruction placement。38 个提交给 checker 的 boundary events 中，\sys 执行或放置 17 个授权 effects，阻止 21 个 events，并产生 0 个 unsafe executions/placements。Object-only baselines 在对应边界上观察到 12 个 unsafe accepts，lease-args/no-provenance baselines 观察到 5 个 unsafe accepts，monitor/checker mismatch 为 0。Integrated workflow 不是并入这 38 个分散 boundary records 的重复计数，而是单独验证：同一 \(\sigma\) 和 lease lifecycle 能跨五个边界保持一致。这些结果支撑本地 adapter contract 可执行、跨 blockpoint 一致的结论；生产级 MCP broker、ActPlane integration、prompt builder/subagent runtime 和大规模 utility 是表~\ref{tab:current-evidence} 中列出的更强证据需求。
+合并这些本地系统边界和 Qwen diagnostic 后，记录覆盖 local env side effects、Qwen proposer、env-projection replay backend、context placement、delegation handoff 和 Skill instruction placement。38 个提交给 checker 的 boundary events 中，\sys 执行或放置 17 个授权 effects，阻止 21 个 events，并产生 0 个 unsafe executions/placements。Object-only baselines 在对应边界上观察到 12 个 unsafe accepts，lease-args/no-provenance baselines 观察到 5 个 unsafe accepts，monitor/checker mismatch 为 0。Integrated workflow 不是并入这 38 个分散 boundary records 的重复计数，而是单独验证：同一 \(\sigma\) 和 lease lifecycle 能跨五个边界保持一致。这些结果支撑本地 adapter contract 可执行、跨 blockpoint 一致的结论；生产级 MCP broker、ActPlane integration、prompt builder/subagent runtime 和大规模 utility 是表~\ref{tab:current-evidence} 中列出的更强证据需求。
 
 \subsection{Support: Lease Auditability}
 
@@ -1075,7 +1100,7 @@ Constrained reconsideration can recover from blocked unsafe candidates in a diag
 
 第二，辅助 lease audit 使用 author-adjudicated labels。这能检查 lease schema 和 authority-distance invariants。Blinded independent expert replication 才能支撑 expert-oracle least-privilege claim。
 
-第三，本地 env backend 在隔离目录中验证 pre-side-effect blocking。OS-monitor-style replay backend 只验证同一 lease contract 可以降低成 monitor rule set。System-surface result 只是把这些本地边界结果汇总。生产级 ActPlane/kernel integration、真实 syscall mediation 和低开销 enforcement 仍需要单独工程与实验。
+第三，本地 env backend 在隔离目录中验证 pre-side-effect blocking。Env-projection replay backend 只验证同一 lease contract 可以降低成 monitor rule set。System-surface result 只是把这些本地边界结果汇总。生产级 ActPlane/kernel integration、真实 syscall mediation 和低开销 enforcement 仍需要单独工程与实验。
 
 第四，本地 boundary tests 已经实现 live context-placement guard、Skill/manual instruction-source substitution test、live delegation monitor test，以及一个五边界 integrated local workflow。若要声称完整多边界 enforcement，还需要接入生产级 prompt builder、真实 subagent runtime、更多自然 Skill/manual injection workloads 和端到端 approval/recovery metrics。
 
@@ -1109,7 +1134,7 @@ ActPlane & OS/local event policy & syscall/local side effect & OS monitor substr
 表~\ref{tab:closest-abstractions} 比较的是默认 runtime authorization object，而不是实现成熟度或可编程表达力。若一个 policy DSL 显式暴露同一 authority-state commit record，并在同一 transition 中原子更新，它就在覆盖的 fields 和 transitions 上实现了与 \sys 相同的授权对象。这正是本文的边界：\sys 不是比所有可能 DSL 更 expressive，而是指出 agent protected decisions 的 sound runtime 必须把 issuer-owned field proofs、provenance 和 lifecycle update 暴露为同一个 authority-state commit object。CaMeL/IFC-style work 的 published runtime object 是 flow 或 dependency label，它默认线性化的是 flow check 而不是 lease lifecycle。AuthGraph、PACT 和 AIRGuard 把 action、argument 或 action graph 作为主要检查对象，它们更接近 action-time authority/provenance control。SkillGuard/SkillScope 以 Skill package permission 或 manifest 为中心，默认 owner 是 Skill policy runtime。Progent、PCAS 和 AgentSpec 可以编码丰富 policy；如果它们把 field proofs、checker-owned lease state 和 same-transition lifecycle update 暴露成同一 commit object，就在该 decision class 上与 \sys 等价。ActPlane 的 published object 是 OS/local event policy，适合作为 env projection 的 enforcement substrate，但默认不铸造 agent/instruction/tool/env field proofs。与这些方向相比，\sys 将授权对象定义为可消耗、可过期、可衰减的 protected-decision lease，并把 issuer ownership、proof、budget 和 delegation 放入同一个 transition。
 
 \subsection{应用扩展隔离与底层 Enforcement}
-传统扩展系统和 sandbox 关注扩展代码能访问哪些宿主资源。EIM/bpftime 将应用扩展表示为 host resources 和 capabilities，并强调安全、高效的 userspace extension execution~\cite{eim-bpftime}。ActPlane 将 agent policy lowering 到 OS-level enforcement，以覆盖 tool interception 看不到的 file、process 和 network side effects~\cite{actplane}。在 \sys 的分层视角中，ActPlane-style monitor 是 env projection backend：它执行已经认证的 file/process/network/local-env predicates，并提供本地执行观测。IntentCap 的授权对象位于 pre-OS authority decision 层：它在 tool choice、sink selection、approval scope、prompt placement 和 delegation handoff 发生前，把 agent intent、instruction endorsement、tool interface proof、env observation 和 lease lifecycle 线性化为一个 commit object。若 OS/local backend 接收这个 commit object 的 env projection，它就在本地效果子集上实现 \sys 的 lowering contract；若只接收 syscall/local event，则它仍然是强 enforcement backend，但不是 sink、approval、instruction endorsement、tool interface proof 或 delegation graph mutation 的签发者。
+传统扩展系统和 sandbox 关注扩展代码能访问哪些宿主资源。EIM/bpftime 将应用扩展表示为 host resources 和 capabilities，并强调安全、高效的 userspace extension execution~\cite{eim-bpftime}。ActPlane 将 agent policy lowering 到 OS-level enforcement，以覆盖 tool interception 看不到的 file、process 和 network side effects~\cite{actplane}。在 \sys 的分层视角中，ActPlane-style monitor 是 env-projection backend：它执行已经认证的 file/process/network/local-env predicates，并提供本地执行观测。IntentCap 的授权对象位于 pre-OS authority decision 层：它在 tool choice、sink selection、approval scope、prompt placement 和 delegation handoff 发生前，把 agent intent、instruction endorsement、tool interface proof、env observation 和 lease lifecycle 线性化为一个 commit object。若 OS/local backend 接收这个 commit object 的 env projection，它就在本地效果子集上实现 \sys 的 lowering contract；若只接收 syscall/local event，则它仍然是强 enforcement backend，但不是 sink、approval、instruction endorsement、tool interface proof 或 delegation graph mutation 的签发者。
 
 \begin{table}[t]
 \centering
