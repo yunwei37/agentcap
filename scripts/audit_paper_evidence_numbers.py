@@ -316,6 +316,12 @@ def _checks() -> list[dict[str, Any]]:
         _json("CompilerFeedback.bound_refs", "11 reference calls bind", "results/eval/R340RETAILCOMPILERFEEDBACK5/task_gateway_summary.json", "bound_reference_calls", 11),
         _json("CompilerFeedback.action_reward", "action-reward 和 tool-oracle remain 0/5", "results/eval/R340RETAILCOMPILERFEEDBACK5/task_gateway_summary.json", "action_reward_pass_tasks", 0),
         _json("CompilerFeedback.tool_oracle", "tool-oracle remain 0/5", "results/eval/R340RETAILCOMPILERFEEDBACK5/task_gateway_summary.json", "tool_oracle_pass_tasks", 0),
+        _json("ProtocolGap.step_outputs", "23 个 step raw outputs", "results/eval/R344PROTOCOLGAP/benchmark_protocol_gap_summary.json", "step_raw_outputs", 23),
+        _json("ProtocolGap.think_outputs", "21 个包含 \\texttt{<think>}", "results/eval/R344PROTOCOLGAP/benchmark_protocol_gap_summary.json", "step_outputs_with_think", 21),
+        _json("ProtocolGap.truncated_outputs", "14 个被标为 likely truncated", "results/eval/R344PROTOCOLGAP/benchmark_protocol_gap_summary.json", "step_outputs_likely_truncated", 14),
+        _json("ProtocolGap.parsed_calls", "只有 10 个产生 parsed tool calls", "results/eval/R344PROTOCOLGAP/benchmark_protocol_gap_summary.json", "step_outputs_with_parsed_calls", 10),
+        _json("ProtocolGap.truncated_tasks", "5/5 tasks 都至少有一个 likely truncated step output", "results/eval/R344PROTOCOLGAP/benchmark_protocol_gap_summary.json", "tasks_with_likely_truncated_step_outputs", 5),
+        _json("ProtocolGap.empty_outputs", "2 个是 empty step outputs", "results/eval/R344PROTOCOLGAP/benchmark_protocol_gap_summary.json", "step_outputs_empty", 2),
     ]
 
 

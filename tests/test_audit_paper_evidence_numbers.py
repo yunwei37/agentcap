@@ -105,6 +105,11 @@ def test_paper_evidence_audit_matches_saved_results(tmp_path):
     assert any(row["claim_id"] == "CompilerFeedback.feedback_tasks" for row in rows)
     assert any(row["claim_id"] == "CompilerFeedback.feedback_allowed" for row in rows)
     assert any(row["claim_id"] == "CompilerFeedback.tool_oracle" for row in rows)
+    assert any(row["claim_id"] == "ProtocolGap.step_outputs" for row in rows)
+    assert any(row["claim_id"] == "ProtocolGap.think_outputs" for row in rows)
+    assert any(row["claim_id"] == "ProtocolGap.truncated_outputs" for row in rows)
+    assert any(row["claim_id"] == "ProtocolGap.parsed_calls" for row in rows)
+    assert any(row["claim_id"] == "ProtocolGap.truncated_tasks" for row in rows)
 
     digests = list(csv.DictReader((output_dir / "input_digests.csv").open()))
     assert any(row["path"] == "docs/autopaper/intentcap-paper-zh.tex" for row in digests)
