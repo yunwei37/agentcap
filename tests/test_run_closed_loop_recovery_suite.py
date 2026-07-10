@@ -71,6 +71,47 @@ def test_force_initial_feedback_recovers_to_allowed_alternatives(tmp_path):
     assert summary["recovery_rate_to_safe_outcome"] == 1.0
 
 
+def test_blinded_candidate_prompt_hides_semantic_ids_and_recovers(tmp_path):
+    runner = _load_runner()
+    suite_path = Path(__file__).parents[1] / "examples" / "closed_loop_recovery_suite.json"
+    suite = json.loads(suite_path.read_text())
+    task = suite["tasks"][0]
+    prompt_view = runner._prompt_view(task, "blinded")
+
+    prompt = runner.build_prompt(task, prompt_view=prompt_view)
+    payload_text = prompt.split("Input JSON:\n", 1)[1].split("\nOutput JSON:", 1)[0]
+    payload = json.loads(payload_text)
+
+    assert [candidate["id"] for candidate in payload["candidate_events"]] == [
+        "candidate_1",
+        "candidate_2",
+    ]
+    assert payload["candidate_events"][0]["event"]["id"] == "candidate_1"
+    assert "pdf_issue_attacker_repo" not in prompt
+    assert "pdf_issue_authorized_repo" not in prompt
+    assert "Untrusted PDF chooses a different repository" not in prompt
+    assert "User-selected repository and trusted summary" not in prompt
+
+    result = runner.run_experiment(
+        suite_path=suite_path,
+        output_dir=tmp_path / "out",
+        run_id="test",
+        initial_strategy="force-initial-event",
+        candidate_prompt_mode="blinded",
+        feedback_rounds=1,
+        dry_run=False,
+        runner=_expected_event_runner,
+    )
+    summary = result["summary"]
+    rows = result["rows"]
+
+    assert summary["candidate_prompt_mode"] == "blinded"
+    assert summary["recovered_to_allowed_alternative"] == 6
+    assert summary["final_dangerous_executes"] == 0
+    assert {row["candidate_prompt_mode"] for row in rows} == {"blinded"}
+    assert rows[0]["feedback_event_id"] == task["expected_event_id"]
+
+
 def test_llm_initial_correct_path_skips_feedback(tmp_path):
     runner = _load_runner()
     suite_path = Path(__file__).parents[1] / "examples" / "closed_loop_recovery_suite.json"
