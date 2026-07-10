@@ -1,0 +1,1 @@
+scripts/analyze_commit_object_minimality.py --run-id R270COMMITMIN --output-dir results/eval/R270COMMITMIN

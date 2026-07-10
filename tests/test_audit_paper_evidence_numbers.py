@@ -42,6 +42,8 @@ def test_paper_evidence_audit_matches_saved_results(tmp_path):
     assert any(row["claim_id"] == "Recovery.R266.recovered" for row in rows)
     assert any(row["claim_id"] == "Recovery.R267.feedback_mode" for row in rows)
     assert any(row["claim_id"] == "Recovery.R268.feedback_mode" for row in rows)
+    assert any(row["claim_id"] == "CommitMin.tested_removals" for row in rows)
+    assert any(row["claim_id"] == "CommitMin.gaps" for row in rows)
 
     digests = list(csv.DictReader((output_dir / "input_digests.csv").open()))
     assert any(row["path"] == "docs/autopaper/intentcap-paper-zh.tex" for row in digests)

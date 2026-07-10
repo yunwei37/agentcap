@@ -1,0 +1,29 @@
+{
+  "adapter_events": 38,
+  "adapter_proof_complete_for_verdict": 38,
+  "analysis": "authority-state commit-object minimality matrix over saved results",
+  "full_intentcap_local_unsafe_effects_or_placements": 0,
+  "full_intentcap_unsafe_false_accepts": 0,
+  "gap_removal_ids": [
+    "audit_binding_removed"
+  ],
+  "gap_removals": 1,
+  "git_status": "## main...origin/main\n?? scripts/analyze_commit_object_minimality.py\n?? tests/test_analyze_commit_object_minimality.py",
+  "global_minimality_claim": false,
+  "local_no_provenance_unsafe_accepts": 5,
+  "local_object_only_unsafe_accepts": 12,
+  "no_dataset_sync": true,
+  "no_owner_collapsed_context_false_accepts": 3593,
+  "not_a_model_run": true,
+  "not_a_new_experiment_trace": true,
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "99deec042505cc25edd542daa280b5b1fc477810",
+  "python": "3.12.3",
+  "run_id": "R270COMMITMIN",
+  "same_event_or_boundary_counterexamples": true,
+  "scope": "Minimality is only with respect to the listed tested owner-projection, lifecycle, and local-boundary removals. Audit-id removal remains a gap.",
+  "tested_removals": 10,
+  "tested_removals_with_counterexamples": 10,
+  "typed_parent_child_missing_false_accepts": 1,
+  "workflow_split_lifecycle_false_accepts": 5
+}
