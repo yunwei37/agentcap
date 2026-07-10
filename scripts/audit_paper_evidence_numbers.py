@@ -282,6 +282,21 @@ def _checks() -> list[dict[str, Any]]:
         _json("OracleFeedbackShard.gateway_blocks", "0 gateway blocks", "results/eval/R311E1ORACLEFEEDBACKSHARD/task_gateway_summary.json", "gateway_blocked", 0),
         _json("OracleFeedbackShard.feedback_tasks", "0 feedback-attempted tasks", "results/eval/R311E1ORACLEFEEDBACKSHARD/task_gateway_summary.json", "feedback_attempted_tasks", 0),
         _json("OracleFeedbackShard.tool_oracle", "0/2 tool-oracle passes", "results/eval/R311E1ORACLEFEEDBACKSHARD/task_gateway_summary.json", "tool_oracle_pass_tasks", 0),
+        _json("RetailCompiler.tasks", "5-task retail compiler corpus", "results/eval/R313RETAILCOMPILER/llm_visible_lease_compiler_summary.json", "tasks_evaluated", 5),
+        _json("RetailCompiler.parse_ok", "4/5 tasks parse", "results/eval/R313RETAILCOMPILER/llm_visible_lease_compiler_summary.json", "parse_ok_tasks", 4),
+        _json("RetailCompiler.tool_slots", "18 candidate tool slots", "results/eval/R313RETAILCOMPILER/llm_visible_lease_compiler_summary.json", "candidate_tool_slots_total", 18),
+        _json("RetailCompiler.invalid_tools", "0 invalid tools", "results/eval/R313RETAILCOMPILER/llm_visible_lease_compiler_summary.json", "invalid_tool_slots_total", 0),
+        _json("RetailCompiler.exact_args", "6/46 exact non-evaluation-JSON argument coverage", "results/eval/R313RETAILCOMPILER/llm_visible_lease_compiler_summary.json", "coverage_class_counts.tool_and_non_eval_json_args", 6),
+        _json("RetailCompiler.runtime_needed", "29/46 runtime/broad-needed actions", "results/eval/R313RETAILCOMPILER/llm_visible_lease_compiler_summary.json", "coverage_class_counts.tool_only_runtime_or_broad_args_needed", 29),
+        _json("RetailCompiler.missing_tool", "11/46 missing-tool actions", "results/eval/R313RETAILCOMPILER/llm_visible_lease_compiler_summary.json", "coverage_class_counts.missing_tool", 11),
+        _json("CompilerFeedback.tasks", "retail tasks 3 and 4", "results/eval/R314RETAILCOMPILERFEEDBACK/task_gateway_summary.json", "tasks_evaluated", 2),
+        _json("CompilerFeedback.gateway_blocks", "1 gateway block", "results/eval/R314RETAILCOMPILERFEEDBACK/task_gateway_summary.json", "gateway_blocked", 1),
+        _json("CompilerFeedback.feedback_tasks", "1 feedback-attempted task", "results/eval/R314RETAILCOMPILERFEEDBACK/task_gateway_summary.json", "feedback_attempted_tasks", 1),
+        _json("CompilerFeedback.feedback_calls", "1 feedback model call", "results/eval/R314RETAILCOMPILERFEEDBACK/task_gateway_summary.json", "feedback_model_calls", 1),
+        _json("CompilerFeedback.feedback_allowed", "feedback call is allowed", "results/eval/R314RETAILCOMPILERFEEDBACK/task_gateway_summary.json", "feedback_gateway_allowed", 1),
+        _json("CompilerFeedback.bound_refs", "5 reference calls bind", "results/eval/R314RETAILCOMPILERFEEDBACK/task_gateway_summary.json", "bound_reference_calls", 5),
+        _json("CompilerFeedback.action_reward", "action-reward and tool-oracle remain 0/2", "results/eval/R314RETAILCOMPILERFEEDBACK/task_gateway_summary.json", "action_reward_pass_tasks", 0),
+        _json("CompilerFeedback.tool_oracle", "tool-oracle remain 0/2", "results/eval/R314RETAILCOMPILERFEEDBACK/task_gateway_summary.json", "tool_oracle_pass_tasks", 0),
     ]
 
 
