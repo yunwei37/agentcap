@@ -57,6 +57,10 @@ def test_paper_evidence_audit_matches_saved_results(tmp_path):
     assert "E4.bwrap.object_contained" in claim_ids
     assert "E4.bwrap.object_unsafe_host" in claim_ids
     assert "E4.bwrap.network_blocked" in claim_ids
+    assert "E4.mcp.intentcap_executed" in claim_ids
+    assert "E4.mcp.intentcap_unsafe" in claim_ids
+    assert "E4.mcp.object_unsafe" in claim_ids
+    assert "E4.mcp.server_unsafe" in claim_ids
     assert "E4.proof.events" in claim_ids
     assert "E4.proof.complete" in claim_ids
     assert any(row["claim_id"] == "Recovery.feedback" for row in rows)

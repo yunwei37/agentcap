@@ -1,0 +1,13 @@
+{
+  "intentcap_mcp_broker": [
+    "github.create_issue"
+  ],
+  "object_only_broker": [
+    "github.create_issue"
+  ],
+  "server_allowlist_broker": [
+    "github.create_issue",
+    "github.create_repository",
+    "github.request_oauth_scope"
+  ]
+}
