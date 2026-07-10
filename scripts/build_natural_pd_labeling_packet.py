@@ -81,6 +81,16 @@ def main() -> int:
     parser.add_argument("--per-mode-verdict", type=int, default=3)
     parser.add_argument("--min-per-source", type=int, default=4)
     parser.add_argument("--env-quota", type=int, default=12)
+    parser.add_argument(
+        "--sample-id-prefix",
+        default="r221",
+        help="Prefix for generated sample ids; default preserves the original R221 packet.",
+    )
+    parser.add_argument(
+        "--require-existing-source",
+        action="store_true",
+        help="Sample only rows whose original source_path is present in the current worktree.",
+    )
     args = parser.parse_args()
 
     result = build_packet(
@@ -92,6 +102,8 @@ def main() -> int:
         per_mode_verdict=args.per_mode_verdict,
         min_per_source=args.min_per_source,
         env_quota=args.env_quota,
+        sample_id_prefix=args.sample_id_prefix,
+        require_existing_source=args.require_existing_source,
     )
     print(json.dumps(result["summary"], indent=2, sort_keys=True))
     return 0
@@ -107,10 +119,25 @@ def build_packet(
     per_mode_verdict: int,
     min_per_source: int,
     env_quota: int,
+    sample_id_prefix: str = "r221",
+    require_existing_source: bool = False,
 ) -> dict[str, Any]:
     rows = _read_csv(event_csv)
+    original_row_count = len(rows)
+    missing_source_paths = sorted(
+        {
+            row.get("source_path", "")
+            for row in rows
+            if row.get("source_path") and not Path(row["source_path"]).exists()
+        }
+    )
+    selection_rows = (
+        [row for row in rows if Path(row.get("source_path", "")).exists()]
+        if require_existing_source
+        else rows
+    )
     selected = _select_rows(
-        rows,
+        selection_rows,
         target_size=target_size,
         per_edge=per_edge,
         per_mode_verdict=per_mode_verdict,
@@ -119,7 +146,12 @@ def build_packet(
     )
     trace_lookup = _build_trace_lookup({Path(row["source_path"]) for row in selected})
     samples = [
-        _sample_record(index=index, row=row, trace_lookup=trace_lookup)
+        _sample_record(
+            index=index,
+            row=row,
+            trace_lookup=trace_lookup,
+            sample_id_prefix=sample_id_prefix,
+        )
         for index, row in enumerate(selected, start=1)
     ]
     labels = [_author_label(sample) for sample in samples]
@@ -136,7 +168,17 @@ def build_packet(
     _write_rows(output_dir / "input_digests.csv", digests, INPUT_DIGEST_FIELDS)
     (output_dir / "command.txt").write_text(_command_text())
 
-    summary = _summary(run_id=run_id, rows=rows, samples=samples, labels=labels, digests=digests)
+    summary = _summary(
+        run_id=run_id,
+        rows=rows,
+        selection_rows=selection_rows,
+        samples=samples,
+        labels=labels,
+        digests=digests,
+        original_row_count=original_row_count,
+        missing_source_paths=missing_source_paths,
+        require_existing_source=require_existing_source,
+    )
     (output_dir / "natural_pd_labeling_summary.json").write_text(
         json.dumps(summary, indent=2, sort_keys=True)
     )
@@ -273,12 +315,13 @@ def _sample_record(
     index: int,
     row: dict[str, str],
     trace_lookup: dict[tuple[str, str, str], dict[str, Any]],
+    sample_id_prefix: str,
 ) -> dict[str, Any]:
     key = (str(row["source_path"]), str(row["source"]), str(row["event_id"]))
     trace_item = trace_lookup.get(key, {})
     event = trace_item.get("event", {})
     labels = trace_item.get("labels", {})
-    sample_id = f"r221_{index:03d}"
+    sample_id = f"{sample_id_prefix}_{index:03d}"
     return {
         "sample_id": sample_id,
         "source": row.get("source", ""),
@@ -553,9 +596,13 @@ def _summary(
     *,
     run_id: str,
     rows: list[dict[str, str]],
+    selection_rows: list[dict[str, str]],
     samples: list[dict[str, Any]],
     labels: list[dict[str, Any]],
     digests: list[dict[str, Any]],
+    original_row_count: int,
+    missing_source_paths: list[str],
+    require_existing_source: bool,
 ) -> dict[str, Any]:
     mode_counts = Counter(sample["mode"] for sample in samples)
     source_counts = Counter(sample["source_path"] for sample in samples)
@@ -567,6 +614,10 @@ def _summary(
     return {
         "run_id": run_id,
         "input_events": len(rows),
+        "original_input_events": original_row_count,
+        "selection_candidate_events": len(selection_rows),
+        "require_existing_source": require_existing_source,
+        "missing_source_paths": missing_source_paths,
         "samples": len(samples),
         "author_first_pass_labels": len(labels),
         "protected_decision_labels": sum(1 for label in labels if label["is_protected_decision"]),

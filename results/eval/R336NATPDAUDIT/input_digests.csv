@@ -1,0 +1,4 @@
+path,sha256,bytes
+results/eval/R335NATPD96/sample_manifest.jsonl,6ff618884687608a6f33c59738187840abbdb891ab7c0b11a225bd214e77393c,146128
+results/eval/R335NATPD96/author_labels.codex.jsonl,9cff776809fa901af2e4ad04c86eb4cbae1f89ebdb4f683152a0087f451e55b9,99358
+results/eval/R335NATPD96/natural_pd_labeling_summary.json,c77754fe1a46456d6a6345c338c90cb01f60c1e4b9ad6fb911fba467ae3a697c,2520

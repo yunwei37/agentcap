@@ -1,0 +1,1 @@
+PYTHONPATH=src:. /usr/bin/python3 scripts/build_natural_pd_labeling_packet.py --run-id R335NATPD96 --sample-id-prefix r335 --require-existing-source --output-dir results/eval/R335NATPD96 --target-size 96 --per-edge 12 --per-mode-verdict 4 --min-per-source 8 --env-quota 24

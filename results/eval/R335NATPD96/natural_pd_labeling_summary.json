@@ -1,0 +1,78 @@
+{
+  "analyzer_sha256": "aa471a5e5b7ddeffdd9d469c5061c7284e00c9c8bebb73bdaee129f87c9d4e94",
+  "author_first_pass_labels": 83,
+  "input_digests": [
+    {
+      "bytes": 3456190,
+      "path": "results/eval/R220AUTHCHAR/event_authority_characterization.csv",
+      "sha256": "99b6b9973da7e1b2a5b150f5a6e09616460cabd0d81d09c207fb5320490f4067"
+    },
+    {
+      "bytes": 7160,
+      "path": "examples/env_adapter_side_effect_suite.json",
+      "sha256": "a1d5fa355deb0a837e8d5848467bcfbb02697ddff9b94ca5fa4a48fb8e3fdccf"
+    },
+    {
+      "bytes": 9344,
+      "path": "examples/residual_workflow_policy_suite.json",
+      "sha256": "121e5e4dea4e7fa6d44f6f62f194eaeb234f1099d895099d1e78509ee623d40f"
+    },
+    {
+      "bytes": 114666,
+      "path": "results/agentdojo/R011/intentcap_trace.json",
+      "sha256": "24df558c3043da8c59ece179c074a981f75a41b021db2d6cbf27328352ad7df6"
+    }
+  ],
+  "input_events": 8696,
+  "missing_source_paths": [
+    "results/mcptox/R007/intentcap_trace.json",
+    "results/online/R010/export/intentcap_trace.json",
+    "results/tau2/R024/intentcap_traces.json"
+  ],
+  "mode_counts": {
+    "authorize": 42,
+    "delegate": 1,
+    "instruct": 1,
+    "parameterize": 1,
+    "policy_update": 1,
+    "read": 2,
+    "sink_select": 28,
+    "summarize": 1,
+    "tool_select": 4,
+    "write": 2
+  },
+  "notes": [
+    "This packet uses existing local R220 artifacts only; it does not sync or download datasets.",
+    "Author labels are first-pass project adjudication for schema/protocol validation, not blinded independent expert replication.",
+    "The packet is intended to test whether R220 issuer-class requirements survive natural-event human labeling."
+  ],
+  "original_input_events": 8696,
+  "protected_decision_labels": 80,
+  "require_existing_source": true,
+  "required_issuer_set_counts": {
+    "agent": 2,
+    "agent|env": 1,
+    "agent|env|instruction": 1,
+    "agent|env|instruction|tool": 8,
+    "agent|instruction|tool": 1,
+    "agent|tool": 67,
+    "env": 3
+  },
+  "run_id": "R335NATPD96",
+  "samples": 83,
+  "samples_requiring_env": 13,
+  "samples_requiring_multiple_issuers": 78,
+  "samples_with_substitution_attempt": 68,
+  "selection_candidate_events": 83,
+  "source_path_counts": {
+    "examples/env_adapter_side_effect_suite.json": 10,
+    "examples/residual_workflow_policy_suite.json": 9,
+    "results/agentdojo/R011/intentcap_trace.json": 64
+  },
+  "substitution_edge_counts": {
+    "env->agent": 65,
+    "env->tool": 64,
+    "instruction->agent": 2,
+    "tool->agent": 1
+  }
+}

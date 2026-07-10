@@ -1,0 +1,135 @@
+{
+  "analysis": "natural protected-decision owner-label audit",
+  "analyzer_sha256": "0584d319283339d245ab5e355871e70f8fc0224c787a62016596fd549b711b1a",
+  "audit_status": "ok",
+  "extra_labels": [],
+  "failed_checks_total": 0,
+  "failed_global_checks": [],
+  "failed_samples": [],
+  "failed_samples_count": 0,
+  "git_status": "M scripts/build_natural_pd_labeling_packet.py\n?? results/eval/R335NATPD96/\n?? results/eval/R336NATPDAUDIT/\n?? scripts/audit_natural_pd_labels.py\n?? tests/test_audit_natural_pd_labels.py",
+  "global_checks": [
+    {
+      "name": "sample_count_matches_summary",
+      "passed": true
+    },
+    {
+      "name": "label_count_matches_summary",
+      "passed": true
+    },
+    {
+      "name": "protected_count_matches_summary",
+      "passed": true
+    },
+    {
+      "name": "multi_count_matches_summary",
+      "passed": true
+    },
+    {
+      "name": "env_count_matches_summary",
+      "passed": true
+    },
+    {
+      "name": "substitution_count_matches_summary",
+      "passed": true
+    },
+    {
+      "name": "min_samples",
+      "passed": true
+    },
+    {
+      "name": "min_protected",
+      "passed": true
+    },
+    {
+      "name": "min_multiple",
+      "passed": true
+    },
+    {
+      "name": "min_env",
+      "passed": true
+    },
+    {
+      "name": "min_substitution",
+      "passed": true
+    },
+    {
+      "name": "all_selected_sources_exist",
+      "passed": true
+    },
+    {
+      "name": "selected_sources_have_digests",
+      "passed": true
+    },
+    {
+      "name": "summary_records_no_dataset_sync",
+      "passed": true
+    },
+    {
+      "name": "summary_requires_existing_source",
+      "passed": true
+    }
+  ],
+  "input_digests": [
+    {
+      "bytes": 146128,
+      "path": "results/eval/R335NATPD96/sample_manifest.jsonl",
+      "sha256": "6ff618884687608a6f33c59738187840abbdb891ab7c0b11a225bd214e77393c"
+    },
+    {
+      "bytes": 99358,
+      "path": "results/eval/R335NATPD96/author_labels.codex.jsonl",
+      "sha256": "9cff776809fa901af2e4ad04c86eb4cbae1f89ebdb4f683152a0087f451e55b9"
+    },
+    {
+      "bytes": 2520,
+      "path": "results/eval/R335NATPD96/natural_pd_labeling_summary.json",
+      "sha256": "c77754fe1a46456d6a6345c338c90cb01f60c1e4b9ad6fb911fba467ae3a697c"
+    }
+  ],
+  "limitations": [
+    "This audit checks project-author labels for internal consistency.",
+    "It is not blinded independent human agreement.",
+    "It supports labelability and owner-boundary coverage, not natural prevalence."
+  ],
+  "machine": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "missing_labels": [],
+  "mode_counts": {
+    "authorize": 42,
+    "delegate": 1,
+    "instruct": 1,
+    "parameterize": 1,
+    "policy_update": 1,
+    "read": 2,
+    "sink_select": 28,
+    "summarize": 1,
+    "tool_select": 4,
+    "write": 2
+  },
+  "no_dataset_sync": true,
+  "not_a_model_run": true,
+  "not_a_tool_execution": true,
+  "packet_dir": "results/eval/R335NATPD96",
+  "packet_run_id": "R335NATPD96",
+  "project_head": "bf70d014a8f05b74e13a119ed83a242971b9afb7",
+  "protected_decision_labels": 80,
+  "required_issuer_set_counts": {
+    "agent": 2,
+    "agent|env": 1,
+    "agent|env|instruction": 1,
+    "agent|env|instruction|tool": 8,
+    "agent|instruction|tool": 1,
+    "agent|tool": 67,
+    "env": 3
+  },
+  "run_id": "R336NATPDAUDIT",
+  "samples_audited": 83,
+  "samples_requiring_env": 13,
+  "samples_requiring_multiple_issuers": 78,
+  "samples_with_substitution_attempt": 68,
+  "source_path_counts": {
+    "examples/env_adapter_side_effect_suite.json": 10,
+    "examples/residual_workflow_policy_suite.json": 9,
+    "results/agentdojo/R011/intentcap_trace.json": 64
+  }
+}
