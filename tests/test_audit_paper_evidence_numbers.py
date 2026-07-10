@@ -44,6 +44,12 @@ def test_paper_evidence_audit_matches_saved_results(tmp_path):
     assert any(row["claim_id"] == "Recovery.R268.feedback_mode" for row in rows)
     assert any(row["claim_id"] == "CommitMin.tested_removals" for row in rows)
     assert any(row["claim_id"] == "CommitMin.gaps" for row in rows)
+    assert any(row["claim_id"] == "E3.merge_coverage.pairs" for row in rows)
+    assert any(
+        row["claim_id"] == "E3.merge_coverage.instruction_tool_false_accepts"
+        for row in rows
+    )
+    assert any(row["claim_id"] == "E3.merge_coverage.full_checker_unsafe" for row in rows)
     assert any(row["claim_id"] == "E3.integrated.events" for row in rows)
     assert any(row["claim_id"] == "E3.integrated.object_unsafe" for row in rows)
     assert any(row["claim_id"] == "E3.integrated.latency_max" for row in rows)

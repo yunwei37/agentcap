@@ -831,13 +831,13 @@ env/data modes & 7 & all four: 4; env only: 3 & 7 & none \\
 
 Same-event ablation 将上述 characterization 转化为直接的机制隔离结果。实验固定同一批 event 的 operation、object、argument、mode 和 provenance annotation，只改变 checker 是否保留 issuer owner 与 atomic lifecycle checks。表~\ref{tab:e2-weak-variant-ablation} 显示，完整 \sys 在 authority traces 上有 0 个 unsafe false accepts。若把 \(C_{agent},C_{inst},C_{tool},C_{env}\) 折叠成 generic trusted context，弱版本会接受 3,593/3,823 个被完整 checker 拒绝的 protected decisions，false-accept rate 为 93.98\%。单独折叠 tool\(\rightarrow\)agent、env\(\rightarrow\)agent、env\(\rightarrow\)tool 和 instruction\(\rightarrow\)agent 也分别产生 1,928、1,663、1,662 和 2 个 false accepts。
 
-表~\ref{tab:three-class-merge-coverage} 明确给出“三类折叠”的覆盖边界。当前证据不是全局枚举所有可能 agent taxonomies，而是在本文接入 workloads 中测试自然工程捷径：把扩展说明、接口元数据或运行时观测放入更高 authority owner。四个 trace-derived pairwise collapse families 有聚合计数；env+instruction 的三类折叠由本地 Skill placement counterexample 支撑；instruction+tool 的单独聚合 ablation 尚未隔离，因此本文不声称所有 pairwise merge 都已被统计化反驳。相应地，本文的结论是：在已覆盖 workloads 和 tested collapse families 上，四类 owner projection 不能安全退化为三类或 generic trusted context。
+表~\ref{tab:three-class-merge-coverage} 明确给出“三类折叠”的覆盖边界。当前证据不是全局枚举所有可能 agent taxonomies，而是在本文接入 workloads 中测试自然工程捷径：把扩展说明、接口元数据或运行时观测放入更高 authority owner。四个 trace-derived pairwise collapse families 有聚合计数；env+instruction 的三类折叠由本地 Skill placement counterexample 支撑；instruction+tool 由两个固定 action/slot shape、只替换 issuer owner 的 controlled counterexamples 补齐。在这个 tested owner partition 上，6/6 个 pairwise owner-merge families 均已有至少一个 saved 或 controlled false-accept counterexample；其中 instruction+tool 是 2/2 个 controlled instruction+tool false accepts，而完整 checker 在同一 controlled cases 上是 0/2 个 controlled full-checker unsafe accepts。相应地，本文的结论是：在已覆盖 workloads 和 tested collapse families 上，四类 owner projection 不能安全退化为三类或 generic trusted context；这个结果不是自然流行率估计，也不是关于所有可能 context taxonomy 的全局最小性证明。
 
 \begin{table}[t]
 \centering
 \tiny
 \setlength{\tabcolsep}{1.3pt}
-\caption{Three-class merge coverage. A three-class design merges at least one pair of owner classes; current evidence reports saved false-accept counts where available and bounds unisolated pairs explicitly.}
+\caption{Three-class merge coverage. A three-class design merges at least one pair of owner classes; current evidence reports saved aggregate false accepts where available and controlled counterexamples for non-aggregate pairs.}
 \label{tab:three-class-merge-coverage}
 \begin{tabular}{p{0.16\linewidth}p{0.26\linewidth}p{0.25\linewidth}p{0.22\linewidth}}
 \toprule
@@ -848,7 +848,7 @@ Agent + Env & runtime text, tool result, or observed output supplies user select
 Tool + Env & runtime observation supplies schema/interface proof & 1,662 same-event false accepts & tested aggregate \\
 Agent + Instruction & workflow text supplies approval, sink, or delegation root & 2 same-event false accepts & tested aggregate \\
 Instruction + Env & script/tool output or unsigned text occupies trusted instruction slot & 3/3 Skill placement substitutions & local counterexample \\
-Instruction + Tool & procedure text and interface metadata share one proof channel & not separately isolated & future ablation; not used for aggregate claim \\
+Instruction + Tool & procedure text and interface metadata share one proof channel & 2/2 controlled false accepts; full checker 0/2 unsafe accepts & controlled counterexample \\
 \bottomrule
 \end{tabular}
 \end{table}

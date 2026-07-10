@@ -1,0 +1,1 @@
+PYTHONPATH=src /usr/bin/python3 scripts/analyze_three_class_merge_coverage.py --run-id R281MERGECOV --output-dir results/eval/R281MERGECOV

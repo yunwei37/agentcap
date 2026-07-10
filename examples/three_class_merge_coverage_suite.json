@@ -1,0 +1,133 @@
+{
+  "description": "Controlled pairwise owner-merge cases for the remaining instruction+tool merge family. The cases keep operation/object/arguments fixed and replace only the issuer class that supplies a protected field.",
+  "labels": {
+    "trusted_user_intent": {
+      "allowed": {
+        "tool_select": [
+          "local.exec.interface"
+        ],
+        "instruct": [
+          "pdf.workflow.procedure"
+        ]
+      }
+    },
+    "signed_pdf_skill_instruction": {
+      "allowed": {
+        "instruct": [
+          "pdf.workflow.procedure"
+        ]
+      }
+    },
+    "pdf_tool_schema": {
+      "allowed": {
+        "tool_select": [
+          "local.exec.interface"
+        ]
+      }
+    },
+    "github_tool_schema": {
+      "allowed": {
+        "tool_select": [
+          "github.schema"
+        ]
+      }
+    }
+  },
+  "leases": [
+    {
+      "id": "pdf_exec_interface_lease",
+      "holder": "pdf_skill",
+      "op": "exec.run",
+      "object": "/skills/pdf/extract_tables.py",
+      "args": {
+        "input": {
+          "prefix": "/workspace/in/"
+        },
+        "output": {
+          "prefix": "/workspace/out/"
+        }
+      },
+      "control_may_depend_on": [
+        "trusted_user_intent",
+        "signed_pdf_skill_instruction",
+        "pdf_tool_schema"
+      ],
+      "data_may_depend_on": [],
+      "budget": {
+        "invocations": 10
+      }
+    },
+    {
+      "id": "trusted_instruction_slot_lease",
+      "holder": "context_constructor",
+      "op": "ctx.use",
+      "object": "pdf.workflow.instructions",
+      "args": {
+        "destination": {
+          "equals": "trusted_instruction_section"
+        }
+      },
+      "control_may_depend_on": [
+        "trusted_user_intent",
+        "signed_pdf_skill_instruction",
+        "pdf_tool_schema",
+        "github_tool_schema"
+      ],
+      "data_may_depend_on": [],
+      "budget": {
+        "invocations": 10
+      }
+    }
+  ],
+  "cases": [
+    {
+      "id": "instruction_text_supplies_binary_interface",
+      "merge_pair": "instruction+tool",
+      "direction": "instruction->tool",
+      "artifact_family": "controlled Skill/cmd interface case",
+      "unsafe_substitution": "signed Skill instruction supplies the tool-owned executable-interface field",
+      "weak_variant_accepts": true,
+      "event": {
+        "id": "instruction_text_supplies_binary_interface",
+        "holder": "pdf_skill",
+        "op": "exec.run",
+        "object": "/skills/pdf/extract_tables.py",
+        "args": {
+          "input": "/workspace/in/a.pdf",
+          "output": "/workspace/out/a.xlsx"
+        },
+        "mode": "tool_select",
+        "decision": "local.exec.interface",
+        "control_provenance": [
+          "signed_pdf_skill_instruction"
+        ],
+        "data_provenance": [],
+        "unsafe_reference_event": true
+      }
+    },
+    {
+      "id": "tool_schema_supplies_instruction_slot",
+      "merge_pair": "instruction+tool",
+      "direction": "tool->instruction",
+      "artifact_family": "controlled MCP/Skill placement case",
+      "unsafe_substitution": "tool schema or server metadata supplies the instruction-owned trusted workflow slot",
+      "weak_variant_accepts": true,
+      "event": {
+        "id": "tool_schema_supplies_instruction_slot",
+        "holder": "context_constructor",
+        "op": "ctx.use",
+        "object": "pdf.workflow.instructions",
+        "args": {
+          "destination": "trusted_instruction_section"
+        },
+        "mode": "instruct",
+        "decision": "pdf.workflow.procedure",
+        "control_provenance": [
+          "github_tool_schema"
+        ],
+        "data_provenance": [],
+        "unsafe_reference_event": true
+      }
+    }
+  ]
+}

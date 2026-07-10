@@ -1,0 +1,7 @@
+merged_pair,direction_or_substitution,false_accept_counterexamples,denominator,evidence_source,coverage_status,notes
+agent+tool,tool/server metadata -> agent-owned intent/sink/approval/policy,1928,3823,R239 same-event authority traces,tested aggregate,tool owner collapsed into agent owner
+agent+env,runtime text/tool result -> agent-owned selection/sink,1663,3823,R239 same-event authority traces,tested aggregate,env owner collapsed into agent owner
+tool+env,runtime observation -> tool-owned schema/interface proof,1662,3823,R239 same-event authority traces,tested aggregate,env owner collapsed into tool owner
+agent+instruction,workflow text -> agent-owned approval/sink/delegation root,2,3823,R239 same-event authority traces,tested aggregate,instruction owner collapsed into agent owner
+instruction+env,script/tool output or unsigned text -> trusted instruction slot,3,3,R224 Skill placement substitutions,local counterexample,env-like runtime/output text collapsed into instruction owner
+instruction+tool,procedure text <-> callable/schema/interface proof,2,2,controlled Skill/cmd and MCP/Skill placement suite,controlled counterexample,new isolated pairwise merge cases in examples/three_class_merge_coverage_suite.json

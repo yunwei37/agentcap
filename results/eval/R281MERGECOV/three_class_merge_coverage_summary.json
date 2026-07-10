@@ -1,0 +1,41 @@
+{
+  "all_pairwise_merges_have_counterexample": true,
+  "analysis": "pairwise three-class owner-merge coverage",
+  "controlled_cases": 2,
+  "controlled_instruction_tool_false_accepts": 2,
+  "full_checker_unsafe_accepts_on_controlled_cases": 0,
+  "git_status": "## main...origin/main\n?? examples/three_class_merge_coverage_suite.json\n?? scripts/analyze_three_class_merge_coverage.py\n?? tests/test_analyze_three_class_merge_coverage.py",
+  "global_taxonomy_claim": false,
+  "input_digests": [
+    {
+      "bytes": 2111,
+      "path": "results/eval/R239E3WEAKABL/e3_weak_variant_summary.json",
+      "sha256": "8e08f95b791560c17e4c34316fc34887c0f56e5994bd4106eae435b654475f5e"
+    },
+    {
+      "bytes": 1164,
+      "path": "results/eval/R224SKILLBOUNDARY/skill_instruction_boundary_summary.json",
+      "sha256": "f237a7d38331dc8e4ef329f17a8680047e1dbaca74fb7734f6384018209a5f66"
+    },
+    {
+      "bytes": 3686,
+      "path": "examples/three_class_merge_coverage_suite.json",
+      "sha256": "be3cc8aa46158f0816daeeb332d6dea98a488d89fd5cfabbadcccdbcc82a6c2a"
+    }
+  ],
+  "no_dataset_sync": true,
+  "not_a_model_run": true,
+  "not_a_new_benchmark": true,
+  "notes": [
+    "The result is coverage over tested merge families, not a natural prevalence estimate.",
+    "R239 supplies aggregate saved-trace owner-collapse counts for four pair families.",
+    "R224 supplies the local instruction+env placement substitution row.",
+    "The controlled suite isolates instruction+tool in both directions without model calls or side effects."
+  ],
+  "pairwise_merges": 6,
+  "pairwise_merges_with_counterexamples": 6,
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "f62818220d46e60425525a0ec89710d83f41b324",
+  "python": "3.12.3",
+  "run_id": "R281MERGECOV"
+}
