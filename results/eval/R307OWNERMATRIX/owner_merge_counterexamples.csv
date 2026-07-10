@@ -1,0 +1,7 @@
+merged_pair,covered_by_counterexample,evidence_source,scope_note
+agent+instruction,True,R239 instruction->agent,workflow text promoted to approval/sink/delegation root
+agent+tool,True,R239 tool->agent,tool/server metadata promoted to user/admin authority
+agent+env,True,R239 env->agent,runtime text promoted to user selection or sink authority
+instruction+tool,True,R281 controlled instruction+tool cases,procedure text substituted for callable/schema proof and vice versa
+instruction+env,True,R224/R281 Skill placement substitutions,script/tool output or unsigned text promoted to trusted instruction slot
+tool+env,True,R239 env->tool,runtime observation promoted to static interface proof

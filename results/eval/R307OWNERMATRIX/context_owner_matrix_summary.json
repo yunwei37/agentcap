@@ -1,0 +1,91 @@
+{
+  "all_pairwise_merges_have_counterexample": true,
+  "analysis": "context-owner evidence matrix over saved IntentCap artifacts",
+  "analyzer_sha256": "3e75b2ee434b901218ffe8c8d7e51550cce6389a0504fcc232ab8e92a31de5a7",
+  "audit_binding_gap_removals": 1,
+  "git_status": "## main...origin/main\n M docs/autopaper/intentcap-paper-zh.tex\n M docs/design.md\n M docs/evaluation.md\n M docs/implementation.md\n M scripts/audit_paper_evidence_numbers.py\n M tests/test_audit_paper_evidence_numbers.py\n?? results/eval/R307OWNERMATRIX/\n?? results/eval/R308PAPERAUDIT/\n?? scripts/analyze_context_owner_evidence_matrix.py\n?? tests/test_analyze_context_owner_evidence_matrix.py",
+  "global_minimality_claim": false,
+  "global_taxonomy_claim": false,
+  "input_digests": [
+    {
+      "bytes": 2139,
+      "input_name": "boundary_coverage",
+      "path": "results/eval/R294BOUNDARYCOVERAGE/multiboundary_system_summary.json",
+      "sha256": "a3422a90c81d2a53f153b22bafe00aad67f692685c26fd56a2ead82e894d8eae"
+    },
+    {
+      "bytes": 1294,
+      "input_name": "commit_minimality",
+      "path": "results/eval/R270COMMITMIN/commit_object_minimality_summary.json",
+      "sha256": "d5efe7ab5b509558bffd40e9f95b6ec9796a8c333bf939d7b4370508b2773c48"
+    },
+    {
+      "bytes": 1792,
+      "input_name": "merge_coverage",
+      "path": "results/eval/R281MERGECOV/three_class_merge_coverage_summary.json",
+      "sha256": "44e882f43958dfad50387bf545b01b03d1893ac735262c27239411ac181bc944"
+    },
+    {
+      "bytes": 2383,
+      "input_name": "prompt_builder",
+      "path": "results/eval/R292PROMPTBUILDER/prompt_builder_context_summary.json",
+      "sha256": "215727f814d22b34955b4c087756c6f1f2770340269a7e17b0b3daae077628b3"
+    },
+    {
+      "bytes": 4333,
+      "input_name": "recovery",
+      "path": "results/eval/R305MULTIBOUNDARYRECOVERY/closed_loop_recovery_summary.json",
+      "sha256": "0876d938218e41b5737e629fe57679ac2619bd8be655dfb7878a0c7046c5fb46"
+    },
+    {
+      "bytes": 2111,
+      "input_name": "weak_variant",
+      "path": "results/eval/R239E3WEAKABL/e3_weak_variant_summary.json",
+      "sha256": "8e08f95b791560c17e4c34316fc34887c0f56e5994bd4106eae435b654475f5e"
+    }
+  ],
+  "local_boundary_attempts": 58,
+  "local_boundary_object_only_unsafe_accepts": 20,
+  "local_boundary_rows": 8,
+  "local_boundary_unsafe_effects_or_placements": 0,
+  "no_dataset_sync": true,
+  "no_owner_denied_total": 3823,
+  "no_owner_false_accepts": 3593,
+  "not_a_model_run": true,
+  "not_a_new_benchmark": true,
+  "notes": [
+    "This is a read-only consolidation over saved local artifacts.",
+    "It does not run a model, execute tools, replay traces, clone repositories, sync datasets, or download data.",
+    "It supports the paper's scoped four-owner proof-boundary story and no-three-class-collapse evidence, not a global taxonomy-minimality claim.",
+    "The recovery input includes a previous local Qwen3.6 run; this analyzer itself is not a model run."
+  ],
+  "owner_class_count": 4,
+  "owner_classes": [
+    "agent",
+    "instruction",
+    "tool",
+    "env"
+  ],
+  "pairwise_merges": 6,
+  "pairwise_merges_with_counterexamples": 6,
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "6653c598218d111acb9cccc33e57edef04eb9fa0",
+  "prompt_builder_owner_class_count": 4,
+  "prompt_builder_unsafe_authority_placements": 0,
+  "python": "3.12.3",
+  "recovery_authorized_alternatives": 8,
+  "recovery_dangerous_executions": 0,
+  "recovery_initial_blocks": 8,
+  "recovery_object_only_would_allow": 8,
+  "recovery_owner_classes_covered": [
+    "agent",
+    "env",
+    "instruction",
+    "tool"
+  ],
+  "recovery_surfaces_covered": 6,
+  "recovery_tasks": 8,
+  "run_id": "R307OWNERMATRIX",
+  "tested_removals": 10,
+  "tested_removals_with_counterexamples": 10
+}
