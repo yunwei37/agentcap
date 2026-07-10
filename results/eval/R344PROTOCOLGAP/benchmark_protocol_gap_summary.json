@@ -2,7 +2,7 @@
   "analysis": "benchmark task-loop model-output protocol gap over saved artifacts",
   "claim_interpretation": "The saved benchmark-derived recovery shard is bottlenecked by local planner/output protocol and compiler recall, not by observed tool errors or unsafe checker bypasses.",
   "feedback_raw_outputs": 2,
-  "git_status": "?? scripts/analyze_benchmark_protocol_gap.py",
+  "git_status": "",
   "missing_for_stronger_utility_claim": [
     "persistent or batch local model serving to avoid per-step cold starts",
     "reliable no-thinking JSON output protocol or constrained decoding",
@@ -13,7 +13,7 @@
   "not_a_model_run": true,
   "not_a_new_benchmark": true,
   "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
-  "project_head": "1fdda992d75d8ed725dc3f9c02d72e0c25b03022",
+  "project_head": "6df0d6e925d9430b5e279d40717287da368a4871",
   "protocol_gap_status": "open",
   "python": "3.12.3",
   "run_id": "R344PROTOCOLGAP",
