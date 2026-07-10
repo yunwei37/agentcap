@@ -714,7 +714,7 @@ OS-monitor-style lowering & active env leases lowered to deny-by-default rules w
 \section{评估}
 \label{sec:evaluation}
 
-评估围绕三个主实验块和一个 supporting audit 组织。E1 是 feasibility/expressiveness guardrail：它检查 protected-decision event model 是否能表达良性 reference actions，并用 replay safety 做实现一致性 sanity check，而不是证明攻击自然流行率。E2 是核心机制实验，测试 issuer collapse 或 lifecycle split 是否在同一事件上重新产生 unsafe accepting paths，并包含 typed-provenance state guard 作为强收敛基线。E3 是系统接口实验，验证同一个 transition object 能否放到 tool-call 之外的本地 pre-side-effect、pre-placement/handoff 和 lowering boundaries 前。Supporting audit 只问 lease 是否是可机器审计的 authority object，并报告当前 project-author adjudicated distance 结果；它不承担独立 expert-oracle least-privilege 结论。
+评估围绕三个主实验块和一个 supporting audit 组织。三组主实验按 claim dependency 排列：E1 先排除 event model 无法表达 benign behavior 的空洞安全结果，E2 再测试 issuer ownership 和 atomic lifecycle 是否是必要机制，E3 最后验证同一个 transition object 能否放到 tool-call 之外的本地系统边界前。E1 是 feasibility/expressiveness guardrail：它检查 protected-decision event model 是否能表达良性 reference actions，并用 replay safety 做实现一致性 sanity check，而不是证明攻击自然流行率。E2 是核心机制实验，测试 issuer collapse 或 lifecycle split 是否在同一事件上重新产生 unsafe accepting paths，并包含 typed-provenance state guard 作为强收敛基线。E3 是系统接口实验，验证同一个 transition object 能否放到本地 pre-side-effect、pre-placement/handoff 和 lowering boundaries 前。Supporting audit 只问 lease 是否是可机器审计的 authority object，并报告当前 project-author adjudicated distance 结果；它不承担独立 expert-oracle least-privilege 结论。
 
 对包含模型调用的实验，我们固定底层模型、任务顺序、工具描述和 prompt budget。对 replay experiments，我们固定 event set、oracle 和 baseline policy，只改变授权检查层。High-impact denials 使用同一个 protected-decision oracle 判定。若某个 protected decision 的 control provenance 来自缺少相应 influence mode 的 context source，该事件应被拒绝。本文中的 baseline policies 在同一事件模型上实现其 checkable predicates，用来表示 provenance/IFC/policy-style baselines 的可判定部分。它们不是 AuthGraph、PACT、AIRGuard 或其他完整系统的复现。本文区分两个结果指标：unsafe accept 表示 checker 或 baseline 接受违规事件，unsafe execution/placement 表示本地副作用或 prompt placement 实际发生。表~\ref{tab:evaluation-summary} 给出主实验和 supporting audit 与结论的对应关系。
 
@@ -937,7 +937,7 @@ Closed-loop utility and recovery remain preliminary & The matched local-Qwen sli
 
 第四，本地 boundary tests 已经实现 live context-placement guard、Skill/manual instruction-source substitution test 和 live delegation monitor test。若要声称完整多边界 enforcement，还需要接入 production prompt builder、真实 subagent runtime、更多自然 Skill/manual injection workloads 和端到端 approval/recovery metrics。
 
-这些限制限定外推范围。\sys 证明的是 instrumented protected-decision events 可以由 intent-derived, provenance-gated, consumable leases 管理。完整 workload utility、approval burden、independent expert-oracle least privilege 和 production sandbox integration 需要分别报告，而不能由当前结果自动推出。
+这些限制限定外推范围。当前结果支持的性质是：instrumented protected-decision events 可以由 intent-derived, provenance-gated, consumable leases 管理，并且在这些边界上暴露 issuer/lifecycle collapse 的 false-accept 路径。完整 workload utility、approval burden、independent expert-oracle least privilege 和 production sandbox integration 需要分别报告，而不能由当前结果自动推出。
 
 \section{相关工作}
 
