@@ -1,8 +1,8 @@
 """Aggregate local multi-boundary system evidence for IntentCap.
 
 This analyzer is intentionally read-only. It consolidates existing local result
-summaries for env side effects, local model proposals, ActPlane-style lowering,
-context placement, delegation, and Skill/manual instruction placement.
+summaries for historical env/placement/delegation/Skill boundaries plus the
+paired integrated workflow and prompt-builder assembly probes.
 """
 
 from __future__ import annotations
@@ -17,16 +17,17 @@ from pathlib import Path
 from typing import Any
 
 
-DEFAULT_OUTPUT_DIR = Path("results/eval/R225MULTIBOUNDARY")
+DEFAULT_OUTPUT_DIR = Path("results/eval/R294BOUNDARYCOVERAGE")
+DEFAULT_RUN_ID = "R294BOUNDARYCOVERAGE"
 DEFAULT_INPUTS = {
-    "env_backend": Path("results/eval/R211ENVBACKEND/env_backend_summary.json"),
-    "env_llm": Path("results/eval/R212ENVLLM/env_llm_backend_summary.json"),
-    "actplane_lowering": Path("results/eval/R218ACTLOWER/actplane_lowering_summary.json"),
-    "boundary_gateway": Path("results/eval/R222BOUNDARY/boundary_gateway_summary.json"),
-    "boundary_baselines": Path("results/eval/R223BOUNDARYBASE/boundary_baseline_summary.json"),
-    "skill_boundary": Path(
-        "results/eval/R224SKILLBOUNDARY/skill_instruction_boundary_summary.json"
+    "legacy_multiboundary_rows": Path(
+        "results/eval/R225MULTIBOUNDARY/multiboundary_system_evidence.csv"
     ),
+    "legacy_multiboundary_summary": Path(
+        "results/eval/R225MULTIBOUNDARY/multiboundary_system_summary.json"
+    ),
+    "paired_integrated": Path("results/eval/R289PAIRED/integrated_workflow_summary.json"),
+    "prompt_builder": Path("results/eval/R292PROMPTBUILDER/prompt_builder_context_summary.json"),
 }
 
 ROW_FIELDS = [
@@ -48,6 +49,7 @@ INPUT_DIGEST_FIELDS = ["input_name", "path", "sha256", "bytes"]
 def main() -> int:
     parser = argparse.ArgumentParser(description="Analyze multi-boundary system evidence")
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
+    parser.add_argument("--run-id", default=DEFAULT_RUN_ID)
     parser.add_argument(
         "--input",
         action="append",
@@ -64,16 +66,22 @@ def main() -> int:
             raise SystemExit(f"invalid --input override: {item!r}")
         inputs[name] = Path(value)
 
-    result = analyze(output_dir=args.output_dir, inputs=inputs)
+    result = analyze(output_dir=args.output_dir, inputs=inputs, run_id=args.run_id)
     print(json.dumps(result["summary"], indent=2, sort_keys=True))
     return 0
 
 
-def analyze(*, output_dir: Path, inputs: dict[str, Path]) -> dict[str, Any]:
-    summaries = {name: _read_json(path) for name, path in inputs.items()}
-    rows = _rows(summaries)
+def analyze(*, output_dir: Path, inputs: dict[str, Path], run_id: str = DEFAULT_RUN_ID) -> dict[str, Any]:
+    legacy_rows = [_normalize_legacy_row(row) for row in _read_rows(inputs["legacy_multiboundary_rows"])]
+    summaries = {
+        name: _read_json(path)
+        for name, path in inputs.items()
+        if name != "legacy_multiboundary_rows"
+    }
+    _validate_legacy_summary(legacy_rows, summaries["legacy_multiboundary_summary"])
+    rows = _rows(legacy_rows=legacy_rows, summaries=summaries)
     digests = [_file_digest(name, path) for name, path in sorted(inputs.items())]
-    summary = _summary(rows=rows, digests=digests)
+    summary = _summary(rows=rows, digests=digests, run_id=run_id)
 
     output_dir.mkdir(parents=True, exist_ok=True)
     _write_rows(output_dir / "multiboundary_system_evidence.csv", rows, ROW_FIELDS)
@@ -85,104 +93,78 @@ def analyze(*, output_dir: Path, inputs: dict[str, Path]) -> dict[str, Any]:
     return {"summary": summary, "rows": rows}
 
 
-def _rows(summaries: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
-    env_backend = summaries["env_backend"]
-    env_llm = summaries["env_llm"]
-    actplane = summaries["actplane_lowering"]
-    boundary = summaries["boundary_gateway"]
-    baselines = summaries["boundary_baselines"]
-    skill = summaries["skill_boundary"]
+def _rows(
+    *,
+    legacy_rows: list[dict[str, Any]],
+    summaries: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    paired = summaries["paired_integrated"]
+    prompt = summaries["prompt_builder"]
 
-    return [
+    rows: list[dict[str, Any]] = list(legacy_rows)
+    rows.extend(
+        [
         {
-            "row_id": "env_local_side_effects",
-            "boundary": "fs/exec/write/context local env side effects",
-            "source_run": str(env_backend.get("run_id", "R211ENVBACKEND")),
-            "attempts": int(env_backend["events"]),
-            "authorized_effects_or_placements": int(env_backend["intentcap_executed"]),
-            "blocked_attempts": int(env_backend["intentcap_blocked"]),
-            "unsafe_intentcap_effects_or_placements": int(env_backend["intentcap_unsafe_executed"]),
-            "object_only_unsafe_accepts": int(env_backend["object_only_unsafe_executed"]),
-            "no_provenance_unsafe_accepts": 0,
-            "monitor_mismatches": 0,
-            "scope_note": "real local fixture side effects before handler execution",
-        },
-        {
-            "row_id": "env_llm_model_loop",
-            "boundary": "local Qwen proposer before env side effects",
-            "source_run": str(env_llm.get("run_id", "R212ENVLLM")),
-            "attempts": int(env_llm["model_calls"]),
-            "authorized_effects_or_placements": int(env_llm["intentcap_executed"]),
-            "blocked_attempts": int(env_llm["intentcap_blocked_model_calls"]),
-            "unsafe_intentcap_effects_or_placements": int(env_llm["intentcap_unsafe_executed"]),
-            "object_only_unsafe_accepts": int(env_llm["object_only_unsafe_executed"]),
-            "no_provenance_unsafe_accepts": 0,
-            "monitor_mismatches": 0,
-            "scope_note": "local model-loop safety, not benchmark-scale utility",
-        },
-        {
-            "row_id": "actplane_style_env_lowering",
-            "boundary": "env/OS monitor target",
-            "source_run": str(actplane.get("run_id", "R218ACTLOWER")),
-            "attempts": int(actplane["events"]),
-            "authorized_effects_or_placements": int(actplane["monitor_allowed"]),
-            "blocked_attempts": int(actplane["monitor_blocked"]),
-            "unsafe_intentcap_effects_or_placements": int(actplane["unsafe_monitor_allowed"]),
-            "object_only_unsafe_accepts": 0,
-            "no_provenance_unsafe_accepts": 0,
-            "monitor_mismatches": int(actplane["decision_mismatches"]),
-            "scope_note": "deterministic lowering target, not production ActPlane integration",
-        },
-        {
-            "row_id": "context_placement",
-            "boundary": "prompt-section context placement",
-            "source_run": str(boundary.get("run_id", "R222BOUNDARY")),
-            "attempts": int(boundary["context_attempts"]),
-            "authorized_effects_or_placements": int(boundary["context_placed"]),
-            "blocked_attempts": int(boundary["context_blocked"]),
-            "unsafe_intentcap_effects_or_placements": int(boundary["unsafe_context_placements"]),
-            "object_only_unsafe_accepts": 0,
-            "no_provenance_unsafe_accepts": 0,
-            "monitor_mismatches": 0,
-            "scope_note": "live local placement adapter, not production prompt builder",
-        },
-        {
-            "row_id": "delegation_handoff",
-            "boundary": "subagent capability handoff",
-            "source_run": str(boundary.get("run_id", "R222BOUNDARY")),
-            "attempts": int(boundary["delegation_attempts"]),
-            "authorized_effects_or_placements": int(boundary["delegation_spawned"]),
-            "blocked_attempts": int(boundary["delegation_blocked"]),
-            "unsafe_intentcap_effects_or_placements": int(boundary["unsafe_delegations"]),
-            "object_only_unsafe_accepts": int(baselines["object_only_unsafe_accepts"]),
-            "no_provenance_unsafe_accepts": int(
-                baselines["lease_args_no_provenance_unsafe_accepts"]
+            "row_id": "paired_integrated_shared_session",
+            "boundary": "integrated PDF-to-issue shared checker session",
+            "source_run": str(paired.get("run_id", "R289PAIRED")),
+            "attempts": int(paired["events"]),
+            "authorized_effects_or_placements": int(paired["intentcap_effects_or_placements"]),
+            "blocked_attempts": int(paired["intentcap_blocked"]),
+            "unsafe_intentcap_effects_or_placements": int(
+                paired["intentcap_unsafe_effects_or_placements"]
             ),
+            "object_only_unsafe_accepts": int(paired["object_only_unsafe_effects_or_placements"]),
+            "no_provenance_unsafe_accepts": 0,
             "monitor_mismatches": 0,
-            "scope_note": "delegation attenuation probe plus boundary baseline comparison",
+            "scope_note": "same CheckerSession across five local boundaries; not production MCP/prompt/subagent/kernel mediation",
         },
         {
-            "row_id": "skill_instruction_placement",
-            "boundary": "Skill/manual instruction-source placement",
-            "source_run": str(skill.get("run_id", "R224SKILLBOUNDARY")),
-            "attempts": int(skill["events"]),
-            "authorized_effects_or_placements": int(skill["authorized_instruction_placements"])
-            + int(skill["tool_result_data_uses_allowed"]),
-            "blocked_attempts": int(skill["blocked_instruction_substitutions"]),
-            "unsafe_intentcap_effects_or_placements": int(skill["checker_unsafe_accepts"]),
-            "object_only_unsafe_accepts": int(skill["object_only_unsafe_accepts"]),
-            "no_provenance_unsafe_accepts": int(
-                skill["lease_args_no_provenance_unsafe_accepts"]
+            "row_id": "prompt_builder_section_assembly",
+            "boundary": "section-aware prompt-builder assembly",
+            "source_run": str(prompt.get("run_id", "R292PROMPTBUILDER")),
+            "attempts": int(prompt["events"]),
+            "authorized_effects_or_placements": int(prompt["intentcap_placed"]),
+            "blocked_attempts": int(prompt["intentcap_blocked"]),
+            "unsafe_intentcap_effects_or_placements": int(
+                prompt["intentcap_unsafe_authority_placements"]
             ),
+            "object_only_unsafe_accepts": int(prompt["object_only_unsafe_authority_placements"]),
+            "no_provenance_unsafe_accepts": 0,
             "monitor_mismatches": 0,
-            "scope_note": "controlled Skill instruction issuer substitution probe",
+            "scope_note": "deterministic prompt-cell placement adapter; not production prompt runtime",
         },
+        ]
+    )
+    return rows
+
+
+def _validate_legacy_summary(rows: list[dict[str, Any]], summary: dict[str, Any]) -> None:
+    expected = _summary(rows=rows, digests=[], run_id=str(summary.get("run_id", "")))
+    checks = {
+        "system_boundary_rows": "system_boundary_rows",
+        "total_attempts": "total_attempts",
+        "authorized_effects_or_placements": "authorized_effects_or_placements",
+        "blocked_attempts": "blocked_attempts",
+        "unsafe_intentcap_effects_or_placements": "unsafe_intentcap_effects_or_placements",
+        "object_only_unsafe_accepts_observed": "object_only_unsafe_accepts_observed",
+        "no_provenance_unsafe_accepts_observed": "no_provenance_unsafe_accepts_observed",
+        "monitor_mismatches": "monitor_mismatches",
+        "covered_boundaries": "covered_boundaries",
+    }
+    mismatches = [
+        name
+        for name, field in checks.items()
+        if summary.get(field) != expected[field]
     ]
+    if mismatches:
+        joined = ", ".join(mismatches)
+        raise ValueError(f"legacy R225 rows do not match summary fields: {joined}")
 
 
-def _summary(rows: list[dict[str, Any]], digests: list[dict[str, Any]]) -> dict[str, Any]:
+def _summary(rows: list[dict[str, Any]], digests: list[dict[str, Any]], run_id: str) -> dict[str, Any]:
     return {
-        "run_id": "R225MULTIBOUNDARY",
+        "run_id": run_id,
         "system_boundary_rows": len(rows),
         "total_attempts": sum(int(row["attempts"]) for row in rows),
         "authorized_effects_or_placements": sum(
@@ -205,7 +187,7 @@ def _summary(rows: list[dict[str, Any]], digests: list[dict[str, Any]]) -> dict[
         "notes": [
             "This is a read-only consolidation of existing local result summaries.",
             "It does not run models, execute side effects, or sync/download datasets.",
-            "Rows intentionally mix local live adapters and deterministic lowering targets; the scope_note field bounds each row.",
+            "Rows intentionally mix local live adapters, deterministic lowering targets, and integrated local stress cases; the scope_note field bounds each row.",
             "The result supports a system-surface claim, not benchmark-scale utility or production ActPlane integration.",
         ],
     }
@@ -213,6 +195,28 @@ def _summary(rows: list[dict[str, Any]], digests: list[dict[str, Any]]) -> dict[
 
 def _read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text())
+
+
+def _read_rows(path: Path) -> list[dict[str, str]]:
+    with path.open(newline="") as file:
+        return list(csv.DictReader(file))
+
+
+def _normalize_legacy_row(row: dict[str, str]) -> dict[str, Any]:
+    numeric_fields = {
+        "attempts",
+        "authorized_effects_or_placements",
+        "blocked_attempts",
+        "unsafe_intentcap_effects_or_placements",
+        "object_only_unsafe_accepts",
+        "no_provenance_unsafe_accepts",
+        "monitor_mismatches",
+    }
+    normalized: dict[str, Any] = {}
+    for field in ROW_FIELDS:
+        value = row[field]
+        normalized[field] = int(value) if field in numeric_fields else value
+    return normalized
 
 
 def _file_digest(name: str, path: Path) -> dict[str, Any]:

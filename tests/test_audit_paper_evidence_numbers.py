@@ -37,7 +37,17 @@ def test_paper_evidence_audit_matches_saved_results(tmp_path):
     rows = list(csv.DictReader((output_dir / "paper_evidence_audit.csv").open()))
     assert len(rows) == summary["checks_total"]
     assert {row["status"] for row in rows} == {"ok"}
-    assert any(row["claim_id"] == "E4.aggregate.events" for row in rows)
+    claim_ids = {row["claim_id"] for row in rows}
+    assert "E4.aggregate.rows" in claim_ids
+    assert "E4.aggregate.events" in claim_ids
+    assert "E4.aggregate.authorized" in claim_ids
+    assert "E4.aggregate.blocked" in claim_ids
+    assert "E4.aggregate.object_baseline" in claim_ids
+    assert "E4.scope.not_production" in claim_ids
+    assert "E4.scope.not_benchmark_utility" in claim_ids
+    assert "E4.scope.r240_historical" in claim_ids
+    assert "E4.proof.events" in claim_ids
+    assert "E4.proof.complete" in claim_ids
     assert any(row["claim_id"] == "Recovery.feedback" for row in rows)
     assert any(row["claim_id"] == "Recovery.R266.recovered" for row in rows)
     assert any(row["claim_id"] == "Recovery.R267.feedback_mode" for row in rows)

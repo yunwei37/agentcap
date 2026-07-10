@@ -46,9 +46,9 @@ def main() -> int:
     input_paths = {args.paper}
 
     for check in _checks():
-        source_path = Path(check["source_path"])
+        source_path = args.paper if check["source_path"] == "__paper__" else Path(check["source_path"])
         input_paths.add(source_path)
-        actual = _extract(source_path, check)
+        actual = _extract(source_path, check, paper_text=paper_text)
         expected = check["expected"]
         status = _compare(actual, expected, check.get("compare", "exact"))
         paper_number = check["paper_number"]
@@ -168,12 +168,16 @@ def _checks() -> list[dict[str, Any]]:
         _json("E4.qwen.unsafe_calls", "4 个 unsafe", "results/eval/R212ENVLLM/env_llm_backend_summary.json", "llm_only_unsafe_calls", 4),
         _json("E4.lower.rules", "4 条 deny-by-default monitor rules", "results/eval/R218ACTLOWER/actplane_lowering_summary.json", "lowered_rules", 4),
         _json("E4.lower.mismatches", "0 个 decision mismatches", "results/eval/R218ACTLOWER/actplane_lowering_summary.json", "decision_mismatches", 0),
-        _json("E4.aggregate.events", "38 个提交给 checker", "results/eval/R225MULTIBOUNDARY/multiboundary_system_summary.json", "total_attempts", 38),
-        _json("E4.aggregate.authorized", "17 个授权 effects", "results/eval/R225MULTIBOUNDARY/multiboundary_system_summary.json", "authorized_effects_or_placements", 17),
-        _json("E4.aggregate.blocked", "21 个 events", "results/eval/R225MULTIBOUNDARY/multiboundary_system_summary.json", "blocked_attempts", 21),
-        _json("E4.aggregate.unsafe", "0 个 unsafe executions/placements", "results/eval/R225MULTIBOUNDARY/multiboundary_system_summary.json", "unsafe_intentcap_effects_or_placements", 0),
-        _json("E4.aggregate.object_baseline", "12 个 unsafe accepts", "results/eval/R225MULTIBOUNDARY/multiboundary_system_summary.json", "object_only_unsafe_accepts_observed", 12),
-        _json("E4.aggregate.no_prov_baseline", "5 个 unsafe accepts", "results/eval/R225MULTIBOUNDARY/multiboundary_system_summary.json", "no_provenance_unsafe_accepts_observed", 5),
+        _json("E4.aggregate.rows", "8 类记录", "results/eval/R294BOUNDARYCOVERAGE/multiboundary_system_summary.json", "system_boundary_rows", 8),
+        _json("E4.aggregate.events", "58 个 boundary attempts", "results/eval/R294BOUNDARYCOVERAGE/multiboundary_system_summary.json", "total_attempts", 58),
+        _json("E4.aggregate.authorized", "29 个授权 effects/placements", "results/eval/R294BOUNDARYCOVERAGE/multiboundary_system_summary.json", "authorized_effects_or_placements", 29),
+        _json("E4.aggregate.blocked", "29 个 attempts", "results/eval/R294BOUNDARYCOVERAGE/multiboundary_system_summary.json", "blocked_attempts", 29),
+        _json("E4.aggregate.unsafe", "0 个 unsafe executions/placements", "results/eval/R294BOUNDARYCOVERAGE/multiboundary_system_summary.json", "unsafe_intentcap_effects_or_placements", 0),
+        _json("E4.aggregate.object_baseline", "20 个 unsafe accepts", "results/eval/R294BOUNDARYCOVERAGE/multiboundary_system_summary.json", "object_only_unsafe_accepts_observed", 20),
+        _json("E4.aggregate.no_prov_baseline", "5 个 unsafe accepts", "results/eval/R294BOUNDARYCOVERAGE/multiboundary_system_summary.json", "no_provenance_unsafe_accepts_observed", 5),
+        _text("E4.scope.not_production", "不是 production backend"),
+        _text("E4.scope.not_benchmark_utility", "不是 benchmark-scale utility 结果"),
+        _text("E4.scope.r240_historical", "R240 proof-completeness audit 仍只覆盖 38 个 historical adapter records"),
         _json("E3.integrated.events", "9 个 events", "results/eval/R274INTEGRATED/integrated_workflow_summary.json", "events", 9),
         _json("E3.integrated.boundaries", "5 个边界", "results/eval/R274INTEGRATED/integrated_workflow_summary.json", "boundary_count", 5),
         _json("E3.integrated.allowed", "允许 5 个 authorized effects/placements", "results/eval/R274INTEGRATED/integrated_workflow_summary.json", "intentcap_allowed", 5),
@@ -183,7 +187,7 @@ def _checks() -> list[dict[str, Any]]:
         _json("E3.integrated.latency_mean", "2.558/22.942 ms", "results/eval/R274INTEGRATED/integrated_workflow_summary.json", "mean_intentcap_latency_ms", 2.558),
         _json("E3.integrated.latency_max", "2.558/22.942 ms", "results/eval/R274INTEGRATED/integrated_workflow_summary.json", "max_intentcap_latency_ms", 22.942),
         _json("E3.paired.events", "10 个 events", "results/eval/R289PAIRED/integrated_workflow_summary.json", "events", 10),
-        _json("E3.paired.boundaries", "same 5 boundaries", "results/eval/R289PAIRED/integrated_workflow_summary.json", "boundary_count", 5),
+        _json("E3.paired.boundaries", "同样的五类边界", "results/eval/R289PAIRED/integrated_workflow_summary.json", "boundary_count", 5),
         _json("E3.paired.allowed", "允许 6 个 effects/placements", "results/eval/R289PAIRED/integrated_workflow_summary.json", "intentcap_allowed", 6),
         _json("E3.paired.blocked_unsafe", "阻止 4 个 unsafe attempts", "results/eval/R289PAIRED/integrated_workflow_summary.json", "intentcap_blocked_unsafe_attempts", 4),
         _json("E3.paired.unsafe", "0 个 unsafe effects/placements", "results/eval/R289PAIRED/integrated_workflow_summary.json", "intentcap_unsafe_effects_or_placements", 0),
@@ -251,7 +255,22 @@ def _json(
     }
 
 
-def _extract(source_path: Path, check: dict[str, Any]) -> Any:
+def _text(claim_id: str, paper_token: str, notes: str = "") -> dict[str, Any]:
+    return {
+        "claim_id": claim_id,
+        "paper_number": paper_token,
+        "source_path": "__paper__",
+        "source_field": "paper_text",
+        "expected": True,
+        "compare": "exact",
+        "kind": "text",
+        "notes": notes,
+    }
+
+
+def _extract(source_path: Path, check: dict[str, Any], *, paper_text: str) -> Any:
+    if check.get("kind") == "text":
+        return check["paper_number"] in paper_text
     data = json.loads(source_path.read_text())
     value: Any = data
     for part in check["source_field"].split("."):
