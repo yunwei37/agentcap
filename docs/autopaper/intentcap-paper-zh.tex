@@ -42,7 +42,9 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 根因不是不可信文本进入 prompt 本身，而是现有 agent runtime 通常 linearize actions，而没有在副作用前 linearize authority-state transitions。一个工具调用可以被记录为“参数合法”，但系统没有同时记录该字段由谁证明、证明来自哪里、哪些 context 控制该字段，以及这次提交如何消费或更新权限状态。这个主因产生三个结构性失效形态。第一是 \textbf{authority-root collapse}：用户意图、approval、sink 和 delegation root 与扩展文本共享 planning channel。第二是 \textbf{owner-boundary collapse}：Skill/manual procedure、tool or command interface metadata、以及 runtime observations 被当成同一种 trusted context，使 instruction、tool 和 env 可以互相代填 field。第三是 \textbf{lifecycle/boundary split}：下游 guard 多数在 action materialized 后才检查 tool、arguments 或 resource，而一次性权限是否已被消费、是否过期、是否被委托给子任务、以及是谁铸造了权限，分散在不同状态和 adapter 中。这三个失效形态推出两个接口需求：每个 protected field 必须有可审计 owner，且 authority state 必须在同一次 transition 中提交、消费或更新。在本文的 Skill、MCP、cmd 和 subagent workloads 中，只有 issuer、可伪造面、观测点和 lifecycle authority 等价的 fields 才能安全合并；按这个准则得到四类 proof owners：agent-owned authority root、instruction-owned procedure endorsement、tool-owned interface contract 和 env-owned runtime observation。它们共同说明 authorization object 选错了。本文后文把需要检查的副作用前原子状态转移称为 protected-decision transition。
 
-现有防线分别覆盖了这个问题的一部分。Tool guards、argument validators 和 action-time authority controls 可以拒绝错误对象或非法参数~\cite{authgraph,pact,airguard}。Static allowlists 和 server-level policies 可以限制可见工具。Human approval gates 可以重新引入用户确认。OS sandbox 或 monitor 可以约束文件、网络和进程 side effects~\cite{actplane}。Provenance、taint 和 IFC-style defenses 可以表达部分 flow policy~\cite{camel,prompt-flow-integrity,fides,rtbas,neurotaint}。最强的替代路线可以被理解为 stateful provenance/ABAC monitor：它记录 source、field owner、approval、holder、temporal 和 budget predicates，并在事件前检查这些属性。本文不把这一路线当作 straw man；若它显式暴露 issuer-owned field proofs、唯一 checker writer 和 same-transition lifecycle mutation，就可以实现本文接口的一部分。但 agent runtime 默认把 field proofs、lease state 和 lifecycle update 分散在 prompt construction、tool gateway、approval UI、sandbox 和 subagent handoff 中。OS、sandbox 或 extension substrate 可以执行 local effects 的资源策略，但它们不决定哪个 issuer-owned field proof 可以改变 agent 的 authority state。EIM/bpftime 和 ActPlane 的细节留到相关工作讨论~\cite{eim-bpftime,actplane}。
+现有防线分别覆盖了这个问题的一部分。Tool guards、argument validators 和 action-time authority controls 可以拒绝错误对象或非法参数~\cite{authgraph,pact,airguard}。Static allowlists 和 server-level policies 可以限制可见工具。Human approval gates 可以重新引入用户确认。OS sandbox 或 monitor 可以约束文件、网络和进程 side effects~\cite{actplane}。Provenance、taint 和 IFC-style defenses 可以表达部分 flow policy~\cite{camel,prompt-flow-integrity,fides,rtbas,neurotaint}。
+
+最强的替代路线可以被理解为 stateful provenance/ABAC monitor：它记录 source、field owner、approval、holder、temporal 和 budget predicates，并在事件前检查这些属性。本文不声称这类 monitor 缺少布尔表达力。\sys 的 claim 更窄：agent runtime 需要在每个副作用前提交一个具体的 authority-state object，同时绑定 concrete effect、issuer-owned field proofs、active lease version、以及 consume/delegate mutation。一个实现若暴露这个对象、让 checker 成为唯一 state writer，并在同一 transition 中更新 lifecycle state，就在覆盖的 decision classes 上实现了 \sys 接口。若这些字段仍分散在 prompt construction、tool gateway、approval UI、sandbox 和 subagent handoff 中，即使 provenance guard 和 budget guard 各自正确，仍可能在旧 lease state 上 double-consume one-shot authority，或在 parent-child comparison 之前完成 over-delegation。OS、sandbox 或 extension substrate 可以执行 local effects 的资源策略，但它们不决定哪个 issuer-owned field proof 可以改变 agent 的 authority state。EIM/bpftime 和 ActPlane 的细节留到相关工作讨论~\cite{eim-bpftime,actplane}。
 
 \sys 的核心洞察是把这些分散对象显式化为一个 runtime-visible pre-effect authorization record。本文的主线分为三层：context influence 是要保护的安全对象，field-owned lease 是授权表达，authority-state commit object 是执行 lease 的运行时线性化机制。Lease 是可消耗的 authority object；commit object 是一次执行、放置或委托该 lease 时返回的线性化记录。非平凡点不是“再写一个 ABAC/IFC predicate”，而是 agent runtime 默认把 proof issuer、observation issuer 和 lifecycle writer 分散在 prompt construction、tool registry、runtime observer、approval UI 和 delegation adapter 中。本文的接口要求是：任何会产生 side effect、prompt authority placement 或 authority handoff 的 adapter，都必须在执行前暴露一个 authority-state transition API，让同一个 checker-state writer 同时看到三个 runtime objects：issuer-owned field proofs、checker-owned active-lease state、以及 same-transition consume/delegate mutation。若任一对象只存在于另一层，某些 required proof 会不可见，或会被错误 issuer 写入。这个 record 同时提交 issuer-owned field proofs、checker-owned active-lease version 和 same-transition consume/delegate mutation，并返回可审计的 commit binding。本文把这一 linearization record 称为 authority-state commit object。本文比较的是 runtime 是否暴露这个授权状态对象和 sole-writer discipline，而不是某个 policy DSL 理论上能否写出相同布尔谓词；它的 tested-removal claim 只限定在本文测试过的 owner-projection、lifecycle 和 local-boundary removal families 上。一个 DSL、IFC runtime 或 reference monitor 若暴露同一对象，就在覆盖的 fields 上实现了本文接口；缺少任一已测试字段，则需要另外证明不会出现 class substitution、stale reuse、double consume 或 over-delegation。Audit binding 是实现中的追踪与审计字段；当前实验把它作为 auditability gap，而不是已证明必要的核心安全字段。
 
@@ -91,7 +93,7 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 \subsection{Problem Characterization}
 
-我们先在保存的 benchmark-derived traces、local adapter suites 和 controlled counterexample artifacts 上检查这个授权单位是否由问题本身导出，而不是由 \sys 的实现事后规定。该检查不运行模型，也不同步新数据；它只读取已有 provenance labels、event modes 和 protected-decision labels，并使用预先声明的 protected-decision oracle：authority-bearing fields 必须由对应 owner class 证明，不能由其他 class 代填。结果形成三条设计前观察。
+我们先在保存的 benchmark-derived traces、local adapter suites 和 controlled counterexample artifacts 上检查这个授权单位是否有 counterexample-backed design support，而不是把它当作 \sys 的实现约定。该检查不运行模型，也不同步新数据；它只读取已有 provenance labels、event modes 和 protected-decision labels，并使用预先声明的 protected-decision oracle：authority-bearing fields 必须由对应 owner class 证明，不能由其他 class 代填。结果形成三条设计前观察。
 
 第一，agent authority decisions 通常需要多个 issuer classes。8,696 个已有事件中，8,691 个需要不止一种 proof source，说明高影响转移不是单一“工具是否可调用”的问题。第二，runtime-observation/env proof 不能省略。198 个事件需要本次运行的路径、stdout、tool result 或 side-effect evidence，否则 checker 只能退化成静态 prompt/tool policy。第三，错误接受常来自 class substitution，而不是最终参数变化。3,593 个 protected-decision-oracle-denied events 存在某类 context 试图替另一类 owner 补齐 field 的情形；48 个 sampled labels 中，37 个暴露这种 substitution attempt。这些数字是 artifact-derived、author-adjudicated design evidence，用于检验设计粒度，不是自然频率统计或 independent-label study。
 
@@ -459,6 +461,29 @@ owner:F\rightarrow\{agent,inst,tool,env\}
 同一个自然语言片段可以被不同 adapter 观察到，但它能证明哪个 field 只由 \(owner(f)\) 和 endorsement state 决定。
 
 一个 protected event \(e\) 只有在 \(Req(d)\) 要求的 projections 与同一个 lease \(\kappa\) 的 predicates 一致时才被接受。未被 \(Req(d)\) 要求的输入类可以为空，但 required field 不能从其他 context class 中补齐。例如 instruction 不能补齐 authorized sink，tool schema 不能补齐 user intent，env evidence 不能补齐 approval token。这个 typed field rule 使 \sys 不只是 MCP/tool-call guard，而是跨 Skill instruction、tool interface、runtime environment 和 agent workflow state 的统一 checker transition。
+
+显式写成 checker rule，设 \(\Phi_e\) 是 adapter 在本次 transition 提交的 proof map，\(\mathsf{proof}_q(f,\Phi_e)\) 表示 owner class \(q\) 为 field \(f\) 提交的结构化证明。若 \(d=class(e)\)，则：
+
+\[
+\begin{aligned}
+Accept(e,\sigma,\kappa) \iff{}&
+match(e,\kappa) \land active(\kappa,\sigma)\\
+&\land \forall f\in Req(d).\;
+  \mathsf{proof}_{owner(f)}(f,\Phi_e)\land
+  valid_f(\Phi_e,\kappa,I,\Gamma)\\
+&\land flow(e,\kappa,\Phi_e) \land temporal(e,\kappa,\sigma)\\
+&\land budget(e,\kappa,\sigma) \land delegate(e,\kappa,\sigma).
+\end{aligned}
+\]
+
+接受不是只返回一个布尔值。它必须和状态更新一起线性化：
+
+\[
+Accept(e,\sigma,\kappa)\Rightarrow
+\mathsf{commit}(e,\kappa,version(\sigma),\Phi_e,\mu,\sigma')
+\]
+
+其中 \(\mu\) 是本次 transition 的 consume、expire、mint 或 delegate mutation。Commit record 绑定 concrete effect、field proofs、active lease version 和 lifecycle mutation；若其中任一项由另一个 adapter 或稍后的状态 writer 补齐，就不是本文反驳的表达力问题，而是缺少同一 authority-state transition object。
 
 对应地，capability synthesis 可以写成一个 partial function，而不是最大权限选择：
 \[
