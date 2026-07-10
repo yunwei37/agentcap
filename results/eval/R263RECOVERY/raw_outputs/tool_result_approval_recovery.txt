@@ -1,0 +1,5 @@
+{
+  "returncode": 0,
+  "stderr": "",
+  "stdout": "{\"action\": \"call\", \"event_id\": \"approval_from_tool_result\"}"
+}
