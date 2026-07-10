@@ -37,6 +37,15 @@ DEFAULT_INPUTS = {
     "compiler_feedback_actions": Path(
         "results/eval/R314RETAILCOMPILERFEEDBACK/action_results.csv"
     ),
+    "expanded_feedback_summary": Path(
+        "results/eval/R340RETAILCOMPILERFEEDBACK5/task_gateway_summary.json"
+    ),
+    "expanded_feedback_tasks": Path(
+        "results/eval/R340RETAILCOMPILERFEEDBACK5/task_results.csv"
+    ),
+    "expanded_feedback_actions": Path(
+        "results/eval/R340RETAILCOMPILERFEEDBACK5/action_results.csv"
+    ),
     "six_task_recovery": Path("results/eval/R263RECOVERY/closed_loop_recovery_summary.json"),
     "multiboundary_recovery": Path(
         "results/eval/R305MULTIBOUNDARYRECOVERY/closed_loop_recovery_summary.json"
@@ -106,6 +115,9 @@ def analyze(*, output_dir: Path, inputs: dict[str, Path], run_id: str) -> dict[s
     compiler_feedback = _read_json(inputs["compiler_feedback_summary"])
     compiler_feedback_tasks = _read_rows(inputs["compiler_feedback_tasks"])
     compiler_feedback_actions = _read_rows(inputs["compiler_feedback_actions"])
+    expanded_feedback = _read_json(inputs["expanded_feedback_summary"])
+    expanded_feedback_tasks = _read_rows(inputs["expanded_feedback_tasks"])
+    expanded_feedback_actions = _read_rows(inputs["expanded_feedback_actions"])
     six = _read_json(inputs["six_task_recovery"])
     multi = _read_json(inputs["multiboundary_recovery"])
 
@@ -115,12 +127,19 @@ def analyze(*, output_dir: Path, inputs: dict[str, Path], run_id: str) -> dict[s
         compiler_feedback_tasks,
         compiler_feedback_actions,
     )
+    _validate_compiler_feedback_summary(
+        expanded_feedback,
+        expanded_feedback_tasks,
+        expanded_feedback_actions,
+    )
     gate_rows = _gate_rows(
         matched=matched,
         leased_tasks=leased_tasks,
         all_tasks=all_tasks,
         compiler_feedback=compiler_feedback,
         compiler_feedback_tasks=compiler_feedback_tasks,
+        expanded_feedback=expanded_feedback,
+        expanded_feedback_tasks=expanded_feedback_tasks,
         six=six,
         multi=multi,
     )
@@ -135,6 +154,8 @@ def analyze(*, output_dir: Path, inputs: dict[str, Path], run_id: str) -> dict[s
         all_tasks=all_tasks,
         compiler_feedback=compiler_feedback,
         compiler_feedback_tasks=compiler_feedback_tasks,
+        expanded_feedback=expanded_feedback,
+        expanded_feedback_tasks=expanded_feedback_tasks,
         six=six,
         multi=multi,
         denial_rows=denial_rows,
@@ -159,6 +180,8 @@ def _gate_rows(
     all_tasks: list[dict[str, str]],
     compiler_feedback: dict[str, Any],
     compiler_feedback_tasks: list[dict[str, str]],
+    expanded_feedback: dict[str, Any],
+    expanded_feedback_tasks: list[dict[str, str]],
     six: dict[str, Any],
     multi: dict[str, Any],
 ) -> list[dict[str, Any]]:
@@ -212,6 +235,25 @@ def _gate_rows(
                 "2-task retail compiler-corpus shard; one blocked benchmark step "
                 "triggers structured feedback and the replacement call is allowed, "
                 "but task-level reward remains 0/2"
+            ),
+        },
+        {
+            "evidence_class": "benchmark_compiler_feedback_expanded",
+            "source_run": str(expanded_feedback["run_id"]),
+            "tasks": int(expanded_feedback["tasks_evaluated"]),
+            "gateway_blocks": int(expanded_feedback["gateway_blocked"]),
+            "tasks_with_gateway_blocks": _tasks_with_blocks(expanded_feedback_tasks),
+            "feedback_attempted_tasks": int(expanded_feedback["feedback_attempted_tasks"]),
+            "recovered_tasks": int(expanded_feedback["feedback_gateway_allowed"]),
+            "action_reward_tasks": int(expanded_feedback["action_reward_pass_tasks"]),
+            "tool_oracle_tasks": int(expanded_feedback["tool_oracle_pass_tasks"]),
+            "dangerous_executions": "",
+            "benchmark_derived": True,
+            "free_form_replanning": True,
+            "scope_note": (
+                "5-task retail compiler-corpus shard; two blocked benchmark "
+                "steps trigger structured feedback, one replacement call is "
+                "allowed, and task-level reward remains 0/5"
             ),
         },
         {
@@ -278,6 +320,8 @@ def _summary(
     all_tasks: list[dict[str, str]],
     compiler_feedback: dict[str, Any],
     compiler_feedback_tasks: list[dict[str, str]],
+    expanded_feedback: dict[str, Any],
+    expanded_feedback_tasks: list[dict[str, str]],
     six: dict[str, Any],
     multi: dict[str, Any],
     denial_rows: list[dict[str, Any]],
@@ -290,6 +334,8 @@ def _summary(
     )
     compiler_feedback_attempted_tasks = int(compiler_feedback["feedback_attempted_tasks"])
     compiler_feedback_allowed_calls = int(compiler_feedback["feedback_gateway_allowed"])
+    expanded_feedback_attempted_tasks = int(expanded_feedback["feedback_attempted_tasks"])
+    expanded_feedback_allowed_calls = int(expanded_feedback["feedback_gateway_allowed"])
     handwritten_tasks = int(six["tasks"]) + int(multi["tasks"])
     handwritten_recovered = int(six["recovered_to_allowed_alternative"]) + int(
         multi["recovered_to_allowed_alternative"]
@@ -305,7 +351,7 @@ def _summary(
         "benchmark_all_tools_tasks_with_blocks": all_blocked_tasks,
         "benchmark_denial_task_rows": len(denial_rows),
         "benchmark_feedback_attempted_tasks": (
-            natural_feedback_tasks + compiler_feedback_attempted_tasks
+            natural_feedback_tasks + expanded_feedback_attempted_tasks
         ),
         "benchmark_matched_feedback_attempted_tasks": natural_feedback_tasks,
         "benchmark_compiler_feedback_tasks": int(compiler_feedback["tasks_evaluated"]),
@@ -330,6 +376,29 @@ def _summary(
         ),
         "benchmark_compiler_feedback_tool_oracle_tasks": int(
             compiler_feedback["tool_oracle_pass_tasks"]
+        ),
+        "benchmark_expanded_feedback_tasks": int(expanded_feedback["tasks_evaluated"]),
+        "benchmark_expanded_feedback_gateway_blocks": int(
+            expanded_feedback["gateway_blocked"]
+        ),
+        "benchmark_expanded_feedback_tasks_with_blocks": _tasks_with_blocks(
+            expanded_feedback_tasks
+        ),
+        "benchmark_expanded_feedback_attempted_tasks": (
+            expanded_feedback_attempted_tasks
+        ),
+        "benchmark_expanded_feedback_model_calls": int(
+            expanded_feedback["feedback_model_calls"]
+        ),
+        "benchmark_expanded_feedback_allowed_calls": expanded_feedback_allowed_calls,
+        "benchmark_expanded_feedback_bound_reference_calls": int(
+            expanded_feedback["bound_reference_calls"]
+        ),
+        "benchmark_expanded_feedback_action_reward_tasks": int(
+            expanded_feedback["action_reward_pass_tasks"]
+        ),
+        "benchmark_expanded_feedback_tool_oracle_tasks": int(
+            expanded_feedback["tool_oracle_pass_tasks"]
         ),
         "benchmark_recovered_tasks": 0,
         "benchmark_leased_action_reward_tasks": int(
@@ -356,7 +425,7 @@ def _summary(
             "larger benchmark-derived denied-benign recovery run",
             "task-level utility improvement or preservation under recovery",
             "approval-burden measurement",
-            "broader non-enumerated recovery beyond the 2-task compiler-feedback shard",
+            "broader non-enumerated recovery beyond the 5-task retail compiler-feedback shard",
         ],
         "no_dataset_sync": True,
         "not_a_model_run": True,
@@ -371,7 +440,7 @@ def _summary(
             "This is a read-only gate audit over saved local result artifacts.",
             "It does not run a model, execute tools, replay traces, clone repositories, sync datasets, or download data.",
             "The result separates benchmark-derived utility evidence from hand-written denial-targeted recovery diagnostics.",
-            "The gate remains open because current benchmark-derived feedback recovers an allowed call in a 2-task shard but has no task-level reward improvement.",
+            "The gate remains open because current benchmark-derived feedback recovers one allowed call in a 5-task retail shard but has no task-level reward improvement.",
         ],
     }
 

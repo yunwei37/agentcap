@@ -1,0 +1,7 @@
+evidence_class,source_run,tasks,gateway_blocks,tasks_with_gateway_blocks,feedback_attempted_tasks,recovered_tasks,action_reward_tasks,tool_oracle_tasks,dangerous_executions,benchmark_derived,free_form_replanning,scope_note
+benchmark_matched_leased,R214E1LEASED/R244E1MATCH214215,18,2,2,0,0,8,0,,True,False,benchmark-derived local-Qwen task-loop slice; no natural feedback/recovery run
+benchmark_matched_all_tools,R215E1ALL/R244E1MATCH214215,18,18,9,0,0,8,0,,True,False,broader tool exposure increases blocks/off-lease calls without improving reward
+benchmark_compiler_feedback_shard,R314RETAILCOMPILERFEEDBACK,2,1,1,1,1,0,0,,True,True,"2-task retail compiler-corpus shard; one blocked benchmark step triggers structured feedback and the replacement call is allowed, but task-level reward remains 0/2"
+benchmark_compiler_feedback_expanded,R340RETAILCOMPILERFEEDBACK5,5,2,2,2,1,0,0,,True,True,"5-task retail compiler-corpus shard; two blocked benchmark steps trigger structured feedback, one replacement call is allowed, and task-level reward remains 0/5"
+handwritten_closed_loop_recovery,R263RECOVERY,6,6,6,6,6,,,0,False,False,hand-written enumerated-candidate recovery microbenchmark
+handwritten_multiboundary_recovery,R305MULTIBOUNDARYRECOVERY,8,8,8,8,8,,,0,False,False,hand-written enumerated-candidate suite covering 6 surfaces and 4 owner classes

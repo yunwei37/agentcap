@@ -1,0 +1,12 @@
+source_run,tool_exposure,domain,task_id,gateway_blocked,off_lease_calls_blocked,feedback_attempted,action_reward,tool_oracle_pass
+R214E1LEASED,leased,retail,3,1,0,False,0.0,False
+R214E1LEASED,leased,retail,4,1,1,False,0.0,False
+R215E1ALL,all,airline,5,1,0,False,0.0,False
+R215E1ALL,all,airline,6,1,0,False,0.0,False
+R215E1ALL,all,airline,7,4,1,False,0.0,False
+R215E1ALL,all,retail,3,1,0,False,0.0,False
+R215E1ALL,all,retail,4,3,3,False,0.0,False
+R215E1ALL,all,retail,5,1,1,False,0.0,False
+R215E1ALL,all,retail,6,2,1,False,0.0,False
+R215E1ALL,all,retail,7,1,0,False,0.0,False
+R215E1ALL,all,telecom,[mobile_data_issue]data_usage_exceeded[PERSONA:Easy],4,3,False,0.0,False
