@@ -49,9 +49,8 @@ Source addendum: R104-R108 add runtime-evidence compiler hints and saved diagnos
 ## Repository Layout Relevant To The Project
 | Path | Role | Status |
 |---|---|---|
-| `main.tex`, `main.pdf` | frozen two-page workshop abstract from the first drafting pass | existing; do not edit during auto-research |
-| `docs/paper-workshop/` | snapshot of the two-page workshop paper | created |
-| `docs/autopaper/` | evolving long-form research paper draft | created |
+| `main.tex`, `main.pdf` | canonical English paper entry at the repository root | keep |
+| `docs/autopaper/` | evolving long-form Chinese research paper draft and paper-facing bibliography | keep |
 | `docs/idea-story.md` | canonical story, claims, current state | created |
 | `docs/background-related-work.md` | canonical novelty, benchmarks, baselines | created |
 | `docs/design.md` | canonical system design | created |
@@ -262,8 +261,8 @@ Source addendum: R104-R108 add runtime-evidence compiler hints and saved diagnos
 ## Build/Run Commands
 | Purpose | Command | Status |
 |---|---|---|
-| Build current workshop PDF | `make` | works as of commit `4ce9892`; root paper should remain frozen |
-| Verify workshop PDF page count | `pdfinfo main.pdf | rg '^Pages'` | works; expected `Pages: 2` |
+| Build root English paper PDF | `make` | works; root `main.tex`/`main.pdf` is the canonical English entry |
+| Verify root English paper page count | `pdfinfo main.pdf | rg '^Pages'` | works; currently expected to be a short extended-abstract PDF |
 | Unit tests | `PYTHONPATH=src python -m pytest -q` | works: 146 tests passed; `pytest.ini` restricts discovery to this repo's `tests/` |
 | Local checker sanity | `PYTHONPATH=src python -m intentcap.checker examples/local_pdf_wrong_sink.json` | works; see `results/local/R001/verdicts.json` |
 | AgentDojo suite count probe | `. .venv/bin/activate && python scripts/probe_agentdojo.py --benchmark-version v1.2.2 --suite workspace` | works; see `results/agentdojo/R002/` |
