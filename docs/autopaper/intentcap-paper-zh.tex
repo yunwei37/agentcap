@@ -29,8 +29,8 @@ LLM agents 正在从固定工具调用器演变为可扩展执行环境，它们
 \sys 提出一个 protected-decision authorization interface，将 context influence 显式建模为 capability，并把 trusted user intent 作为 high-impact authority 的根。
 每个会改变权限的状态转移都携带短期 lease 和字段级 proof，由 intent/agent-runtime、instruction、tool/interface 和 runtime-observation/env 四类 owner 分别证明目标、过程、接口和本次运行观察。
 LLM-assisted compiler 只能提出 plans 和 candidate leases，deterministic checker 在 tool/env/prompt/delegation 边界前验证 proof、消耗 lease 并更新 checker 自有状态。
-评估显示，带 lease 的 protected-event model 仍能表达良性行为：\sys 覆盖 3,813/3,813 个 benign reference actions。机制消融显示，no-owner collapse false-accepts 3,593/3,823 个完整 checker 拒绝的 protected decisions。
-本地多边界实验把同一个 pre-effect commit interface 放在 side effect、placement、handoff 和 MCP-style local broker 执行前。结合 owner/lifecycle 消融，实验表明 \sys 在已接入边界阻断了被测试的 owner substitution、context promotion 和 lifecycle violations。
+评估显示，带 lease 的事件模型仍能表达良性行为：\sys 覆盖 3,813/3,813 个 benign reference actions。机制消融显示，折叠字段 owner 会误接受 3,593/3,823 个完整 checker 拒绝的 protected decisions。
+本地多边界实验在 side effect、context placement、handoff 和 MCP-style local broker 前执行同一提交接口，并阻断被测试的字段代填、context promotion 和 lease lifecycle violations。
 \end{abstract}
 
 \section{引言}
@@ -43,7 +43,7 @@ LLM agents 正在变成可扩展执行环境。它们加载 Skills，连接 MCP 
 
 现有防线分别覆盖了这个问题的一部分。Tool guards、argument validators 和 action-time authority controls 可以拒绝错误对象或非法参数~\cite{authgraph,pact,airguard}。Static allowlists 和 server-level policies 可以限制可见工具，human approval gates 可以重新引入用户确认，OS sandbox 或 monitor 可以约束文件、网络和进程 side effects~\cite{actplane}。Provenance、taint 和 IFC-style defenses 可以表达部分 flow policy~\cite{camel,prompt-flow-integrity,fides,rtbas,neurotaint}。这些机制仍然主要检查已经成形的 action、argument、flow 或 syscall，而没有把产生这些 action 的 protected-decision transition 作为同一个 runtime object。
 
-\sys 的核心洞察是把分散在 prompt construction、tool registry、runtime observer、approval UI 和 delegation adapter 中的授权状态显式化为一个副作用前可检查的提交记录。\sys 限制 context 对 authority fields 的影响，并用按字段取证的 lease 表达授权。这个提交点是运行时执行 lease 的线性化点。四类来源不是 component taxonomy，而是 proof ownership。Intent/agent-runtime context 回答谁授权本次 run，instruction context 回答哪个过程可指导它，tool/interface context 回答哪个接口可执行，runtime-observation/env context 回答本次运行实际观察到了什么。两个 context sources 只有在 issuer、可伪造面、观测边界、state writer 和 lifecycle authority 都等价时才能 safe merge。
+\sys 的核心洞察是把分散在 prompt construction、tool registry、runtime observer、approval UI 和 delegation adapter 中的授权状态显式化为一个副作用前可检查的提交记录。\sys 限制 context 对 authority fields 的影响，并用按字段取证的 lease 表达授权。这个提交点是运行时执行 lease 的线性化点。四类来源不是按组件名称划分，而是按谁能证明某个 protected field 划分。换言之，它们是 proof owners：intent/agent-runtime context 回答谁授权本次 run，instruction context 回答哪个过程可指导它，tool/interface context 回答哪个接口可执行，runtime-observation/env context 回答本次运行实际观察到了什么。两个 context sources 只有在 issuer、可伪造面、观测边界、state writer 和 lifecycle authority 都等价时才能 safe merge。
 
 实现这一洞察需要解决三个工程挑战。第一，checker 必须分离不同 authority fields 的证明来源。Skill/manual text 可以指导 workflow，但不能替代用户意图。MCP/tool metadata 可以描述接口和 credential scope，但不能授权 sink。Script output、tool result 和文件状态可以提供 runtime evidence，但不能成为 instruction 或 approval reason。第二，lease table、budget counters 和 consumption state 必须属于 checker state \(\sigma\)，而不能被 env context 或 adapter 本地状态替代。第三，同一个授权对象必须出现在 tool call 之外的 prompt placement、Skill instruction placement、本地环境执行和 delegation handoff 边界，否则 untrusted context 仍可通过间接边界影响 authority。
 
@@ -55,7 +55,7 @@ LLM agents 正在变成可扩展执行环境。它们加载 Skills，连接 MCP 
 \begin{enumerate}[leftmargin=*,label=\textbf{C\arabic*.}]
   \item \textbf{Protected-decision linearization model.} 一个把 authority-changing transition 作为 authority-state update 最小测试线性化点的模型，并定义 safe-merge、owner-equivalence 与 lifecycle-equivalence obligations（第~\ref{sec:formal} 节）。
   \item \textbf{Runtime contract and prototype.} 一个以 checker 为 authority-state writer 的 \(\mathsf{check\_and\_consume}\) contract 与原型，使同一 protected transition 可以放到 tool、env、prompt/Skill placement 和 delegation 边界前（第~\ref{sec:design}--\ref{sec:implementation} 节）。
-  \item \textbf{Evaluation evidence for the interface.} 一组按 claim 组织的评估，验证 event-model expressiveness、tested owner/lifecycle necessity 和 multi-boundary enforceability。更强的 benchmark-scale utility、approval burden、independent oracle 和 production backend 外推在证据边界中单独列出（第~\ref{sec:evaluation}--\ref{sec:evidence-status} 节）。
+  \item \textbf{Evaluation evidence for the interface.} 一组按 claim 组织的评估，在已接入边界内验证 event-model expressiveness、tested owner/lifecycle necessity 和 multi-boundary enforceability。外推边界在第~\ref{sec:evidence-status} 节单独界定。
 \end{enumerate}
 
 \section{背景}
@@ -224,9 +224,11 @@ Guardrail & event model still expresses benign reference behavior under leased e
 
 \subsection{授权输入}
 
-\sys 的 capability synthesis 不是从单一 prompt context 中抽取权限，而是从字段证明责任开始。本文把这些证明边界称为 \textbf{owner classes}：raw artifacts 会先被拆成带 owner 的 proof cells，再提交给 checker。设计先列出会改变 authority 的字段族，例如 selected object、authorized sink、approval scope、workflow scope、callable schema、credential scope、observed path、stdout 和 child lease bound；再为每个字段指定唯一 owner。第~\ref{sec:formal} 节给出 safe-merge 判据；本节只说明四类证明来源在运行时授权中的角色。
+\sys 的 capability synthesis 不是从单一 prompt context 中抽取权限，而是从字段证明责任开始。本文把这些证明边界称为 \textbf{owner classes}：raw artifacts 会先被拆成带 owner 的 proof cells，再提交给 checker。设计先列出会改变 authority 的字段族，例如 selected object、authorized sink、approval scope、workflow scope、callable schema、credential scope、observed path、stdout 和 child lease bound；再为每个字段指定唯一 owner。
 
-按这个等价判据，本文接入的 Skill/MCP/cmd/env/subagent 边界将受保护字段合并为四个 owner classes，分别是 intent/agent-runtime、instruction、tool/interface 和 runtime-observation/env。它们不是四个组件名，也不是全局 taxonomy，而是当前任务集中四个不可互相代填的证明问题。Intent/agent-runtime 回答谁可以授权，instruction 回答哪个过程可以指导，tool/interface 回答哪个接口可以执行，env 回答本次运行实际发生或观察到了什么。Intent/agent-runtime-owned proofs 证明用户授权的 goal、objects、sinks、approval tokens 和 delegation root。Instruction-owned proofs 证明被 endorsement 的 workflow scope 和 procedure guidance。Tool-owned proofs 证明 callable name、schema、credential scope、binary descriptor 和 declared side-effect contract。Env-owned proofs 证明本次运行观察到的 concrete args、cwd、路径存在性、tool results、script outputs 和 observed side effects。Delegation 不是第五类 owner，而是由 intent/agent-runtime-owned delegation root、tool/interface proof、env observation 和 checker-owned lifecycle state 共同证明的 compound protected decision。
+按这个等价判据，本文接入的 Skill/MCP/cmd/env/subagent 边界将受保护字段合并为四个 owner classes，分别是 intent/agent-runtime、instruction、tool/interface 和 runtime-observation/env。它们不是四个组件名，也不是全局 taxonomy，而是当前任务集中四个不可互相代填的证明问题。Intent/agent-runtime 回答谁可以授权，instruction 回答哪个过程可以指导，tool/interface 回答哪个接口可以执行，env 回答本次运行实际发生或观察到了什么。第~\ref{sec:formal} 节给出 safe-merge 判据；本节只说明四类证明来源在运行时授权中的角色。
+
+Intent/agent-runtime-owned proofs 证明用户授权的 goal、objects、sinks、approval tokens 和 delegation root。Instruction-owned proofs 证明被 endorsement 的 workflow scope 和 procedure guidance。Tool-owned proofs 证明 callable name、schema、credential scope、binary descriptor 和 declared side-effect contract。Env-owned proofs 证明本次运行观察到的 concrete args、cwd、路径存在性、tool results、script outputs 和 observed side effects。Delegation 不是第五类 owner，而是由 intent/agent-runtime-owned delegation root、tool/interface proof、env observation 和 checker-owned lifecycle state 共同证明的 compound protected decision。
 
 除非特别说明，本文中的 owner class、issuer class 和 context class 均指 canonicalized proof cells 的四类 owner，而不是 raw artifact 或 runtime component 的类型。
 
@@ -261,7 +263,7 @@ Subagent handoff, child capability set, delegation target & Not a fifth owner; c
 
 错误合并会产生不同的 false authority path。把 instruction 并入 intent/agent-runtime 会把 Skill/manual 中的过程建议提升为用户意图或 approval。把 tool 并入 intent/agent-runtime 会让 server/interface description 变成用户授权。把 env 并入 tool 会让 runtime observations、script outputs 和文档内容获得本不具备的接口可信度。把 tool 并入 env 又会丢失 schema、credential scope 和 declared side effect 这些接口约束。因此，no-substitution rule 的作用是阻止一类 projection 替另一类 projection 证明 field。
 
-这四类不是 component taxonomy。一个 Skill package 同时可能携带 instruction context（\texttt{SKILL.md} 和手册）、tool context（bundled script descriptor 和 argv schema）以及 env context（script stdout、生成文件和错误日志）。一个 MCP server 同时可能携带 tool context（schema、server identity 和 credential scope）以及 env context（tool result 和资源状态）。一个 agent run 同时持有 intent/agent-runtime context（trusted issuer canonicalize 的用户 intent、approval 和 delegation root）与 instruction context（用户给出的格式偏好或 workflow preference）。因此，\sys 不按“来源属于 Skill、MCP 还是 command”铸造 capability，而按每个 protected field 的 issuer owner 铸造 capability。实际 lease 是这些 proof projections 对同一次 protected transition 的合取：少一类 required proof 就拒绝，任一类 proof 越权代填另一个 field 也拒绝。
+这四类按 proof owner 划分，而不是 component taxonomy。一个 Skill package 同时可能携带 instruction context（\texttt{SKILL.md} 和手册）、tool context（bundled script descriptor 和 argv schema）以及 env context（script stdout、生成文件和错误日志）。一个 MCP server 同时可能携带 tool context（schema、server identity 和 credential scope）以及 env context（tool result 和资源状态）。一个 agent run 同时持有 intent/agent-runtime context（trusted issuer canonicalize 的用户 intent、approval 和 delegation root）与 instruction context（用户给出的格式偏好或 workflow preference）。因此，\sys 不按“来源属于 Skill、MCP 还是 command”铸造 capability，而按每个 protected field 的 issuer owner 铸造 capability。实际 lease 是这些 proof projections 对同一次 protected transition 的合取：少一类 required proof 就拒绝，任一类 proof 越权代填另一个 field 也拒绝。
 
 实际 capability 必须由相关 protected fields、当前 intent、checker lifecycle state 与全局策略共同决定。这是合取约束而不是权限并集：Intent/agent-runtime context 给出目标、对象和 sink 的上界；instruction context 只能在该上界内约束过程；tool context 只能暴露可调用接口、凭证范围和 sandbox contract；env context 只能把本次运行实际观测到的值绑定到这些 lease predicates。任一 required field 缺失都会使 lease 不可铸造。相反，若把四类 context 做成 union authority，最强或最会写自然语言的一类输入就可能替其他类补齐字段。
 
@@ -538,15 +540,15 @@ synth_\Gamma(d,\Phi,\sigma)=
 \textbf{判据 1（owner merge counterexample criterion）.}
 对任意折叠映射 \(h\)，若存在 required field \(f\) 和两个输入类 \(q_1\neq q_2\)，满足 \(owner(f)=q_1\)、\(h(q_1)=h(q_2)\)，且 \(q_2\) 的 issuer 可以产生与 \(\kappa.f\) 匹配的 proof value 但没有 \(f\) 的签发权，则存在同 action/argument 的事件 \(e\)，使 \(Accept_h(e,\sigma,\kappa)\) 成立而 \(Accept(e,\sigma,\kappa)\) 不成立。
 证明思路是构造一个只替换 proof issuer 的事件：operation、object、argument、prompt slot 和 data provenance 都保持不变，弱 checker 在折叠后的 class 中看到匹配 value，完整 checker 因 \(q_2\neq owner(f)\) 拒绝。
-E2 中 tool\(\rightarrow\)agent、env\(\rightarrow\)agent、env\(\rightarrow\)tool、instruction\(\rightarrow\)agent、instruction\(\rightarrow\)env 和 instruction\(\leftrightarrow\)tool 的 rows 是该判据在本文 artifacts 和 controlled suites 上的实例化，而不是关于所有可能 taxonomy 的全局最小性证明。
+E2 中 tool\(\rightarrow\)agent、env\(\rightarrow\)agent、env\(\rightarrow\)tool、instruction\(\rightarrow\)agent、instruction\(\rightarrow\)env 和 instruction\(\leftrightarrow\)tool 的 rows 是该判据在本文 artifacts 和 controlled suites 上的实例化。该判据的结论限定在本文测试的 adapter surfaces 和 collapsed owner interfaces。
 这个前提不是纯逻辑假设。MCPTox-derived MCP metadata 给出 tool issuer 产生 matching policy/approval value 的 cases，AgentDojo/InjecAgent 和本地 env suites 给出 env text 或 observed output 产生 matching agent/tool fields 的 cases，Skill placement records 给出 unsigned or wrong-source text 产生 matching instruction slot 的 cases。因此 E2 测的是 artifact-derived issuer substitution，而不是只在纸面上构造的反例。
-对应的最小 witness families 是：tool metadata 不能替用户授权 sink 或 approval，runtime text 不能替用户选择 sink，runtime observation 不能替 tool schema，workflow text 不能替 approval 或 delegation root，script/tool output 不能占用 trusted instruction slot，procedure text 不能和 interface metadata 共用 proof channel。它们覆盖的不是所有可能 context taxonomy，而是本文接入边界上任何三类折叠必须合并的一对 proof owners。
+对应的最小 witness families 是：tool metadata 不能替用户授权 sink 或 approval，runtime text 不能替用户选择 sink，runtime observation 不能替 tool schema，workflow text 不能替 approval 或 delegation root，script/tool output 不能占用 trusted instruction slot，procedure text 不能和 interface metadata 共用 proof channel。它们覆盖本文接入边界上任何三类折叠必须合并的一对 proof owners。
 
 \textbf{推论 1（tested no three-class collapse）.}
 在本文 prototype 的四个 owner classes 上，任何不保留 per-field owner projections 的三类 collapsed owner interface 都至少合并 \(\{agent,inst,tool,env\}\) 中的一对 owner。
 若 E2 对六个 pairwise merges 都给出同 action/argument 或同 prompt-slot shape 的 false-accept counterexample，则这种 collapsed interface 在本文 tested adapter surfaces 上不能满足 \(Accept_h\Rightarrow Accept\)。
 这个推论的证明只用 pigeonhole argument 加判据 1：collapsed 三类 interface 必须合并一对 owner，而该对 owner 在 E2 中已有一个折叠后接受、完整 checker 拒绝的反例。
-它的范围也同样受限：它排除的是本文测试过的 collapsed owner interface，不排除一个内部仍保留 per-field owner projections、proof objects 和 same-transition lifecycle update 的实现把外部 API 命名为三类；后者实现的是本文 commit interface，而不是 collapsed baseline。
+该推论排除的是本文测试过的 collapsed owner interface。若某实现外部 API 命名为三类，但内部仍保留 per-field owner projections、proof objects 和 same-transition lifecycle update，它实现的是本文 commit interface，而不是 collapsed baseline。
 
 第二个等价条件是 lifecycle-linearization equivalence。令 \(Accept_{atomic}(e,\sigma,\kappa)\rightarrow\sigma'\) 表示 \sys 的 \(\mathsf{check\_and\_consume}\) 在一个 transition 中完成 proof check、lease lookup、budget consume、expiry progress 和 delegation attenuation，并返回 effect/handoff 可绑定的 audit record。令 \(Accept_{split}\) 表示一个把 predicate check、budget update、delegation comparison 或 audit write 分散到多个组件或多个时间点的 monitor。二者在本文 decision classes 上等价，必须满足：
 
@@ -556,7 +558,7 @@ Accept_{split}(\tau)=Accept_{atomic}(\tau)
 \land final_\sigma(Accept_{split},\tau)=final_\sigma(Accept_{atomic},\tau).
 \]
 
-该条件要求 split monitor 不仅接受同一批 events，还必须产生同一个 checker-owned lease state：active/exhausted lease version、budget counter 和 parent-child capability relation 都一致。Audit id 需要绑定到 allow decision 以支持审计和事后归因，但本文尚未把它作为单独 false-accept 安全字段隔离证明。若 predicate check 在旧 \(\sigma\) 上允许事件、budget consume 在 side effect 后发生，或 child lease set 没有和 parent active set 在 handoff 前同 transition 比较，则会出现 stale reuse、double consume 或 over-delegation false accept。本文 claim 限定在覆盖的 Skill/manual、MCP/tool/cmd、runtime-observation/env 和 delegation boundaries：safe merge 得到的四个 owner classes 不能在不保留 per-field projections 的情况下继续折叠。任何进一步合并或拆分生命周期的实现都必须证明 owner-projection equivalence 和 lifecycle-linearization equivalence，否则 E2 的 counterexamples 就会给出 unsafe merge 或 unsafe split。
+该条件要求 split monitor 不仅接受同一批 events，还必须产生同一个 checker-owned lease state：active/exhausted lease version、budget counter 和 parent-child capability relation 都一致。本文的核心安全性质依赖 field-owner projections、active lease state 和同一 transition 的 lifecycle mutation；audit id 主要服务审计和事后归因。若 predicate check 在旧 \(\sigma\) 上允许事件、budget consume 在 side effect 后发生，或 child lease set 没有和 parent active set 在 handoff 前同 transition 比较，则会出现 stale reuse、double consume 或 over-delegation false accept。本文 claim 限定在覆盖的 Skill/manual、MCP/tool/cmd、runtime-observation/env 和 delegation boundaries：safe merge 得到的四个 owner classes 不能在不保留 per-field projections 的情况下继续折叠。任何进一步合并或拆分生命周期的实现都必须证明 owner-projection equivalence 和 lifecycle-linearization equivalence，否则 E2 的 counterexamples 就会给出 unsafe merge 或 unsafe split。
 
 \textbf{命题 2（split lifecycle unsoundness）.}
 若一个实现把 allow predicate、budget consumption、expiry progress 或 parent-child attenuation 拆到不同 writer 或不同提交点，并且不能证明其最终 \(\sigma\) 与 \(Accept_{atomic}\) 在所有 interleavings 上相同，则存在同 action/argument 的 trace pair，使 split implementation 接受 stale reuse、double consume 或 over-delegation，而 atomic commit 拒绝。
@@ -872,7 +874,7 @@ Bubblewrap sandbox & env projection materialized as namespace mounts and no-netw
 
 原型还包含 local Qwen/llama.cpp compiler experiments 和本地 env backend experiments。Env backend 在隔离目录中真实执行 Python script、file read/write 和 context-use handlers，并在 side effect handler 之前调用 checker。被拒绝的 exec/read/write/net/ctx events 不会进入本地 side-effect handler。模型闭环版本使用 Qwen3.6/llama.cpp 作为不可信 action proposer。模型在 adversarial env-context prompt 下返回 call/abort，只有 call 事件会继续进入 checker 和本地 side-effect handler。
 
-原型还实现了一个 env-projection replay backend：从 active env leases 生成 deny-by-default monitor rules，并在 replay monitor 中检查 operation、object、holder、argument predicates、budget consumption、control/data provenance 和 context-label influence rules。该 lowering 说明，在本文建模的 env/local-effect projection 上，lease contract 可以被编码为 monitor-shaped policy。当前证据来自 Python replay runtime，尚不是 production ActPlane/eBPF integration。Lowering 只覆盖 env/local-effect projection。File/process/network/object predicates、holder、budget 和 provenance/influence labels 可以进入 monitor rules；intent-owned sink/approval proof、instruction endorsement、tool schema owner proof、lease mint/delegation graph update 仍由 checker 处理，不能由 OS monitor 或 ActPlane-style backend 推导。
+原型还实现了一个 env-projection replay backend：从 active env leases 生成 deny-by-default monitor rules，并在 replay monitor 中检查 operation、object、holder、argument predicates、budget consumption、control/data provenance 和 context-label influence rules。该 lowering 说明，在本文建模的 env/local-effect projection 上，lease contract 可以被编码为 monitor-shaped policy。当前证据来自 Python replay runtime；production ActPlane/eBPF integration 是后续外推对象。Lowering 只覆盖 env/local-effect projection。File/process/network/object predicates、holder、budget 和 provenance/influence labels 可以进入 monitor rules；intent-owned sink/approval proof、instruction endorsement、tool schema owner proof、lease mint/delegation graph update 仍由 checker 处理，不能由 OS monitor 或 ActPlane-style backend 推导。
 
 这些实现给 E1--E3 提供运行路径：已接入 checker 的边界可以提交 owner-typed proofs、绑定 side effect、placement 或 handoff 到 commit id，并把 env projection 降到 replay monitor 或本地 namespace sandbox 配置。生产级 ActPlane/eBPF integration、完整 MCP broker、独立 human expert-oracle replication 和大规模 recovery evaluation 属于扩展结论所需的实验条件。
 
@@ -989,7 +991,7 @@ env/data modes & 7 & all four: 4; env only: 3 & 7 & none \\
 
 Same-event ablation 将上述 characterization 转化为直接的机制隔离结果。实验固定同一批 event 的 operation、object、argument、mode 和 provenance annotation，只改变 checker 是否保留 issuer owner 与 atomic lifecycle checks。表~\ref{tab:e2-weak-variant-ablation} 显示，完整 \sys 在 authority traces 上有 0 个 unsafe false accepts。若把 \(C_{agent},C_{inst},C_{tool},C_{env}\) 折叠成 generic trusted context，弱版本会接受 3,593/3,823 个被完整 checker 拒绝的 protected decisions，removal-family false-accept rate 为 93.98\%。单独折叠 tool\(\rightarrow\)agent、env\(\rightarrow\)agent、env\(\rightarrow\)tool 和 instruction\(\rightarrow\)agent 也分别产生 1,928、1,663、1,662 和 2 个 false accepts。
 
-表~\ref{tab:three-class-merge-coverage} 明确给出“三类折叠”的覆盖边界。当前证据不是全局枚举所有可能 agent taxonomies，而是在本文接入 workloads 中测试自然工程捷径：把扩展说明、接口元数据或运行时观测放入更高 authority owner。四个 trace-derived pairwise collapse families 有聚合计数；env+instruction 的三类折叠由本地 Skill placement counterexample 支撑；instruction+tool 由两个固定 action/slot shape、只替换 issuer owner 的 controlled counterexamples 补齐。对本文四类 proof classes 的六个 pairwise merge removals，tested adapter surfaces 中各有至少一个 saved 或 controlled false-accept counterexample；其中 instruction+tool 是 2/2 个 controlled instruction+tool false accepts，而完整 checker 在同一 controlled cases 上是 0/2 个 controlled full-checker unsafe accepts。相应地，本文的贡献不是四类名字本身，而是 safe-merge test 和 owner-projection obligation：四类只是当前 agent-extension workloads 经 safe merge 后得到的 canonical projection。在已覆盖 workloads 和 tested collapse families 上，不保留 per-field owner projections 的三类 collapsed interface 不能安全替代该 projection；这个结果是 removal-family coverage，不是自然流行率估计，也不是关于所有可能 context taxonomy 的全局最小性证明或所有 three-class designs 的不可能性证明。
+表~\ref{tab:three-class-merge-coverage} 明确给出“三类折叠”的覆盖边界。当前证据在本文接入 workloads 中测试自然工程捷径：把扩展说明、接口元数据或运行时观测放入更高 authority owner。四个 trace-derived pairwise collapse families 有聚合计数；env+instruction 的三类折叠由本地 Skill placement counterexample 支撑；instruction+tool 由两个固定 action/slot shape、只替换 issuer owner 的 controlled counterexamples 补齐。对本文四类 proof classes 的六个 pairwise merge removals，tested adapter surfaces 中各有至少一个 saved 或 controlled false-accept counterexample；其中 instruction+tool 是 2/2 个 controlled instruction+tool false accepts，而完整 checker 在同一 controlled cases 上是 0/2 个 controlled full-checker unsafe accepts。相应地，本文的贡献不是四类名字本身，而是 safe-merge test 和 owner-projection obligation：四类只是当前 agent-extension workloads 经 safe merge 后得到的 canonical projection。在已覆盖 workloads 和 tested collapse families 上，不保留 per-field owner projections 的三类 collapsed interface 不能安全替代该 projection；这个结果的范围是 removal-family coverage，而非自然流行率估计、全局 taxonomy minimality 或所有 three-class designs 的不可能性命题。
 形式化上，这一结论对应推论 1：三类 collapsed owner interface 会合并至少一个 tested pair，而表~\ref{tab:three-class-merge-coverage} 中的六个 pair 都有同 shape false-accept witness。若一个实现声称只有三类 context 但仍在内部保留 per-field owner projections 和同一次 lifecycle update，它满足的是本文的 commit interface，而不是这里被测试的 collapsed owner baseline。
 
 \begin{table}[t]
@@ -1065,7 +1067,7 @@ Typed provenance state guard on workflow residuals & 7 & 1 & convergence boundar
 
 Controlled counterexample suite 进一步展示折叠 issuer 或拆开 lifecycle 状态后的具体失败方式。每个 case 都对应表~\ref{tab:decision-reqs} 中的 owner-field violation：trusted tool metadata 试图供应 policy/approval authority，tool result 或 script output 试图占用 instruction slot，或 delegated child 得到 parent lease 不覆盖的 sink。对照族包括 object/action guard、IFC/provenance guard 和 split-state composite guard。表~\ref{tab:collapse-counterexamples} 将这些 cases 组织成支撑机制结论的 counterexamples。
 
-Tested-removal matrix 再把 owner projection、post-hoc action policy、split lifecycle、missing parent-child handoff commit、missing local provenance 和 object-only local boundary 这些 removal families 放入同一矩阵。矩阵覆盖 10 类 removals，并且 10/10 个 removals 都有 same-event 或 local-boundary counterexamples。Audit binding removal 尚未单独隔离，记录为 1 个 gap，并且不进入核心 safety 结论。因此这里的结论限定为：在本文建模的 decision classes 和 adapter proofs 下，被测试的 collapse/split/removal variants 都存在 false-accept 反例。它不是关于所有可能 context taxonomies 或所有 commit fields 的全局最小性证明。
+Tested-removal matrix 再把 owner projection、post-hoc action policy、split lifecycle、missing parent-child handoff commit、missing local provenance 和 object-only local boundary 这些 removal families 放入同一矩阵。矩阵覆盖 10 类 removals，并且 10/10 个 removals 都有 same-event 或 local-boundary counterexamples。Audit binding removal 尚未单独隔离，记录为 1 个 gap，并且不进入核心 safety 结论。因此这里的结论限定为：在本文建模的 decision classes 和 adapter proofs 下，被测试的 collapse/split/removal variants 都存在 false-accept 反例。全局 taxonomy minimality 和所有 commit fields 的最小性需要单独证明。
 
 \begin{table}[t]
 \centering
@@ -1088,17 +1090,17 @@ Delegation split & child subagent receives email sink not covered by parent summ
 
 结果支持一个窄机制结论：在这些 weakened-variant tests 中，no-substitution、no-promotion 与原子 check/consume 必须一起检查。Workflow-policy suite 中，\sys 执行 2 个合法 workflow events，并阻止 7 个 lifecycle/issuer violations。Baseline predicates 会接受全部 9 个 events，因为它们不区分 trusted tool metadata 和 agent/admin policy authority；same-event post-hoc policy DSL ablation 也会错误接受 7/7 个被完整 checker 拒绝的 residuals。MCPTox-derived counterexamples 中，\sys 允许 24/24 个合法 schema-use events，并拒绝 48/48 个 trusted-tool-metadata \(\rightarrow\) policy/approval promotions。Provenance/IFC/policy predicates 会接受这些 promotions，因为控制来源是 trusted metadata 且事件匹配 policy-shaped lease。Skill instruction placement test 中，\sys 接受 signed Skill instruction placement 和 tool-result-as-data use，但拒绝 3/3 个 tool result、script output 或 unsigned Skill text 占用 trusted instruction slot 的 substitutions。弱 baselines 接受 3/3 个 unsafe substitutions。
 
-E2 因此是 authority-input trace annotation、controlled mechanism evidence 加 benchmark-derived counterexample stress test，不是 blinded human-label study、benchmark-scale prevalence 结论或 online utility 结论。若要声明这些 patterns 在 benchmark 中普遍出现，还需要扩大 naturally occurring protected-decision labels，并由独立标注者确认每个 field owner。
+E2 的证据类型是 authority-input trace annotation、controlled mechanism evidence 和 benchmark-derived counterexample stress test。Blinded human-label agreement、benchmark-scale prevalence 和 online utility 属于更强外推，需要更多 naturally occurring protected-decision labels 和独立标注者确认每个 field owner。
 
 \subsection{E3: 本地多边界可执行性}
 
-E3 的系统问题是同一个 protected-transition API 能否作为 adapter contract 放到 tool call 之外的多个 authority-changing boundaries 前。E2 说明 interface 为什么需要 owner/lifecycle fields；E3 检查本地 adapters 是否能在 side effect、placement、handoff 和 broker call 前提交并执行这些 fields。结论是 local multi-boundary enforceability，而不是新的 owner-collapse 反例。Owner-collapse 和 lifecycle-split 的 false-accept 证据由 E2 承担。
+E3 的系统问题是同一个 protected-transition API 能否作为 adapter contract 放到 tool call 之外的多个 authority-changing boundaries 前。E2 说明 interface 为什么需要 owner/lifecycle fields；E3 检查本地 adapters 是否能在 side effect、placement、handoff 和 broker call 前提交并执行这些 fields。E3 的结论限定为 local multi-boundary enforceability；owner-collapse 和 lifecycle-split 的 false-accept 证据由 E2 承担。
 
 主文按三个 claim-supporting blocks 解释表~\ref{tab:e3-boundary-results}。第一组是 pre-side-effect enforcement：local env backend 和 MCP-style JSON-RPC broker 在 handler 执行前检查 lease、argument、provenance 和 budget，指标是 unsafe executions 和 unsafe JSON-RPC executions。第二组是 pre-placement/handoff enforcement：context placement、prompt-builder assembly、Skill instruction slot 和 delegation handoff 在 context 写入或 child handoff 前检查 owner projection，指标是 unsafe authority placements 和 over-delegation。第三组是 backend contrast/lowering：env-projection replay 和 bubblewrap rows 检查 env projection 能否降到 monitor/sandbox 形态，同时显示 OS substrate 只能承接 file/process/network 子集，不能替代 upstream intent、instruction、tool 和 delegation proofs。
 
 Integrated 和 paired workflow rows 检查同一个 checker session 是否能跨这些 block points 维护 lease state。Qwen3.6 loop 是 diagnostic：不可信 proposer 的 unsafe calls 仍要经过同一 checker。Baselines 是 object-only policy、server allowlist policy 和 lease-args/no-provenance policy；lowering audit 还加入去掉 holder、argument、provenance/influence、budget 和 default-deny 的 weakened monitor variants。Primary metrics 是 unsafe executions/placements、unsafe JSON-RPC executions、blocked unsafe attempts、checker/monitor mismatches 和 weakened-lowering unsafe accepts。Production MCP、ActPlane、真实 subagent runtime 和完整 prompt runtime 属于表~\ref{tab:current-evidence} 中的更强部署实验。
 
-表~\ref{tab:e3-boundary-results} 按 block point 列出同一个 falsifier：若该 boundary 没有 pre-effect commit，side effect、prompt placement 或 handoff 就可能在 checker 接受前发生。各行不是彼此独立的系统贡献，而是同一 adapter contract 在不同边界上的执行证据。
+表~\ref{tab:e3-boundary-results} 按 block point 列出同一个 falsifier：若该 boundary 没有 pre-effect commit，side effect、prompt placement 或 handoff 就可能在 checker 接受前发生。各行共同支撑同一 adapter contract 在不同边界上的执行证据。
 
 \begin{table}[t]
 \centering
@@ -1124,7 +1126,7 @@ Bubblewrap env sandbox & namespace sandbox & 10 & 4 & 6 & object+bwrap: host 1, 
 \end{tabular}
 \end{table}
 
-表~\ref{tab:e3-boundary-provenance} 说明 E3 的 rows 如何服务同一个 contract claim。Local env backend 验证 pre-side-effect blockpoint；context/delegation/Skill placement rows 验证 prompt write 和 handoff 前的 commit；integrated workflow rows 验证本地 PDF-to-issue 任务能用同一个 checker session 贯穿五类边界。Paired data/control workflow 保留同样的五类边界，并显式测试同源 PDF text 的 data/control 分离；monitor lowering row 验证同一 env lease contract 可被 deterministic replay monitor 执行。Qwen diagnostic 不作为独立 primary boundary result；它只说明本地模型提出的 unsafe calls 仍经过 checker。
+表~\ref{tab:e3-boundary-provenance} 说明 E3 的 rows 如何服务同一个 contract claim。Local env backend 验证 pre-side-effect blockpoint；context/delegation/Skill placement rows 验证 prompt write 和 handoff 前的 commit；integrated workflow rows 验证本地 PDF-to-issue 任务能用同一个 checker session 贯穿五类边界。Paired data/control workflow 保留同样的五类边界，并显式测试同源 PDF text 的 data/control 分离；monitor lowering row 验证同一 env lease contract 可被 deterministic replay monitor 执行。Qwen diagnostic 的作用是说明本地模型提出的 unsafe calls 仍经过 checker，主 boundary result 由 deterministic adapter rows 承担。
 
 \begin{table}[t]
 \centering
@@ -1165,21 +1167,21 @@ Env-projection lowering 检查 lease 的 env 部分是否能在不改变 checker
 
 Bubblewrap namespace probe 区分 OS containment 和 upstream authority proof。它将同一 env suite 的本地 file/process handlers 放进真实 Linux namespace sandbox。\sys+bwrap backend 在 10 个 events 中只允许 4 个 checker-authorized events，实际进入 sandbox 的 OS-relevant attempts 为 3 个，成功 3 个，并产生 0 个 unsafe host effects 和 0 个 unsafe semantic effects。Object-only+bwrap backend 允许 8 个 events，其中 4 个是 checker-denied unsafe events。Bubblewrap 含住 2 个 OS-visible path/resource violations，但仍留下 1 个 unsafe host effect（holder mismatch 复用合法 output path）和 1 个 unsafe semantic effect（\texttt{script\_output} 占用 instruction authority）。强制 network probe 在 bwrap namespace 中返回 network unreachable，说明 no-network sandbox 生效。该结果给出两个边界结论：OS sandbox 可以承接 env projection 并隔离部分 file/network side effects；但 holder、provenance、prompt placement 和 delegation authority 仍必须由 \sys checker 决定。
 
-Adapter proof-completeness audit 作为 supporting diagnostic 检查这些 boundary decisions 是否真的经过 modeled proof obligations，而不只是碰巧没有执行 unsafe action。详细 audit numbers 放在下一节。E3 这里只使用其结论：这些本地边界的 allow/deny verdicts 均能映射到 modeled proof obligations。
+Adapter proof-completeness audit 检查这些 boundary decisions 是否真的经过 modeled proof obligations，而不只是碰巧没有执行 unsafe action。详细 audit numbers 放在下一节。E3 使用该审计的映射结论：这些本地边界的 allow/deny verdicts 均能对应 modeled proof obligations。
 
-跨边界结果可以合并为一个系统合同结论，而不是新的主实验 claim。Primary and contrast rows 覆盖 local env side effects、env-projection replay backend、context placement、delegation handoff、Skill instruction placement、paired shared-session workflow、section-aware prompt construction、MCP-style JSON-RPC broker 和 bubblewrap OS contrast。\sys 在这些本地边界上执行或放置授权 effects/placements，并在对应阻断点前阻止 unsafe attempts。Object-only 和 no-provenance baselines 则接受若干 owner/lifecycle violations。
+跨边界结果合并为一个系统合同结论。Primary and contrast rows 覆盖 local env side effects、env-projection replay backend、context placement、delegation handoff、Skill instruction placement、paired shared-session workflow、section-aware prompt construction、MCP-style JSON-RPC broker 和 bubblewrap OS contrast。\sys 在这些本地边界上执行或放置授权 effects/placements，并在对应阻断点前阻止 unsafe attempts。Object-only 和 no-provenance baselines 则接受若干 owner/lifecycle violations。
 
 去重后的边界汇总覆盖 8 类记录和 58 个 boundary attempts。\sys 有 29 个授权 effects/placements、29 个 attempts 被阻止、0 个 unsafe executions/placements。Object-only baselines 产生 20 个 unsafe accepts，lease-args/no-provenance baselines 产生 5 个 unsafe accepts。这里的 58 个 boundary attempts 来自去重后的边界汇总，不是表~\ref{tab:e3-boundary-results} 各 row 的逐行求和。Integrated、paired、lowering 和 sandbox rows 复用了部分底层 events，用于展示同一 contract 在不同视角下的执行。Owner-evidence matrix 只作为四类 owner 和 removal coverage 的可追溯记录。
 
-这个汇总用于说明 adapter contract 覆盖面，不是 production backend，也不是 benchmark-scale utility 结果。生产级 MCP broker、ActPlane integration、生产 prompt/subagent runtime 和大规模 utility 是表~\ref{tab:current-evidence} 中列出的更强证据需求。
+这个汇总的证据边界是本地 adapter contract 覆盖面。Production backend 与 benchmark-scale utility 属于表~\ref{tab:current-evidence} 中列出的更强外推对象，包括生产级 MCP broker、ActPlane integration、生产 prompt/subagent runtime 和大规模 utility。
 
 \subsection{Supporting Diagnostics}
 
-Supporting diagnostics 放在 E1--E3 之后，用来解释 denial 后的恢复形态和 lease object 的可审计性，而不增加新的顶层实验 claim。Benchmark-scale utility、approval burden 和 independent expert-oracle minimality 仍由表~\ref{tab:current-evidence} 的后续证据项承担。
+Supporting diagnostics 放在 E1--E3 之后，用来解释 denial 后的恢复形态和 lease object 的可审计性，并与顶层实验 claim 分开报告。Benchmark-scale utility、approval burden 和 independent expert-oracle minimality 由表~\ref{tab:current-evidence} 的后续证据项承担。
 
 \subsubsection{Local Qwen Visibility Diagnostic}
 
-本地 Qwen3.6 matched slice 检查 live model-loop 下的 authority surface，而不是 E1 的 primary reference-action coverage。该比较合并一个 leased exposure run 和一个 all-tools exposure run 的已有结果；它不运行新模型、不执行新工具、不同步数据集。在同一 18 个 tau2-style tasks 上，leased exposure 平均向模型暴露 2.61 个 tool schemas，而 all-tools exposure 暴露 14.72 个；对应 model calls 为 62 vs 74。Task-level utility 在这个切片上没有改善：action-reward 均为 8/18，tool-oracle 均为 0/18。差别主要出现在 checker-visible authority friction：gateway blocks 为 2 vs 18，off-lease blocks 为 1 vs 9。该切片只支持一个窄结论：较宽 tool visibility 会扩大可见 authority surface 和被 checker 拦截的越界尝试，但不能作为大规模 benchmark utility 或 recovery 结论。
+本地 Qwen3.6 matched slice 检查 live model-loop 下的 authority surface，与 E1 的 primary reference-action coverage 分开报告。该比较合并一个 leased exposure run 和一个 all-tools exposure run 的已有结果；它不运行新模型、不执行新工具、不同步数据集。在同一 18 个 tau2-style tasks 上，leased exposure 平均向模型暴露 2.61 个 tool schemas，而 all-tools exposure 暴露 14.72 个；对应 model calls 为 62 vs 74。Task-level utility 在这个切片上没有改善：action-reward 均为 8/18，tool-oracle 均为 0/18。差别主要出现在 checker-visible authority friction：gateway blocks 为 2 vs 18，off-lease blocks 为 1 vs 9。该切片的结论限定为 authority-surface comparison：较宽 tool visibility 会扩大可见 authority surface 和被 checker 拦截的越界尝试；大规模 benchmark utility 与 recovery 需要独立评估。
 
 \subsubsection{Adapter Proof Completeness}
 
@@ -1189,13 +1191,13 @@ Extended proof audit 覆盖 64/64 adapter verdicts。它把 prompt-builder assem
 
 \subsubsection{Denial-Targeted Recovery}
 
-作为主指标之外的 supporting recovery diagnostic，本文还加入一个手写构造的 denial-targeted closed-loop recovery microbenchmark，用来检查 denial 后的 agent 是否必然只能 abort。该 microbenchmark 固定六个 recoverable authority-bearing tasks，覆盖 wrong sink、approval-scope widening、delegation attenuation、instruction-slot placement、Skill workflow scope 和 tool-result approval substitution。每个任务先强制提交一个已知 unsafe event；\sys gateway 阻断 6/6 个初始事件。
+Denial-targeted closed-loop recovery microbenchmark 用来检查 denial 后的 agent 是否必然只能 abort，并作为恢复诊断放在主指标之后。该 microbenchmark 固定六个 recoverable authority-bearing tasks，覆盖 wrong sink、approval-scope widening、delegation attenuation、instruction-slot placement、Skill workflow scope 和 tool-result approval substitution。每个任务先强制提交一个已知 unsafe event；\sys gateway 阻断 6/6 个初始事件。
 
 在语义候选名和 structured denial feedback 可见时，本地 Qwen3.6 在 6/6 个任务上选择预期 authorized alternative，产生 6 个 final correct executions、0 个 dangerous executions。将候选 ID 和候选描述盲化后，原始输出预算下恢复 5/6 个任务；把输出预算从 384 提高到 768 后恢复 6/6 个任务。No-feedback baseline 没有第二轮模型调用，因此 0/6 恢复。Generic feedback 和 candidate-only feedback 均恢复 6/6 个任务并保持 0 个 dangerous executions。这说明在该枚举候选微基准中，关键因素是第二轮 constrained reconsideration prompt 加上 lease/provenance/candidate scaffold；详细 checker denial reason 不是必要条件。
 
-八任务多边界 suite 把同一闭环恢复形态扩展到 6 个 surfaces：MCP-style broker、approval gateway、delegation monitor、prompt builder、Skill/cmd gateway 和 env side-effect boundary。该 suite 同时覆盖 intent/agent-runtime、env、instruction 和 tool 四类 owner。每个任务先强制提交一个 object-only 会接受的 unsafe event。\sys gateway 阻断 8/8 个 forced unsafe 初始事件，本地 Qwen3.6 在 structured feedback 后恢复 8/8 个 authorized alternatives，并产生 8 个 final correct executions、0 个 dangerous executions。新增的 recoverable cases 包括 MCP tool-result semantic control、tool-schema-to-instruction promotion 和 env holder-scope reuse，因此它比旧六任务 suite 更接近 E3 的多边界系统 contract。该结果隔离的是 enumerated-candidate recovery；表~\ref{tab:current-evidence} 列出 free-form 和 benchmark-scale recovery 仍需的单独证据。
+八任务多边界 suite 把同一闭环恢复形态扩展到 6 个 surfaces：MCP-style broker、approval gateway、delegation monitor、prompt builder、Skill/cmd gateway 和 env side-effect boundary。该 suite 同时覆盖 intent/agent-runtime、env、instruction 和 tool 四类 owner。每个任务先强制提交一个 object-only 会接受的 unsafe event。\sys gateway 阻断 8/8 个 forced unsafe 初始事件，本地 Qwen3.6 在 structured feedback 后恢复 8/8 个 authorized alternatives，并产生 8 个 final correct executions、0 个 dangerous executions。新增的 recoverable cases 包括 MCP tool-result semantic control、tool-schema-to-instruction promotion 和 env holder-scope reuse，因此它比旧六任务 suite 更接近 E3 的多边界系统 contract。该结果隔离的是 enumerated-candidate recovery；free-form 和 benchmark-scale recovery 的证据需求列在表~\ref{tab:current-evidence}。
 
-Benchmark-derived recovery gate 目前支持的是更窄的结论：recovery feedback 可以在真实 benchmark-derived denial 上产生 authorized replacement call，但还没有带来 task-level utility recovery。Blind policy-suite feedback 在 1/1 个 blocked unsafe duplicate proposal 上恢复到安全替代，且产生 0 unsafe executions；hand-written recovery suites 的 14/14 successes 不能外推到自然 benchmark recovery。后续 Qwen3.6 task-loop 诊断把失败源从 checker safety 分离出来：schema-constrained decoding 和更大 context window 消除了 \texttt{<think>}、truncation、prompt-too-long 和 backend-crash 类失败，但 5-task retail slice 仍只有 1/5 action-reward、0/5 tool-oracle 和 22/46 bound reference calls。当前 benchmark-scale recovery gate 因此仍是 open：剩余问题是 planner/compiler recall、stop-condition handling、free-form recovery 和 approval-burden measurement，而不是 observed checker bypass。
+Benchmark-derived recovery gate 当前支持的结论是：recovery feedback 可以在真实 benchmark-derived denial 上产生 authorized replacement call，task-level utility recovery 尚待后续实验验证。Blind policy-suite feedback 在 1/1 个 blocked unsafe duplicate proposal 上恢复到安全替代，且产生 0 unsafe executions；hand-written recovery suites 的 14/14 successes 对应枚举候选设置，自然 benchmark recovery 需要单独评估。后续 Qwen3.6 task-loop 诊断把失败源从 checker safety 分离出来：schema-constrained decoding 和更大 context window 消除了 \texttt{<think>}、truncation、prompt-too-long 和 backend-crash 类失败，但 5-task retail slice 仍只有 1/5 action-reward、0/5 tool-oracle 和 22/46 bound reference calls。当前 benchmark-scale recovery gate 的未闭合部分是 planner/compiler recall、stop-condition handling、free-form recovery 和 approval-burden measurement，而不是 observed checker bypass。
 
 \subsubsection{Lease Auditability}
 
@@ -1203,15 +1205,15 @@ Lease audit 检查 intent-carrying leases 是否能被机器审计为结构化 a
 
 Audit 通过 24/24 个 labels，并对 144 个 \sys/baseline policy rows 计算 authority distance。这些 checks 说明 lease representation 可以支持 structured authority-distance analysis，并能在该 corpus 中发现 schema/sample/policy-distance mistakes。
 
-该审计的结论限定在 author-adjudicated lease-audit result。它是 supporting evidence，不是主实验块。若要声称 \sys 比 symbolic policy baselines 更接近 expert minimal policy，还需要 blinded independent adjudication、inter-rater agreement 和统计化 authority-distance comparison。
+该审计的结论限定在 author-adjudicated lease-audit result，并作为 lease object 可审计性的支持证据。将这一结果提升为“\sys 比 symbolic policy baselines 更接近 expert minimal policy”的主张，需要 blinded independent adjudication、inter-rater agreement 和统计化 authority-distance comparison。
 
 \section{讨论与局限}
 \label{sec:evidence-status}
 
-本节限定当前实验结果的解释范围。\sys 的核心结论是一个可执行的 protected-decision authorization unit。Trace replay、oracle replay 和 bounded compiler/model-loop experiments 分别覆盖不同边界，不能合并成对 sandbox、MCP broker、human approval UX 或所有 agent planning logic 的完整替代结论。
+本节限定当前实验结果的解释范围。\sys 的核心结论是一个可执行的 protected-decision authorization unit。Trace replay、oracle replay 和 bounded compiler/model-loop experiments 分别覆盖不同边界；sandbox、MCP broker、human approval UX 和完整 agent planning logic 需要各自的部署与效用证据。
 
 \subsection{证据边界}
-这些实验支持的系统结论是：\sys 可以作为 agent decision authorization layer，把 LLM-generated plans/leases 放在 TCB 之外，并在 checker-enforced boundaries 内拒绝违反 intent、argument、provenance、temporal、budget 或 delegation constraints 的事件。表~\ref{tab:current-evidence} 按 claim 汇总当前支持、尚不支持的外推，以及需要补充的证据；这些缺口是 stronger claims 的证据边界，不削弱当前 bounded claim。
+这些实验支持的系统结论是：\sys 可以作为 agent decision authorization layer，把 LLM-generated plans/leases 放在 TCB 之外，并在 checker-enforced boundaries 内拒绝违反 intent、argument、provenance、temporal、budget 或 delegation constraints 的事件。表~\ref{tab:current-evidence} 按 claim 汇总当前支持的结论、对应外推对象，以及补充这些外推所需的证据；这些证据边界限定 stronger claims，不削弱当前 bounded claim。
 
 \begin{table}[t]
 \centering
@@ -1228,7 +1230,7 @@ Event-model feasibility and protected-event sanity & Same-event replay has 0 uns
 Issuer ownership and atomic lifecycle have counterexamples under tested removals & Under predeclared author-adjudicated labels, artifact-derived characterization finds 8,691/8,696 multi-owner events, 198 env/runtime requirements, and 3,593 substitution attempts. No-owner collapse false-accepts 3,593/3,823 denied protected decisions; workflow policy and split-lifecycle removals false-accept 7/7 and 5/7 residuals; 10/10 tested removals and 6/6 pairwise owner merges have counterexamples. & Blinded field-owner adjudication; larger natural protected-decision labels; independent false-accept replication. \\
 The same transition API defines a local multi-boundary adapter feasibility contract & Local adapters cover env effects, env-projection replay, context/Skill placement, delegation, paired workflows, prompt construction, MCP-style broker, and bubblewrap contrast. The deduplicated summary has 58 attempts, 29 authorized effects/placements, 29 blocks, 0 unsafe executions/placements, 20 object-only unsafe accepts, and 5 no-provenance unsafe accepts; extended proof audit maps 64/64 verdicts and 36/36 denials. Integrated workflow latency is 2.558/22.942 ms mean/max. & Production MCP server; production prompt/subagent runtime; ActPlane/eBPF mediation and overhead; benchmark-scale integrated utility workflows. \\
 Lease auditability and minimality boundary & 24/24 author-adjudicated lease labels pass schema, sample, and policy-distance invariant checks over 144 \sys/baseline policy rows. & Blinded expert-oracle replication; statistically powered least-privilege distance; inter-rater agreement. \\
-Diagnostic: constrained reconsideration and local task-loop gates & Enumerated recovery suites have 0 unsafe executions. Benchmark-derived shards show one allowed replacement call but 0 task-level recovered benchmark tasks. Output-protocol controls remove \texttt{<think>} and truncation on completed outputs; 16K context removes capacity/backend failures on the 5-task slice, but task utility remains limited to 1/5 action-reward and 0/5 tool-oracle. This is a recovery/planner diagnostic, not a utility claim. & Planner/compiler recall; stop-condition handling for parsed empty/no-call outputs; persistent or batch serving; free-form benchmark recovery and approval burden measurements. \\
+Diagnostic: constrained reconsideration and local task-loop gates & Enumerated recovery suites have 0 unsafe executions. Benchmark-derived shards show one allowed replacement call but 0 task-level recovered benchmark tasks. Output-protocol controls remove \texttt{<think>} and truncation on completed outputs; 16K context removes capacity/backend failures on the 5-task slice, but task utility remains limited to 1/5 action-reward and 0/5 tool-oracle. This row is scoped to recovery/planner diagnosis. & Planner/compiler recall; stop-condition handling for parsed empty/no-call outputs; persistent or batch serving; free-form benchmark recovery and approval burden measurements. \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1236,11 +1238,11 @@ Diagnostic: constrained reconsideration and local task-loop gates & Enumerated r
 \subsection{局限}
 当前结果支持的性质是，已接入的受保护事件可以由从 intent 派生、带 provenance 检查且可消耗的 leases 管理，并且这些边界会暴露 issuer/lifecycle collapse 的 false-accept 路径。外推边界分为三类。
 
-第一是 data and labeling boundary。Workloads 仍以 saved traces、reference-action proxies、controlled counterexample suites、benchmark-derived counterexamples 和 local experiments 为主。Authority-input characterization 使用已有 artifacts 做 derived trace annotation。对应的 83 个 current-source sampled labels 已经提供 natural protected-decision events 和 author-adjudicated labels；标注审计同时记录当前缺失的历史 MCPTox、online 和 tau2 原始 trace paths，避免把这些旧路径当作仍可复现的原始来源。MCPTox-derived benchmark cases 也提供 24 个 authentic tool-metadata counterexample cases。Naturally occurring prevalence、field-owner agreement 和 expert-oracle least privilege 仍需要 independent labeling、blinded replication 和 inter-rater agreement。
+第一是 data and labeling boundary。Workloads 以 saved traces、reference-action proxies、controlled counterexample suites、benchmark-derived counterexamples 和 local experiments 为主。Authority-input characterization 使用已有 artifacts 做 derived trace annotation。对应的 83 个 current-source sampled labels 已经提供 natural protected-decision events 和 author-adjudicated labels；标注审计同时记录当前缺失的历史 MCPTox、online 和 tau2 原始 trace paths，避免把这些旧路径当作仍可复现的原始来源。MCPTox-derived benchmark cases 也提供 24 个 authentic tool-metadata counterexample cases。Naturally occurring prevalence、field-owner agreement 和 expert-oracle least privilege 的外推需要 independent labeling、blinded replication 和 inter-rater agreement。
 
-第二是 deployment boundary。本地 env backend、MCP-style JSON-RPC broker、section-aware prompt-builder、Skill/manual placement、delegation monitor、integrated local workflow 和 bubblewrap sandbox probe 共同验证 local multi-boundary adapter feasibility。Production deployment 仍需要 deployed MCP servers、真实 prompt/subagent runtime、ActPlane/eBPF or kernel mediation、syscall-level overhead 和更多自然 Skill/manual injection workloads。
+第二是 deployment boundary。本地 env backend、MCP-style JSON-RPC broker、section-aware prompt-builder、Skill/manual placement、delegation monitor、integrated local workflow 和 bubblewrap sandbox probe 共同验证 local multi-boundary adapter feasibility。Production deployment 的外推需要 deployed MCP servers、真实 prompt/subagent runtime、ActPlane/eBPF or kernel mediation、syscall-level overhead 和更多自然 Skill/manual injection workloads。
 
-第三是 utility and recovery boundary。Reference-action coverage、matched local-Qwen slice 和 enumerated-candidate recovery suites 说明窄 authority 不必排除 reference actions，也能在小型 harness 中恢复被阻止的 unsafe initial candidates。完整 workload utility、approval burden、free-form recovery 和 online user-simulator performance 需要分别报告，而不能由当前 local diagnostics 自动推出。
+第三是 utility and recovery boundary。Reference-action coverage、matched local-Qwen slice 和 enumerated-candidate recovery suites 说明窄 authority 不必排除 reference actions，也能在小型 harness 中恢复被阻止的 unsafe initial candidates。完整 workload utility、approval burden、free-form recovery 和 online user-simulator performance 需要分别报告，作为当前 local diagnostics 之外的外推证据。
 
 \section{相关工作}
 
