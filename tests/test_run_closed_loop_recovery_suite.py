@@ -25,6 +25,11 @@ def _payload_from_prompt_path(command):
     return json.loads(payload_text)
 
 
+def _payload_from_prompt(prompt):
+    payload_text = prompt.split("Input JSON:\n", 1)[1].split("\nOutput JSON:", 1)[0]
+    return json.loads(payload_text)
+
+
 def _expected_event_runner(command, timeout_seconds):
     del timeout_seconds
     payload = _payload_from_prompt_path(command)
@@ -106,9 +111,11 @@ def test_blinded_candidate_prompt_hides_semantic_ids_and_recovers(tmp_path):
     rows = result["rows"]
 
     assert summary["candidate_prompt_mode"] == "blinded"
+    assert summary["feedback_prompt_mode"] == "structured"
     assert summary["recovered_to_allowed_alternative"] == 6
     assert summary["final_dangerous_executes"] == 0
     assert {row["candidate_prompt_mode"] for row in rows} == {"blinded"}
+    assert {row["feedback_prompt_mode"] for row in rows} == {"structured"}
     assert rows[0]["feedback_event_id"] == task["expected_event_id"]
 
 
@@ -152,11 +159,78 @@ def test_feedback_prompt_preserves_gateway_authority(tmp_path):
     )
 
     prompt = runner.build_feedback_prompt(task, initial, initial_eval)
-    payload_text = prompt.split("Input JSON:\n", 1)[1].split("\nOutput JSON:", 1)[0]
-    payload = json.loads(payload_text)
+    payload = _payload_from_prompt(prompt)
 
     assert payload["gateway_feedback"]["blocked_event_id"] == task["initial_event_id"]
+    assert payload["gateway_feedback"]["reason"] == initial_eval["gateway_reason"]
+    assert payload["feedback_prompt_mode"] == "structured"
     assert "does not grant authority" not in prompt
     assert "Do not widen scope" in payload["instruction"]
     assert payload["leases"] == task["leases"]
     assert payload["untrusted_context"] == task["untrusted_context"]
+
+
+def test_feedback_prompt_ablation_modes_hide_denial_detail(tmp_path):
+    runner = _load_runner()
+    suite_path = Path(__file__).parents[1] / "examples" / "closed_loop_recovery_suite.json"
+    suite = json.loads(suite_path.read_text())
+    task = suite["tasks"][0]
+    initial = {"action": "call", "event_id": task["initial_event_id"]}
+    trace = runner._trace_for_task(task)
+    tools = runner._tool_registry(trace, [])
+    initial_eval = runner.evaluate_choice(
+        task=task,
+        parsed=initial,
+        trace=trace,
+        tools=tools,
+        expected_event_id=task["expected_event_id"],
+    )
+
+    generic_prompt = runner.build_feedback_prompt(
+        task,
+        initial,
+        initial_eval,
+        feedback_prompt_mode="generic",
+    )
+    generic_payload = _payload_from_prompt(generic_prompt)
+    assert generic_payload["feedback_prompt_mode"] == "generic"
+    assert generic_payload["gateway_feedback"]["blocked_event_id"] == task["initial_event_id"]
+    assert generic_payload["gateway_feedback"]["reason"] == "blocked_by_gateway"
+    assert initial_eval["gateway_reason"] not in generic_prompt
+
+    candidate_only_prompt = runner.build_feedback_prompt(
+        task,
+        initial,
+        initial_eval,
+        feedback_prompt_mode="candidate-only",
+    )
+    candidate_only_payload = _payload_from_prompt(candidate_only_prompt)
+    assert candidate_only_payload["feedback_prompt_mode"] == "candidate-only"
+    assert "gateway_feedback" not in candidate_only_payload
+    assert "previous_model_json" not in candidate_only_payload
+    assert task["initial_event_id"] in candidate_only_prompt
+    assert initial_eval["gateway_reason"] not in candidate_only_prompt
+
+
+def test_feedback_prompt_mode_is_recorded_in_rows_and_summary(tmp_path):
+    runner = _load_runner()
+    suite_path = Path(__file__).parents[1] / "examples" / "closed_loop_recovery_suite.json"
+
+    result = runner.run_experiment(
+        suite_path=suite_path,
+        output_dir=tmp_path / "out",
+        run_id="test",
+        initial_strategy="force-initial-event",
+        candidate_prompt_mode="blinded",
+        feedback_prompt_mode="candidate-only",
+        feedback_rounds=1,
+        dry_run=False,
+        runner=_expected_event_runner,
+    )
+    summary = result["summary"]
+    rows = result["rows"]
+
+    assert summary["candidate_prompt_mode"] == "blinded"
+    assert summary["feedback_prompt_mode"] == "candidate-only"
+    assert summary["recovered_to_allowed_alternative"] == 6
+    assert {row["feedback_prompt_mode"] for row in rows} == {"candidate-only"}

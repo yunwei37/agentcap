@@ -1,0 +1,1 @@
+scripts/run_closed_loop_recovery_suite.py --suite examples/closed_loop_recovery_suite.json --output-dir results/eval/R266NOFEEDBACK --run-id R266NOFEEDBACK --initial-strategy force-initial-event --candidate-prompt-mode blinded --feedback-rounds 0 --n-predict 768 --timeout-seconds 300
