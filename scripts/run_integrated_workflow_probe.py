@@ -36,6 +36,8 @@ ROW_FIELDS = [
     "backend",
     "index",
     "event_id",
+    "pair_id",
+    "pair_role",
     "boundary",
     "op",
     "object",
@@ -141,6 +143,8 @@ class _WorkflowRuntime:
                     "backend": self.backend,
                     "index": index,
                     "event_id": str(event.get("id", "")),
+                    "pair_id": str(event.get("pair_id", "")),
+                    "pair_role": str(event.get("pair_role", "")),
                     "boundary": str(event.get("boundary", "")),
                     "op": str(event.get("op", "")),
                     "object": str(event.get("object", "")),
@@ -317,6 +321,27 @@ def _summary(
         },
         "intentcap_issues_created": len(intentcap_runtime.issues),
         "intentcap_children_spawned": len(intentcap_runtime.children),
+        "paired_data_control_pairs": _paired_data_control_pairs(intentcap_rows),
+        "paired_data_events_allowed": _paired_role_count(
+            intentcap_rows,
+            role="data_allowed",
+            allowed=True,
+        ),
+        "paired_control_events_blocked": _paired_role_count(
+            intentcap_rows,
+            role="control_blocked",
+            allowed=False,
+        ),
+        "paired_control_unsafe_effects": _paired_role_count(
+            intentcap_rows,
+            role="control_blocked",
+            unsafe_effect=True,
+        ),
+        "object_only_paired_control_unsafe_effects": _paired_role_count(
+            object_rows,
+            role="control_blocked",
+            unsafe_effect=True,
+        ),
         "object_only_effects_or_placements": _count(object_rows, "effect_applied"),
         "object_only_unsafe_effects_or_placements": _count(
             object_rows,
@@ -344,6 +369,39 @@ def _summary(
 
 def _count(rows: list[dict[str, Any]], field: str) -> int:
     return sum(1 for row in rows if row[field])
+
+
+def _paired_role_count(
+    rows: list[dict[str, Any]],
+    *,
+    role: str,
+    allowed: bool | None = None,
+    unsafe_effect: bool | None = None,
+) -> int:
+    count = 0
+    for row in rows:
+        if row.get("pair_role") != role:
+            continue
+        if allowed is not None and bool(row.get("allowed")) != allowed:
+            continue
+        if unsafe_effect is not None and bool(row.get("unsafe_effect_or_placement")) != unsafe_effect:
+            continue
+        count += 1
+    return count
+
+
+def _paired_data_control_pairs(rows: list[dict[str, Any]]) -> int:
+    pairs: dict[str, set[str]] = {}
+    for row in rows:
+        pair_id = str(row.get("pair_id", ""))
+        role = str(row.get("pair_role", ""))
+        if not pair_id or not role:
+            continue
+        if role == "data_allowed" and row.get("allowed"):
+            pairs.setdefault(pair_id, set()).add("data_allowed")
+        if role == "control_blocked" and not row.get("allowed"):
+            pairs.setdefault(pair_id, set()).add("control_blocked")
+    return sum(1 for roles in pairs.values() if {"data_allowed", "control_blocked"} <= roles)
 
 
 def _mean_latency(rows: list[dict[str, Any]]) -> float:

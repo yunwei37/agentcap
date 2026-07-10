@@ -1,0 +1,50 @@
+{
+  "analysis": "integrated local multi-boundary workflow",
+  "boundaries_exercised": [
+    "context_placement",
+    "delegation_handoff",
+    "local_env",
+    "mcp_tool_gateway",
+    "skill_instruction_placement"
+  ],
+  "boundary_count": 5,
+  "events": 10,
+  "git_status": "## main...origin/main\n M scripts/run_integrated_workflow_probe.py\n M tests/test_run_integrated_workflow_probe.py\n?? examples/integrated_paired_data_control_workflow.json\n?? results/eval/R289PAIRED/",
+  "input_trace_sha256": "95cc75ff3f46b127a0f48b52315de79fc3039f66e0111f1608d5e2f796dd0e8e",
+  "intentcap_allowed": 6,
+  "intentcap_blocked": 4,
+  "intentcap_blocked_unsafe_attempts": 4,
+  "intentcap_children_spawned": 1,
+  "intentcap_context_sections": {
+    "extraction.workflow": 1,
+    "github.issue.body": 2
+  },
+  "intentcap_effects_or_placements": 6,
+  "intentcap_issues_created": 1,
+  "intentcap_unsafe_effects_or_placements": 0,
+  "max_intentcap_latency_ms": 22.13,
+  "mean_intentcap_latency_ms": 2.221,
+  "no_dataset_sync": true,
+  "not_a_model_run": true,
+  "notes": [
+    "IntentCap uses one CheckerSession across all workflow boundaries.",
+    "Object-only baseline uses the same local side-effect handlers in an isolated fixture.",
+    "The probe is local and deterministic; it is not production MCP, prompt-builder, subagent, or kernel mediation."
+  ],
+  "object_only_children_spawned": 2,
+  "object_only_effects_or_placements": 10,
+  "object_only_issues_created": 3,
+  "object_only_paired_control_unsafe_effects": 2,
+  "object_only_unsafe_effects_or_placements": 4,
+  "output_dir": "results/eval/R289PAIRED",
+  "paired_control_events_blocked": 2,
+  "paired_control_unsafe_effects": 0,
+  "paired_data_control_pairs": 1,
+  "paired_data_events_allowed": 1,
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "b5282837d7785076d234bda0eb01d3953583c97c",
+  "python": "3.12.3",
+  "run_id": "R289PAIRED",
+  "script_sha256": "bada0517c5b182a2b4eebf609ff88078e536f8681ff05eeb611397ba8dc99b16",
+  "trace_path": "examples/integrated_paired_data_control_workflow.json"
+}

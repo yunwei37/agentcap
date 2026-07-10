@@ -53,6 +53,8 @@ def test_paper_evidence_audit_matches_saved_results(tmp_path):
     assert any(row["claim_id"] == "E3.integrated.events" for row in rows)
     assert any(row["claim_id"] == "E3.integrated.object_unsafe" for row in rows)
     assert any(row["claim_id"] == "E3.integrated.latency_max" for row in rows)
+    assert any(row["claim_id"] == "E3.paired.events" for row in rows)
+    assert any(row["claim_id"] == "E3.paired.object_paired_unsafe" for row in rows)
 
     digests = list(csv.DictReader((output_dir / "input_digests.csv").open()))
     assert any(row["path"] == "docs/autopaper/intentcap-paper-zh.tex" for row in digests)

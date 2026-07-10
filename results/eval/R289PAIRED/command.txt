@@ -1,0 +1,1 @@
+PYTHONPATH=src /usr/bin/python3 scripts/run_integrated_workflow_probe.py --run-id R289PAIRED --trace examples/integrated_paired_data_control_workflow.json --output-dir results/eval/R289PAIRED
