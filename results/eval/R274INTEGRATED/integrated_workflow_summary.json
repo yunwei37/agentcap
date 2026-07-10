@@ -1,0 +1,45 @@
+{
+  "analysis": "integrated local multi-boundary workflow",
+  "boundaries_exercised": [
+    "context_placement",
+    "delegation_handoff",
+    "local_env",
+    "mcp_tool_gateway",
+    "skill_instruction_placement"
+  ],
+  "boundary_count": 5,
+  "events": 9,
+  "git_status": "## main...origin/main\n?? results/eval/R274INTEGRATED/",
+  "input_trace_sha256": "2d75a69c33ff45728cf4a0831cd8bd730ffac60539bc8a63294f9d7d1c93a219",
+  "intentcap_allowed": 5,
+  "intentcap_blocked": 4,
+  "intentcap_blocked_unsafe_attempts": 4,
+  "intentcap_children_spawned": 1,
+  "intentcap_context_sections": {
+    "extraction.workflow": 1,
+    "github.issue.body": 1
+  },
+  "intentcap_effects_or_placements": 5,
+  "intentcap_issues_created": 1,
+  "intentcap_unsafe_effects_or_placements": 0,
+  "max_intentcap_latency_ms": 22.942,
+  "mean_intentcap_latency_ms": 2.558,
+  "no_dataset_sync": true,
+  "not_a_model_run": true,
+  "notes": [
+    "IntentCap uses one CheckerSession across all workflow boundaries.",
+    "Object-only baseline uses the same local side-effect handlers in an isolated fixture.",
+    "The probe is local and deterministic; it is not production MCP, prompt-builder, subagent, or kernel mediation."
+  ],
+  "object_only_children_spawned": 2,
+  "object_only_effects_or_placements": 9,
+  "object_only_issues_created": 3,
+  "object_only_unsafe_effects_or_placements": 4,
+  "output_dir": "results/eval/R274INTEGRATED",
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "6b02fc29af0dbf5641d8a5706d0a4b521881091d",
+  "python": "3.12.3",
+  "run_id": "R274INTEGRATED",
+  "script_sha256": "9817dd9c80236d739047ca1f159d06ff6911c1733a96aa51ecbaa44d721b069f",
+  "trace_path": "examples/integrated_pdf_issue_workflow.json"
+}
