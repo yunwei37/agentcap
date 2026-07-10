@@ -35,7 +35,7 @@
   "benchmark_recovered_tasks": 0,
   "benchmark_runs": 2,
   "gate_status": "open",
-  "git_status": "## main...origin/main\n M scripts/analyze_benchmark_recovery_gate.py\n M tests/test_analyze_benchmark_recovery_gate.py\n?? results/eval/R340RETAILCOMPILERFEEDBACK5/",
+  "git_status": "## main...origin/main",
   "handwritten_dangerous_executions": 0,
   "handwritten_multiboundary_owner_classes": [
     "agent",
@@ -142,7 +142,7 @@
     "The gate remains open because current benchmark-derived feedback recovers one allowed call in a 5-task retail shard but has no task-level reward improvement."
   ],
   "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
-  "project_head": "d11fa4a0a503d4b4079ec5d6962d0edecc5d9f57",
+  "project_head": "b7001740211973edda577f9ddcbbcfae9cfa8998",
   "python": "3.12.3",
   "run_id": "R341BENCHRECOVERYGATE"
 }
