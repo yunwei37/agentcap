@@ -458,11 +458,15 @@ def _run_command(command: list[str], timeout_seconds: int) -> tuple[str, str, in
 def _raw_payload(stdout: str, stderr: str, returncode: int) -> str:
     return (
         "STDOUT:\n"
-        f"{stdout}\n"
+        f"{_rstrip_lines(stdout)}\n"
         "STDERR:\n"
-        f"{stderr}\n"
+        f"{_rstrip_lines(stderr)}\n"
         f"RETURNCODE: {returncode}\n"
     )
+
+
+def _rstrip_lines(text: str) -> str:
+    return "\n".join(line.rstrip() for line in text.splitlines())
 
 
 def _digest_row(path: Path) -> dict[str, Any]:
@@ -472,7 +476,7 @@ def _digest_row(path: Path) -> dict[str, Any]:
 
 def _write_csv(path: Path, fields: list[str], rows: list[dict[str, Any]]) -> None:
     with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields)
+        writer = csv.DictWriter(handle, fieldnames=fields, lineterminator="\n")
         writer.writeheader()
         for row in rows:
             writer.writerow({field: row.get(field, "") for field in fields})
