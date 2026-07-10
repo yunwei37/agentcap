@@ -26,7 +26,7 @@
   "benchmark_recovered_tasks": 0,
   "benchmark_runs": 2,
   "gate_status": "open",
-  "git_status": "## main...origin/main\n M scripts/analyze_benchmark_recovery_gate.py\n M tests/test_analyze_benchmark_recovery_gate.py",
+  "git_status": "## main...origin/main",
   "handwritten_dangerous_executions": 0,
   "handwritten_multiboundary_owner_classes": [
     "agent",
@@ -115,7 +115,7 @@
     "The gate remains open because current benchmark-derived feedback recovers an allowed call in a 2-task shard but has no task-level reward improvement."
   ],
   "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
-  "project_head": "35c0e1d13ca83be780d3e6a7797618178f19e75e",
+  "project_head": "b9bb6d00dfe3512b9b15d8a3b33c5973e856c798",
   "python": "3.12.3",
   "run_id": "R338BENCHRECOVERYGATE"
 }

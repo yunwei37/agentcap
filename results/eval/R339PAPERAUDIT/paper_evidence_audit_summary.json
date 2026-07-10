@@ -212,9 +212,9 @@
       "sha256": "4df99b6efd70776a1d2fbf204f0242ccd58730727ecf19a65ebd4619fa272ccf"
     },
     {
-      "bytes": 5057,
+      "bytes": 4960,
       "path": "results/eval/R338BENCHRECOVERYGATE/benchmark_recovery_gate_summary.json",
-      "sha256": "a74c37a0d1602c6ac01f49bc906c83c4ddb81f521231327bbba5ae74e183af83"
+      "sha256": "8fa2b96ee8f3777415e273c42f11a343f660254ff611d519096c7da312d560b8"
     }
   ],
   "machine": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
@@ -227,7 +227,7 @@
     "Some source artifacts still use historical field names such as dangerous_accepted; the paper-facing terminology is unsafe accept/execution."
   ],
   "paper": "docs/autopaper/intentcap-paper-zh.tex",
-  "project_head": "35c0e1d13ca83be780d3e6a7797618178f19e75e",
+  "project_head": "b9bb6d00dfe3512b9b15d8a3b33c5973e856c798",
   "python": "3.12.3",
   "run_id": "R339PAPERAUDIT"
 }
