@@ -197,3 +197,84 @@ def test_protocol_gap_audit_separates_context_capacity_from_output_protocol(tmp_
     assert summary["step_outputs_prompt_too_long"] == 1
     assert summary["step_outputs_nonempty_clean_end"] == 1
     assert "context compaction" in summary["missing_for_stronger_utility_claim"][0]
+
+
+def test_protocol_gap_audit_reports_planner_parse_coverage_after_clean_transport(tmp_path):
+    input_dir = tmp_path / "source"
+    output_dir = tmp_path / "out"
+    (input_dir / "step_raw_outputs").mkdir(parents=True)
+    (input_dir / "feedback_raw_outputs").mkdir()
+    (input_dir / "task_gateway_summary.json").write_text(
+        json.dumps(
+            {
+                "run_id": "SCHEMA_CLEAN_NO_CALL",
+                "tasks_evaluated": 1,
+                "model_calls": 2,
+                "gateway_allowed": 1,
+                "gateway_blocked": 0,
+                "feedback_attempted_tasks": 0,
+                "feedback_model_calls": 0,
+                "feedback_gateway_allowed": 0,
+                "bound_reference_calls": 1,
+                "action_reward_pass_tasks": 0,
+                "tool_oracle_pass_tasks": 0,
+                "llama_json_schema_actions": True,
+                "llama_reasoning_off": True,
+            }
+        )
+    )
+    (input_dir / "task_results.csv").write_text(
+        "\n".join(
+            [
+                "domain,task_id,gateway_allowed,gateway_blocked,feedback_attempted,feedback_model_calls,action_reward,tool_oracle_pass",
+                "retail,0,1,0,False,0,0.0,False",
+            ]
+        )
+        + "\n"
+    )
+    (input_dir / "action_results.csv").write_text(
+        "\n".join(
+            [
+                "domain,task_id,round,gateway_allowed",
+                "retail,0,step_1,True",
+            ]
+        )
+        + "\n"
+    )
+    (input_dir / "step_raw_outputs" / "retail_0_step_1.txt").write_text(
+        json.dumps(
+            {
+                "returncode": 0,
+                "stdout": (
+                    '{"actions":[{"tool":"get_order_details",'
+                    '"arguments":{"order_id":"#W2378156"}}]} [end of text]\n'
+                ),
+                "stderr": "",
+            }
+        )
+    )
+    (input_dir / "step_raw_outputs" / "retail_0_step_2.txt").write_text(
+        json.dumps(
+            {
+                "returncode": 0,
+                "stdout": '{"actions":[]} [end of text]\n',
+                "stderr": "",
+            }
+        )
+    )
+
+    summary = analyzer.analyze(
+        input_dir=input_dir,
+        output_dir=output_dir,
+        run_id="SCHEMA_CLEAN_NO_CALL_GAP",
+    )
+
+    assert summary["protocol_gap_status"] == "planner_or_parse_coverage_open"
+    assert summary["step_outputs_with_think"] == 0
+    assert summary["step_outputs_likely_truncated"] == 0
+    assert summary["step_outputs_nonzero_returncode"] == 0
+    assert summary["step_outputs_prompt_too_long"] == 0
+    assert summary["step_outputs_nonempty_clean_end"] == 2
+    assert summary["step_outputs_with_parsed_json"] == 2
+    assert summary["step_outputs_with_parsed_calls"] == 1
+    assert "planner/compiler recall" in summary["missing_for_stronger_utility_claim"][0]

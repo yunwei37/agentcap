@@ -294,6 +294,20 @@ def _summary(
             "larger non-oracle compiler/refinement task loop with task-level reward",
             "approval-burden and recovery measurements on benchmark-derived denials",
         ]
+    elif output_protocol_clean_for_completed_steps and step_outputs_nonzero_returncode == 0:
+        protocol_gap_status = "planner_or_parse_coverage_open"
+        claim_interpretation = (
+            "Schema-constrained reasoning-off outputs are clean at the transport "
+            "and truncation boundary, but not every completed step produces a "
+            "parsed callable action; remaining utility depends on planner, "
+            "stop-condition, and compiler recall rather than context capacity."
+        )
+        missing_for_stronger_utility_claim = [
+            "planner/compiler recall and stop-condition handling for parsed empty or no-call outputs",
+            "larger non-oracle compiler/refinement task loop with task-level reward",
+            "approval-burden and recovery measurements on benchmark-derived denials",
+            "persistent or batch local model serving to reduce run cost",
+        ]
     else:
         protocol_gap_status = "open"
         claim_interpretation = (
