@@ -1,0 +1,140 @@
+{
+  "allowed": 28,
+  "analysis": "adapter proof-completeness audit over existing E4 local records",
+  "blocked": 36,
+  "boundary_events": {
+    "bubblewrap_env_sandbox": 10,
+    "context_placement": 3,
+    "delegation_handoff": 2,
+    "local_env_side_effect": 10,
+    "local_qwen_env_proposer": 8,
+    "mcp_jsonrpc_broker": 6,
+    "os_monitor_style_lowering": 10,
+    "prompt_builder_section_assembly": 10,
+    "skill_instruction_placement": 5
+  },
+  "denial_classes": {
+    "allowed": 28,
+    "budget_consumption": 2,
+    "control_provenance_or_influence": 7,
+    "delegation_attenuation": 1,
+    "holder_scope": 4,
+    "operation_object_argument_or_no_lease": 22
+  },
+  "events": 64,
+  "extended_e3_included": true,
+  "git_status": "## main...origin/main\n M scripts/analyze_adapter_proof_completeness.py\n M tests/test_analyze_adapter_proof_completeness.py\n?? results/eval/R222BOUNDARY/",
+  "incomplete_or_unclassified_denials": 0,
+  "input_digests": [
+    {
+      "bytes": 2687,
+      "input_name": "actplane_rows",
+      "path": "results/eval/R218ACTLOWER/actplane_lowering_rows.csv",
+      "sha256": "33d1ce46a1ddad9e33417fe832606a733c1040e04bdbbef05a07cef5d885ece5"
+    },
+    {
+      "bytes": 824,
+      "input_name": "boundary_rows",
+      "path": "results/eval/R222BOUNDARY/boundary_gateway_records.csv",
+      "sha256": "d502f81cbc4456f2011180288f4bbd84397c7ed09b6ee1456670c765a289587e"
+    },
+    {
+      "bytes": 3549,
+      "input_name": "bwrap_rows",
+      "path": "results/eval/R298BWRAP/bwrap_env_sandbox_rows.csv",
+      "sha256": "8ff025ce4493af66db2f782e6bdb863825ae6f73c14c975a838a8df031a13d04"
+    },
+    {
+      "bytes": 5450,
+      "input_name": "env_backend_rows",
+      "path": "results/eval/R211ENVBACKEND/env_backend_rows.csv",
+      "sha256": "87357e998737aa4afa0efed38f54483fc9f785363ca745331c5eaa45e2ab3788"
+    },
+    {
+      "bytes": 3426,
+      "input_name": "env_llm_rows",
+      "path": "results/eval/R212ENVLLM/env_llm_backend_rows.csv",
+      "sha256": "372f8fe897a535ef86d905737d820fe9f717cafe9d3d33a99e4107b8e684750e"
+    },
+    {
+      "bytes": 7160,
+      "input_name": "env_trace",
+      "path": "examples/env_adapter_side_effect_suite.json",
+      "sha256": "a1d5fa355deb0a837e8d5848467bcfbb02697ddff9b94ca5fa4a48fb8e3fdccf"
+    },
+    {
+      "bytes": 4856,
+      "input_name": "mcp_broker_rows",
+      "path": "results/eval/R303MCPBROKERCLEAN/mcp_broker_rows.csv",
+      "sha256": "40af1dcf2bfeff331cf27214030694ad02be16ddbbe8d87a2df35e79725f038c"
+    },
+    {
+      "bytes": 7545,
+      "input_name": "mcp_broker_trace",
+      "path": "examples/mcp_broker_jsonrpc_suite.json",
+      "sha256": "edca3de5af7b27d0424567b4f38329d74e550cc5ad81df4db89e75c077812655"
+    },
+    {
+      "bytes": 4388,
+      "input_name": "prompt_builder_rows",
+      "path": "results/eval/R292PROMPTBUILDER/prompt_builder_context_rows.csv",
+      "sha256": "04b93f282d4936e03fec8b48074e01d3815f51e8f9845103abe1decd32a88421"
+    },
+    {
+      "bytes": 10506,
+      "input_name": "prompt_builder_trace",
+      "path": "examples/prompt_builder_context_suite.json",
+      "sha256": "850f4549b9eb238c0ad210e0db6aa5a7b2aa06414cd0a6b6155d94a05e6d0cb7"
+    },
+    {
+      "bytes": 1175,
+      "input_name": "skill_rows",
+      "path": "results/eval/R224SKILLBOUNDARY/skill_instruction_boundary_records.csv",
+      "sha256": "2a25919d2085307545335b1407b04d80a6867e0f557ad81d42eef23d4811462e"
+    },
+    {
+      "bytes": 4553,
+      "input_name": "skill_trace",
+      "path": "examples/skill_instruction_boundary_suite.json",
+      "sha256": "80bcd7bbb61ce17589099fcad7e7bee835b0e6ce28d8421af1bdaa472962bc40"
+    },
+    {
+      "bytes": 9344,
+      "input_name": "workflow_trace",
+      "path": "examples/residual_workflow_policy_suite.json",
+      "sha256": "121e5e4dea4e7fa6d44f6f62f194eaeb234f1099d895099d1e78509ee623d40f"
+    }
+  ],
+  "no_dataset_sync": true,
+  "not_a_model_run": true,
+  "not_a_new_execution": true,
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "pre_effect_or_pre_handoff_blockpoints": 64,
+  "project_head": "ef59abeae7a9788246295a257b9644ca68d54134",
+  "proof_complete_for_verdict": 64,
+  "proof_obligation_counts": {
+    "budget_consumption": 26,
+    "control_provenance": 64,
+    "data_provenance": 64,
+    "delegation_attenuation": 2,
+    "holder_scope": 47,
+    "intent_or_approval_proof": 4,
+    "local_runtime_projection": 10,
+    "mcp_jsonrpc_pre_call": 6,
+    "monitor_lowering": 10,
+    "namespace_sandbox": 8,
+    "operation_object_argument_contract": 64,
+    "prompt_section_placement": 10
+  },
+  "python": "3.12.3",
+  "run_id": "R331ADAPTERPROOFEXT",
+  "scope": "Audits local adapter records and trace metadata only; it supports the adapter contract claim, not production prompt-builder, MCP broker, subagent runtime, or kernel/ActPlane mediation. Extended E3 mode adds deterministic local prompt-builder, MCP-style JSON-RPC broker, and bubblewrap-backed environment records when requested.",
+  "submitted_authority_input_counts": {
+    "agent": 45,
+    "env": 58,
+    "instruction": 31,
+    "tool": 2,
+    "tool_or_env_contract": 37
+  },
+  "unsafe_effects_or_placements": 0
+}

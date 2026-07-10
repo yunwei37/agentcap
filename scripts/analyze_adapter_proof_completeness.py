@@ -37,6 +37,14 @@ DEFAULT_INPUTS = {
     "skill_rows": Path("results/eval/R224SKILLBOUNDARY/skill_instruction_boundary_records.csv"),
 }
 
+EXTENDED_E3_INPUTS = {
+    "prompt_builder_trace": Path("examples/prompt_builder_context_suite.json"),
+    "prompt_builder_rows": Path("results/eval/R292PROMPTBUILDER/prompt_builder_context_rows.csv"),
+    "mcp_broker_trace": Path("examples/mcp_broker_jsonrpc_suite.json"),
+    "mcp_broker_rows": Path("results/eval/R303MCPBROKERCLEAN/mcp_broker_rows.csv"),
+    "bwrap_rows": Path("results/eval/R298BWRAP/bwrap_env_sandbox_rows.csv"),
+}
+
 ROW_FIELDS = [
     "boundary",
     "event_id",
@@ -70,21 +78,39 @@ def main() -> int:
         metavar="NAME=PATH",
         help="Override a default input path.",
     )
+    parser.add_argument(
+        "--include-extended-e3",
+        action="store_true",
+        help="Also audit prompt-builder, MCP broker, and bubblewrap adapter records.",
+    )
     args = parser.parse_args()
 
     inputs = dict(DEFAULT_INPUTS)
+    if args.include_extended_e3:
+        inputs.update(EXTENDED_E3_INPUTS)
     for item in args.input:
         name, sep, value = item.partition("=")
         if not sep or not name:
             raise SystemExit(f"invalid --input override: {item!r}")
         inputs[name] = Path(value)
 
-    result = analyze(output_dir=args.output_dir, inputs=inputs, run_id=args.run_id)
+    result = analyze(
+        output_dir=args.output_dir,
+        inputs=inputs,
+        run_id=args.run_id,
+        include_extended_e3=args.include_extended_e3,
+    )
     print(json.dumps(result["summary"], indent=2, sort_keys=True))
     return 0
 
 
-def analyze(*, output_dir: Path, inputs: dict[str, Path], run_id: str) -> dict[str, Any]:
+def analyze(
+    *,
+    output_dir: Path,
+    inputs: dict[str, Path],
+    run_id: str,
+    include_extended_e3: bool = False,
+) -> dict[str, Any]:
     traces = {
         "env": _read_json(inputs["env_trace"]),
         "workflow": _read_json(inputs["workflow_trace"]),
@@ -99,8 +125,30 @@ def analyze(*, output_dir: Path, inputs: dict[str, Path], run_id: str) -> dict[s
     )
     rows.extend(_skill_rows(_read_rows(inputs["skill_rows"]), traces["skill"]))
 
+    if include_extended_e3:
+        traces["prompt_builder"] = _read_json(inputs["prompt_builder_trace"])
+        traces["mcp_broker"] = _read_json(inputs["mcp_broker_trace"])
+        rows.extend(
+            _prompt_builder_rows(
+                _read_rows(inputs["prompt_builder_rows"]),
+                traces["prompt_builder"],
+            )
+        )
+        rows.extend(
+            _mcp_broker_rows(
+                _read_rows(inputs["mcp_broker_rows"]),
+                traces["mcp_broker"],
+            )
+        )
+        rows.extend(_bwrap_rows(_read_rows(inputs["bwrap_rows"]), traces["env"]))
+
     digests = [_file_digest(name, path) for name, path in sorted(inputs.items())]
-    summary = _summary(rows=rows, digests=digests, run_id=run_id)
+    summary = _summary(
+        rows=rows,
+        digests=digests,
+        run_id=run_id,
+        include_extended_e3=include_extended_e3,
+    )
 
     output_dir.mkdir(parents=True, exist_ok=True)
     _write_rows(output_dir / "adapter_proof_completeness.csv", rows, ROW_FIELDS)
@@ -257,6 +305,87 @@ def _skill_rows(csv_rows: list[dict[str, str]], trace: dict[str, Any]) -> list[d
     return out
 
 
+def _prompt_builder_rows(
+    csv_rows: list[dict[str, str]],
+    trace: dict[str, Any],
+) -> list[dict[str, Any]]:
+    events = _events_by_id(trace)
+    leases = trace.get("leases", [])
+    out = []
+    for row in csv_rows:
+        if row["backend"] != "intentcap":
+            continue
+        event = events[row["event_id"]]
+        out.append(
+            _audit_row(
+                boundary="prompt_builder_section_assembly",
+                event=event,
+                leases=leases,
+                allowed=_bool(row["allowed"]),
+                effect_applied=_bool(row["placed"]),
+                unsafe_reference_event=_bool(row["unsafe_reference_event"]),
+                reason=row["reason"],
+                blockpoint="before prompt-section write",
+                extra_obligations=["prompt_section_placement"],
+            )
+        )
+    return out
+
+
+def _mcp_broker_rows(
+    csv_rows: list[dict[str, str]],
+    trace: dict[str, Any],
+) -> list[dict[str, Any]]:
+    events = _events_by_id(trace)
+    leases = trace.get("leases", [])
+    out = []
+    for row in csv_rows:
+        if row["backend"] != "intentcap_mcp_broker":
+            continue
+        event = events[row["event_id"]]
+        out.append(
+            _audit_row(
+                boundary="mcp_jsonrpc_broker",
+                event=event,
+                leases=leases,
+                allowed=_bool(row["checker_allowed"]),
+                effect_applied=_bool(row["executed"]),
+                unsafe_reference_event=_bool(row["unsafe_reference_event"]),
+                reason=row["reason"],
+                blockpoint="before MCP tools/call handler",
+                extra_obligations=["mcp_jsonrpc_pre_call"],
+            )
+        )
+    return out
+
+
+def _bwrap_rows(csv_rows: list[dict[str, str]], trace: dict[str, Any]) -> list[dict[str, Any]]:
+    events = _events_by_id(trace)
+    leases = trace.get("leases", [])
+    out = []
+    for row in csv_rows:
+        if row["backend"] != "intentcap_bwrap":
+            continue
+        event = events[row["event_id"]]
+        extra_obligations = ["local_runtime_projection"]
+        if event.get("op") in {"exec.run", "fs.read", "fs.write", "net.connect"}:
+            extra_obligations.append("namespace_sandbox")
+        out.append(
+            _audit_row(
+                boundary="bubblewrap_env_sandbox",
+                event=event,
+                leases=leases,
+                allowed=_bool(row["checker_allowed"]),
+                effect_applied=_bool(row["backend_allowed"]),
+                unsafe_reference_event=_bool(row["unsafe_reference_event"]),
+                reason=row["reason"],
+                blockpoint="before namespace-backed local handler",
+                extra_obligations=extra_obligations,
+            )
+        )
+    return out
+
+
 def _audit_row(
     *,
     boundary: str,
@@ -369,7 +498,12 @@ def _denial_class(reason: str, allowed: bool) -> str:
     return "unclassified_denial"
 
 
-def _summary(rows: list[dict[str, Any]], digests: list[dict[str, Any]], run_id: str) -> dict[str, Any]:
+def _summary(
+    rows: list[dict[str, Any]],
+    digests: list[dict[str, Any]],
+    run_id: str,
+    include_extended_e3: bool,
+) -> dict[str, Any]:
     denied = [row for row in rows if not row["allowed"]]
     unsafe_effects = [
         row for row in rows if row["unsafe_reference_event"] and row["effect_applied"]
@@ -390,6 +524,7 @@ def _summary(rows: list[dict[str, Any]], digests: list[dict[str, Any]], run_id: 
     return {
         "run_id": run_id,
         "analysis": "adapter proof-completeness audit over existing E4 local records",
+        "extended_e3_included": include_extended_e3,
         "events": len(rows),
         "allowed": sum(1 for row in rows if row["allowed"]),
         "blocked": len(denied),
@@ -412,7 +547,9 @@ def _summary(rows: list[dict[str, Any]], digests: list[dict[str, Any]], run_id: 
         "scope": (
             "Audits local adapter records and trace metadata only; it supports the "
             "adapter contract claim, not production prompt-builder, MCP broker, "
-            "subagent runtime, or kernel/ActPlane mediation."
+            "subagent runtime, or kernel/ActPlane mediation. Extended E3 mode "
+            "adds deterministic local prompt-builder, MCP-style JSON-RPC broker, "
+            "and bubblewrap-backed environment records when requested."
         ),
     }
 

@@ -1,0 +1,1 @@
+/usr/bin/python3 scripts/analyze_adapter_proof_completeness.py --run-id R331ADAPTERPROOFEXT --include-extended-e3 --output-dir results/eval/R331ADAPTERPROOFEXT
