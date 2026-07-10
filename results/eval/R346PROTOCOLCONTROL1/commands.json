@@ -1,0 +1,58 @@
+[
+  {
+    "command": [
+      "/home/yunwei37/workspace/llama.cpp-latest/build/bin/llama-completion",
+      "-m",
+      "/home/yunwei37/.cache/huggingface/hub/models--DevQuasar--Qwen.Qwen3.6-27B-GGUF/snapshots/b19fa7e8538a1a5f66452eb3b3167e026177be1d/Qwen.Qwen3.6-27B.f16.gguf.Q4_K_M.gguf",
+      "-f",
+      "results/eval/R340RETAILCOMPILERFEEDBACK5/step_prompts/retail_0_step_1.txt",
+      "-n",
+      "256",
+      "-c",
+      "8192",
+      "-ngl",
+      "48",
+      "--temp",
+      "0",
+      "--seed",
+      "0",
+      "--no-display-prompt",
+      "--no-warmup",
+      "--single-turn"
+    ],
+    "mode": "completion",
+    "prompt_path": "results/eval/R340RETAILCOMPILERFEEDBACK5/step_prompts/retail_0_step_1.txt",
+    "timeout_seconds": 300
+  },
+  {
+    "command": [
+      "/home/yunwei37/workspace/llama.cpp-latest/build/bin/llama-completion",
+      "-m",
+      "/home/yunwei37/.cache/huggingface/hub/models--DevQuasar--Qwen.Qwen3.6-27B-GGUF/snapshots/b19fa7e8538a1a5f66452eb3b3167e026177be1d/Qwen.Qwen3.6-27B.f16.gguf.Q4_K_M.gguf",
+      "-f",
+      "results/eval/R340RETAILCOMPILERFEEDBACK5/step_prompts/retail_0_step_1.txt",
+      "-n",
+      "256",
+      "-c",
+      "8192",
+      "-ngl",
+      "48",
+      "--temp",
+      "0",
+      "--seed",
+      "0",
+      "--no-display-prompt",
+      "--no-warmup",
+      "--json-schema-file",
+      "results/eval/R346PROTOCOLCONTROL1/actions_schema.json",
+      "--reasoning",
+      "off",
+      "--reasoning-budget",
+      "0",
+      "--single-turn"
+    ],
+    "mode": "completion_schema_reasoning_off",
+    "prompt_path": "results/eval/R340RETAILCOMPILERFEEDBACK5/step_prompts/retail_0_step_1.txt",
+    "timeout_seconds": 300
+  }
+]

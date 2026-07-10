@@ -110,6 +110,9 @@ def test_paper_evidence_audit_matches_saved_results(tmp_path):
     assert any(row["claim_id"] == "ProtocolGap.truncated_outputs" for row in rows)
     assert any(row["claim_id"] == "ProtocolGap.parsed_calls" for row in rows)
     assert any(row["claim_id"] == "ProtocolGap.truncated_tasks" for row in rows)
+    assert any(row["claim_id"] == "ProtocolControl.prompts" for row in rows)
+    assert any(row["claim_id"] == "ProtocolControl.baseline_think" for row in rows)
+    assert any(row["claim_id"] == "ProtocolControl.schema_parsed_calls" for row in rows)
 
     digests = list(csv.DictReader((output_dir / "input_digests.csv").open()))
     assert any(row["path"] == "docs/autopaper/intentcap-paper-zh.tex" for row in digests)

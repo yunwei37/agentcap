@@ -322,6 +322,14 @@ def _checks() -> list[dict[str, Any]]:
         _json("ProtocolGap.parsed_calls", "只有 10 个产生 parsed tool calls", "results/eval/R344PROTOCOLGAP/benchmark_protocol_gap_summary.json", "step_outputs_with_parsed_calls", 10),
         _json("ProtocolGap.truncated_tasks", "5/5 tasks 都至少有一个 likely truncated step output", "results/eval/R344PROTOCOLGAP/benchmark_protocol_gap_summary.json", "tasks_with_likely_truncated_step_outputs", 5),
         _json("ProtocolGap.empty_outputs", "2 个是 empty step outputs", "results/eval/R344PROTOCOLGAP/benchmark_protocol_gap_summary.json", "step_outputs_empty", 2),
+        _json("ProtocolControl.prompts", "1-prompt fresh Qwen3.6 protocol-control probe", "results/eval/R346PROTOCOLCONTROL1/protocol_control_summary.json", "prompts", 1),
+        _json("ProtocolControl.baseline_think", "baseline completion 下包含 \\texttt{<think>}", "results/eval/R346PROTOCOLCONTROL1/protocol_control_summary.json", "mode_summary.0.contains_think", 1),
+        _json("ProtocolControl.baseline_truncated", "baseline completion 下包含 \\texttt{<think>}、likely truncated", "results/eval/R346PROTOCOLCONTROL1/protocol_control_summary.json", "mode_summary.0.likely_truncated", 1),
+        _json("ProtocolControl.baseline_parsed_calls", "0 parsed calls", "results/eval/R346PROTOCOLCONTROL1/protocol_control_summary.json", "mode_summary.0.parsed_calls_outputs", 0),
+        _json("ProtocolControl.schema_think", "0 个 \\texttt{<think>}", "results/eval/R346PROTOCOLCONTROL1/protocol_control_summary.json", "mode_summary.1.contains_think", 0),
+        _json("ProtocolControl.schema_truncated", "0 个 likely truncated", "results/eval/R346PROTOCOLCONTROL1/protocol_control_summary.json", "mode_summary.1.likely_truncated", 0),
+        _json("ProtocolControl.schema_parsed_calls", "1 个 parsed call", "results/eval/R346PROTOCOLCONTROL1/protocol_control_summary.json", "mode_summary.1.parsed_calls_outputs", 1),
+        _json("ProtocolControl.status", "constrained decoding 是下一轮 task-loop integration 的合理方向", "results/eval/R346PROTOCOLCONTROL1/protocol_control_summary.json", "protocol_control_status", "schema_reasoning_control_improved"),
     ]
 
 

@@ -1,0 +1,3 @@
+mode,prompts,returncode_zero,empty_stdout,contains_think,parsed_json,parsed_calls_outputs,likely_truncated,avg_latency_seconds
+completion,1,1,0,1,0,0,1,35.988104
+completion_schema_reasoning_off,1,1,0,0,1,1,0,15.2122

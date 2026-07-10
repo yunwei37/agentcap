@@ -1,0 +1,55 @@
+STDOUT:
+{
+  "actions": [
+    {
+      "arguments": {
+        "first_name": "Yusuf",
+        "last_name": "Rossi",
+        "zip": "19122"
+      },
+      "tool": "find_user_id_by_name_zip"
+    }
+  ]
+} [end of text]
+
+
+
+STDERR:
+0.00.062.539 I llama_completion: llama backend init
+0.00.062.562 I llama_completion: load the model and apply lora adapter, if any
+0.01.945.142 I llama_completion: llama threadpool init, n_threads = 4
+0.01.945.983 I llama_completion: chat template is available, enabling conversation mode (disable it with -no-cnv)
+0.01.945.984 W *** User-specified prompt will pre-start conversation, did you mean to set --system-prompt (-sys) instead?
+0.01.946.054 I llama_completion: chat template example:
+<|im_start|>system
+You are a helpful assistant<|im_end|>
+<|im_start|>user
+Hello<|im_end|>
+<|im_start|>assistant
+Hi there<|im_end|>
+<|im_start|>user
+How are you?<|im_end|>
+<|im_start|>assistant
+
+0.01.946.054 I 
+0.01.946.098 I system_info: n_threads = 4 (n_threads_batch = 4) / 24 | CUDA : ARCHS = 1200 | USE_GRAPHS = 1 | PEER_MAX_BATCH_SIZE = 128 | BLACKWELL_NATIVE_FP4 = 1 | CPU : SSE3 = 1 | SSSE3 = 1 | AVX = 1 | AVX_VNNI = 1 | AVX2 = 1 | F16C = 1 | FMA = 1 | BMI2 = 1 | LLAMAFILE = 1 | OPENMP = 1 | REPACK = 1 | 
+0.01.946.099 I 
+0.01.950.303 I sampler seed: 0
+0.01.950.309 I sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = -1
+	top_k = 20, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+0.01.950.314 I sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> dist 
+0.01.950.314 I generate: n_ctx = 8192, n_batch = 2048, n_predict = 256, n_keep = 0
+0.01.950.314 I 
+0.14.935.913 I common_perf_print:    sampling time =      71.76 ms
+0.14.935.914 I common_perf_print:    samplers time =       9.85 ms /  4988 tokens
+0.14.935.917 I common_perf_print:        load time =    4404.50 ms
+0.14.935.918 I common_perf_print: prompt eval time =    4399.11 ms /  4914 tokens (    0.90 ms per token,  1117.04 tokens per second)
+0.14.935.919 I common_perf_print:        eval time =    8513.22 ms /    73 runs   (  116.62 ms per token,     8.57 tokens per second)
+0.14.935.919 I common_perf_print:       total time =   12990.78 ms /  4987 tokens
+0.14.935.919 I common_perf_print: unaccounted time =       6.69 ms /   0.1 %      (total - sampling - prompt eval - eval) / (total)
+0.14.935.920 I common_perf_print:    graphs reused =         72
+
+RETURNCODE: 0

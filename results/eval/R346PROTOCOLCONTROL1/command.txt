@@ -1,0 +1,1 @@
+scripts/run_llama_protocol_control_probe.py --run-id R346PROTOCOLCONTROL1 --input-dir results/eval/R340RETAILCOMPILERFEEDBACK5 --output-dir results/eval/R346PROTOCOLCONTROL1 --max-prompts 1 --modes completion completion_schema_reasoning_off --n-predict 256 --ctx-size 8192 --gpu-layers 48 --timeout-seconds 300
