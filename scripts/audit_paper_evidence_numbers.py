@@ -259,6 +259,14 @@ def _checks() -> list[dict[str, Any]]:
         _json("Recovery.R268.feedback_mode", "candidate-only", "results/eval/R268CANDIDATEONLY/closed_loop_recovery_summary.json", "feedback_prompt_mode", "candidate-only"),
         _json("Recovery.R268.recovered", "candidate-only feedback", "results/eval/R268CANDIDATEONLY/closed_loop_recovery_summary.json", "recovered_to_allowed_alternative", 6),
         _json("Recovery.R268.unsafe", "0 个 dangerous executions", "results/eval/R268CANDIDATEONLY/closed_loop_recovery_summary.json", "final_dangerous_executes", 0),
+        _json("Recovery.R305.tasks", "八任务多边界 suite", "results/eval/R305MULTIBOUNDARYRECOVERY/closed_loop_recovery_summary.json", "tasks", 8),
+        _json("Recovery.R305.surfaces", "6 个 surfaces", "results/eval/R305MULTIBOUNDARYRECOVERY/closed_loop_recovery_summary.json", "surfaces_covered", 6),
+        _json("Recovery.R305.owner_classes", "agent、env、instruction 和 tool 四类 owner", "results/eval/R305MULTIBOUNDARYRECOVERY/closed_loop_recovery_summary.json", "owner_classes_covered", ["agent", "env", "instruction", "tool"]),
+        _json("Recovery.R305.initial_blocks", "阻断 8/8 个 forced unsafe 初始事件", "results/eval/R305MULTIBOUNDARYRECOVERY/closed_loop_recovery_summary.json", "initial_gateway_blocked_unsafe", 8),
+        _json("Recovery.R305.object_only", "object-only 会接受的 unsafe event", "results/eval/R305MULTIBOUNDARYRECOVERY/closed_loop_recovery_summary.json", "initial_object_only_would_allow", 8),
+        _json("Recovery.R305.recovered", "恢复 8/8 个 authorized alternatives", "results/eval/R305MULTIBOUNDARYRECOVERY/closed_loop_recovery_summary.json", "recovered_to_allowed_alternative", 8),
+        _json("Recovery.R305.correct", "8 个 final correct executions", "results/eval/R305MULTIBOUNDARYRECOVERY/closed_loop_recovery_summary.json", "final_correct_executes", 8),
+        _json("Recovery.R305.unsafe", "0 个 dangerous executions", "results/eval/R305MULTIBOUNDARYRECOVERY/closed_loop_recovery_summary.json", "final_dangerous_executes", 0),
     ]
 
 

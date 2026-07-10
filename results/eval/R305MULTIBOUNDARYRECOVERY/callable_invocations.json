@@ -1,0 +1,58 @@
+[
+  {
+    "args": {
+      "repo": "org/repo-x"
+    },
+    "tool": "github.create_issue"
+  },
+  {
+    "args": {
+      "scope": "issues:write"
+    },
+    "tool": "github.issue_scope_approval"
+  },
+  {
+    "args": {
+      "capabilities": [
+        {
+          "mode": "summarize",
+          "object": "extracted_tables",
+          "op": "ctx.use"
+        }
+      ],
+      "role": "summary"
+    },
+    "tool": "summarizer"
+  },
+  {
+    "args": {
+      "slot": "data"
+    },
+    "tool": "prompt.data_section"
+  },
+  {
+    "args": {
+      "input": "/workspace/a.pdf",
+      "output": "/workspace/out/a.xlsx"
+    },
+    "tool": "/skills/pdf/extract.py"
+  },
+  {
+    "args": {
+      "path": "/workspace/out/a.xlsx"
+    },
+    "tool": "/workspace/out/a.xlsx"
+  },
+  {
+    "args": {
+      "slot": "tool_schema"
+    },
+    "tool": "prompt.tool_routing_section"
+  },
+  {
+    "args": {
+      "scope": "issues:write"
+    },
+    "tool": "github.issue_scope_approval"
+  }
+]

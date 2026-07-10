@@ -44,6 +44,11 @@ DEFAULT_SUITE = Path("examples/closed_loop_recovery_suite.json")
 
 ROW_FIELDS = [
     "task_id",
+    "surface",
+    "owner_boundary",
+    "unsafe_kind",
+    "protected_decision",
+    "required_owner_classes",
     "expected_event_id",
     "initial_strategy",
     "candidate_prompt_mode",
@@ -666,6 +671,11 @@ def _row(
     final = feedback_eval if feedback_eval["attempted"] else initial_eval
     return {
         "task_id": task["id"],
+        "surface": str(task.get("surface", "")),
+        "owner_boundary": str(task.get("owner_boundary", "")),
+        "unsafe_kind": str(task.get("unsafe_kind", "")),
+        "protected_decision": str(task.get("protected_decision", "")),
+        "required_owner_classes": "|".join(str(owner) for owner in task.get("required_owner_classes", [])),
         "expected_event_id": expected_event_id,
         "initial_strategy": initial_strategy,
         "candidate_prompt_mode": candidate_prompt_mode,
@@ -790,7 +800,57 @@ def _summary(
     else:
         summary["recovery_rate_to_allowed_alternative"] = 0.0
         summary["recovery_rate_to_safe_outcome"] = 0.0
+    summary.update(_metadata_summary(rows))
     return summary
+
+
+def _metadata_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    surface_counts = _counts(row["surface"] for row in rows if row["surface"])
+    owner_boundary_counts = _counts(row["owner_boundary"] for row in rows if row["owner_boundary"])
+    unsafe_kind_counts = _counts(row["unsafe_kind"] for row in rows if row["unsafe_kind"])
+    protected_decision_counts = _counts(
+        row["protected_decision"] for row in rows if row["protected_decision"]
+    )
+    owner_classes: set[str] = set()
+    for row in rows:
+        for owner in str(row.get("required_owner_classes", "")).split("|"):
+            if owner:
+                owner_classes.add(owner)
+    initial_blocks_by_surface = _counts(
+        row["surface"]
+        for row in rows
+        if row["surface"] and row["initial_outcome"] == "gateway_blocked_unsafe"
+    )
+    recovered_by_surface = _counts(
+        row["surface"]
+        for row in rows
+        if row["surface"] and row["recovered_to_allowed_alternative"]
+    )
+    object_only_by_surface = _counts(
+        row["surface"]
+        for row in rows
+        if row["surface"] and row["initial_object_only_would_allow"]
+    )
+    return {
+        "surfaces_covered": len(surface_counts),
+        "surface_counts": surface_counts,
+        "owner_boundaries_covered": len(owner_boundary_counts),
+        "owner_boundary_counts": owner_boundary_counts,
+        "owner_classes_covered": sorted(owner_classes),
+        "unsafe_kind_counts": unsafe_kind_counts,
+        "protected_decision_counts": protected_decision_counts,
+        "initial_blocks_by_surface": initial_blocks_by_surface,
+        "recovered_to_allowed_alternative_by_surface": recovered_by_surface,
+        "initial_object_only_would_allow_by_surface": object_only_by_surface,
+    }
+
+
+def _counts(values: Any) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for value in values:
+        key = str(value)
+        counts[key] = counts.get(key, 0) + 1
+    return dict(sorted(counts.items()))
 
 
 def _invoke_model(

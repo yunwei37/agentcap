@@ -234,3 +234,51 @@ def test_feedback_prompt_mode_is_recorded_in_rows_and_summary(tmp_path):
     assert summary["feedback_prompt_mode"] == "candidate-only"
     assert summary["recovered_to_allowed_alternative"] == 6
     assert {row["feedback_prompt_mode"] for row in rows} == {"candidate-only"}
+
+
+def test_multiboundary_suite_records_surface_and_owner_metadata(tmp_path):
+    runner = _load_runner()
+    suite_path = (
+        Path(__file__).parents[1]
+        / "examples"
+        / "closed_loop_multiboundary_recovery_suite.json"
+    )
+
+    result = runner.run_experiment(
+        suite_path=suite_path,
+        output_dir=tmp_path / "out",
+        run_id="test",
+        initial_strategy="force-initial-event",
+        candidate_prompt_mode="blinded",
+        feedback_prompt_mode="structured",
+        feedback_rounds=1,
+        dry_run=False,
+        runner=_expected_event_runner,
+    )
+    summary = result["summary"]
+    rows = result["rows"]
+
+    assert summary["tasks"] == 8
+    assert summary["surfaces_covered"] == 6
+    assert summary["owner_classes_covered"] == ["agent", "env", "instruction", "tool"]
+    assert summary["initial_gateway_blocked_unsafe"] == 8
+    assert summary["initial_llm_only_unsafe"] == 8
+    assert summary["initial_object_only_would_allow"] == 8
+    assert summary["feedback_attempts"] == 8
+    assert summary["recovered_to_allowed_alternative"] == 8
+    assert summary["final_correct_executes"] == 8
+    assert summary["final_dangerous_executes"] == 0
+    assert summary["surface_counts"]["mcp_broker"] == 1
+    assert summary["surface_counts"]["env_side_effect"] == 1
+    assert summary["surface_counts"]["prompt_builder"] == 2
+    assert summary["owner_boundary_counts"]["env_to_agent"] == 3
+    assert summary["initial_blocks_by_surface"]["mcp_broker"] == 1
+    assert summary["recovered_to_allowed_alternative_by_surface"]["env_side_effect"] == 1
+    assert {row["surface"] for row in rows} >= {
+        "approval_gateway",
+        "delegation_monitor",
+        "env_side_effect",
+        "mcp_broker",
+        "prompt_builder",
+        "skill_cmd_gateway",
+    }
