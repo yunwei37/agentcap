@@ -46,6 +46,12 @@ def test_paper_evidence_audit_matches_saved_results(tmp_path):
     assert "E4.scope.not_production" in claim_ids
     assert "E4.scope.not_benchmark_utility" in claim_ids
     assert "E4.scope.r240_historical" in claim_ids
+    assert "E4.lower_contract.challenge_events" in claim_ids
+    assert "E4.lower_contract.full_unsafe" in claim_ids
+    assert "E4.lower_contract.weakened_unsafe" in claim_ids
+    assert "E4.lower_contract.default_allow" in claim_ids
+    assert "E4.lower_contract.no_arg" in claim_ids
+    assert "E4.lower_contract.no_budget" in claim_ids
     assert "E4.proof.events" in claim_ids
     assert "E4.proof.complete" in claim_ids
     assert any(row["claim_id"] == "Recovery.feedback" for row in rows)

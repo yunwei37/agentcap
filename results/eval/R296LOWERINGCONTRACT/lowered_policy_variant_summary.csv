@@ -1,0 +1,7 @@
+variant,unsafe_accepts,decision_mismatches,monitor_allowed,checker_allowed
+default_allow_unmatched,7,7,8,1
+full_policy,0,0,1,1
+no_argument_constraints,2,2,3,1
+no_budget_state,1,1,2,1
+no_holder_binding,1,1,2,1
+no_provenance_influence,1,1,2,1

@@ -1,0 +1,1 @@
+/usr/bin/python3 scripts/analyze_lowered_policy_contract.py --run-id R296LOWERINGCONTRACT --output-dir results/eval/R296LOWERINGCONTRACT

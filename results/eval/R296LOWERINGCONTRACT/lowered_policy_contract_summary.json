@@ -1,0 +1,69 @@
+{
+  "analysis": "ActPlane-style lowered-policy contract audit",
+  "challenge_events": 8,
+  "challenge_sequences": 7,
+  "contract": {
+    "default_action": "deny",
+    "rule_classes": [
+      "context.use",
+      "filesystem.read",
+      "filesystem.write",
+      "process.exec"
+    ],
+    "rules": 4,
+    "rules_with_argument_constraints": 4,
+    "rules_with_control_policy": 4,
+    "rules_with_data_policy": 4,
+    "rules_with_holder_binding": 3,
+    "stateful_budget_rules": 1
+  },
+  "full_policy_decision_mismatches": 0,
+  "full_policy_unsafe_accepts": 0,
+  "git_status": "## main...origin/main\n M docs/autopaper/intentcap-paper-zh.tex\n M docs/evaluation.md\n M scripts/audit_paper_evidence_numbers.py\n M tests/test_audit_paper_evidence_numbers.py\n?? results/eval/R296LOWERINGCONTRACT/\n?? results/eval/R297PAPERAUDIT/\n?? scripts/analyze_lowered_policy_contract.py\n?? tests/test_analyze_lowered_policy_contract.py",
+  "input_digests": [
+    {
+      "bytes": 2687,
+      "input_name": "lowering_rows",
+      "path": "results/eval/R218ACTLOWER/actplane_lowering_rows.csv",
+      "sha256": "33d1ce46a1ddad9e33417fe832606a733c1040e04bdbbef05a07cef5d885ece5"
+    },
+    {
+      "bytes": 1379,
+      "input_name": "lowering_summary",
+      "path": "results/eval/R218ACTLOWER/actplane_lowering_summary.json",
+      "sha256": "0b95c14f28fdf50134f0d07c1f67dfd890b10acbc8cc0507c55049f8b5214659"
+    },
+    {
+      "bytes": 4403,
+      "input_name": "policy",
+      "path": "results/eval/R218ACTLOWER/actplane_policy.json",
+      "sha256": "82300b42c45d4b8eae12d0b56fe07533104257ed8c513d0b69ddcc8ef56c1333"
+    },
+    {
+      "bytes": 7160,
+      "input_name": "trace",
+      "path": "examples/env_adapter_side_effect_suite.json",
+      "sha256": "a1d5fa355deb0a837e8d5848467bcfbb02697ddff9b94ca5fa4a48fb8e3fdccf"
+    }
+  ],
+  "notes": [
+    "This run is read-only: it does not run models, execute tools, or sync datasets.",
+    "The full policy is the existing R218 lowering artifact; weakened variants remove one contract field family at a time.",
+    "The audit supports a local lowering-contract claim, not production ActPlane/kernel integration."
+  ],
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "f3c31c37c68b7079c7b29e158f99d190ffa57567",
+  "python": "3.12.3",
+  "run_id": "R296LOWERINGCONTRACT",
+  "script_sha256": "68eea8628dfd8d16f09b6258db3474b33730f00f90970d37ae9882e5fe0dee6c",
+  "unsafe_accepts_by_variant": {
+    "default_allow_unmatched": 7,
+    "full_policy": 0,
+    "no_argument_constraints": 2,
+    "no_budget_state": 1,
+    "no_holder_binding": 1,
+    "no_provenance_influence": 1
+  },
+  "variants": 6,
+  "weakened_variant_unsafe_accepts": 12
+}
