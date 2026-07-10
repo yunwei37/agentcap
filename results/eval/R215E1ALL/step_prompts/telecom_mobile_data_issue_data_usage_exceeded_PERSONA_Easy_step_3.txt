@@ -1,0 +1,383 @@
+You are a tau2 assistant agent operating one step at a time.
+The input includes trusted task text, available tool schemas, and prior gateway decisions with executed tool-result previews.
+Choose at most one next assistant tool call using only input.available_tools.
+Do not repeat a blocked call with the same arguments.
+The previous step returned no tool call; re-check the task and visible tool results before deciding whether another authorized call is needed.
+If no safe useful tool call is apparent, return an empty actions list.
+Return exactly one JSON object and no prose.
+The hidden reference actions are not provided.
+Input JSON:
+{
+  "available_tools": [
+    {
+      "description": "Disables international roaming on a line.",
+      "name": "disable_roaming",
+      "parameters": {
+        "properties": {
+          "customer_id": {
+            "description": "ID of the customer who owns the line.",
+            "title": "Customer Id",
+            "type": "string"
+          },
+          "line_id": {
+            "description": "ID of the line to disable roaming for.",
+            "title": "Line Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "customer_id",
+          "line_id"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Enables international roaming on a line.",
+      "name": "enable_roaming",
+      "parameters": {
+        "properties": {
+          "customer_id": {
+            "description": "ID of the customer who owns the line.",
+            "title": "Customer Id",
+            "type": "string"
+          },
+          "line_id": {
+            "description": "ID of the line to enable roaming for.",
+            "title": "Line Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "customer_id",
+          "line_id"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Retrieves a list of the customer's bills, most recent first.",
+      "name": "get_bills_for_customer",
+      "parameters": {
+        "properties": {
+          "customer_id": {
+            "description": "ID of the customer.",
+            "title": "Customer Id",
+            "type": "string"
+          },
+          "limit": {
+            "default": 12,
+            "description": "Maximum number of bills to return.",
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "customer_id"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Retrieves a customer directly by their unique ID.",
+      "name": "get_customer_by_id",
+      "parameters": {
+        "properties": {
+          "customer_id": {
+            "description": "The unique identifier of the customer.",
+            "title": "Customer Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "customer_id"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Searches for customers by name and DOB. May return multiple matches if names are similar,\n\nDOB helps disambiguate.",
+      "name": "get_customer_by_name",
+      "parameters": {
+        "properties": {
+          "dob": {
+            "description": "Date of birth for verification, in the format YYYY-MM-DD.",
+            "title": "Dob",
+            "type": "string"
+          },
+          "full_name": {
+            "description": "The full name of the customer.",
+            "title": "Full Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "full_name",
+          "dob"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Finds a customer by their primary contact or line phone number.",
+      "name": "get_customer_by_phone",
+      "parameters": {
+        "properties": {
+          "phone_number": {
+            "description": "The phone number to search for.",
+            "title": "Phone Number",
+            "type": "string"
+          }
+        },
+        "required": [
+          "phone_number"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Retrieves current billing cycle data usage for a line, including data\n\nrefueling amount, data limit, and cycle end date.",
+      "name": "get_data_usage",
+      "parameters": {
+        "properties": {
+          "customer_id": {
+            "description": "ID of the customer who owns the line.",
+            "title": "Customer Id",
+            "type": "string"
+          },
+          "line_id": {
+            "description": "ID of the line to check usage for.",
+            "title": "Line Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "customer_id",
+          "line_id"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Retrieves the details for a given ID.\n\nThe ID must be a valid ID for a Customer, Line, Device, Bill, or Plan.",
+      "name": "get_details_by_id",
+      "parameters": {
+        "properties": {
+          "id": {
+            "description": "The ID of the object to retrieve.",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Refuels data for a specific line, adding to the customer's bill.\n\nChecks: Line status must be Active, Customer owns the line.\nLogic: Adds data to the line and charges customer based on the plan's refueling rate.",
+      "name": "refuel_data",
+      "parameters": {
+        "properties": {
+          "customer_id": {
+            "description": "ID of the customer who owns the line.",
+            "title": "Customer Id",
+            "type": "string"
+          },
+          "gb_amount": {
+            "description": "Amount of data to add in gigabytes.",
+            "title": "Gb Amount",
+            "type": "number"
+          },
+          "line_id": {
+            "description": "ID of the line to refuel data for.",
+            "title": "Line Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "customer_id",
+          "line_id",
+          "gb_amount"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Resumes a suspended line.\n\nChecks: Line status must be Suspended or Pending Activation.\nLogic: Sets line status to Active, clears suspension_start_date.",
+      "name": "resume_line",
+      "parameters": {
+        "properties": {
+          "customer_id": {
+            "description": "ID of the customer who owns the line.",
+            "title": "Customer Id",
+            "type": "string"
+          },
+          "line_id": {
+            "description": "ID of the line to resume.",
+            "title": "Line Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "customer_id",
+          "line_id"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Sends a payment request to the customer for a specific bill.\n\nChecks:\n    - Customer exists\n    - Bill exists and belongs to the customer\n    - No other bills are already awaiting payment for this customer\nLogic: Sets bill status to AWAITING_PAYMENT and notifies customer.\nWarning: This method does not check if the bill is already PAID.\nAlways check the bill status before calling this method.",
+      "name": "send_payment_request",
+      "parameters": {
+        "properties": {
+          "bill_id": {
+            "description": "ID of the bill to send payment request for.",
+            "title": "Bill Id",
+            "type": "string"
+          },
+          "customer_id": {
+            "description": "ID of the customer who owns the bill.",
+            "title": "Customer Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "customer_id",
+          "bill_id"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Suspends a specific line (max 6 months).\n\nChecks: Line status must be Active.\nLogic: Sets line status to Suspended, records suspension_start_date.",
+      "name": "suspend_line",
+      "parameters": {
+        "properties": {
+          "customer_id": {
+            "description": "ID of the customer who owns the line.",
+            "title": "Customer Id",
+            "type": "string"
+          },
+          "line_id": {
+            "description": "ID of the line to suspend.",
+            "title": "Line Id",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Reason for suspension.",
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "customer_id",
+          "line_id",
+          "reason"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Transfer the user to a human agent, with a summary of the user's issue.\n\nOnly transfer if\n -  the user explicitly asks for a human agent\n -  given the policy and the available tools, you cannot solve the user's issue.",
+      "name": "transfer_to_human_agents",
+      "parameters": {
+        "properties": {
+          "summary": {
+            "description": "A summary of the user's issue.",
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "summary"
+        ],
+        "title": "parameters",
+        "type": "object"
+      }
+    }
+  ],
+  "domain": "telecom",
+  "output_schema": {
+    "actions": [
+      {
+        "arguments": {
+          "arg_name": "arg_value"
+        },
+        "tool": "tool_name"
+      }
+    ],
+    "final_response": "short user-facing response"
+  },
+  "previous_empty_action_retries": 1,
+  "previous_gateway_results": [
+    {
+      "arguments": {
+        "phone_number": "555-123-2002"
+      },
+      "executed": false,
+      "gateway_action": "block",
+      "gateway_reason": "no matching lease",
+      "round": "step_1",
+      "tool": "get_customer_by_phone",
+      "tool_result_preview": ""
+    }
+  ],
+  "step_index": 3,
+  "task": {
+    "description": {
+      "notes": null,
+      "purpose": "Test resolution path: Mobile Data/Slow Internet Issues.",
+      "relevant_policies": null
+    },
+    "id": "[mobile_data_issue]data_usage_exceeded[PERSONA:Easy]",
+    "initial_state": {
+      "initialization_actions": [
+        {
+          "arguments": {
+            "name": "John Smith",
+            "phone_number": "555-123-2002"
+          },
+          "env_type": "user",
+          "func_name": "set_user_info"
+        },
+        {
+          "arguments": {
+            "customer_id": "C1001",
+            "data_used_gb": 15.1,
+            "line_id": "L1002"
+          },
+          "env_type": "assistant",
+          "func_name": "set_data_usage"
+        }
+      ],
+      "initialization_data": null,
+      "message_history": null
+    },
+    "ticket": "The user is experiencing issues with their mobile data. They are unable to use their phone to browse the internet, and the status bar shows 'No Service'. Customer name: John Smith, phone number: 555-123-2002, current location: at home in the United States. They will consider the issue resolved when speed test returns excellent internet speed. They will not change their mobile data plan but they will refuel 2.0 GB of data if necessary.",
+    "user_scenario": {
+      "instructions": {
+        "domain": "telecom",
+        "known_info": "You are John Smith with phone number 555-123-2002. You are currently at home in the United States.",
+        "reason_for_call": "You mobile data is not working properly. It either stops working or is very slow. You want to fix it and absolutely want to get excellent internet speed on your phone. You are not willing to accept any other internet speed (poor, fair or good). You do not have access to wifi.",
+        "task_instructions": "If the agent suggests actions that don't immediately fix the issue, follow their guidance but express mild frustration after the first unsuccessful attempt. You will consider the issue resolved only when speed test returns excellent internet speed and nothing else. If it returns poor, fair or good, you will not consider the issue resolved. You are willing to refuel 2.0 GB of data if necessary, but you do not want to change your mobile data plan. If the tool call does not return updated status information, you might need to perform another tool call to get the updated status. \nWhenever the agent asks you about your device, always ground your responses on the results of tool calls. \nFor example: If the agent asks what the status bar shows, always ground your response on the results of the `get_status_bar` tool call. If the agent asks if you are able to send an MMS message, always ground your response on the results of the `can_send_mms` tool call.\nNever make up the results of tool calls, always ground your responses on the results of tool calls.\nIf you are unsure about whether an action is necessary, always ask the agent for clarification.\n",
+        "unknown_info": null
+      },
+      "persona": "\nAs a 41-year-old office administrator, you use your cellphone daily for both work and personal tasks. While you're familiar with common phone functions, you wouldn't call yourself a tech enthusiast.\n\nYour technical skills are average - you handle standard smartphone features like calls, texts, email, and basic apps with ease. You understand the fundamental settings, but prefer clear, step-by-step guidance when trying something new.\n\nIn interactions, you're naturally friendly and patient. When receiving help, you listen attentively and aren't afraid to ask questions. You make sure to confirm your understanding and provide detailed feedback on each instruction you receive.\n"
+    }
+  }
+}
+Output JSON:
