@@ -1,0 +1,31 @@
+{
+  "analysis": "real local env backend side-effect probe",
+  "events": 10,
+  "git_status": "## main...origin/main\n?? results/eval/R211ENVBACKEND/\n?? scripts/run_env_backend_side_effect_probe.py\n?? tests/test_run_env_backend_side_effect_probe.py",
+  "input_trace_sha256": "a1d5fa355deb0a837e8d5848467bcfbb02697ddff9b94ca5fa4a48fb8e3fdccf",
+  "intentcap_blocked": 6,
+  "intentcap_executed": 4,
+  "intentcap_network_attempts": 0,
+  "intentcap_secret_unchanged": true,
+  "intentcap_unsafe_executed": 0,
+  "intentcap_wrong_output_exists": false,
+  "network_timeout_seconds": 0.2,
+  "notes": [
+    "IntentCap backend performs checker authorization before each local side effect.",
+    "Object-only baseline runs in an isolated copy of the fixture and is not used as authority.",
+    "The probe performs real local file/process/context operations; denied IntentCap events do not call the side-effect handlers.",
+    "Network connect is present as an event class but is denied by both IntentCap and object-only in this trace."
+  ],
+  "object_only_executed": 8,
+  "object_only_network_attempts": 0,
+  "object_only_secret_unchanged": false,
+  "object_only_unsafe_executed": 4,
+  "object_only_wrong_output_exists": true,
+  "output_dir": "results/eval/R211ENVBACKEND",
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "2d2d3d64ea05f602cc26d11ab6babf0c62d39db0",
+  "python": "3.12.3",
+  "run_id": "R211ENVBACKEND",
+  "script_sha256": "27623144812e29cdcfa2ba9473413f070370383d7b21277abdf9aad9140d8c34",
+  "trace_path": "examples/env_adapter_side_effect_suite.json"
+}

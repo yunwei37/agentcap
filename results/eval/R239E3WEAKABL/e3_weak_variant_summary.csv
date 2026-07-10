@@ -1,0 +1,10 @@
+corpus,variant,events,checker_allowed,checker_denied,variant_accepts,variant_blocks,unsafe_false_accepts,false_accept_rate_among_denied,same_event_comparison,interpretation
+R220 authority traces,full_intentcap,8696,4873,3823,4873,3823,0,0.000000,True,Full checker keeps issuer-owner and lifecycle checks in the commit object.
+R220 authority traces,no_owner_collapsed_context,8696,4873,3823,8466,230,3593,0.939838,True,Collapses issuer-owned fields into generic trusted context; denied class-substitution attempts become accepts.
+R220 authority traces,collapse_tool_to_agent,8696,4873,3823,6801,1895,1928,0.504316,True,Collapses the tool->agent proof boundary while leaving the protected event unchanged.
+R220 authority traces,collapse_env_to_agent,8696,4873,3823,6536,2160,1663,0.434999,True,Collapses the env->agent proof boundary while leaving the protected event unchanged.
+R220 authority traces,collapse_env_to_tool,8696,4873,3823,6535,2161,1662,0.434737,True,Collapses the env->tool proof boundary while leaving the protected event unchanged.
+R220 authority traces,collapse_instruction_to_agent,8696,4873,3823,4875,3821,2,0.000523,True,Collapses the instruction->agent proof boundary while leaving the protected event unchanged.
+R217 workflow residuals,full_intentcap,9,2,7,2,7,0,0.000000,True,Full checker blocks workflow residuals before side effects or handoff.
+R217 workflow residuals,post_hoc_policy_dsl,9,2,7,9,0,7,1.000000,True,"Operation/object/argument policy predicates accept the residuals while ignoring commit-object owner, temporal, budget, and delegation state."
+R217 workflow residuals,split_lifecycle_state,9,2,7,7,2,5,0.714286,True,"Stateful proof, holder, approval, budget, temporal, and delegation checks are split from the action/provenance guard."

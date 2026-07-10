@@ -1,0 +1,11 @@
+mode,events,checker_allowed,checker_denied,required_class_sets,control_class_sets,events_requiring_agent,events_requiring_instruction,events_requiring_tool,events_requiring_env,events_with_observed_multi_provenance,events_with_class_substitution_attempt,substitution_edges
+authorize,2271,0,2271,agent:1|agent|env|tool:185|agent|tool:2085,agent:1|env:1010|tool:1260,2271,0,2270,185,1,2270,env->agent:1010|env->tool:1010|tool->agent:1260
+delegate,1,0,1,agent|env|instruction:1,instruction:1,1,1,0,1,1,1,instruction->agent:1
+instruct,1,0,1,env:1,env:1,0,0,0,1,0,0,
+parameterize,1,1,0,env:1,agent:1,0,0,0,1,1,0,
+policy_update,1,0,1,agent:1,tool:1,1,0,0,0,1,1,tool->agent:1
+read,2,1,1,agent|env|instruction|tool:2,agent|instruction:2,2,2,2,2,2,0,
+sink_select,1324,1,1323,agent|env:1|agent|instruction|tool:1|agent|tool:1322,agent:3|env:653|instruction:1|tool:667,1324,1,1323,1,4,1321,env->agent:653|env->tool:652|instruction->agent:1|tool->agent:667
+summarize,1,1,0,env:1,agent:1,0,0,0,1,1,0,
+tool_select,5092,4868,224,agent|env|instruction|tool:4|agent|instruction|tool:1054|agent|tool:4034,agent:3813|agent|instruction:4|instruction:1054|tool:221,5092,1058,5092,4,4,0,
+write,2,1,1,agent|env|instruction|tool:2,agent|instruction:2,2,2,2,2,2,0,

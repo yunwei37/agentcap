@@ -1,0 +1,11 @@
+mode,events,checker_denied,no_owner_false_accepts,false_accept_rate_among_denied,substitution_edges
+authorize,2271,2271,2270,0.999560,env->agent:1010|env->tool:1010|tool->agent:1260
+delegate,1,1,1,1.000000,instruction->agent:1
+instruct,1,1,0,0.000000,
+parameterize,1,0,0,0.000000,
+policy_update,1,1,1,1.000000,tool->agent:1
+read,2,1,0,0.000000,
+sink_select,1324,1323,1321,0.998488,env->agent:653|env->tool:652|instruction->agent:1|tool->agent:667
+summarize,1,0,0,0.000000,
+tool_select,5092,224,0,0.000000,
+write,2,1,0,0.000000,

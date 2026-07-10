@@ -1,0 +1,38 @@
+{
+  "analysis": "E1 same-event security wrapper comparison",
+  "exact_or_task_tool_acl_accept_rate": 0.57367859,
+  "exact_or_task_tool_acl_dangerous_accepted": 2149,
+  "family_rows": 5,
+  "git_status": "?? scripts/build_e1_security_wrapper_matrix.py\n?? tests/test_build_e1_security_wrapper_matrix.py",
+  "input_digests": [
+    {
+      "bytes": 5943,
+      "path": "results/injecagent/R019/authority_summary.json",
+      "sha256": "516c7fdc4a737cbf4ccc3b050e4d4d3a8171d2a6aaa6a7862bd5a0959911467d"
+    },
+    {
+      "bytes": 8659,
+      "path": "results/mcptox/R020/authority_summary.json",
+      "sha256": "68a94d5feafb9f4ae32b3cb6a7714abb8ed184fa8fee90c6377da53bb1b4ea6b"
+    }
+  ],
+  "intentcap_accept_rate": 0.0,
+  "intentcap_dangerous_accepted": 0,
+  "intentcap_matched_events": 3746,
+  "machine": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "matrix_rows": 12,
+  "no_dataset_sync": true,
+  "not_a_fresh_online_run": true,
+  "notes": [
+    "This is an E1 security-side matrix over saved protected events, not a utility result.",
+    "Rows compare policy wrappers on the same event sets exported by R019 and R020.",
+    "The exact/tool ACL family is intentionally narrow on object exposure but lacks control-provenance checks."
+  ],
+  "project_head": "05750e966c633cd5f69640d48ee3fbe9cae97f8c",
+  "rows_by_benchmark": {
+    "InjecAgent": 6,
+    "MCPTox": 6
+  },
+  "run_id": "R202E1",
+  "same_event_security_delta": 2149
+}

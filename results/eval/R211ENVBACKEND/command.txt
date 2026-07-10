@@ -1,0 +1,1 @@
+PYTHONPATH=src /usr/bin/python scripts/run_env_backend_side_effect_probe.py --output-dir results/eval/R211ENVBACKEND --trace examples/env_adapter_side_effect_suite.json --run-id R211ENVBACKEND

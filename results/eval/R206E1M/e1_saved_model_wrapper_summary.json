@@ -1,0 +1,66 @@
+{
+  "analysis": "E1 saved local-model proposal wrapper replay",
+  "broad_proposed_tool_acl_off_reference_accepted": 47,
+  "broad_proposed_tool_acl_wrong_or_hallucinated_tool_accepted": 25,
+  "category_counts": {
+    "exact_executed": 11,
+    "off_lease_same_tool_wrong_args": 22,
+    "off_lease_wrong_or_hallucinated_tool": 25
+  },
+  "claim_supported": "On saved local-Qwen proposals, exact IntentCap leases preserve exact accepted reference calls while rejecting off-reference proposals that tool-only wrappers admit.",
+  "deduplicated_model_calls": 58,
+  "duplicate_rows_removed": 0,
+  "git_status": "",
+  "input_digests": [
+    {
+      "bytes": 17872,
+      "path": "results/eval/R035/model_call_mismatches.csv",
+      "sha256": "19fba3d5fde635ac9bdbbf4794c5dc5aef5ee939f9b21fa0d447b85f0521e2b6"
+    },
+    {
+      "bytes": 5042,
+      "path": "results/eval/R038/model_call_mismatches.csv",
+      "sha256": "47f9a2434b31360877d47081d66956f50f7b85cb2cb62628265b99194add201d"
+    }
+  ],
+  "input_rows": 58,
+  "intentcap_exact_lease_allowed_calls": 11,
+  "intentcap_exact_lease_exact_proposals_accepted": 11,
+  "intentcap_exact_lease_off_reference_accepted": 0,
+  "intentcap_saved_gateway_allowed_calls": 11,
+  "intentcap_saved_gateway_exact_proposals_accepted": 11,
+  "intentcap_saved_gateway_off_reference_accepted": 0,
+  "limitations": [
+    "This is an action-level counterfactual replay over saved model proposals, not an online task trajectory.",
+    "It does not measure model replanning, user-simulator interaction, approval burden, or recovery after denial.",
+    "The broad_proposed_tool_acl row is a permissive saved-proposal proxy, not a complete domain catalog policy."
+  ],
+  "machine": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "no_dataset_sync": true,
+  "not_a_fresh_online_run": true,
+  "not_a_hidden_state_analysis": true,
+  "not_a_task_success_result": true,
+  "policy_order": [
+    "intentcap_saved_gateway",
+    "intentcap_exact_lease",
+    "task_reference_tool_acl",
+    "broad_proposed_tool_acl"
+  ],
+  "project_head": "7b403ac2eea2d4db6968013e12addf874be9cd18",
+  "replay_rows": 232,
+  "run_id": "R206E1M",
+  "saved_exact_proposals": 11,
+  "source_mismatch_runs": [
+    "R035",
+    "R038"
+  ],
+  "source_model_runs": [
+    "R031",
+    "R032",
+    "R033",
+    "R034",
+    "R036"
+  ],
+  "task_reference_tool_acl_off_reference_accepted": 22,
+  "task_reference_tool_acl_same_tool_wrong_args_accepted": 22
+}

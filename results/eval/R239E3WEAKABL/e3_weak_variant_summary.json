@@ -1,0 +1,55 @@
+{
+  "analysis": "E3 weak-variant ablation over saved authority annotations",
+  "authority_checker_allowed": 4873,
+  "authority_checker_denied": 3823,
+  "authority_events": 8696,
+  "collapse_edge_false_accepts": {
+    "env->agent": 1663,
+    "env->tool": 1662,
+    "instruction->agent": 2,
+    "tool->agent": 1928
+  },
+  "full_intentcap_unsafe_false_accepts": 0,
+  "git_status": "## main...origin/main\n?? results/eval/R239E3WEAKABL/\n?? scripts/analyze_e3_weak_variant_ablation.py\n?? tests/test_analyze_e3_weak_variant_ablation.py",
+  "input_digests": [
+    {
+      "bytes": 3456190,
+      "path": "results/eval/R220AUTHCHAR/event_authority_characterization.csv",
+      "sha256": "99b6b9973da7e1b2a5b150f5a6e09616460cabd0d81d09c207fb5320490f4067"
+    },
+    {
+      "bytes": 3761,
+      "path": "results/eval/R217E3POLICY/closest_baseline/event_baseline_labels.csv",
+      "sha256": "17223cc2ec73ea31ac073938d830d18b8184289b59e7cd4a3d861fcbbb33fedb"
+    }
+  ],
+  "mode_rows": 10,
+  "no_dataset_sync": true,
+  "no_owner_collapsed_context_false_accepts": 3593,
+  "no_owner_false_accept_rate_among_denied": "0.939838",
+  "not_a_model_run": true,
+  "notes": [
+    "Rows are same-event ablations: op/object/arguments/provenance records are unchanged.",
+    "No-owner/collapsed variants use existing R220 class-substitution annotations.",
+    "Post-hoc policy DSL and split-lifecycle variants use existing R217 residual labels and checker reasons.",
+    "These are mechanism ablations, not reproductions of named prior systems."
+  ],
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "c51acaa3359e32119c581e636487aa2ee2c74833",
+  "python": "3.12.3",
+  "run_id": "R239E3WEAKABL",
+  "same_event_comparison": true,
+  "source_rows": 1978,
+  "variant_rows": 9,
+  "workflow_checker_denied": 7,
+  "workflow_events": 9,
+  "workflow_lifecycle_classes": {
+    "approval_mint_state": 1,
+    "budget_consumption": 1,
+    "delegation_attenuation": 1,
+    "holder_scope": 1,
+    "temporal_state": 1
+  },
+  "workflow_policy_dsl_false_accepts": 7,
+  "workflow_split_lifecycle_false_accepts": 5
+}

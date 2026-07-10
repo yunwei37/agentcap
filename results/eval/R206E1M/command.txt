@@ -1,0 +1,1 @@
+PYTHONPATH=.:src python scripts/build_e1_saved_model_wrapper_replay.py --run-id R206E1M --output-dir results/eval/R206E1M

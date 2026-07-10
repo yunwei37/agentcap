@@ -1,0 +1,1 @@
+PYTHONPATH=src:. /usr/bin/python scripts/analyze_multiboundary_system_evidence.py

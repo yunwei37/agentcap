@@ -1,0 +1,2 @@
+path,reference_actions,model_calls,executed_calls,runtime_binding_attempts,runtime_binding_successes,runtime_binding_missing_evidence,runtime_binding_missing_value_proof,runtime_evidence_hint_steps,tool_oracle_pass_tasks,tool_oracle_pass_rate
+results/eval/R136/task_gateway_summary.json,61,42,42,29,29,0,0,25,0,0.0

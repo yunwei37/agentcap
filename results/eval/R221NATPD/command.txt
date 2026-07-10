@@ -1,0 +1,1 @@
+PYTHONPATH=.:src /usr/bin/python scripts/build_natural_pd_labeling_packet.py --output-dir results/eval/R221NATPD
