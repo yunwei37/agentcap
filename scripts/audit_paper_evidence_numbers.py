@@ -136,7 +136,7 @@ def _checks() -> list[dict[str, Any]]:
         _json("E3.weak.env_agent", "1,663", "results/eval/R239E3WEAKABL/e3_weak_variant_summary.json", "collapse_edge_false_accepts.env->agent", 1663),
         _json("E3.weak.env_tool", "1,662", "results/eval/R239E3WEAKABL/e3_weak_variant_summary.json", "collapse_edge_false_accepts.env->tool", 1662),
         _json("E3.weak.inst_agent", "2 个 false accepts", "results/eval/R239E3WEAKABL/e3_weak_variant_summary.json", "collapse_edge_false_accepts.instruction->agent", 2),
-        _json("E3.merge_coverage.pairs", "6/6 个 pairwise owner-merge families", "results/eval/R281MERGECOV/three_class_merge_coverage_summary.json", "pairwise_merges_with_counterexamples", 6),
+        _json("E3.merge_coverage.pairs", "六个 pairwise merge removals", "results/eval/R281MERGECOV/three_class_merge_coverage_summary.json", "pairwise_merges_with_counterexamples", 6),
         _json("E3.merge_coverage.instruction_tool_false_accepts", "2/2 个 controlled instruction+tool false accepts", "results/eval/R281MERGECOV/three_class_merge_coverage_summary.json", "controlled_instruction_tool_false_accepts", 2),
         _json("E3.merge_coverage.full_checker_unsafe", "0/2 个 controlled full-checker unsafe accepts", "results/eval/R281MERGECOV/three_class_merge_coverage_summary.json", "full_checker_unsafe_accepts_on_controlled_cases", 0),
         _json("E3.merge_coverage.global_taxonomy", "不是关于所有可能 context taxonomy 的全局最小性证明", "results/eval/R281MERGECOV/three_class_merge_coverage_summary.json", "global_taxonomy_claim", False),
