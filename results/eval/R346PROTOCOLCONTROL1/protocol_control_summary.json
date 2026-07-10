@@ -2,12 +2,12 @@
   "analysis": "fresh local llama.cpp protocol-control probe over saved R340 prompts",
   "best_constrained_mode": "completion_schema_reasoning_off",
   "ctx_size": 8192,
-  "git_status": "M results/eval/R346PROTOCOLCONTROL1/protocol_control_mode_summary.csv\n M results/eval/R346PROTOCOLCONTROL1/protocol_control_rows.csv\n M results/eval/R346PROTOCOLCONTROL1/protocol_control_summary.json\n M results/eval/R346PROTOCOLCONTROL1/raw_outputs/completion_retail_0_step_1.txt\n M results/eval/R346PROTOCOLCONTROL1/raw_outputs/completion_schema_reasoning_off_retail_0_step_1.txt\n M results/eval/R347PAPERAUDIT/input_digests.csv\n M results/eval/R347PAPERAUDIT/paper_evidence_audit_summary.json\n M scripts/run_llama_protocol_control_probe.py",
+  "git_status": "",
   "gpu_layers": 48,
   "input_dir": "results/eval/R340RETAILCOMPILERFEEDBACK5",
   "mode_summary": [
     {
-      "avg_latency_seconds": 36.036726,
+      "avg_latency_seconds": 36.024632,
       "contains_think": 1,
       "empty_stdout": 0,
       "likely_truncated": 1,
@@ -18,7 +18,7 @@
       "returncode_zero": 1
     },
     {
-      "avg_latency_seconds": 15.072707,
+      "avg_latency_seconds": 15.059517,
       "contains_think": 0,
       "empty_stdout": 0,
       "likely_truncated": 0,
@@ -42,7 +42,7 @@
   "not_a_tool_execution": true,
   "output_dir": "results/eval/R346PROTOCOLCONTROL1",
   "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
-  "project_head": "0d8a75eeb583f5d373826b52e454abef7a0ddfcb",
+  "project_head": "23b477462f3d1741de654f1620b2ed3781d89ff9",
   "prompt_glob": "step_prompts/*.txt",
   "prompts": 1,
   "protocol_control_status": "schema_reasoning_control_improved",

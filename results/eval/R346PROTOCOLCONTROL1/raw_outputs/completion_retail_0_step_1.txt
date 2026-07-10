@@ -18,12 +18,12 @@ No other actions are needed for this step.
 Final response can be empty or a placeholder, but the schema expects `actions` and `final_response`.
 
 STDERR:
-0.00.158.334 I llama_completion: llama backend init
-0.00.158.360 I llama_completion: load the model and apply lora adapter, if any
-0.02.076.786 I llama_completion: llama threadpool init, n_threads = 4
-0.02.077.652 I llama_completion: chat template is available, enabling conversation mode (disable it with -no-cnv)
-0.02.077.653 W *** User-specified prompt will pre-start conversation, did you mean to set --system-prompt (-sys) instead?
-0.02.077.721 I llama_completion: chat template example:
+0.00.175.192 I llama_completion: llama backend init
+0.00.175.200 I llama_completion: load the model and apply lora adapter, if any
+0.02.085.515 I llama_completion: llama threadpool init, n_threads = 4
+0.02.086.388 I llama_completion: chat template is available, enabling conversation mode (disable it with -no-cnv)
+0.02.086.389 W *** User-specified prompt will pre-start conversation, did you mean to set --system-prompt (-sys) instead?
+0.02.086.463 I llama_completion: chat template example:
 <|im_start|>system
 You are a helpful assistant<|im_end|>
 <|im_start|>user
@@ -34,24 +34,24 @@ Hi there<|im_end|>
 How are you?<|im_end|>
 <|im_start|>assistant
 
-0.02.077.721 I
-0.02.077.767 I system_info: n_threads = 4 (n_threads_batch = 4) / 24 | CUDA : ARCHS = 1200 | USE_GRAPHS = 1 | PEER_MAX_BATCH_SIZE = 128 | BLACKWELL_NATIVE_FP4 = 1 | CPU : SSE3 = 1 | SSSE3 = 1 | AVX = 1 | AVX_VNNI = 1 | AVX2 = 1 | F16C = 1 | FMA = 1 | BMI2 = 1 | LLAMAFILE = 1 | OPENMP = 1 | REPACK = 1 |
-0.02.077.767 I
-0.02.081.823 I sampler seed: 0
-0.02.081.829 I sampler params:
+0.02.086.466 I
+0.02.086.512 I system_info: n_threads = 4 (n_threads_batch = 4) / 24 | CUDA : ARCHS = 1200 | USE_GRAPHS = 1 | PEER_MAX_BATCH_SIZE = 128 | BLACKWELL_NATIVE_FP4 = 1 | CPU : SSE3 = 1 | SSSE3 = 1 | AVX = 1 | AVX_VNNI = 1 | AVX2 = 1 | F16C = 1 | FMA = 1 | BMI2 = 1 | LLAMAFILE = 1 | OPENMP = 1 | REPACK = 1 |
+0.02.086.512 I
+0.02.090.619 I sampler seed: 0
+0.02.090.624 I sampler params:
 	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
 	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = -1
 	top_k = 20, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
 	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
-0.02.081.834 I sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> dist
-0.02.081.834 I generate: n_ctx = 8192, n_batch = 2048, n_predict = 256, n_keep = 0
-0.02.081.834 I
-0.35.763.890 I common_perf_print:    sampling time =      93.41 ms
-0.35.763.890 I common_perf_print:    samplers time =      31.15 ms /  5170 tokens
-0.35.763.893 I common_perf_print:        load time =    4383.24 ms
-0.35.763.894 I common_perf_print: prompt eval time =    4377.98 ms /  4914 tokens (    0.89 ms per token,  1122.44 tokens per second)
-0.35.763.894 I common_perf_print:        eval time =   29205.03 ms /   255 runs   (  114.53 ms per token,     8.73 tokens per second)
-0.35.763.894 I common_perf_print:       total time =   33687.11 ms /  5169 tokens
-0.35.763.895 I common_perf_print: unaccounted time =      10.68 ms /   0.0 %      (total - sampling - prompt eval - eval) / (total)
-0.35.763.895 I common_perf_print:    graphs reused =        253
+0.02.090.629 I sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> dist
+0.02.090.630 I generate: n_ctx = 8192, n_batch = 2048, n_predict = 256, n_keep = 0
+0.02.090.630 I
+0.35.751.551 I common_perf_print:    sampling time =      95.85 ms
+0.35.751.551 I common_perf_print:    samplers time =      32.76 ms /  5170 tokens
+0.35.751.554 I common_perf_print:        load time =    4396.60 ms
+0.35.751.555 I common_perf_print: prompt eval time =    4391.26 ms /  4914 tokens (    0.89 ms per token,  1119.04 tokens per second)
+0.35.751.556 I common_perf_print:        eval time =   29168.21 ms /   255 runs   (  114.39 ms per token,     8.74 tokens per second)
+0.35.751.556 I common_perf_print:       total time =   33666.04 ms /  5169 tokens
+0.35.751.557 I common_perf_print: unaccounted time =      10.73 ms /   0.0 %      (total - sampling - prompt eval - eval) / (total)
+0.35.751.557 I common_perf_print:    graphs reused =        253
 RETURNCODE: 0
