@@ -30,7 +30,7 @@ LLM agents 正在从固定工具调用器演变为可扩展执行环境，可以
 \sys 将该 transition 表示为 field-owned protected-decision lease，并通过 \(\mathsf{check\_and\_consume}\) 在同一原子步骤中验证 issuer-owned proofs、当前 intent、provenance、budget、expiry 和 delegation state。
 原型把这个 contract 接入 trace replay、local callable/env side effects、context and Skill placement、delegation handoff，并把 env/local-effect projection lowering 到 deterministic replay target，而不是生产级 OS monitor。LLM 只提出 plans 和 candidate leases，不在 TCB 内。
 评估支持一个有界结论：在已 instrumented protected-decision boundaries 内，\sys 可以阻断 unauthorized context-to-decision influence，同时保留 benign reference-action expressiveness。
-Same-event ablations 显示 no-owner collapse 会错误接受 3,593/3,823 个完整 checker 拒绝的 protected decisions。Local multi-boundary suite 和一个 integrated PDF-to-issue workflow 进一步显示同一 contract 可放到 side-effect、placement、handoff 和 tool/MCP gateway 前，并产生 0 个 unsafe executions/placements。
+Same-event ablations 固定 action、argument 和 provenance record，只替换 issuer ownership 或 lifecycle ownership，显示 no-owner collapse 会错误接受 3,593/3,823 个完整 checker 拒绝的 protected decisions。Local multi-boundary suite 和一个 integrated PDF-to-issue workflow 进一步显示同一 contract 可放到 side-effect、placement、handoff 和 tool/MCP gateway 前，并产生 0 个 unsafe executions/placements。
 \end{abstract}
 
 \section{引言}
@@ -43,7 +43,7 @@ LLM agents 的安全边界正在发生变化。传统应用扩展通常通过 AP
 
 现有防线分别覆盖了这个问题的一部分。Tool guards、argument validators 和 action-time authority controls 可以拒绝错误对象或非法参数~\cite{authgraph,pact,airguard}。Static allowlists 和 server-level policies 可以限制可见工具。Human approval gates 可以重新引入用户确认。OS sandbox 或 monitor 可以约束文件、网络和进程 side effects~\cite{actplane}。Provenance、taint 和 IFC-style defenses 可以表达部分 flow policy~\cite{camel,prompt-flow-integrity,fides,rtbas,neurotaint}。这些机制是必要的；若它们显式暴露 issuer-owned field proofs 和 same-transition lifecycle mutation，就可以实现本文接口的一部分。但 agent runtime 默认把 field proofs、lease state 和 lifecycle update 分散在 prompt construction、tool gateway、approval UI、sandbox 和 subagent handoff 中。OS、sandbox 或 extension substrate 可以执行 local effects 的资源策略，但它们不决定哪个 issuer-owned field proof 可以改变 agent 的 authority state。EIM/bpftime 和 ActPlane 的细节留到相关工作讨论~\cite{eim-bpftime,actplane}。
 
-\sys 的核心洞察是把这些分散对象显式化为一个 runtime-visible pre-effect authorization record。本文的主线分为三层：context influence 是要保护的安全对象，field-owned lease 是授权表达，authority-state commit object 是执行 lease 的运行时线性化机制。Lease 是可消耗的 authority object；commit object 是一次执行、放置或委托该 lease 时返回的线性化记录。非平凡点不是“再写一个 ABAC/IFC predicate”，而是 agent runtime 默认把 proof issuer、observation issuer 和 lifecycle writer 分散在 prompt construction、tool registry、runtime observer、approval UI 和 delegation adapter 中。Sound monitor 必须把这三者线性化到同一个 pre-effect transition。本文把这个要求称为 field-issuer linearization requirement。若状态只放在其中一层，某些 required proof 会不可见，或会被错误 issuer 写入。这个 record 同时提交 issuer-owned field proofs、checker-owned active-lease version 和 same-transition consume/delegate mutation，并返回可审计的 commit binding。本文把这一 linearization record 称为 authority-state commit object。本文比较的是 runtime 是否暴露这个授权状态对象，而不是某个 policy DSL 理论上能否写出相同布尔谓词；它的 necessity claim 只限定在本文测试过的 owner-projection、lifecycle 和 local-boundary removal families 上。一个 DSL、IFC runtime 或 reference monitor 若暴露同一对象，就在覆盖的 fields 上实现了 \sys 的接口；缺少任一已测试字段，则需要另外证明不会出现 class substitution、stale reuse、double consume 或 over-delegation。Audit binding 是实现中的追踪与审计字段；当前实验把它作为 auditability gap，而不是已证明必要的核心安全字段。
+\sys 的核心洞察是把这些分散对象显式化为一个 runtime-visible pre-effect authorization record。本文的主线分为三层：context influence 是要保护的安全对象，field-owned lease 是授权表达，authority-state commit object 是执行 lease 的运行时线性化机制。Lease 是可消耗的 authority object；commit object 是一次执行、放置或委托该 lease 时返回的线性化记录。非平凡点不是“再写一个 ABAC/IFC predicate”，而是 agent runtime 默认把 proof issuer、observation issuer 和 lifecycle writer 分散在 prompt construction、tool registry、runtime observer、approval UI 和 delegation adapter 中。Sound monitor 必须把这三者线性化到同一个 pre-effect transition。本文把这个要求称为 field-issuer linearization requirement：任何会产生 side effect、prompt authority placement 或 authority handoff 的 adapter，都必须在执行前暴露一个 authority-state transition API，让同一个 checker-state writer 同时看到 issuer-owned field proofs、runtime observations、active-lease version 和 consume/delegate mutation。若状态只放在其中一层，某些 required proof 会不可见，或会被错误 issuer 写入。这个 record 同时提交 issuer-owned field proofs、checker-owned active-lease version 和 same-transition consume/delegate mutation，并返回可审计的 commit binding。本文把这一 linearization record 称为 authority-state commit object。本文比较的是 runtime 是否暴露这个授权状态对象和 sole-writer discipline，而不是某个 policy DSL 理论上能否写出相同布尔谓词；它的 necessity claim 只限定在本文测试过的 owner-projection、lifecycle 和 local-boundary removal families 上。一个 DSL、IFC runtime 或 reference monitor 若暴露同一对象，就在覆盖的 fields 上实现了 \sys 的接口；缺少任一已测试字段，则需要另外证明不会出现 class substitution、stale reuse、double consume 或 over-delegation。Audit binding 是实现中的追踪与审计字段；当前实验把它作为 auditability gap，而不是已证明必要的核心安全字段。
 
 实现这一洞察需要解决三个工程挑战。第一，checker 必须分离不同 authority fields 的证明来源。Skill/manual text 可以指导 workflow，但不能替代用户意图。MCP/tool metadata 可以描述接口和 credential scope，但不能授权 sink。Script output、tool result 和文件状态可以提供 runtime evidence，但不能成为 instruction 或 approval reason。第二，lease table、budget counters 和 consumption state 必须属于 checker state \(\sigma\)，而不能被 env context 或 adapter 本地状态替代。第三，同一个授权对象必须出现在 tool call 之外的 prompt placement、Skill instruction placement、本地环境执行和 delegation handoff 边界，否则 untrusted context 仍可通过间接边界影响 authority。
 
@@ -197,13 +197,13 @@ C3 是 evidence contribution，覆盖表~\ref{tab:goal-map} 的 safety/system ro
 
 \subsection{授权输入}
 
-\sys 的 capability synthesis 不是从单一 prompt context 中抽取权限，而是从一组 proof-carrying issuer boundaries 中求解 lease。在本文的 agent-extension setting 中，这组边界实例化为四类授权输入类（authority-input classes）：agent、instruction、tool 和 runtime-observation/env。它们不是四个组件名，而是四个证明问题的 owner-equivalence partition：谁授权当前 run，哪个过程说明被 endorsement，哪个接口可被调用，以及本次运行实际观察到了什么。Agent context 证明用户授权的 goal、objects、sinks、approval tokens 和 delegation root。Instruction context 证明被 endorsement 的 workflow scope 和 procedure guidance。Tool context 证明 callable name、schema、credential scope、binary descriptor 和 declared side-effect contract。Env context 证明本次运行观察到的 concrete args、cwd、路径存在性、tool results、script outputs 和 observed side effects。
+\sys 的 capability synthesis 不是从单一 prompt context 中抽取权限，而是从一组 proof-carrying issuer boundaries 中求解 lease。在本文的 agent-extension setting 中，这组边界实例化为四类授权输入类（authority-input classes）：agent、instruction、tool 和 runtime-observation/env。它们不是四个组件名，而是四个证明问题的 owner-equivalence partition：agent 回答谁可以授权，instruction 回答哪个过程可以指导，tool 回答哪个接口可以执行，env 回答本次运行实际发生或观察到了什么。这四个问题的 issuer、可伪造面、观测点和 state-write authority 不同，因此不能只作为一组普通 attributes 合并。Agent context 证明用户授权的 goal、objects、sinks、approval tokens 和 delegation root。Instruction context 证明被 endorsement 的 workflow scope 和 procedure guidance。Tool context 证明 callable name、schema、credential scope、binary descriptor 和 declared side-effect contract。Env context 证明本次运行观察到的 concrete args、cwd、路径存在性、tool results、script outputs 和 observed side effects。
 
 用户原始文本不是第五类 authority input。Trusted issuer 会把用户文本 canonicalize 成不同 proof cells：goal、object、sink、approval 和 delegation root 进入 agent-owned intent fields；workflow preference、formatting preference 或过程约束进入 instruction-owned fields。即使某个 workflow preference 来自用户，它也不能单独替代 agent-owned sink、approval 或 delegation root。
 
 Env context 是必要的执行证据边界，不是 Unix environment variables。若只使用 agent intent、instruction/Skill/manual 和 tool/MCP interface 三类上层来源，checker 只能知道“用户想做什么”“过程如何描述”“接口如何声明”，却不能证明本次运行实际看到了哪些路径、stdout、tool result、文件状态、资源状态或外部数据。缺少 env 类，系统会退化成 prompt/tool policy。把 env 合并进 tool 或 instruction，则会让运行时文本继承接口可信度或过程可信度。反过来，把 tool 和 env 合并也不安全：tool schema 是执行前的接口承诺，env evidence 是执行中或执行后的观测事实。前者可以证明参数形状和 credential scope，后者只能把观测值绑定到已经授权的 predicate，不能反向证明接口或授权范围。
 
-这四类的 novelty 不在名称，而在 safe-merge test：两个 context 类只有在 issuer、可伪造面、field ownership、观测边界和 lifecycle authority 全部等价时才可以合并。形式化模型允许更细的 per-field owners；四类是本文 workloads 和 adapter surface 经过 safe merge 后得到的默认 owner-equivalence partition。E2 和 integrated workflow 只证明当前接入的 Skill/MCP/cmd/subagent/env workloads 中 agent、instruction、tool 和 env 不能安全合并，不声称所有 agent 系统只能有四类 context。同一段文本如果来自被 endorsement 的 \texttt{SKILL.md} 或手册，可能在 workflow scope 内成为 instruction context。如果它来自普通 PDF、网页、tool result、script output 或 subagent summary，即使内容像指令，也仍是 env context。Command-line tools 也不是第五类。Binary、argv schema 和 sandbox profile 属于 tool context，实际 cwd、输入文件、stdout/stderr 和文件系统变化属于 env context。
+这四类的 novelty 不在名称，而在 safe-merge derivation。推导从 protected fields 开始，而不是从 artifact 名称开始：先列出 sink、approval、workflow scope、callable schema、credential scope、observed path、stdout、delegation root 等 field families；再判断两个 field families 是否拥有相同 issuer、可伪造面、观测边界和 lifecycle authority；只有完全等价的 field families 才能共享 owner。形式化模型允许更细的 per-field owners；四类是本文 workloads 和 adapter surface 经过 safe merge 后得到的默认 owner-equivalence partition。E2 和 integrated workflow 只证明当前接入的 Skill/MCP/cmd/subagent/env workloads 中 agent、instruction、tool 和 env 不能安全合并，不声称所有 agent 系统只能有四类 context。同一段文本如果来自被 endorsement 的 \texttt{SKILL.md} 或手册，可能在 workflow scope 内成为 instruction context。如果它来自普通 PDF、网页、tool result、script output 或 subagent summary，即使内容像指令，也仍是 env context。Command-line tools 也不是第五类。Binary、argv schema 和 sandbox profile 属于 tool context，实际 cwd、输入文件、stdout/stderr 和文件系统变化属于 env context。
 
 E2 把 safe-merge criterion 转化为可证伪的 necessity-over-removals contract。四类不是一个关于 agent 世界的 ontology，也不是声称所有系统都只能有四类 owner，而是本文接入边界中的四个不可代填证明问题：谁授权了当前目标和 sink，哪个过程说明被 endorsement，哪个接口或 command 可以被调用，以及本次运行实际观察到了什么。若把任意两个问题放进同一个 proof boundary，checker 就需要额外证明其中一个问题的答案不能被另一个问题的 issuer 伪造或代填。E2 正是按这个 contract 测试折叠：tool\(\rightarrow\)agent 让 interface metadata 供应 user authority，env\(\rightarrow\)agent 让 runtime text 供应 user selection，env\(\rightarrow\)tool 让 observed output 供应 interface proof，instruction\(\rightarrow\)agent 让 workflow text 供应 approval。
 
@@ -418,7 +418,15 @@ Intent-carrying lease 的抽象形式为：
 
 \subsection{Issuer Ownership and Safe Merge}
 
-Owner projections 只有在 issuer、可伪造面、可证明字段、观测边界和 lifecycle authority 完全相同时才可合并。Agent、instruction、tool 和 env 分别回答四个不可互换的证明问题：用户授权了什么，过程如何被允许约束，接口声明了什么，以及本次运行实际观察到了什么。
+Owner projections 不是先验 taxonomy，而是从 protected fields 上的 safe-merge relation 推导出来的。设 \(F\) 是所有会出现在 protected transition 中的 authority fields。每个 field \(f\in F\) 有四个可审计来源属性：\(issuer(f)\) 指谁能签发该 field，\(forge(f)\) 指哪些输入能伪造或模仿该 field 的值，\(observe(f)\) 指 runtime 在哪个边界能观察该 field，\(write(f)\) 指哪个 state writer 可以创建、消费或更新该 field 对应的 authority state。两个 fields 只有在这些属性以及所需 lifecycle authority 完全等价时才可共享 owner：
+
+\[
+f_i \equiv_{merge} f_j
+\iff
+issuer_i=issuer_j \land forge_i=forge_j \land observe_i=observe_j \land write_i=write_j .
+\]
+
+四类 owner 是本文 workloads 中 \(F/\!\equiv_{merge}\) 的默认合并结果，而不是按 artifact 名称手工分组。Agent、instruction、tool 和 env 分别回答四个不可互换的证明问题：用户授权了什么，过程如何被允许约束，接口声明了什么，以及本次运行实际观察到了什么。
 
 错误合并会让一个 issuer class 补齐另一个 class 才拥有的 field。若把 \(C_{inst}\) 合并进 \(C_{tool}\)，Skill/manual workflow text 就会和 callable schema、credential scope、binary descriptor 处在同一 issuer class，工具结果或 tool metadata 更容易被误解释为 procedure authority。若把 \(C_{inst}\) 合并进 \(C_{agent}\)，Skill instruction 就可能替用户选择 sink、扩大 approval scope 或 mint lease。若把 \(C_{env}\) 合并进 \(C_{tool}\)，runtime observation 会和静态接口描述混在一起，已执行 tool result、script output 或文件状态就可能替 schema 或 policy 补证明。划分的目的不是命名方便，而是让每个 authority field 只有一个可以签发它的 issuer boundary。
 
@@ -703,6 +711,23 @@ Checker core 位于 \texttt{src/intentcap/}，实现 context labels、effect eve
 
 Checker state 显式保存 active/exhausted lease table、budget counters、temporal prerequisites、holder identity、delegation parent-child relation 和 audit records。每次 protected event 进入 checker 时，runtime adapter 必须提交 event \(e\)（含 argument values）、\(lease\_id\)、\(field\_proofs\) 和 control/data provenance。Checker 在一个函数调用中完成 lease lookup、field-owner proof check、argument predicate check、budget/expiry check 和 attenuation check。若事件被接受，checker 同步写入 audit log 并更新 budget 或 child lease state。若被拒绝，它返回 structured denial，adapter 不执行 side effect、不写 prompt section、不创建 child handoff。
 
+\subsection{Adapter-Facing Transition API}
+
+\(\mathsf{check\_and\_consume}\) 是 runtime adapter 面向 checker 的唯一 authority-changing API。它不是一个普通 allow/deny predicate，而是一个带状态提交语义的 transition：
+
+\[
+\begin{aligned}
+&\mathsf{check\_and\_consume}(e,lease\_id,field\_proofs,prov,version)\\
+&\qquad \rightarrow allow(\sigma',audit)\mid deny(reason,\sigma).
+\end{aligned}
+\]
+
+输入端，adapter 必须提交五类对象。第一，事件 \(e\) 包含 operation、object、arguments、holder、decision class 和 block point。第二，\(lease\_id\) 指向 checker 当前 active set 中的一条 lease。第三，\(field\_proofs\) 是按 \(owner(f)\) typed 的 proof map，覆盖本次 \(Req(d)\) 所需的 agent、instruction、tool 和 env fields。第四，\(prov\) 给出 data/control provenance 和 context influence modes。第五，\(version\) 是 adapter 观察到的 checker-state version，用于并发或 parallel subagent 提交时的 compare-and-swap 检查。
+
+输出端，\(\mathsf{allow}\) 返回新的 checker-owned state \(\sigma'\) 和 audit commit id。该 commit id 是 side effect、prompt section write 或 delegation handoff 的线性化点。Adapter 只能执行绑定到该 id 的 effect，不能缓存旧 allow、不能在 checker 外消耗 budget、不能恢复 exhausted lease，也不能本地写 parent-child capability graph。\(\mathsf{deny}\) 返回结构化原因，但不改变外部世界；adapter 必须阻止 handler、placement 或 handoff。
+
+这个 API 给出四个 runtime obligations。State ownership obligation 要求 active/exhausted leases、budgets、expiry 和 delegation graph 只有 checker 可以写。Linearization obligation 要求 field proof check、argument predicate、budget consume、expiry progress 和 delegation attenuation 在同一 state transition 内完成。Failure obligation 要求 deny 发生在 side effect、prompt authority placement 或 handoff 之前。Concurrency obligation 要求并发 tool calls 和 parallel subagents 通过 checker version 串行化或提供等价 compare-and-swap transition。E3 的每个 adapter 都按这四个 obligations 报告，而不是只报告某个本地测试是否通过。
+
 \subsection{Implemented Contract Surfaces}
 
 表~\ref{tab:implemented-contract-surfaces} 按 contract surface 而不是 artifact 列出原型。每一行都回答同一个问题：adapter 在哪个 block point 前提交哪些 proof/state objects，checker 如何成为唯一 state writer，以及该 surface 在当前证据中承担什么角色。这个组织避免把系统贡献解释成脚本集合；系统贡献是多边界 transition API 和 adapter contract。OS-monitor-style replay backend 是 env adapter 的 reference lowering，不是生产级 ActPlane integration。
@@ -799,6 +824,27 @@ E1 还包含一个已完成本地 Qwen3.6 matched slice，用来检查 live mode
 \subsection{E2: Issuer-Collapse and Lifecycle-Split Ablation}
 
 E2 是本文的机制必要性实验：它问移除 issuer ownership 或 same-transition lifecycle update 后，同一个 event/action/provenance record 是否会重新出现 unsafe accepting path。E2 的假设是：四类 authority-input fields 和 stateful lease lifecycle 共同形成一个不可拆开的 authority-state commit object。在本文测试的 no-owner 和 split-state variants 中，object/action guards、IFC/provenance guards 和 split-state counters 会 false-accept 某些事件，因为它们允许一类输入替另一类输入补齐 field，或把 budget/delegation/provenance 分散到不同状态中。因此，E2 是 issuer-collapse/lifecycle-split test，而不是完整自然频率证明，也不是声称所有 policy DSL 都无法表达相同 predicate。本文只声明 tested owner/lifecycle/local-boundary removal families 上的必要性：tested-removal matrix 中 10/10 个 removals 都有 same-event 或 local-boundary false-accept 反例；audit-id removal 仍是 1 个 gap，并且只作为 auditability gap 报告。
+
+为避免用 checker 结果反过来定义 owner class，E2 先执行 field-owner adjudication protocol，再执行 ablation。Adjudication 的输入不是 \sys 的 allow/deny，而是 task text、trusted object/sink selection、Skill/manual endorsement、tool or command schema、runtime observation 和 saved provenance label。标注者先为每个 protected field 选择 allowed issuer，并记录为什么其他 issuer 不能代填；只有之后，实验才把同一 event 交给 full checker 和 weakened variants。表~\ref{tab:field-owner-adjudication} 给出协议的代表性规则。这个协议把“哪个 owner 合法”绑定到外部证据源，而不是绑定到某个 baseline 是否失败。
+
+\begin{table}[t]
+\centering
+\tiny
+\setlength{\tabcolsep}{1.4pt}
+\caption{Field-owner adjudication protocol. Owner labels are assigned from task text, endorsement records, tool schemas, and runtime observations before ablation, not from the checker result.}
+\label{tab:field-owner-adjudication}
+\begin{tabular}{p{0.17\linewidth}p{0.17\linewidth}p{0.25\linewidth}p{0.31\linewidth}}
+\toprule
+Field family & Allowed issuer & Source evidence & Why other issuers cannot substitute \\
+\midrule
+Authorized sink / approval scope & Agent & user selection, trusted UI, admin policy, fresh approval & Skill text, tool metadata, and env output can quote a sink but cannot authorize it \\
+Workflow scope / prompt instruction slot & Instruction & endorsed \texttt{SKILL.md}, signed manual, user-endorsed procedure & PDF/tool result/stdout can contain imperatives but lacks instruction endorsement \\
+Callable / schema / credential scope & Tool & MCP schema, command registry, binary descriptor, sandbox profile & Runtime output can mention an API but cannot define interface or credential bounds \\
+Observed path / stdout / tool result & Env & gateway observation, filesystem/process state, tool result record & Tool schema and instructions predict behavior but do not prove this run's observation \\
+Delegation root / child lease bound & Agent + checker state & parent active lease, user/task role, current budget and graph & Child prompt or summary cannot expand parent authority or refresh exhausted lease \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 比较对象包括两类自然工程捷径和一个强收敛基线。第一类去掉 issuer ownership，并把 \(C_{agent},C_{inst},C_{tool},C_{env}\) 折叠成 generic trusted context。第二类保留 predicates，但把 proof、budget、expiry 和 delegation state 分散检查。Typed-provenance state guard 则已经保留 source/field owner、approval、holder、temporal 和 budget predicates，用来回答最强反驳：若一个 policy DSL 继续加入同一 pre-effect transition 中的 parent-child lease comparison、checker sole-writer state 和 child-state update，它就不再是被 \sys 反驳的外部 baseline，而是在该 boundary 上实现了 \sys 的 commit interface。
 
@@ -1063,7 +1109,7 @@ ActPlane & OS/local event policy & syscall/local side effect & OS monitor substr
 表~\ref{tab:closest-abstractions} 比较的是默认 runtime authorization object，而不是实现成熟度或可编程表达力。若一个 policy DSL 显式暴露同一 authority-state commit record，并在同一 transition 中原子更新，它就在覆盖的 fields 和 transitions 上实现了与 \sys 相同的授权对象。这正是本文的边界：\sys 不是比所有可能 DSL 更 expressive，而是指出 agent protected decisions 的 sound runtime 必须把 issuer-owned field proofs、provenance 和 lifecycle update 暴露为同一个 authority-state commit object。CaMeL/IFC-style work 的 published runtime object 是 flow 或 dependency label，它默认线性化的是 flow check 而不是 lease lifecycle。AuthGraph、PACT 和 AIRGuard 把 action、argument 或 action graph 作为主要检查对象，它们更接近 action-time authority/provenance control。SkillGuard/SkillScope 以 Skill package permission 或 manifest 为中心，默认 owner 是 Skill policy runtime。Progent、PCAS 和 AgentSpec 可以编码丰富 policy；如果它们把 field proofs、checker-owned lease state 和 same-transition lifecycle update 暴露成同一 commit object，就在该 decision class 上与 \sys 等价。ActPlane 的 published object 是 OS/local event policy，适合作为 env projection 的 enforcement substrate，但默认不铸造 agent/instruction/tool/env field proofs。与这些方向相比，\sys 将授权对象定义为可消耗、可过期、可衰减的 protected-decision lease，并把 issuer ownership、proof、budget 和 delegation 放入同一个 transition。
 
 \subsection{应用扩展隔离与底层 Enforcement}
-传统扩展系统和 sandbox 关注扩展代码能访问哪些宿主资源。EIM/bpftime 将应用扩展表示为 host resources 和 capabilities，并强调安全、高效的 userspace extension execution~\cite{eim-bpftime}。ActPlane 将 agent policy lowering 到 OS-level enforcement，以覆盖 tool interception 看不到的 file、process 和 network side effects~\cite{actplane}。这些机制适合作为 \sys 的 enforcement backend 或系统对照，但默认不签发 upstream field proofs。OS-level monitor 可以阻止 \texttt{net.connect(attacker.com)} 或未授权 file write。若 backend 只接收 OS/local events，它看不到 prompt placement、instruction endorsement、agent-owned sink proof 或 delegation lifecycle；若 upstream 显式提供这些 projections，并与 checker-owned lease state 共享同一个线性化点，它就在 env/local projection 上实现了 \sys 的 lowering contract。\sys 先生成带 issuer proof 的 lease contract。ActPlane-style backend 接收的是已经由 checker 认证的 env lease contract，并执行其中 file/process/network/local-env 子集；它不是 sink、approval、instruction endorsement、tool interface proof 或 delegation graph mutation 的签发者。\sys 的问题在更上层：某个 tool choice、sink selection、approval scope 或 delegation decision 是否由当前用户 intent 授权，并且是否被不可信 context 非法影响。
+传统扩展系统和 sandbox 关注扩展代码能访问哪些宿主资源。EIM/bpftime 将应用扩展表示为 host resources 和 capabilities，并强调安全、高效的 userspace extension execution~\cite{eim-bpftime}。ActPlane 将 agent policy lowering 到 OS-level enforcement，以覆盖 tool interception 看不到的 file、process 和 network side effects~\cite{actplane}。在 \sys 的分层视角中，ActPlane-style monitor 是 env projection backend：它执行已经认证的 file/process/network/local-env predicates，并提供本地执行观测。IntentCap 的授权对象位于 pre-OS authority decision 层：它在 tool choice、sink selection、approval scope、prompt placement 和 delegation handoff 发生前，把 agent intent、instruction endorsement、tool interface proof、env observation 和 lease lifecycle 线性化为一个 commit object。若 OS/local backend 接收这个 commit object 的 env projection，它就在本地效果子集上实现 \sys 的 lowering contract；若只接收 syscall/local event，则它仍然是强 enforcement backend，但不是 sink、approval、instruction endorsement、tool interface proof 或 delegation graph mutation 的签发者。
 
 \begin{table}[t]
 \centering
