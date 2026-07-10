@@ -273,6 +273,11 @@ def _checks() -> list[dict[str, Any]]:
         _json("OwnerMatrix.recovery_surfaces", "8-task recovery result covering 6 surfaces", "results/eval/R307OWNERMATRIX/context_owner_matrix_summary.json", "recovery_surfaces_covered", 6),
         _json("OwnerMatrix.recovery_owners", "all 4 owner classes", "results/eval/R307OWNERMATRIX/context_owner_matrix_summary.json", "owner_class_count", 4),
         _json("OwnerMatrix.no_global_taxonomy", "不是关于所有可能 context taxonomy 的全局最小性证明", "results/eval/R307OWNERMATRIX/context_owner_matrix_summary.json", "global_taxonomy_claim", False),
+        _json("BenchRecovery.denial_rows", "11 denial-task rows", "results/eval/R309BENCHRECOVERYGATE/benchmark_recovery_gate_summary.json", "benchmark_denial_task_rows", 11),
+        _json("BenchRecovery.feedback_tasks", "0 feedback-attempted tasks", "results/eval/R309BENCHRECOVERYGATE/benchmark_recovery_gate_summary.json", "benchmark_feedback_attempted_tasks", 0),
+        _json("BenchRecovery.recovered_benchmark", "recovered benchmark tasks are still 0", "results/eval/R309BENCHRECOVERYGATE/benchmark_recovery_gate_summary.json", "benchmark_recovered_tasks", 0),
+        _json("BenchRecovery.handwritten", "14/14 recovery result", "results/eval/R309BENCHRECOVERYGATE/benchmark_recovery_gate_summary.json", "handwritten_recovered_tasks", 14),
+        _json("BenchRecovery.gate_status", "recovery gate", "results/eval/R309BENCHRECOVERYGATE/benchmark_recovery_gate_summary.json", "gate_status", "open"),
     ]
 
 

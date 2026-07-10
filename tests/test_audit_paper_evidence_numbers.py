@@ -85,6 +85,11 @@ def test_paper_evidence_audit_matches_saved_results(tmp_path):
     assert any(row["claim_id"] == "OwnerMatrix.tested_removals" for row in rows)
     assert any(row["claim_id"] == "OwnerMatrix.recovery_surfaces" for row in rows)
     assert any(row["claim_id"] == "OwnerMatrix.no_global_taxonomy" for row in rows)
+    assert any(row["claim_id"] == "BenchRecovery.denial_rows" for row in rows)
+    assert any(row["claim_id"] == "BenchRecovery.feedback_tasks" for row in rows)
+    assert any(row["claim_id"] == "BenchRecovery.recovered_benchmark" for row in rows)
+    assert any(row["claim_id"] == "BenchRecovery.handwritten" for row in rows)
+    assert any(row["claim_id"] == "BenchRecovery.gate_status" for row in rows)
 
     digests = list(csv.DictReader((output_dir / "input_digests.csv").open()))
     assert any(row["path"] == "docs/autopaper/intentcap-paper-zh.tex" for row in digests)
