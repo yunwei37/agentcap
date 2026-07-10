@@ -689,15 +689,17 @@ OS-monitor-style lowering & active env leases lowered to deny-by-default rules w
 \section{评估}
 \label{sec:evaluation}
 
-评估围绕三个主实验块和一个 supporting audit 组织。三组主实验按 claim dependency 排列：E1 先排除 event model 无法表达 benign behavior 的空洞安全结果，E2 再测试 issuer ownership 和 atomic lifecycle 是否是必要机制，E3 最后验证同一个 transition object 能否放到 tool-call 之外的本地系统边界前。E1 是 feasibility/expressiveness guardrail：它检查 protected-decision event model 是否能表达良性 reference actions，并用 replay safety 做实现一致性 sanity check，而不是证明攻击自然流行率。E2 是核心机制实验，测试 issuer collapse 或 lifecycle split 是否在同一事件上重新产生 unsafe accepting paths，并包含 typed-provenance state guard 作为强收敛基线。E3 是系统接口实验，验证同一个 transition object 能否放到本地 pre-side-effect、pre-placement/handoff 和 lowering boundaries 前。Supporting audit 只问 lease 是否是可机器审计的 authority object，并报告 author-adjudicated lease-distance 结果；它不承担独立 expert-oracle least-privilege 结论。
-
-对包含模型调用的实验，我们固定底层模型、任务顺序、工具描述和 prompt budget。对 replay experiments，我们固定 event set、oracle 和 baseline policy，只改变授权检查层。High-impact denials 使用同一个 protected-decision oracle 判定。若某个 protected decision 的 control provenance 来自缺少相应 influence mode 的 context source，该事件应被拒绝。本文中的 baseline policies 在同一事件模型上实现其 checkable predicates，用来表示 provenance/IFC/policy-style baselines 的可判定部分。它们不是 AuthGraph、PACT、AIRGuard 或其他完整系统的复现。本文区分两个结果指标：unsafe accept 表示 checker 或 baseline 接受违规事件，unsafe execution/placement 表示本地副作用或 prompt placement 实际发生。表~\ref{tab:evaluation-summary} 给出主实验和 supporting audit 与结论的对应关系。
+评估按 claim dependency 组织，而不是按脚本或 artifact 罗列。E1 先检查 protected-decision event model 是否仍能表达良性 reference actions，避免后续安全结果建立在不可用模型上。E2 测试本文的核心机制 claim，即 issuer ownership 和 atomic lifecycle update 是否是必要的 runtime invariant。E3 再验证同一个 transition object 能否放到 tool-call 之外的本地系统边界前。Supporting audit 只问 lease 是否是可机器审计的 authority object，并报告 author-adjudicated lease-distance 结果；它不承担独立 expert-oracle least-privilege 结论。
 
 \subsection{评估方法}
 
 Workloads 分为两组。公开 trace 来自 AgentDojo、MCPTox、InjecAgent 和 tau2-style artifacts~\cite{agentdojo,mcptox,injecagent,tau2bench}。本地 suites 覆盖 Skill/manual injection、command/script side effects 和 delegation workflows。这些 workloads 覆盖 agent、instruction、tool 和 env 四类输入，而不是只测试 MCP/tool-call 参数。
 
-Baselines 包括 vanilla/all-tool exposure、static ACL、exact-tool ACL、MCP/server allowlist、Skill manifest-style policy、tool-call guard、OS/sandbox-only policy、IFC/taint predicate、action-provenance predicate 和 split-state composite policy。Same-event comparison 表示不同策略在同一批 protected events 上重放，不代表 live replanning。Oracle sources 包括 benchmark security/utility labels、protected-decision labels、author-adjudicated lease labels 和 provenance-proof completeness records。
+对包含模型调用的实验，我们固定底层模型、任务顺序、工具描述和 prompt budget。对 replay experiments，我们固定 event set、oracle 和 baseline policy，只改变授权检查层。High-impact denials 使用同一个 protected-decision oracle 判定。若某个 protected decision 的 control provenance 来自缺少相应 influence mode 的 context source，该事件应被拒绝。
+
+Baseline policies 在同一事件模型上实现各自可判定的 predicates，用来近似 provenance、IFC 和 policy-style baselines 的可检查部分。它们不是 AuthGraph、PACT、AIRGuard 或其他完整系统的复现。Baselines 包括 vanilla/all-tool exposure、static ACL、exact-tool ACL、MCP/server allowlist、Skill manifest-style policy、tool-call guard、OS/sandbox-only policy、IFC/taint predicate、action-provenance predicate 和 split-state composite policy。Same-event comparison 表示不同策略在同一批 protected events 上重放，不代表 live replanning。Oracle sources 包括 benchmark security/utility labels、protected-decision labels、author-adjudicated lease labels 和 provenance-proof completeness records。
+
+本文区分两个结果指标。Unsafe accept 表示 checker 或 baseline 接受违规事件。Unsafe execution/placement 表示本地副作用或 prompt placement 实际发生。表~\ref{tab:evaluation-summary} 给出主实验和 supporting audit 与结论的对应关系。
 
 \begin{table}[t]
 \centering
@@ -719,7 +721,7 @@ Support & Lease auditability & 24 author-adjudicated lease labels, scored policy
 
 \subsection{E1: Event-Model Feasibility and Reference-Action Coverage}
 
-E1 的主问题不是证明机制必要性，而是排除一个基本失败模式：如果 protected-decision event model 不能表达 benign reference behavior，那么后续安全结果即使为真也没有实用意义。为固定比较对象，实验把 3,746 个 benchmark-derived protected-event replay cases 输入 \sys 和 same-event policies，作为 unsafe-accept sanity check；同时在 3,813 个 benign reference actions 与 2,556 个 applicable tool-oracle checks 上评估良性动作是否仍能被表示和覆盖。Primary metric 是 reference-action coverage，unsafe accept 只是对 event extraction 和 replay policy 的 sanity check。E2 才承担 issuer/lifecycle 机制必要性的证明责任。
+E1 排除一个基本失败模式。如果 protected-decision event model 不能表达 benign reference behavior，那么后续安全结果即使为真也没有实用意义。为固定比较对象，实验把 3,746 个 benchmark-derived protected-event replay cases 输入 \sys 和 same-event policies，作为 unsafe-accept sanity check；同时在 3,813 个 benign reference actions 与 2,556 个 applicable tool-oracle checks 上评估良性动作是否仍能被表示和覆盖。Primary metric 是 reference-action coverage，unsafe accept 只是对 event extraction 和 replay policy 的 sanity check。E2 才承担 issuer/lifecycle 机制必要性的证明责任。
 
 在 protected-event replay 中，\sys 在 3,746 个 protected-event cases 上产生 0 个 unsafe accepts。Object/tool ACL policies 接受许多 protected-decision violations，因为它们不区分 context influence authority。在 benign reference-action proxy 上，\sys 覆盖 3,813/3,813 个 reference actions，并通过 2,554/2,556 个 applicable tool-oracle checks。
 
@@ -902,13 +904,13 @@ Closed-loop utility and recovery remain preliminary & The matched local-Qwen sli
 \end{table}
 
 \subsection{局限}
-当前评估支持的结论是：protected-decision transitions 可以在已 instrumented 的边界上被形式化并执行。结果覆盖 instrumented protected-decision events。端到端 utility、approval burden、independent expert replication 和 production sandbox integration 需要单独实验。
+本节只支持一个结论，即 protected-decision transitions 可以在已 instrumented 的边界上被形式化并执行。结果覆盖 instrumented protected-decision events。端到端 utility、approval burden、independent expert replication 和生产级 sandbox integration 需要单独实验。
 
 第一，workloads 仍以 saved traces、reference-action proxies、controlled counterexample suites、benchmark-derived counterexamples 和 local experiments 为主。Authority-input characterization 使用已有 artifacts 做 derived trace annotation。对应的 48 个 sampled protected-decision labels 已经提供 natural protected-decision events 和 author-adjudicated labels，但顶会级 prevalence claim 仍需要独立标注者复核 field owner 与 unsafe substitutes。MCPTox-derived benchmark cases 使用已有 artifacts 生成 24 个 authentic tool-metadata counterexample cases，但它不是自然发生频率统计。更大规模的 online user-simulator evaluation 是端到端 utility claim 的证据来源。
 
 第二，辅助 lease audit 使用 author-adjudicated labels。这能检查 lease schema 和 authority-distance invariants。Blinded independent expert replication 才能支撑 expert-oracle least-privilege claim。
 
-第三，本地 env backend 在隔离目录中验证 pre-side-effect blocking。OS-monitor-style replay backend 只验证同一 lease contract 可以降低成 monitor rule set。System-surface result 只是把这些本地边界结果汇总。Production ActPlane/kernel integration、真实 syscall mediation 和低开销 enforcement 仍需要单独工程与实验。
+第三，本地 env backend 在隔离目录中验证 pre-side-effect blocking。OS-monitor-style replay backend 只验证同一 lease contract 可以降低成 monitor rule set。System-surface result 只是把这些本地边界结果汇总。生产级 ActPlane/kernel integration、真实 syscall mediation 和低开销 enforcement 仍需要单独工程与实验。
 
 第四，本地 boundary tests 已经实现 live context-placement guard、Skill/manual instruction-source substitution test 和 live delegation monitor test。若要声称完整多边界 enforcement，还需要接入生产级 prompt builder、真实 subagent runtime、更多自然 Skill/manual injection workloads 和端到端 approval/recovery metrics。
 
