@@ -1,0 +1,61 @@
+{
+  "analysis": "bubblewrap namespace env sandbox probe",
+  "backends": {
+    "intentcap_bwrap": {
+      "allowed_by_backend": 4,
+      "events": 10,
+      "max_sandbox_elapsed_ms": 25.498,
+      "mean_sandbox_elapsed_ms": 22.787,
+      "sandbox_attempts": 3,
+      "sandbox_successes": 3,
+      "unsafe_events_contained_by_sandbox": 0,
+      "unsafe_host_effects": 0,
+      "unsafe_reference_events_allowed": 0,
+      "unsafe_semantic_effects": 0
+    },
+    "object_only_bwrap": {
+      "allowed_by_backend": 8,
+      "events": 10,
+      "max_sandbox_elapsed_ms": 26.188,
+      "mean_sandbox_elapsed_ms": 22.98,
+      "sandbox_attempts": 6,
+      "sandbox_successes": 6,
+      "unsafe_events_contained_by_sandbox": 2,
+      "unsafe_host_effects": 1,
+      "unsafe_reference_events_allowed": 4,
+      "unsafe_semantic_effects": 1
+    }
+  },
+  "bwrap": "/usr/bin/bwrap",
+  "bwrap_version": "bubblewrap 0.9.0",
+  "forced_network_probe": {
+    "attempted": true,
+    "blocked": true,
+    "elapsed_ms": 20.304,
+    "returncode": 1,
+    "stderr": "Traceback (most recent call last):\\n  File \"<string>\", line 1, in <module>\\n  File \"/usr/lib/python3.12/socket.py\", line 852, in create_connection\\n    raise exceptions[0]\\n  File \"/usr/lib/python3.12/socket.py\", line 837, in create_connection\\n    sock.connect(sa)\\nOSError: [Errno 101] Network is unreachable\\n"
+  },
+  "git_status": "## main...origin/main\n M docs/autopaper/intentcap-paper-zh.tex\n M scripts/audit_paper_evidence_numbers.py\n M tests/test_audit_paper_evidence_numbers.py\n?? results/eval/R298BWRAP/\n?? scripts/run_bwrap_env_sandbox_probe.py\n?? tests/test_run_bwrap_env_sandbox_probe.py",
+  "input_digests": [
+    {
+      "bytes": 7160,
+      "input_name": "trace",
+      "path": "examples/env_adapter_side_effect_suite.json",
+      "sha256": "a1d5fa355deb0a837e8d5848467bcfbb02697ddff9b94ca5fa4a48fb8e3fdccf"
+    }
+  ],
+  "input_trace_sha256": "a1d5fa355deb0a837e8d5848467bcfbb02697ddff9b94ca5fa4a48fb8e3fdccf",
+  "notes": [
+    "This run executes local handlers under bubblewrap namespaces.",
+    "It does not run a model, clone/sync/download datasets, or implement ActPlane/eBPF.",
+    "Bubblewrap enforces OS-visible filesystem/process/network containment but cannot decide holder/provenance or prompt-placement authority."
+  ],
+  "output_dir": "results/eval/R298BWRAP",
+  "platform": "Linux-6.15.11-061511-generic-x86_64-with-glibc2.39",
+  "project_head": "097405f850bac41ba9736b7423451df91e03621d",
+  "python": "3.12.3",
+  "run_id": "R298BWRAP",
+  "script_sha256": "f9b617b35abca2712d40eb290694b97bfa1eb54fb1ef50149593af90fe7e176d",
+  "strace_version": "strace -- version 6.8",
+  "trace_path": "examples/env_adapter_side_effect_suite.json"
+}

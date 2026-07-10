@@ -52,6 +52,11 @@ def test_paper_evidence_audit_matches_saved_results(tmp_path):
     assert "E4.lower_contract.default_allow" in claim_ids
     assert "E4.lower_contract.no_arg" in claim_ids
     assert "E4.lower_contract.no_budget" in claim_ids
+    assert "E4.bwrap.intentcap_allowed" in claim_ids
+    assert "E4.bwrap.intentcap_unsafe_host" in claim_ids
+    assert "E4.bwrap.object_contained" in claim_ids
+    assert "E4.bwrap.object_unsafe_host" in claim_ids
+    assert "E4.bwrap.network_blocked" in claim_ids
     assert "E4.proof.events" in claim_ids
     assert "E4.proof.complete" in claim_ids
     assert any(row["claim_id"] == "Recovery.feedback" for row in rows)
