@@ -384,3 +384,30 @@ R151-R172 update for C3: high-impact write lease activation/value-proof is imple
 - R131-R172 update: candidate-correctness labeling, filter-policy simulation, generation-gap diagnosis, actionability diagnosis, repair-map analysis, bounded/cumulative/priority repair-map task-loop execution, structured write-proof execution, residual audits, per-leaf proof review, recovery planning, and cumulative R166 execution are now available over the saved ranked-activation run and broader missing-reference set. They show the most valuable next experiment is not another ranker-only, filter-only, invalid-reference candidate-generation activation, standalone post-hoc repair-map replay, cumulative replay, priority/drain scheduler, or write-proof bypass. The next repair should target structured value proof, repeated/consumed-state selection, broader DB-feasible missing references, hidden-tool activation when evidence exists, suppression of non-reference and same-tool-wrong candidates, and an explicit planner or expert oracle before a proof-complete candidate becomes an automatic action.
 - R175 update: bounded read-tool activation is now available as a task-loop mechanism, not only as an audit. It successfully activates both read-only airline `get_user_details` candidates found by R174 and produces one additional all-reference-executed/action-reward task. The remaining repair space is narrower: high-impact structured write proof, the retail missing-evidence activation row, repeated/consumed-state selection, upstream planning, reward/env debugging, and expert/proof-completeness labels.
 - R176-R179 update: the post-R175 residual audit finds 5 more read-only reservation-detail activation candidates. The next small mechanism step can test whether the same rule closes that bucket; the paper still needs broader proof that planner/recovery works beyond these saved exact candidates.
+
+## Forkable-authority theory branch (2026-07-31)
+
+This is a separate-paper novelty audit for [`formal-model-forkable-agent-authority.md`](formal-model-forkable-agent-authority.md), not a change to the current IntentCap claim.
+
+### Name-free claim comparison
+
+| Candidate claim | Prior occupancy | Disposition |
+|---|---|---|
+| Consumable capability plus a global non-rollbackable ledger prevents double use. | Linear access-control credentials with online ratification already enforce globally bounded and atomic consumption; rollback-resistant systems already externalize monotone state. | Occupied; do not claim. |
+| Linear authority must be moved or split at fork and delegation. | Linear capabilities, separation/resource logics, and fork/join logics already provide move, split, restricted merge, and revocation reasoning. | Occupied; use as foundation. |
+| Agent checkpoint restore can replay effects or resurrect one-shot authority. | ACRFence directly identifies both classes. | Occupied; use as empirical motivation. |
+| Speculative branches need effect gating before a winner commits. | Fork-Explore-Commit, Atomix, Cordon, and Ghost Tool Calls cover branch transactions, effect frontiers, staging, compensation, and issue-time leakage. | Occupied in substantial part. |
+| Authority may be shared exactly across descendants that cannot become durable together; restore and merge change that relation and require authorization. | Additive/multiplicative linear logic and event structures supply the mathematics, but the current search found no agent-authority model giving a compatibility-indexed conservation invariant plus safe-sharing/safe-merge characterization. | Current strongest research opening; medium risk pending full-text audit. |
+| A topology-oblivious checkpoint monitor can be safe and maximally permissive. | No equivalent theorem found in the inspected agent work. | Proposed impossibility target: identical local snapshots cannot distinguish safe choose-one sharing from unsafe co-committable cloning. |
+
+### Required primary sources
+
+- [Consumable Credentials in Logic-Based Access-Control Systems](https://www.cs.cmu.edu/~fp/papers/ndss07.pdf): global bounded use, linear access control, ratification, and atomicity.
+- [Capstone](https://www.usenix.org/system/files/usenixsecurity23-yu-jason.pdf): alias-free linear capabilities, split/limited merge, and hierarchical revocable delegation.
+- [DisLog](https://iris-project.org/pdfs/2024-popl-dislog.pdf) and [Iron](https://iris-project.org/iron/): task-tree/resource/obligation proof machinery.
+- [Memoir](https://www.microsoft.com/en-us/research/publication/memoir-practical-state-continuity-for-protected-modules/), [ROTE](https://www.usenix.org/conference/usenixsecurity17/technical-sessions/presentation/matetic), and [LCM](https://arxiv.org/abs/1701.00981): state continuity, rollback/clone protection, and fork-linearizability.
+- [ACRFence](https://arxiv.org/abs/2603.20625), [Fork, Explore, Commit](https://arxiv.org/abs/2602.08199), [Atomix](https://arxiv.org/abs/2602.14849), [Cordon](https://arxiv.org/abs/2606.17573), [DART](https://arxiv.org/abs/2605.23311), [Ghost Tool Calls](https://arxiv.org/abs/2606.02483), [Commit-Time Authorization](https://arxiv.org/abs/2607.10487), and [Agent libOS](https://arxiv.org/abs/2606.03895): current agent lifecycle, transaction, recovery, privacy, authorization, and capability pressure.
+
+### Current verdict
+
+The generic execution-tree capability story is not sufficiently novel. The surviving claim is topology-sensitive: every possible jointly durable branch frontier must embed into a valid authority configuration. This makes mutually exclusive speculation additive, co-committable execution multiplicative, and a choice-to-merge or live-original restore an authorization event. The theory needs a mechanized safe-sharing/safe-merge characterization and topology-oblivious impossibility; otherwise it collapses to classic linear capabilities plus a ledger.
