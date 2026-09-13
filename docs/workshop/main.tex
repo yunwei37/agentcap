@@ -34,11 +34,16 @@
 \title{LLM Agent Capabilities Should Follow Task Intent and Context Source}
 % LLM 智能体的能力应该跟随任务意图和上下文来源
 
-\author{Yusheng Zheng$^1$, Wenhui Zhang$^2$, Yu Mao$^3$}
-\affiliation{%
-  \institution{$^1$UC Santa Cruz, USA \qquad $^2$Roblox, USA \qquad $^3$Bytedance, China}
-  \city{}\country{}}
-\email{yzhen165@ucsc.edu, wenhuizhang.psu@gmail.com, mynotwo@126.com}
+\author{Yusheng Zheng}
+\affiliation{\institution{UC Santa Cruz}\city{}\country{}}
+\email{yzhen165@ucsc.edu}
+\author{Wenhui Zhang}
+\affiliation{\institution{Roblox}\city{}\country{}}
+\email{wenhuizhang.psu@gmail.com}
+\author{Yu Mao}
+\affiliation{\institution{Bytedance}\city{}\country{}}
+\email{mynotwo@126.com}
+\renewcommand{\shortauthors}{Zheng et al.}
 
 \begin{abstract}
 LLM agents take real actions---executing code, modifying files, calling services, delegating tasks---driven by context sources: user requests, tool results, documents, shell outputs, Skill and MCP instructions, memory.
@@ -47,8 +52,8 @@ Unlike traditional systems, where capability is predefined, the least-privilege 
 % 与能力是确定性且预定义的传统系统不同，智能体所需的最小权限能力是动态的，取决于智能体对任务的意图：它想做什么以及它计划如何完成。
 This creates a security and safety challenge: all inputs enter one shared planning channel with equal influence, by adversarial injection or accidental scope widening, yet a user's explicit request and a document's extracted text carry different trust and should not share authority to choose a destination or widen access.
 % 这带来了安全与可靠性挑战：所有输入以同等影响力进入同一个共享规划通道，无论是通过对抗性注入还是意外的范围扩大，但用户的显式请求和文档的提取文本有不同的信任等级，不应拥有同样的权限来选择目标或扩大访问范围。
-Current defenses control allowed operations, not which inputs influence which decisions.
-% 当前防御控制哪些操作被允许，但不控制哪些输入可以影响哪些决策。
+Existing defenses constrain operations and information flow; we study task-scoped, multi-source authority composition.
+% 现有防御约束操作与信息流；本文研究任务范围内的多来源权限组合。
 
 We argue that agent capabilities should be scoped to the current task intent, not a sandbox or session lifetime, and that no single context source defines a complete capability.
 % 我们认为智能体的能力应该限定在当前任务意图的范围内，而不是沙箱或会话生命周期，且没有任何单一上下文来源能定义完整的能力。
@@ -63,6 +68,7 @@ Evaluation shows \sys blocks tested violations without rejecting benign actions,
 \end{abstract}
 
 \maketitle
+\hypersetup{pdfauthor={Yusheng Zheng, Wenhui Zhang, Yu Mao}}
 
 \section{Background and Motivation}
 % 背景与动机
@@ -75,10 +81,10 @@ Each input is useful precisely because it affects future behavior---the same pro
 % 同样的特性带来了安全与可靠性问题。
 In an agent, any input can influence any action, through adversarial injection~\cite{greshake-injection} or accidental scope widening.
 % 在智能体中，任何输入都可以影响任何操作，无论是通过对抗性注入~\cite{greshake-injection}还是意外的范围扩大。
-Current defenses---prompt-level guardrails~\cite{camel,dualllm}, tool-level permission guards~\cite{progent}, execution sandboxes~\cite{isolategpt}, OS-level policy engines~\cite{actplane}---all control what the agent may do: which tool is called, which file read, which process executed.
-% 当前防御——包括提示级护栏~\cite{camel,dualllm}、工具级权限守卫~\cite{progent}、执行沙箱~\cite{isolategpt} 和 OS 级策略引擎~\cite{actplane}——都控制智能体可以做什么：哪个工具可以调用，哪个文件可以读取，或者哪个进程可以执行。
-None controls what drives each decision: which source selects the tool, fills the repository field, or widens approval scope.
-% 没有一个控制什么被允许驱动每个决策，即哪个来源可以选择工具、填充仓库字段或扩大审批范围。
+Existing defenses separate control from untrusted data~\cite{camel,dualllm}, enforce tool permissions~\cite{progent}, isolate execution~\cite{isolategpt}, constrain information flow~\cite{fides}, or enforce OS policies~\cite{actplane}.
+% 现有防御将控制与不受信任数据分离、强制执行工具权限、隔离执行、约束信息流或强制执行 OS 策略。
+Our focus is explicit ownership of each capability field across four context sources: which source selects the tool, fills the repository field, or supplies approval scope.
+% 本文聚焦于四个上下文来源对各能力字段的显式所有权：哪个来源选择工具、填充仓库字段或提供审批范围。
 
 \textbf{Example.} 
 Consider a user who asks an agent to extract tables from two selected PDFs, save spreadsheets, and create one GitHub issue in a named repository.
@@ -116,8 +122,8 @@ The adversary controls runtime-environment content, documents, tool outputs, web
 % 威胁模型与 TCB。攻击者控制运行时环境的内容——文档、工具输出、网络数据、委托智能体的消息——并可能在 Skill 或 MCP 文本中植入指令；它不能控制用户的结构化选择或执行层。
 The LLM planner and compiler are untrusted and arbitrarily manipulable: they propose but never decide.
 % LLM 规划器和 LLM 辅助编译器不受信任且可能被任意操纵：它们只提出建议，从不做决定。
-The TCB (dashed box in Figure~\ref{fig:arch}) is the intent issuer, source labeler, deterministic checker, and enforcement layer (hooks, MCP gateway, OS enforcer).
-% TCB——即图~\ref{fig:arch} 中的虚线框——是意图签发器、来源标注器、确定性检查器和执行层（钩子、MCP 网关、OS 执行器）。
+The TCB comprises the intent issuer, source labeler, and deterministic checker (dashed box in Figure~\ref{fig:arch}), together with the enforcement layer (hooks, MCP gateway, OS enforcer).
+% TCB 包括意图签发器、来源标注器、确定性检查器（图~\ref{fig:arch} 中的虚线框），以及执行层（钩子、MCP 网关、OS 执行器）。
 
 \begin{figure}[t]
 \centering
@@ -160,7 +166,7 @@ The TCB (dashed box in Figure~\ref{fig:arch}) is the intent issuer, source label
 \end{tikzpicture}%
 }
 \caption{\sys architecture: the untrusted compiler proposes leases, the TCB checker decides.}
-% \Description{The intent issuer, source labeler, and deterministic checker form the trusted computing base; an untrusted LLM-assisted compiler proposes candidate leases, and accepted leases are lowered to the MCP gateway, enforcement hooks, and OS-level enforcer.}
+\Description{The intent issuer, source labeler, and deterministic checker validate leases proposed by an untrusted LLM-assisted compiler. Enforcement hooks, an MCP gateway, and an OS-level enforcer apply accepted leases.}
 \label{fig:arch}
 \end{figure}
 
@@ -188,7 +194,7 @@ A deterministic checker enforces this monotonic narrowing before any side effect
 % 确定性检查器在任何副作用、上下文放置或委托交接提交之前强制执行这种单调缩减。
 Each delegation further attenuates, so a subtask receives only capabilities narrower than its parent.
 % 每次委托进一步衰减，子任务只接收比其父任务更窄的能力。
-The checker exposes a single transition, $\mathsf{check\_and\_consume}(e,\mathit{lease},\mathit{proofs},\sigma) \rightarrow \mathsf{allow}(\sigma') \mid \mathsf{deny}$, that every adapter must call before a side effect commits.
+The checker exposes a single transition, $\mathsf{check\_and\_consume}(e,\allowbreak\mathit{lease},\allowbreak\mathit{proofs},\allowbreak\sigma) \rightarrow \mathsf{allow}(\sigma') \mid \mathsf{deny}$, that every adapter must call before a side effect commits.
 % 检查器暴露单一转换——$\mathsf{check\_and\_consume}(e,\mathit{lease},\mathit{proofs},\sigma) \rightarrow \mathsf{allow}(\sigma') \mid \mathsf{deny}$——适配器必须在任何副作用提交之前调用。
 Enforcement has two layers. At the tool level, boundary adapters intercept MCP calls and validate that each argument field comes from its owner source before execution, as Fides~\cite{fides} applies taint tracking at the planner level. At the OS level, accepted leases compile to ActPlane~\cite{actplane} file, exec, and network policies enforced via eBPF.
 % 执行在两个层次运作。在工具层，边界适配器拦截 MCP 调用并在调用执行前验证每个参数字段来自其所有者来源，类似于 Fides~\cite{fides} 在规划器层面应用污点追踪。在 OS 层，被接受的租约编译为通过 eBPF 执行的 ActPlane~\cite{actplane} 文件、执行和网络策略。
@@ -216,8 +222,8 @@ A capability lease binds these field contributions to a specific operation, obje
 % 能力租约将这些字段贡献绑定到特定的操作、对象、参数、预算、过期时间和委托深度。
 Leases are scoped to the current task intent, consumed on use, and cannot widen themselves.
 % 租约限定在当前任务意图的范围内，使用即消耗，且不能自行扩大。
-An issue lease expires after first use, and a delegated subtask receives only capabilities narrower than its parent's.
-% 一次性 issue 租约在首次使用后即过期，被委托的子任务只接收比其父任务更窄的能力。
+An issue lease expires after first use.
+% 一次性 issue 租约在首次使用后即过期。委托衰减性质已在上文说明。
 The checker validates all fields atomically in a single transition before the side effect commits.
 % 检查器在副作用提交之前，在单次转换中原子地验证所有字段。
 
@@ -268,6 +274,7 @@ Copy-witness provenance is conservative: cross-source synthesis is confined to d
 % 复制见证出处是保守的：跨来源合成被限制在数据字段或用户授权的选择器内。
 Meet-based composition, end-to-end attack success, enforcement latency, and adaptive attacks on labeling and lease generation remain future work.
 % 基于 meet 的组合、端到端攻击成功率、执行延迟，以及针对标注和租约生成的自适应攻击仍是未来工作。
+The prototype is available at \url{https://github.com/yunwei37/agentcap}.
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}
